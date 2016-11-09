@@ -33,6 +33,7 @@ using namespace ALM_NS;
 
 ALM::ALM(int narg, char **arg)
 {
+    // std::cout.rdbuf( NULL );
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     std::cout << " +                         Program ALM                             +" << std::endl;
     std::cout << " +                             Ver.";
