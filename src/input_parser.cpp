@@ -89,6 +89,84 @@ void InputParser::parse_input(int narg, char **arg)
     parse_atomic_positions();
 }
 
+void InputParser::set_input(const std::string prefix,
+                            const std::string mode,
+                            const std::string str_disp_basis,
+                            const std::string str_magmom,
+                            const int nat,
+                            const int nkd,
+                            const int nsym,
+                            const int is_printsymmetry,
+                            const int is_periodic[3],
+                            const bool trim_dispsign_for_evenfunc,
+                            const bool lspin,
+                            const bool print_hessian,
+                            const int noncollinear,
+                            const int trevsym,
+                            const std::string *kdname,
+                            const double * const *magmom,
+                            const double tolerance,
+                            const double a,
+                            const double lavec_tmp[3][3],
+                            const int maxorder,
+                            const int *nbody_include,
+                            const double * const * const * rcs,
+                            const int ndata,
+                            const int nstart,
+                            const int nend,
+                            const int nskip,
+                            const int nboot,
+                            const std::string dfile,
+                            const std::string ffile,
+                            const int multiply_data,
+                            const int constraint_flag,
+                            const std::string rotation_axis,
+                            const std::string fc2_file,
+                            const std::string fc3_file,
+                            const bool fix_harmonic,
+                            const bool fix_cubic,
+                            const int *kd,
+                            const double * const *xeq)
+{
+    set_general_vars(prefix,
+                     mode,
+                     str_disp_basis,
+                     str_magmom,
+                     nat,
+                     nkd,
+                     nsym,
+                     is_printsymmetry,
+                     is_periodic,
+                     trim_dispsign_for_evenfunc,
+                     lspin,
+                     print_hessian,
+                     noncollinear,
+                     trevsym,
+                     kdname,
+                     magmom,
+                     tolerance);
+    set_cell_parameter(a, lavec_tmp);
+    set_interaction_vars(maxorder, nbody_include);
+    set_cutoff_radii(maxorder, nkd, rcs);
+    set_fitting_vars(ndata,
+                     nstart,
+                     nend,
+                     nskip,
+                     nboot,
+                     dfile,
+                     ffile,
+                     multiply_data,
+                     constraint_flag,
+                     rotation_axis,
+                     fc2_file,
+                     fc3_file,
+                     fix_harmonic,
+                     fix_cubic);
+    set_atomic_positions(nat, kd, xeq);
+}
+
+
+
 void InputParser::parse_general_vars()
 {
     int i, j;
