@@ -14,11 +14,11 @@
 
 using namespace ALM_NS;
 
-int main(int argc, char **argv)
-{
-    ALM *alm = new ALM(argc, argv);
+// int main(int argc, char **argv)
+// {
+//     ALM *alm = new ALM(argc, argv);
 
-    delete alm;
+//     delete alm;
 
-    return EXIT_SUCCESS;
-}
+//     return EXIT_SUCCESS;
+// }

@@ -34,6 +34,23 @@ namespace ALM_NS
         int locate_tag(std::string);
         void split_str_by_space(const std::string, std::vector<std::string> &);
         void parse_general_vars();
+	void set_general_vars(const std::string prefix,
+			      const std::string mode,
+			      const std::string str_disp_basis,
+			      const std::string str_magmom,
+			      const int nat,
+			      const int nkd,
+			      const int nsym,
+			      const int is_printsymmetry,
+			      const int is_periodic[3],
+			      const bool trim_dispsign_for_evenfunc,
+			      const bool lspin,
+			      const bool print_hessian,
+			      const int noncollinear,
+			      const int trevsym,
+			      const std::string *kdname,
+			      const double * const *magmom,
+			      const double tolerance);
         void set_general_vars();
         void parse_cell_parameter();
         void parse_interaction_vars();

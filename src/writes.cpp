@@ -20,7 +20,7 @@
 #include "fcs.h"
 #include "fitting.h"
 #include "constraint.h"
-#include "input.h"
+#include "input_parser.h"
 #include "timer.h"
 #include "patterndisp.h"
 #include "version.h"

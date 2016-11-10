@@ -8,7 +8,7 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include "input.h"
+#include "input_parser.h"
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -312,68 +312,50 @@ void InputParser::parse_general_vars()
 
     }
 
-    files->job_title = prefix;
-    alm->mode = mode;
-    system->nat = nat;
-    system->nkd = nkd;
-    symmetry->nsym = nsym;
-    symmetry->is_printsymmetry = is_printsymmetry;
-    symmetry->tolerance = tolerance;
-    this->str_magmom = general_var_dict["MAGMOM"];
-    memory->allocate(system->kdname, nkd);
-    memory->allocate(system->magmom, nat, 3);
-
-    for (i = 0; i < nkd; ++i) {
-        system->kdname[i] = kdname[i];
-    }
-    for (i = 0; i < 3; ++i) {
-        interaction->is_periodic[i] = is_periodic[i];
-    }
-    for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
-            system->magmom[i][j] = magmom[i][j];
-        }
-    }
-    system->lspin = lspin;
-    system->noncollinear = noncollinear;
-    symmetry->trev_sym_mag = trevsym;
-    writes->print_hessian = print_hessian;
-
-    if (mode == "suggest") {
-        displace->disp_basis = str_disp_basis;
-        displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
-    }
-
-    memory->deallocate(kdname);
-    memory->deallocate(magmom);
-
+    set_general_vars(prefix,
+                     mode,
+                     str_disp_basis,
+                     general_var_dict["MAGMOM"],
+                     nat,
+                     nkd,
+                     nsym,
+                     is_printsymmetry,
+                     is_periodic,
+                     trim_dispsign_for_evenfunc,
+                     lspin,
+                     print_hessian,
+                     noncollinear,
+                     trevsym,
+                     kdname,
+                     magmom,
+                     tolerance);
+    
     kdname_v.clear();
     periodic_v.clear();
     no_defaults.clear();
     general_var_dict.clear();
 }
 
-void InputParser::set_general_vars()
+void InputParser::set_general_vars(
+    const std::string prefix,
+    const std::string mode,
+    const std::string str_disp_basis,
+    const std::string str_magmom,
+    const int nat,
+    const int nkd,
+    const int nsym,
+    const int is_printsymmetry,
+    const int is_periodic[3],
+    const bool trim_dispsign_for_evenfunc,
+    const bool lspin,
+    const bool print_hessian,
+    const int noncollinear,
+    const int trevsym,
+    const std::string *kdname,
+    const double * const *magmom,
+    const double tolerance)
 {
     int i, j;
-    std::string prefix, mode, str_tmp, str_disp_basis;
-    int nat, nkd, nsym;
-    int is_printsymmetry, is_periodic[3];
-    int icount, ncount;
-    bool trim_dispsign_for_evenfunc;
-    bool lspin;
-    bool print_hessian;
-    int noncollinear, trevsym;
-    std::string *kdname;
-    double **magmom, magmag;
-    double tolerance;
-
-    std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
-    std::string str_allowed_list = "PREFIX MODE NAT NKD NSYM KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
-                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN";
-    std::string str_no_defaults = "PREFIX MODE NAT NKD KD";
-    std::vector<std::string> no_defaults;
-    std::map<std::string, std::string> general_var_dict;
 
     files->job_title = prefix;
     alm->mode = mode;
@@ -382,7 +364,7 @@ void InputParser::set_general_vars()
     symmetry->nsym = nsym;
     symmetry->is_printsymmetry = is_printsymmetry;
     symmetry->tolerance = tolerance;
-    this->str_magmom = general_var_dict["MAGMOM"];
+    this->str_magmom = str_magmom;
     memory->allocate(system->kdname, nkd);
     memory->allocate(system->magmom, nat, 3);
 

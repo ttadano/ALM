@@ -7,7 +7,7 @@ set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_BUILD_TYPE RELEASE)
 
 project(alm)
-find_package(Boost)
+find_package(Boost REQUIRED)
 
 # Version numbers
 file(READ ${PROJECT_SOURCE_DIR}/src/version.h version_file)
@@ -26,7 +26,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alamode.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
             ${PROJECT_SOURCE_DIR}/src/fitting.cpp
-            ${PROJECT_SOURCE_DIR}/src/input.cpp
+            ${PROJECT_SOURCE_DIR}/src/input_parser.cpp
             ${PROJECT_SOURCE_DIR}/src/interaction.cpp
             ${PROJECT_SOURCE_DIR}/src/memory.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
@@ -39,19 +39,25 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alamode.cpp
 # SET_SOURCE_FILES_PROPERTIES(${SOURCES} PROPERTIES LANGUAGE C)
 # set(CMAKE_C_COMPILER "gcc")
 
-# Shared library
-add_library(alm SHARED ${SOURCES})
+# Executable
+add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp ${SOURCES})
 target_link_libraries(alm ${Boost_LIBRARIES} gomp lapack)
-set_property(TARGET alm PROPERTY VERSION ${serial})
-set_property(TARGET alm PROPERTY SOVERSION ${soserial})
-install(TARGETS alm LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+# add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp)
+# target_link_libraries(alm ${almcxx_static} ${Boost_LIBRARIES} gomp lapack)
+
+# Shared library
+add_library(almcxx SHARED ${SOURCES})
+target_link_libraries(almcxx ${Boost_LIBRARIES} gomp lapack)
+set_property(TARGET almcxx PROPERTY VERSION ${serial})
+set_property(TARGET almcxx PROPERTY SOVERSION ${soserial})
+install(TARGETS almcxx LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Static link library
-add_library(alm_static STATIC ${SOURCES})
-set_property(TARGET alm_static PROPERTY VERSION ${serial})
-set_property(TARGET alm_static PROPERTY SOVERSION ${soserial})
-set_property(TARGET alm_static PROPERTY OUTPUT_NAME alm)
-install(TARGETS alm_static ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+add_library(almcxx_static STATIC ${SOURCES})
+set_property(TARGET almcxx_static PROPERTY VERSION ${serial})
+set_property(TARGET almcxx_static PROPERTY SOVERSION ${soserial})
+set_property(TARGET almcxx_static PROPERTY OUTPUT_NAME almcxx)
+install(TARGETS almcxx_static ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Header file
 # install(FILES ${PROJECT_SOURCE_DIR}/src/alm.h DESTINATION ${PROJECT_SOURCE_DIR}/include)

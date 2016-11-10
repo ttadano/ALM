@@ -12,7 +12,7 @@
 #include <iomanip>
 #include "interaction.h"
 #include "symmetry.h"
-#include "input.h"
+#include "input_parser.h"
 #include "system.h"
 #include "files.h"
 #include "memory.h"
@@ -50,7 +50,7 @@ ALM::ALM(int narg, char **arg)
 #endif
     std::cout << " Job started at " << timer->DateAndTime() << std::endl;
 
-    input = new Input(this, narg, arg);
+    input = new InputParser(this, narg, arg);
     create();
     input->parse_input(narg, arg);
     writes->write_input_vars();
