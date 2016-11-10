@@ -329,6 +329,9 @@ void InputParser::parse_general_vars()
                      kdname,
                      magmom,
                      tolerance);
+
+    memory->deallocate(kdname);
+    memory->deallocate(magmom);
     
     kdname_v.clear();
     periodic_v.clear();
@@ -388,9 +391,6 @@ void InputParser::set_general_vars(
         displace->disp_basis = str_disp_basis;
         displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
     }
-
-    memory->deallocate(kdname);
-    memory->deallocate(magmom);
 }
 
 
@@ -481,12 +481,21 @@ void InputParser::parse_cell_parameter()
         }
     }
 
+    set_cell_parameter(a, lavec_tmp);
+}
+
+void InputParser::set_cell_parameter(const double a,
+                                     const double lavec_tmp[3][3])
+{
+    int i, j;
+
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
             system->lavec[i][j] = a * lavec_tmp[i][j];
         }
     }
 }
+
 
 void InputParser::parse_interaction_vars()
 {
@@ -554,16 +563,25 @@ void InputParser::parse_interaction_vars()
                     "Harmonic interaction is always 2 body (except on-site 1 body)");
     }
 
+    set_interaction_vars(maxorder, nbody_include);
+    
+    memory->deallocate(nbody_include);
+
+    nbody_v.clear();
+    no_defaults.clear();
+}
+
+void InputParser::set_interaction_vars(const int maxorder,
+                                       const int *nbody_include)
+{
+    int i;
+
     interaction->maxorder = maxorder;
     memory->allocate(interaction->nbody_include, maxorder);
 
     for (i = 0; i < maxorder; ++i) {
         interaction->nbody_include[i] = nbody_include[i];
     }
-
-    memory->deallocate(nbody_include);
-    nbody_v.clear();
-    no_defaults.clear();
 }
 
 void InputParser::parse_cutoff_radii()
@@ -739,6 +757,17 @@ void InputParser::parse_cutoff_radii()
     }
     memory->deallocate(undefined_cutoff);
 
+    set_cutoff_radii(maxorder, nkd, rcs);
+
+    memory->deallocate(rcs);
+}
+
+void InputParser::set_cutoff_radii(const int maxorder,
+                                   const int nkd,
+                                   const double * const * const * rcs)
+{
+    int i, j, k;
+
     memory->allocate(interaction->rcs, maxorder, nkd, nkd);
 
     for (i = 0; i < maxorder; ++i) {
@@ -748,9 +777,8 @@ void InputParser::parse_cutoff_radii()
             }
         }
     }
-
-    memory->deallocate(rcs);
 }
+
 
 void InputParser::parse_fitting_vars()
 {
@@ -868,6 +896,40 @@ void InputParser::parse_fitting_vars()
         }
     }
 
+    set_fitting_vars(ndata,
+                     nstart,
+                     nend,
+                     nskip,
+                     nboot,
+                     dfile,
+                     ffile,
+                     multiply_data,
+                     constraint_flag,
+                     rotation_axis,
+                     fc2_file,
+                     fc3_file,
+                     fix_harmonic,
+                     fix_cubic);
+    
+
+    fitting_var_dict.clear();
+}
+
+void InputParser::set_fitting_vars(const int ndata,
+                                   const int nstart,
+                                   const int nend,
+                                   const int nskip,
+                                   const int nboot,
+                                   const std::string dfile,
+                                   const std::string ffile,
+                                   const int multiply_data,
+                                   const int constraint_flag,
+                                   const std::string rotation_axis,
+                                   const std::string fc2_file,
+                                   const std::string fc3_file,
+                                   const bool fix_harmonic,
+                                   const bool fix_cubic)
+{
     system->ndata = ndata;
     system->nstart = nstart;
     system->nend = nend;
@@ -883,8 +945,6 @@ void InputParser::parse_fitting_vars()
     constraint->fix_harmonic = fix_harmonic;
     constraint->fc3_file = fc3_file;
     constraint->fix_cubic = fix_cubic;
-
-    fitting_var_dict.clear();
 }
 
 void InputParser::parse_atomic_positions()
@@ -984,6 +1044,20 @@ void InputParser::parse_atomic_positions()
     }
 
 
+    set_atomic_positions(nat, kd, xeq);
+    
+    memory->deallocate(xeq);
+    memory->deallocate(kd);
+    pos_line.clear();
+    str_v.clear();
+}
+
+void InputParser::set_atomic_positions(const int nat,
+                                       const int *kd,
+                                       const double * const *xeq)
+{
+    int i, j;
+
     memory->allocate(system->xcoord, nat, 3);
     memory->allocate(system->kd, nat);
 
@@ -995,12 +1069,9 @@ void InputParser::parse_atomic_positions()
             system->xcoord[i][j] = xeq[i][j];
         }
     }
-
-    memory->deallocate(xeq);
-    memory->deallocate(kd);
-    pos_line.clear();
-    str_v.clear();
 }
+
+
 
 void InputParser::get_var_dict(const std::string keywords,
                                std::map<std::string, std::string> &var_dict)
