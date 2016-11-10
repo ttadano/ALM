@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -fopenmp")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2 -fopenmp")
@@ -20,20 +20,24 @@ set(soserial "1")
 # Source code
 include_directories("${PROJECT_SOURCE_DIR}/src")
 set(SOURCES ${PROJECT_SOURCE_DIR}/src/alamode.cpp
-            ${PROJECT_SOURCE_DIR}/src/constraint.cpp
+            ${PROJECT_SOURCE_DIR}/src/alm.cpp
+	    ${PROJECT_SOURCE_DIR}/src/constraint.cpp
             ${PROJECT_SOURCE_DIR}/src/error.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
             ${PROJECT_SOURCE_DIR}/src/fitting.cpp
             ${PROJECT_SOURCE_DIR}/src/input.cpp
             ${PROJECT_SOURCE_DIR}/src/interaction.cpp
-            ${PROJECT_SOURCE_DIR}/src/main.cpp
             ${PROJECT_SOURCE_DIR}/src/memory.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
             ${PROJECT_SOURCE_DIR}/src/symmetry.cpp
             ${PROJECT_SOURCE_DIR}/src/system.cpp
             ${PROJECT_SOURCE_DIR}/src/timer.cpp
             ${PROJECT_SOURCE_DIR}/src/writes.cpp)
+
+# # Trick to use gcc to compile *.cpp: This doesn't work because of boost
+# SET_SOURCE_FILES_PROPERTIES(${SOURCES} PROPERTIES LANGUAGE C)
+# set(CMAKE_C_COMPILER "gcc")
 
 # Shared library
 add_library(alm SHARED ${SOURCES})
