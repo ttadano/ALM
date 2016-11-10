@@ -12,16 +12,15 @@
 
 #pragma once
 
-#include "pointers.h"
-#include <string>
+#include "alm_core.h"
 
 namespace ALM_NS
 {
-    class ALMCUI: protected Pointers
+    class ALMCUI
     {
     public:
-        ALMCUI(class ALMCore *);
+        ALMCUI();
         ~ALMCUI();
-	void run(int narg, char **arg);
+	void run(ALMCore *alm, int narg, char **arg);
     };
 }

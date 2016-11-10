@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include "input_setter.h"
 #include "memory.h"
 #include "files.h"
 #include "interaction.h"
@@ -29,12 +30,20 @@
 
 using namespace ALM_NS;
 
-InputParser::InputParser(ALMCore *alm): Pointers(alm) {}
+InputParser::InputParser() {}
 
 InputParser::~InputParser() {}
 
-void InputParser::parse_input(int narg, char **arg)
+void InputParser::parse_input(InputSetter *input,
+                              const int narg,
+                              const char * const *arg,
+                              Error *error,
+                              Memory *memory,
+                              const std::string mode)
 {
+    int maxorder;
+    int nat;
+
     if (narg == 1) {
 
         from_stdin = true;
@@ -54,126 +63,19 @@ void InputParser::parse_input(int narg, char **arg)
         error->exit("parse_input",
                     "&general entry not found in the input file");
     }
-    parse_general_vars();
-
-    if (!locate_tag("&cell")) {
-        error->exit("parse_input",
-                    "&cell entry not found in the input file");
-    }
-    parse_cell_parameter();
-
-    if (!locate_tag("&interaction")) {
-        error->exit("parse_input",
-                    "&interaction entry not found in the input file");
-    }
-    parse_interaction_vars();
-
-    if (!locate_tag("&cutoff")) {
-        error->exit("parse_input",
-                    "&cutoff entry not found in the input file");
-    }
-    parse_cutoff_radii();
-
-    if (alm->mode == "fitting") {
-        if (!locate_tag("&fitting")) {
-            error->exit("parse_input",
-                        "&fitting entry not found in the input file");
-        }
-        parse_fitting_vars();
-    }
-
-    if (!locate_tag("&position")) {
-        error->exit("parse_input",
-                    "&position entry not found in the input file");
-    }
-    parse_atomic_positions();
+    parse_general_vars(input, error, memory);
 }
 
-void InputParser::set_input(const std::string prefix,
-                            const std::string mode,
-                            const std::string str_disp_basis,
-                            const std::string str_magmom,
-                            const int nat,
-                            const int nkd,
-                            const int nsym,
-                            const int is_printsymmetry,
-                            const int is_periodic[3],
-                            const bool trim_dispsign_for_evenfunc,
-                            const bool lspin,
-                            const bool print_hessian,
-                            const int noncollinear,
-                            const int trevsym,
-                            const std::string *kdname,
-                            const double * const *magmom,
-                            const double tolerance,
-                            const double a,
-                            const double lavec_tmp[3][3],
-                            const int maxorder,
-                            const int *nbody_include,
-                            const double * const * const * rcs,
-                            const int ndata,
-                            const int nstart,
-                            const int nend,
-                            const int nskip,
-                            const int nboot,
-                            const std::string dfile,
-                            const std::string ffile,
-                            const int multiply_data,
-                            const int constraint_flag,
-                            const std::string rotation_axis,
-                            const std::string fc2_file,
-                            const std::string fc3_file,
-                            const bool fix_harmonic,
-                            const bool fix_cubic,
-                            const int *kd,
-                            const double * const *xeq)
-{
-    set_general_vars(prefix,
-                     mode,
-                     str_disp_basis,
-                     str_magmom,
-                     nat,
-                     nkd,
-                     nsym,
-                     is_printsymmetry,
-                     is_periodic,
-                     trim_dispsign_for_evenfunc,
-                     lspin,
-                     print_hessian,
-                     noncollinear,
-                     trevsym,
-                     kdname,
-                     magmom,
-                     tolerance);
-    set_cell_parameter(a, lavec_tmp);
-    set_interaction_vars(maxorder, nbody_include);
-    set_cutoff_radii(maxorder, nkd, rcs);
-    set_fitting_vars(ndata,
-                     nstart,
-                     nend,
-                     nskip,
-                     nboot,
-                     dfile,
-                     ffile,
-                     multiply_data,
-                     constraint_flag,
-                     rotation_axis,
-                     fc2_file,
-                     fc3_file,
-                     fix_harmonic,
-                     fix_cubic);
-    set_atomic_positions(nat, kd, xeq);
-}
-
-
-
-void InputParser::parse_general_vars()
+void InputParser::parse_general_vars(InputSetter *input,
+                                     Error *error,
+                                     Memory *memory)
 {
     int i, j;
     std::string prefix, mode, str_tmp, str_disp_basis;
     int nat, nkd, nsym;
     int is_printsymmetry, is_periodic[3];
     int icount, ncount;
+    int maxorder;
     bool trim_dispsign_for_evenfunc;
     bool lspin;
     bool print_hessian;
@@ -195,7 +97,7 @@ void InputParser::parse_general_vars()
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, general_var_dict);
+    get_var_dict(str_allowed_list, general_var_dict, error);
 
     boost::split(no_defaults, str_no_defaults, boost::is_space());
 
@@ -216,19 +118,19 @@ void InputParser::parse_general_vars()
         error->exit("parse_general_vars", "Invalid MODE variable");
     }
 
-    assign_val(nat, "NAT", general_var_dict);
-    assign_val(nkd, "NKD", general_var_dict);
+    assign_val(nat, "NAT", general_var_dict, error);
+    assign_val(nkd, "NKD", general_var_dict, error);
 
     if (general_var_dict["NSYM"].empty()) {
         nsym = 0;
     } else {
-        assign_val(nsym, "NSYM", general_var_dict);
+        assign_val(nsym, "NSYM", general_var_dict, error);
     }
 
     if (general_var_dict["PRINTSYM"].empty()) {
         is_printsymmetry = 0;
     } else {
-        assign_val(is_printsymmetry, "PRINTSYM", general_var_dict);
+        assign_val(is_printsymmetry, "PRINTSYM", general_var_dict, error);
     }
 
     split_str_by_space(general_var_dict["KD"], kdname_v);
@@ -268,7 +170,7 @@ void InputParser::parse_general_vars()
     if (general_var_dict["TOLERANCE"].empty()) {
         tolerance = 1.0e-6;
     } else {
-        assign_val(tolerance, "TOLERANCE", general_var_dict);
+        assign_val(tolerance, "TOLERANCE", general_var_dict, error);
     }
 
     // Convert MAGMOM input to array
@@ -284,17 +186,17 @@ void InputParser::parse_general_vars()
     if (general_var_dict["NONCOLLINEAR"].empty()) {
         noncollinear = 0;
     } else {
-        assign_val(noncollinear, "NONCOLLINEAR", general_var_dict);
+        assign_val(noncollinear, "NONCOLLINEAR", general_var_dict, error);
     }
     if (general_var_dict["TREVSYM"].empty()) {
         trevsym = 1;
     } else {
-        assign_val(trevsym, "TREVSYM", general_var_dict);
+        assign_val(trevsym, "TREVSYM", general_var_dict, error);
     }
     if (general_var_dict["HESSIAN"].empty()) {
         print_hessian = false;
     } else {
-        assign_val(print_hessian, "HESSIAN", general_var_dict);
+        assign_val(print_hessian, "HESSIAN", general_var_dict, error);
     }
 
     if (!general_var_dict["MAGMOM"].empty()) {
@@ -368,7 +270,6 @@ void InputParser::parse_general_vars()
         }
     }
 
-
     if (mode == "suggest") {
         if (general_var_dict["DBASIS"].empty()) {
             str_disp_basis = "Cart";
@@ -385,28 +286,60 @@ void InputParser::parse_general_vars()
             trim_dispsign_for_evenfunc = true;
         } else {
             assign_val(trim_dispsign_for_evenfunc,
-                       "TRIMEVEN", general_var_dict);
+                       "TRIMEVEN", general_var_dict, error);
         }
 
     }
 
-    set_general_vars(prefix,
-                     mode,
-                     str_disp_basis,
-                     general_var_dict["MAGMOM"],
-                     nat,
-                     nkd,
-                     nsym,
-                     is_printsymmetry,
-                     is_periodic,
-                     trim_dispsign_for_evenfunc,
-                     lspin,
-                     print_hessian,
-                     noncollinear,
-                     trevsym,
-                     kdname,
-                     magmom,
-                     tolerance);
+    input->set_general_vars(prefix,
+                            mode,
+                            str_disp_basis,
+                            general_var_dict["MAGMOM"],
+                            nat,
+                            nkd,
+                            nsym,
+                            is_printsymmetry,
+                            is_periodic,
+                            trim_dispsign_for_evenfunc,
+                            lspin,
+                            print_hessian,
+                            noncollinear,
+                            trevsym,
+                            kdname,
+                            magmom,
+                            tolerance);
+
+    if (!locate_tag("&cell")) {
+        error->exit("parse_input",
+                    "&cell entry not found in the input file");
+    }
+    parse_cell_parameter(input, error);
+
+    if (!locate_tag("&position")) {
+        error->exit("parse_input",
+                    "&position entry not found in the input file");
+    }
+    parse_atomic_positions(input, nat, error, memory);
+
+    if (!locate_tag("&interaction")) {
+        error->exit("parse_input",
+                    "&interaction entry not found in the input file");
+    }
+    maxorder = parse_interaction_vars(input, error, memory);
+
+    if (!locate_tag("&cutoff")) {
+        error->exit("parse_input",
+                    "&cutoff entry not found in the input file");
+    }
+    parse_cutoff_radii(input, nkd, maxorder, kdname, error, memory);
+
+    if (mode == "fitting") {
+        if (!locate_tag("&fitting")) {
+            error->exit("parse_input",
+                        "&fitting entry not found in the input file");
+        }
+        parse_fitting_vars(input, error);
+    }
 
     memory->deallocate(kdname);
     memory->deallocate(magmom);
@@ -417,62 +350,8 @@ void InputParser::parse_general_vars()
     general_var_dict.clear();
 }
 
-void InputParser::set_general_vars(
-    const std::string prefix,
-    const std::string mode,
-    const std::string str_disp_basis,
-    const std::string str_magmom,
-    const int nat,
-    const int nkd,
-    const int nsym,
-    const int is_printsymmetry,
-    const int is_periodic[3],
-    const bool trim_dispsign_for_evenfunc,
-    const bool lspin,
-    const bool print_hessian,
-    const int noncollinear,
-    const int trevsym,
-    const std::string *kdname,
-    const double * const *magmom,
-    const double tolerance)
-{
-    int i, j;
-
-    files->job_title = prefix;
-    alm->mode = mode;
-    system->nat = nat;
-    system->nkd = nkd;
-    symmetry->nsym = nsym;
-    symmetry->is_printsymmetry = is_printsymmetry;
-    symmetry->tolerance = tolerance;
-    this->str_magmom = str_magmom;
-    memory->allocate(system->kdname, nkd);
-    memory->allocate(system->magmom, nat, 3);
-
-    for (i = 0; i < nkd; ++i) {
-        system->kdname[i] = kdname[i];
-    }
-    for (i = 0; i < 3; ++i) {
-        interaction->is_periodic[i] = is_periodic[i];
-    }
-    for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
-            system->magmom[i][j] = magmom[i][j];
-        }
-    }
-    system->lspin = lspin;
-    system->noncollinear = noncollinear;
-    symmetry->trev_sym_mag = trevsym;
-    writes->print_hessian = print_hessian;
-
-    if (mode == "suggest") {
-        displace->disp_basis = str_disp_basis;
-        displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
-    }
-}
-
-
-void InputParser::parse_cell_parameter()
+void InputParser::parse_cell_parameter(InputSetter *input,
+                                       Error *error)
 {
     int i, j;
     double a;
@@ -559,23 +438,13 @@ void InputParser::parse_cell_parameter()
         }
     }
 
-    set_cell_parameter(a, lavec_tmp);
-}
-
-void InputParser::set_cell_parameter(const double a,
-                                     const double lavec_tmp[3][3])
-{
-    int i, j;
-
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
-            system->lavec[i][j] = a * lavec_tmp[i][j];
-        }
-    }
+    input->set_cell_parameter(a, lavec_tmp);
 }
 
 
-void InputParser::parse_interaction_vars()
+int InputParser::parse_interaction_vars(InputSetter *input,
+                                        Error *error,
+                                        Memory *memory)
 {
     int i;
     int maxorder;
@@ -594,7 +463,7 @@ void InputParser::parse_interaction_vars()
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, interaction_var_dict);
+    get_var_dict(str_allowed_list, interaction_var_dict, error);
 
     boost::split(no_defaults, str_no_defaults, boost::is_space());
 
@@ -607,7 +476,7 @@ void InputParser::parse_interaction_vars()
         }
     }
 
-    assign_val(maxorder, "NORDER", interaction_var_dict);
+    assign_val(maxorder, "NORDER", interaction_var_dict, error);
     if (maxorder < 1)
         error->exit("parse_interaction_vars",
                     "maxorder has to be a positive integer");
@@ -641,28 +510,265 @@ void InputParser::parse_interaction_vars()
                     "Harmonic interaction is always 2 body (except on-site 1 body)");
     }
 
-    set_interaction_vars(maxorder, nbody_include);
-    
+    input->set_interaction_vars(maxorder, nbody_include);
+
     memory->deallocate(nbody_include);
 
     nbody_v.clear();
     no_defaults.clear();
+
+    return maxorder;
 }
 
-void InputParser::set_interaction_vars(const int maxorder,
-                                       const int *nbody_include)
+
+void InputParser::parse_fitting_vars(InputSetter *input,
+                                     Error *error)
 {
-    int i;
+    int ndata, nstart, nend, nskip, nboot;
+    std::string dfile, ffile;
+    int multiply_data, constraint_flag;
+    std::string rotation_axis;
+    std::string fc2_file, fc3_file;
 
-    interaction->maxorder = maxorder;
-    memory->allocate(interaction->nbody_include, maxorder);
+    std::string str_allowed_list = "NDATA NSTART NEND NSKIP NBOOT DFILE FFILE MULTDAT ICONST ROTAXIS FC2XML FC3XML";
+    std::string str_no_defaults = "NDATA DFILE FFILE";
+    std::vector<std::string> no_defaults;
 
-    for (i = 0; i < maxorder; ++i) {
-        interaction->nbody_include[i] = nbody_include[i];
+    std::map<std::string, std::string> fitting_var_dict;
+
+    bool fix_harmonic, fix_cubic;
+
+    if (from_stdin) {
+        std::cin.ignore();
+    } else {
+        ifs_input.ignore();
     }
+
+    get_var_dict(str_allowed_list, fitting_var_dict, error);
+
+    boost::split(no_defaults, str_no_defaults, boost::is_space());
+
+    for (std::vector<std::string>::iterator it = no_defaults.begin();
+         it != no_defaults.end(); ++it) {
+        if (fitting_var_dict.find(*it) == fitting_var_dict.end()) {
+            error->exit("parse_fitting_vars",
+                        "The following variable is not found in &fitting input region: ",
+                        (*it).c_str());
+        }
+    }
+
+    assign_val(ndata, "NDATA", fitting_var_dict, error);
+
+    if (fitting_var_dict["NSTART"].empty()) {
+        nstart = 1;
+    } else {
+        assign_val(nstart, "NSTART", fitting_var_dict, error);
+    }
+    if (fitting_var_dict["NEND"].empty()) {
+        nend = ndata;
+    } else {
+        assign_val(nend, "NEND", fitting_var_dict, error);
+    }
+    if (fitting_var_dict["NSKIP"].empty()) {
+        nskip = 0;
+    } else {
+        assign_val(nskip, "NSKIP", fitting_var_dict, error);
+    }
+
+    if (ndata <= 0 || nstart <= 0 || nend <= 0
+        || nstart > ndata || nend > ndata || nstart > nend) {
+        error->exit("parce_fitting_vars",
+                    "ndata, nstart, nend are not consistent with each other");
+    }
+
+    if (nskip < -1)
+        error->exit("parce_fitting_vars",
+                    "nskip has to be larger than -2.");
+    if (nskip == -1) {
+
+        if (fitting_var_dict["NBOOT"].empty()) {
+            error->exit("parse_fitting_vars",
+                        "NBOOT has to be given when NSKIP=-1");
+        } else {
+            assign_val(nboot, "NBOOT", fitting_var_dict, error);
+        }
+
+        if (nboot <= 0)
+            error->exit("parce_input",
+                        "nboot has to be a positive integer");
+    } else {
+        nboot = 0;
+    }
+
+    dfile = fitting_var_dict["DFILE"];
+    ffile = fitting_var_dict["FFILE"];
+
+
+    if (fitting_var_dict["MULTDAT"].empty()) {
+        multiply_data = 1;
+    } else {
+        assign_val(multiply_data, "MULTDAT", fitting_var_dict, error);
+    }
+
+    if (fitting_var_dict["ICONST"].empty()) {
+        constraint_flag = 1;
+    } else {
+        assign_val(constraint_flag, "ICONST", fitting_var_dict, error);
+    }
+
+    fc2_file = fitting_var_dict["FC2XML"];
+    if (fc2_file.empty()) {
+        fix_harmonic = false;
+    } else {
+        fix_harmonic = true;
+    }
+
+    fc3_file = fitting_var_dict["FC3XML"];
+    if (fc3_file.empty()) {
+        fix_cubic = false;
+    } else {
+        fix_cubic = true;
+    }
+
+    if (constraint_flag % 10 >= 2) {
+        rotation_axis = fitting_var_dict["ROTAXIS"];
+        if (rotation_axis.empty()) {
+            error->exit("parse_fitting_vars",
+                        "ROTAXIS has to be given when ICONST=2 or 3");
+        }
+    }
+
+    input->set_fitting_vars(ndata,
+                            nstart,
+                            nend,
+                            nskip,
+                            nboot,
+                            dfile,
+                            ffile,
+                            multiply_data,
+                            constraint_flag,
+                            rotation_axis,
+                            fc2_file,
+                            fc3_file,
+                            fix_harmonic,
+                            fix_cubic);
+    
+
+    fitting_var_dict.clear();
 }
 
-void InputParser::parse_cutoff_radii()
+void InputParser::parse_atomic_positions(InputSetter *input,
+                                         const int nat,
+                                         Error *error,
+                                         Memory *memory)
+{
+    int i, j;
+    std::string line, line_wo_comment;
+    std::string str_tmp;
+    std::string::size_type pos_first_comment_tag;
+    std::vector<std::string> str_v, pos_line;
+    double **xeq;
+    int *kd;
+
+    if (from_stdin) {
+        std::cin.ignore();
+    } else {
+        ifs_input.ignore();
+    }
+
+    str_v.clear();
+
+    if (from_stdin) {
+
+        while (std::getline(std::cin, line)) {
+
+            pos_first_comment_tag = line.find_first_of('#');
+
+            if (pos_first_comment_tag == std::string::npos) {
+                line_wo_comment = line;
+            } else {
+                line_wo_comment = line.substr(0, pos_first_comment_tag);
+            }
+
+
+            boost::trim_left(line_wo_comment);
+            if (line_wo_comment.empty()) continue;
+            if (is_endof_entry(line_wo_comment)) break;
+
+            str_v.push_back(line_wo_comment);
+        }
+
+    } else {
+
+        while (std::getline(ifs_input, line)) {
+
+            pos_first_comment_tag = line.find_first_of('#');
+
+            if (pos_first_comment_tag == std::string::npos) {
+                line_wo_comment = line;
+            } else {
+                line_wo_comment = line.substr(0, pos_first_comment_tag);
+            }
+
+
+            boost::trim_left(line_wo_comment);
+            if (line_wo_comment.empty()) continue;
+            if (is_endof_entry(line_wo_comment)) break;
+
+            str_v.push_back(line_wo_comment);
+        }
+    }
+
+
+    if (str_v.size() != nat) {
+        error->exit("parse_atomic_positions",
+                    "The number of entries for atomic positions should be NAT");
+    }
+
+    memory->allocate(xeq, nat, 3);
+    memory->allocate(kd, nat);
+
+
+    for (i = 0; i < nat; ++i) {
+
+        split_str_by_space(str_v[i], pos_line);
+
+        if (pos_line.size() == 4) {
+            try {
+                kd[i] = boost::lexical_cast<int>(pos_line[0]);
+            }
+            catch (std::exception &e) {
+                std::cout << e.what() << std::endl;
+                error->exit("parse_atomic_positions",
+                            "Invalid entry for the &position field at line ",
+                            i + 1);
+            }
+
+            for (j = 0; j < 3; ++j) {
+                xeq[i][j] = boost::lexical_cast<double>(pos_line[j + 1]);
+            }
+
+        } else {
+            error->exit("parse_atomic_positions",
+                        "Bad format for &position region");
+        }
+    }
+
+
+    input->set_atomic_positions(nat, kd, xeq);
+    
+    memory->deallocate(xeq);
+    memory->deallocate(kd);
+    pos_line.clear();
+    str_v.clear();
+}
+
+void InputParser::parse_cutoff_radii(InputSetter *input,
+                                     const int nkd,
+                                     const int maxorder,
+                                     const std::string *kdname,
+                                     Error *error,
+                                     Memory *memory)
 {
     std::string line, line_wo_comment;
     std::string::size_type pos_first_comment_tag;
@@ -716,8 +822,6 @@ void InputParser::parse_cutoff_radii()
     }
 
     int i, j, k;
-    int nkd = system->nkd;
-    int maxorder = interaction->maxorder;
     int ikd, jkd;
     int order;
     std::vector<std::string> cutoff_line;
@@ -744,8 +848,8 @@ void InputParser::parse_cutoff_radii()
     element_allowed.clear();
 
     for (i = 0; i < nkd; ++i) {
-        element_allowed.insert(system->kdname[i]);
-        kd_map.insert(std::map<std::string, int>::value_type(system->kdname[i], i));
+        element_allowed.insert(kdname[i]);
+        kd_map.insert(std::map<std::string, int>::value_type(kdname[i], i));
     }
 
     element_allowed.insert("*");
@@ -835,324 +939,14 @@ void InputParser::parse_cutoff_radii()
     }
     memory->deallocate(undefined_cutoff);
 
-    set_cutoff_radii(maxorder, nkd, rcs);
+    input->set_cutoff_radii(maxorder, nkd, rcs);
 
     memory->deallocate(rcs);
 }
 
-void InputParser::set_cutoff_radii(const int maxorder,
-                                   const int nkd,
-                                   const double * const * const * rcs)
-{
-    int i, j, k;
-
-    memory->allocate(interaction->rcs, maxorder, nkd, nkd);
-
-    for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < nkd; ++j) {
-            for (k = 0; k < nkd; ++k) {
-                interaction->rcs[i][j][k] = rcs[i][j][k];
-            }
-        }
-    }
-}
-
-
-void InputParser::parse_fitting_vars()
-{
-    int ndata, nstart, nend, nskip, nboot;
-    std::string dfile, ffile;
-    int multiply_data, constraint_flag;
-    std::string rotation_axis;
-    std::string fc2_file, fc3_file;
-
-    std::string str_allowed_list = "NDATA NSTART NEND NSKIP NBOOT DFILE FFILE MULTDAT ICONST ROTAXIS FC2XML FC3XML";
-    std::string str_no_defaults = "NDATA DFILE FFILE";
-    std::vector<std::string> no_defaults;
-
-    std::map<std::string, std::string> fitting_var_dict;
-
-    bool fix_harmonic, fix_cubic;
-
-    if (from_stdin) {
-        std::cin.ignore();
-    } else {
-        ifs_input.ignore();
-    }
-
-    get_var_dict(str_allowed_list, fitting_var_dict);
-
-    boost::split(no_defaults, str_no_defaults, boost::is_space());
-
-    for (std::vector<std::string>::iterator it = no_defaults.begin();
-         it != no_defaults.end(); ++it) {
-        if (fitting_var_dict.find(*it) == fitting_var_dict.end()) {
-            error->exit("parse_fitting_vars",
-                        "The following variable is not found in &fitting input region: ",
-                        (*it).c_str());
-        }
-    }
-
-    assign_val(ndata, "NDATA", fitting_var_dict);
-
-    if (fitting_var_dict["NSTART"].empty()) {
-        nstart = 1;
-    } else {
-        assign_val(nstart, "NSTART", fitting_var_dict);
-    }
-    if (fitting_var_dict["NEND"].empty()) {
-        nend = ndata;
-    } else {
-        assign_val(nend, "NEND", fitting_var_dict);
-    }
-    if (fitting_var_dict["NSKIP"].empty()) {
-        nskip = 0;
-    } else {
-        assign_val(nskip, "NSKIP", fitting_var_dict);
-    }
-
-    if (ndata <= 0 || nstart <= 0 || nend <= 0
-        || nstart > ndata || nend > ndata || nstart > nend) {
-        error->exit("parce_fitting_vars",
-                    "ndata, nstart, nend are not consistent with each other");
-    }
-
-    if (nskip < -1)
-        error->exit("parce_fitting_vars",
-                    "nskip has to be larger than -2.");
-    if (nskip == -1) {
-
-        if (fitting_var_dict["NBOOT"].empty()) {
-            error->exit("parse_fitting_vars",
-                        "NBOOT has to be given when NSKIP=-1");
-        } else {
-            assign_val(nboot, "NBOOT", fitting_var_dict);
-        }
-
-        if (nboot <= 0)
-            error->exit("parce_input",
-                        "nboot has to be a positive integer");
-    } else {
-        nboot = 0;
-    }
-
-    dfile = fitting_var_dict["DFILE"];
-    ffile = fitting_var_dict["FFILE"];
-
-
-    if (fitting_var_dict["MULTDAT"].empty()) {
-        multiply_data = 1;
-    } else {
-        assign_val(multiply_data, "MULTDAT", fitting_var_dict);
-    }
-
-    if (fitting_var_dict["ICONST"].empty()) {
-        constraint_flag = 1;
-    } else {
-        assign_val(constraint_flag, "ICONST", fitting_var_dict);
-    }
-
-    fc2_file = fitting_var_dict["FC2XML"];
-    if (fc2_file.empty()) {
-        fix_harmonic = false;
-    } else {
-        fix_harmonic = true;
-    }
-
-    fc3_file = fitting_var_dict["FC3XML"];
-    if (fc3_file.empty()) {
-        fix_cubic = false;
-    } else {
-        fix_cubic = true;
-    }
-
-    if (constraint_flag % 10 >= 2) {
-        rotation_axis = fitting_var_dict["ROTAXIS"];
-        if (rotation_axis.empty()) {
-            error->exit("parse_fitting_vars",
-                        "ROTAXIS has to be given when ICONST=2 or 3");
-        }
-    }
-
-    set_fitting_vars(ndata,
-                     nstart,
-                     nend,
-                     nskip,
-                     nboot,
-                     dfile,
-                     ffile,
-                     multiply_data,
-                     constraint_flag,
-                     rotation_axis,
-                     fc2_file,
-                     fc3_file,
-                     fix_harmonic,
-                     fix_cubic);
-    
-
-    fitting_var_dict.clear();
-}
-
-void InputParser::set_fitting_vars(const int ndata,
-                                   const int nstart,
-                                   const int nend,
-                                   const int nskip,
-                                   const int nboot,
-                                   const std::string dfile,
-                                   const std::string ffile,
-                                   const int multiply_data,
-                                   const int constraint_flag,
-                                   const std::string rotation_axis,
-                                   const std::string fc2_file,
-                                   const std::string fc3_file,
-                                   const bool fix_harmonic,
-                                   const bool fix_cubic)
-{
-    system->ndata = ndata;
-    system->nstart = nstart;
-    system->nend = nend;
-    system->nskip = nskip;
-
-    fitting->nboot = nboot;
-    files->file_disp = dfile;
-    files->file_force = ffile;
-    symmetry->multiply_data = multiply_data;
-    constraint->constraint_mode = constraint_flag;
-    constraint->rotation_axis = rotation_axis;
-    constraint->fc2_file = fc2_file;
-    constraint->fix_harmonic = fix_harmonic;
-    constraint->fc3_file = fc3_file;
-    constraint->fix_cubic = fix_cubic;
-}
-
-void InputParser::parse_atomic_positions()
-{
-    int i, j;
-    std::string line, line_wo_comment;
-    std::string str_tmp;
-    std::string::size_type pos_first_comment_tag;
-    std::vector<std::string> str_v, pos_line;
-    double **xeq;
-    int *kd;
-
-    int nat = system->nat;
-
-    if (from_stdin) {
-        std::cin.ignore();
-    } else {
-        ifs_input.ignore();
-    }
-
-    str_v.clear();
-
-    if (from_stdin) {
-
-        while (std::getline(std::cin, line)) {
-
-            pos_first_comment_tag = line.find_first_of('#');
-
-            if (pos_first_comment_tag == std::string::npos) {
-                line_wo_comment = line;
-            } else {
-                line_wo_comment = line.substr(0, pos_first_comment_tag);
-            }
-
-
-            boost::trim_left(line_wo_comment);
-            if (line_wo_comment.empty()) continue;
-            if (is_endof_entry(line_wo_comment)) break;
-
-            str_v.push_back(line_wo_comment);
-        }
-
-    } else {
-
-        while (std::getline(ifs_input, line)) {
-
-            pos_first_comment_tag = line.find_first_of('#');
-
-            if (pos_first_comment_tag == std::string::npos) {
-                line_wo_comment = line;
-            } else {
-                line_wo_comment = line.substr(0, pos_first_comment_tag);
-            }
-
-
-            boost::trim_left(line_wo_comment);
-            if (line_wo_comment.empty()) continue;
-            if (is_endof_entry(line_wo_comment)) break;
-
-            str_v.push_back(line_wo_comment);
-        }
-    }
-
-
-    if (str_v.size() != nat) {
-        error->exit("parse_atomic_positions",
-                    "The number of entries for atomic positions should be NAT");
-    }
-
-    memory->allocate(xeq, nat, 3);
-    memory->allocate(kd, nat);
-
-
-    for (i = 0; i < nat; ++i) {
-
-        split_str_by_space(str_v[i], pos_line);
-
-        if (pos_line.size() == 4) {
-            try {
-                kd[i] = boost::lexical_cast<int>(pos_line[0]);
-            }
-            catch (std::exception &e) {
-                std::cout << e.what() << std::endl;
-                error->exit("parse_atomic_positions",
-                            "Invalid entry for the &position field at line ",
-                            i + 1);
-            }
-
-            for (j = 0; j < 3; ++j) {
-                xeq[i][j] = boost::lexical_cast<double>(pos_line[j + 1]);
-            }
-
-        } else {
-            error->exit("parse_atomic_positions",
-                        "Bad format for &position region");
-        }
-    }
-
-
-    set_atomic_positions(nat, kd, xeq);
-    
-    memory->deallocate(xeq);
-    memory->deallocate(kd);
-    pos_line.clear();
-    str_v.clear();
-}
-
-void InputParser::set_atomic_positions(const int nat,
-                                       const int *kd,
-                                       const double * const *xeq)
-{
-    int i, j;
-
-    memory->allocate(system->xcoord, nat, 3);
-    memory->allocate(system->kd, nat);
-
-    for (i = 0; i < nat; ++i) {
-
-        system->kd[i] = kd[i];
-
-        for (j = 0; j < 3; ++j) {
-            system->xcoord[i][j] = xeq[i][j];
-        }
-    }
-}
-
-
-
 void InputParser::get_var_dict(const std::string keywords,
-                               std::map<std::string, std::string> &var_dict)
+                               std::map<std::string, std::string> &var_dict,
+                               Error *error)
 {
     std::string line, key, val;
     std::string line_wo_comment;
@@ -1353,7 +1147,8 @@ void InputParser::split_str_by_space(const std::string str,
 template <typename T>
 void InputParser::assign_val(T &val,
                              const std::string key,
-                             std::map<std::string, std::string> dict)
+                             std::map<std::string, std::string> dict,
+                             Error *error)
 {
     // Assign a value to the variable "key" using the boost::lexica_cast.
 

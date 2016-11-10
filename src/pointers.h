@@ -38,7 +38,7 @@ namespace ALM_NS
     protected:
         ALMCore *alm;
         Memory *&memory;
-        InputParser *&input;
+        InputSetter *&input;
         System *&system;
         Interaction *&interaction;
         Fcs *&fcs;

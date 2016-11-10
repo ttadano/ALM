@@ -9,7 +9,6 @@
 */
 
 #include <stdlib.h>
-#include <iostream>
 #include "alm_core.h"
 #include "alm_cui.h"
 
@@ -18,8 +17,9 @@ using namespace ALM_NS;
 int main(int argc, char **argv)
 {
     ALMCore *alm = new ALMCore();
-    ALMCUI *almcui = new ALMCUI(alm);
-    almcui->run(argc, argv);
+    ALMCUI *almcui = new ALMCUI();
+
+    almcui->run(alm, argc, argv);
 
     delete almcui;
     delete alm;

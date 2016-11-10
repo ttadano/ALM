@@ -10,119 +10,65 @@
 
 #pragma once
 
-#include "pointers.h"
 #include <fstream>
 #include <string>
 #include <map>
 #include <vector>
+#include "input_setter.h"
+#include "memory.h"
+#include "error.h"
 
 namespace ALM_NS
 {
-    class InputParser: protected Pointers
+    class InputParser
     {
     public:
-        InputParser(class ALMCore *);
+        InputParser();
         ~InputParser();
-        void parse_input(int, char **);
-
-	void set_input(const std::string prefix,
-		       const std::string mode,
-		       const std::string str_disp_basis,
-		       const std::string str_magmom,
-		       const int nat,
-		       const int nkd,
-		       const int nsym,
-		       const int is_printsymmetry,
-		       const int is_periodic[3],
-		       const bool trim_dispsign_for_evenfunc,
-		       const bool lspin,
-		       const bool print_hessian,
-		       const int noncollinear,
-		       const int trevsym,
-		       const std::string *kdname,
-		       const double * const *magmom,
-		       const double tolerance,
-		       const double a,
-		       const double lavec_tmp[3][3],
-		       const int maxorder,
-		       const int *nbody_include,
-		       const double * const * const * rcs,
-		       const int ndata,
-		       const int nstart,
-		       const int nend,
-		       const int nskip,
-		       const int nboot,
-		       const std::string dfile,
-		       const std::string ffile,
-		       const int multiply_data,
-		       const int constraint_flag,
-		       const std::string rotation_axis,
-		       const std::string fc2_file,
-		       const std::string fc3_file,
-		       const bool fix_harmonic,
-		       const bool fix_cubic,
-		       const int *kd,
-		       const double * const *xeq);
-	void set_general_vars(const std::string prefix,
-			      const std::string mode,
-			      const std::string str_disp_basis,
-			      const std::string str_magmom,
-			      const int nat,
-			      const int nkd,
-			      const int nsym,
-			      const int is_printsymmetry,
-			      const int is_periodic[3],
-			      const bool trim_dispsign_for_evenfunc,
-			      const bool lspin,
-			      const bool print_hessian,
-			      const int noncollinear,
-			      const int trevsym,
-			      const std::string *kdname,
-			      const double * const *magmom,
-			      const double tolerance);
-	void set_cell_parameter(const double a,
-				const double lavec_tmp[3][3]);
-	void set_interaction_vars(const int maxorder,
-				  const int *nbody_include);
-	void set_cutoff_radii(const int maxorder,
-			      const int nkd,
-			      const double * const * const * rcs);
-	void set_fitting_vars(const int ndata,
-			      const int nstart,
-			      const int nend,
-			      const int nskip,
-			      const int nboot,
-			      const std::string dfile,
-			      const std::string ffile,
-			      const int multiply_data,
-			      const int constraint_flag,
-			      const std::string rotation_axis,
-			      const std::string fc2_file,
-			      const std::string fc3_file,
-			      const bool fix_harmonic,
-			      const bool fix_cubic);
-	void set_atomic_positions(const int nat,
-				  const int *kd,
-				  const double * const *xeq);
-
+	void parse_input(InputSetter *input,
+			 const int narg,
+			 const char * const *arg,
+			 Error *error,
+			 Memory *memory,
+			 const std::string mode);
         std::string str_magmom;
 
     private:
         std::ifstream ifs_input;
         bool from_stdin;
 
+	void parse_general_vars(InputSetter *input,
+				Error *error,
+				Memory *memory);
+        void parse_cell_parameter(InputSetter *input,
+				  Error *error);
+        void parse_atomic_positions(InputSetter *input,
+				    const int nat,
+				    Error *error,
+				    Memory *memory);
+        int parse_interaction_vars(InputSetter *input,
+				   Error *error,
+				   Memory *memory);
+        void parse_cutoff_radii(InputSetter *input,
+				const int nkd,
+				const int maxorder,
+				const std::string *kdname,
+				Error *error,
+				Memory *memory);
+        void parse_fitting_vars(InputSetter *input,
+				Error *error);
         int locate_tag(std::string);
         void split_str_by_space(const std::string, std::vector<std::string> &);
-        void parse_general_vars();
-        void parse_cell_parameter();
-        void parse_interaction_vars();
-        void parse_cutoff_radii();
-        void parse_fitting_vars();
-        void parse_atomic_positions();
         bool is_endof_entry(std::string);
-        void get_var_dict(const std::string, std::map<std::string, std::string> &);
+        void get_var_dict(const std::string,
+			  std::map<std::string,
+			  std::string> &,
+			  Error *);
 
         template <typename T>
-        void assign_val(T &, const std::string, std::map<std::string, std::string>);
+        void assign_val(T &,
+			const std::string,
+			std::map<std::string, std::string>,
+			Error *);
     };
 }

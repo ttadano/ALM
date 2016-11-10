@@ -53,6 +53,7 @@ namespace ALM_NS
         double **xcoord; // fractional coordinate
         double **x_cartesian;
         double **magmom;
+	std::string str_magmom;
         int noncollinear;
         std::string *kdname;
 

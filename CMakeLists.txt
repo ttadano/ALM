@@ -25,7 +25,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
             ${PROJECT_SOURCE_DIR}/src/fitting.cpp
-            ${PROJECT_SOURCE_DIR}/src/input_parser.cpp
+            ${PROJECT_SOURCE_DIR}/src/input_setter.cpp
             ${PROJECT_SOURCE_DIR}/src/interaction.cpp
             ${PROJECT_SOURCE_DIR}/src/memory.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
@@ -41,6 +41,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
 # Executable
 add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
                    ${PROJECT_SOURCE_DIR}/src/alm_cui.cpp
+		   ${PROJECT_SOURCE_DIR}/src/input_parser.cpp
 		   ${SOURCES})
 target_link_libraries(alm ${Boost_LIBRARIES} gomp lapack)
 # add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp)

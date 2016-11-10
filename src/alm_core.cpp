@@ -12,6 +12,7 @@
 #include <iomanip>
 #include "alm_core.h"
 #include "interaction.h"
+#include "input_setter.h"
 #include "symmetry.h"
 #include "system.h"
 #include "files.h"
@@ -43,6 +44,7 @@ ALMCore::ALMCore()
 
 void ALMCore::create()
 {
+    input = new InputSetter(this);
     memory = new Memory(this);
     files = new Files(this);
     system = new System(this);
@@ -83,5 +85,6 @@ void ALMCore::finalize()
     delete displace;
     delete writes;
     delete memory;
+    delete input;
 }
 

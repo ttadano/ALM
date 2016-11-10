@@ -18,8 +18,8 @@ namespace ALM_NS
     class ALMCore
     {
     public:
+	class InputSetter *input;
         class Memory *memory;
-	class InputParser *input;
         class System *system;
         class Interaction *interaction;
         class Fcs *fcs;
