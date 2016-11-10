@@ -58,7 +58,7 @@ namespace ALM_NS
     class Writes: protected Pointers
     {
     public:
-        Writes(class ALM *);
+        Writes(class ALMCore *);
         ~Writes();
 
         bool print_hessian;

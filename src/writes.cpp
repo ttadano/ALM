@@ -20,7 +20,6 @@
 #include "fcs.h"
 #include "fitting.h"
 #include "constraint.h"
-#include "input_parser.h"
 #include "timer.h"
 #include "patterndisp.h"
 #include "version.h"
@@ -30,7 +29,7 @@
 
 using namespace ALM_NS;
 
-Writes::Writes(ALM *alm): Pointers(alm) {}
+Writes::Writes(ALMCore *alm): Pointers(alm) {}
 
 Writes::~Writes() {}
 
@@ -53,7 +52,7 @@ void Writes::write_input_vars()
     std::cout << "  PERIODIC = ";
     for (i = 0; i < 3; ++i) std::cout << std::setw(3) << interaction->is_periodic[i];
     std::cout << std::endl;
-    std::cout << "  MAGMOM = " << input->str_magmom << std::endl;
+    // std::cout << "  MAGMOM = " << input->str_magmom << std::endl;
     std::cout << "  HESSIAN = " << writes->print_hessian << std::endl;
     std::cout << std::endl;
 

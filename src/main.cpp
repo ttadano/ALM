@@ -10,16 +10,19 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include "alamode.h"
+#include "alm_core.h"
+#include "alm_cui.h"
 
 using namespace ALM_NS;
 
 int main(int argc, char **argv)
 {
-    ALM *alm = new ALM(argc, argv);
+    ALMCore *alm = new ALMCore();
+    ALMCUI *almcui = new ALMCUI(alm);
+    almcui->run(argc, argv);
 
+    delete almcui;
     delete alm;
 
     return EXIT_SUCCESS;
 }
-

@@ -21,7 +21,7 @@ namespace ALM_NS
     class InputParser: protected Pointers
     {
     public:
-        InputParser(class ALM *, int, char **);
+        InputParser(class ALMCore *);
         ~InputParser();
         void parse_input(int, char **);
 

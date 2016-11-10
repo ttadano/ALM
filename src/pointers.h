@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include "alamode.h"
+#include "alm_core.h"
 
 namespace ALM_NS
 {
     class Pointers
     {
     public:
-        Pointers(ALM *ptr) :
+        Pointers(ALMCore *ptr) :
             alm(ptr),
             memory(ptr->memory),
             input(ptr->input),
@@ -36,7 +36,7 @@ namespace ALM_NS
         virtual ~Pointers() {}
 
     protected:
-        ALM *alm;
+        ALMCore *alm;
         Memory *&memory;
         InputParser *&input;
         System *&system;

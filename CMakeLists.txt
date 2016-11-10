@@ -19,8 +19,7 @@ set(soserial "1")
 
 # Source code
 include_directories("${PROJECT_SOURCE_DIR}/src")
-set(SOURCES ${PROJECT_SOURCE_DIR}/src/alamode.cpp
-            ${PROJECT_SOURCE_DIR}/src/alm.cpp
+set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
 	    ${PROJECT_SOURCE_DIR}/src/constraint.cpp
             ${PROJECT_SOURCE_DIR}/src/error.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
@@ -40,7 +39,9 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alamode.cpp
 # set(CMAKE_C_COMPILER "gcc")
 
 # Executable
-add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp ${SOURCES})
+add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
+                   ${PROJECT_SOURCE_DIR}/src/alm_cui.cpp
+		   ${SOURCES})
 target_link_libraries(alm ${Boost_LIBRARIES} gomp lapack)
 # add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp)
 # target_link_libraries(alm ${almcxx_static} ${Boost_LIBRARIES} gomp lapack)

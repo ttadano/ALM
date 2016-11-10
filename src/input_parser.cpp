@@ -29,7 +29,7 @@
 
 using namespace ALM_NS;
 
-InputParser::InputParser(ALM *alm, int narg, char **arg): Pointers(alm) {}
+InputParser::InputParser(ALMCore *alm): Pointers(alm) {}
 
 InputParser::~InputParser() {}
 

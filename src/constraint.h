@@ -82,7 +82,7 @@ namespace ALM_NS
     class Constraint: protected Pointers
     {
     public:
-        Constraint(class ALM *);
+        Constraint(class ALMCore *);
         ~Constraint();
 
         void setup();

@@ -89,7 +89,7 @@ namespace ALM_NS
     class Symmetry: protected Pointers
     {
     public:
-        Symmetry(class ALM *);
+        Symmetry(class ALMCore *);
         ~Symmetry();
 
         void init();

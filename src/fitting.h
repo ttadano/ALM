@@ -23,7 +23,7 @@ namespace ALM_NS
     class Fitting: protected Pointers
     {
     public:
-        Fitting(class ALM *);
+        Fitting(class ALMCore *);
         ~Fitting();
 
         void fitmain();
