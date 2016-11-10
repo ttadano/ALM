@@ -14,17 +14,10 @@
 #include <string>
 #include "input_setter.h"
 #include "memory.h"
-#include "files.h"
-#include "interaction.h"
-#include "system.h"
-#include "symmetry.h"
 #include "error.h"
-#include "fitting.h"
-#include "constraint.h"
-#include "writes.h"
-#include "patterndisp.h"
 #include <algorithm>
 #include <map>
+#include <set>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
