@@ -77,13 +77,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="alamode.cpp" />
+    <ClCompile Include="alm_core.cpp" />
+    <ClCompile Include="alm_cui.cpp" />
     <ClCompile Include="constraint.cpp" />
     <ClCompile Include="error.cpp" />
     <ClCompile Include="fcs.cpp" />
     <ClCompile Include="files.cpp" />
     <ClCompile Include="fitting.cpp" />
-    <ClCompile Include="input.cpp" />
+    <ClCompile Include="input_parser.cpp" />
+    <ClCompile Include="input_setter.cpp" />
     <ClCompile Include="interaction.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="memory.cpp" />
@@ -91,17 +93,19 @@
     <ClCompile Include="symmetry.cpp" />
     <ClCompile Include="system.cpp" />
     <ClCompile Include="timer.cpp" />
-    <ClCompile Include="writes.cpp" />
+    <ClCompile Include="writer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="alamode.h" />
+    <ClInclude Include="alm_core.h" />
+    <ClInclude Include="alm_cui.h" />
     <ClInclude Include="combination.h" />
     <ClInclude Include="constraint.h" />
     <ClInclude Include="error.h" />
     <ClInclude Include="fcs.h" />
     <ClInclude Include="files.h" />
     <ClInclude Include="fitting.h" />
-    <ClInclude Include="input.h" />
+    <ClInclude Include="input_parser.h" />
+    <ClInclude Include="input_setter.h" />
     <ClInclude Include="interaction.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="patterndisp.h" />
@@ -109,7 +113,7 @@
     <ClInclude Include="symmetry.h" />
     <ClInclude Include="system.h" />
     <ClInclude Include="timer.h" />
-    <ClInclude Include="writes.h" />
+    <ClInclude Include="writer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
