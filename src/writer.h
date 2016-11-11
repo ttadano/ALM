@@ -70,7 +70,6 @@ namespace ALM_NS
         void write_misc_xml(ALMCore *);
         void write_hessian(ALMCore *);
 
-        std::ofstream ofs_info;
         std::string double2string(const double, const int nprec = 15);
     };
 }
