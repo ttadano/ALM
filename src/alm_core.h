@@ -28,7 +28,6 @@ namespace ALM_NS
         class Constraint *constraint;
         class Files *files;
         class Displace *displace;
-        class Writes *writes;
         class Error *error;
         class Timer *timer;
         ALMCore();
@@ -38,6 +37,7 @@ namespace ALM_NS
         void finalize();
 
         std::string mode;
+	bool print_hessian;
     };
 }
 

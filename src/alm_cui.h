@@ -21,6 +21,6 @@ namespace ALM_NS
     public:
         ALMCUI();
         ~ALMCUI();
-	void run(ALMCore *alm, int narg, char **arg);
+	void run(int narg, char **arg);
     };
 }

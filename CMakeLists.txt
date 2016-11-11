@@ -32,7 +32,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
             ${PROJECT_SOURCE_DIR}/src/symmetry.cpp
             ${PROJECT_SOURCE_DIR}/src/system.cpp
             ${PROJECT_SOURCE_DIR}/src/timer.cpp
-            ${PROJECT_SOURCE_DIR}/src/writes.cpp)
+            ${PROJECT_SOURCE_DIR}/src/writer.cpp)
 
 # # Trick to use gcc to compile *.cpp: This doesn't work because of boost
 # SET_SOURCE_FILES_PROPERTIES(${SOURCES} PROPERTIES LANGUAGE C)

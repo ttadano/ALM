@@ -27,12 +27,12 @@ InputParser::InputParser() {}
 
 InputParser::~InputParser() {}
 
-void InputParser::parse_input(InputSetter *input,
-                              const int narg,
-                              const char * const *arg,
-                              Error *error,
-                              Memory *memory,
-                              const std::string mode)
+void InputParser::run(InputSetter *input,
+                      const int narg,
+                      const char * const *arg,
+                      Error *error,
+                      Memory *memory,
+                      const std::string mode)
 {
     int maxorder;
     int nat;

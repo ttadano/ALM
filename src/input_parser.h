@@ -25,12 +25,12 @@ namespace ALM_NS
     public:
         InputParser();
         ~InputParser();
-	void parse_input(InputSetter *input,
-			 const int narg,
-			 const char * const *arg,
-			 Error *error,
-			 Memory *memory,
-			 const std::string mode);
+	void run(InputSetter *input,
+		 const int narg,
+		 const char * const *arg,
+		 Error *error,
+		 Memory *memory,
+		 const std::string mode);
         std::string str_magmom;
 
     private:

@@ -14,7 +14,7 @@
 #include "alm_cui.h"
 #include "input_parser.h"
 #include "input_setter.h"
-#include "writes.h"
+#include "writer.h"
 #include "constraint.h"
 #include "fitting.h"
 #include "version.h"
@@ -24,7 +24,7 @@ using namespace ALM_NS;
 
 ALMCUI::ALMCUI() {}
 
-void ALMCUI::run(ALMCore *alm, int narg, char **arg)
+void ALMCUI::run(int narg, char **arg)
 {
     // std::cout.rdbuf( NULL );
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
@@ -35,30 +35,35 @@ void ALMCUI::run(ALMCore *alm, int narg, char **arg)
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     std::cout << std::endl;
 
+    ALMCore *alm = new ALMCore();
     alm->create();
 
-
     InputParser *parser = new InputParser();
-    parser->parse_input(alm->input, narg, arg, alm->error, alm->memory, alm->mode);
+    parser->run(alm->input, narg, arg, alm->error, alm->memory, alm->mode);
     delete parser;
 
-    alm->writes->write_input_vars();
+    Writer *writer = new Writer();
+    writer->write_input_vars(alm);
+
     alm->initialize();
 
     if (alm->mode == "fitting") {
 
         alm->constraint->setup();
         alm->fitting->fitmain();
-        alm->writes->writeall();
+        writer->writeall(alm);
 
     } else if (alm->mode == "suggest") {
 
         alm->displace->gen_displacement_pattern();
-        alm->writes->write_displacement_pattern();
+        writer->write_displacement_pattern(alm);
 
     }
 
+    delete writer;
+
     alm->finalize();
+    delete alm;
 }
 
 ALMCUI::~ALMCUI()

@@ -20,7 +20,6 @@
 #include "fcs.h"
 #include "fitting.h"
 #include "constraint.h"
-#include "writes.h"
 #include "timer.h"
 #include "patterndisp.h"
 
@@ -54,7 +53,6 @@ void ALMCore::create()
     fitting = new Fitting(this);
     constraint = new Constraint(this);
     displace = new Displace(this);
-    writes = new Writes(this);
 }
 
 void ALMCore::initialize()
@@ -83,7 +81,6 @@ void ALMCore::finalize()
     delete fitting;
     delete constraint;
     delete displace;
-    delete writes;
     delete memory;
     delete input;
 }

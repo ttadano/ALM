@@ -29,7 +29,6 @@ namespace ALM_NS
             constraint(ptr->constraint),
             files(ptr->files),
             displace(ptr->displace),
-            writes(ptr->writes),
             error(ptr->error),
             timer(ptr->timer) {}
 
@@ -47,7 +46,6 @@ namespace ALM_NS
         Constraint *&constraint;
         Files *&files;
         Displace *&displace;
-        Writes *&writes;
         Error *&error;
         Timer *&timer;
     };

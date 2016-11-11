@@ -20,7 +20,6 @@
 #include "error.h"
 #include "fitting.h"
 #include "constraint.h"
-#include "writes.h"
 #include "patterndisp.h"
 
 using namespace ALM_NS;
@@ -151,7 +150,7 @@ void InputSetter::set_general_vars(
     system->lspin = lspin;
     system->noncollinear = noncollinear;
     symmetry->trev_sym_mag = trevsym;
-    writes->print_hessian = print_hessian;
+    alm->print_hessian = print_hessian;
 
     if (mode == "suggest") {
         displace->disp_basis = str_disp_basis;
