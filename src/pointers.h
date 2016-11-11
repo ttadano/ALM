@@ -20,7 +20,6 @@ namespace ALM_NS
         Pointers(ALMCore *ptr) :
             alm(ptr),
             memory(ptr->memory),
-            input(ptr->input),
             system(ptr->system),
             interaction(ptr->interaction),
             fcs(ptr->fcs),
@@ -37,7 +36,6 @@ namespace ALM_NS
     protected:
         ALMCore *alm;
         Memory *&memory;
-        InputSetter *&input;
         System *&system;
         Interaction *&interaction;
         Fcs *&fcs;
