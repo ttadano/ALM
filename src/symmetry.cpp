@@ -141,7 +141,8 @@ void Symmetry::setup_symmetry_operation(int nat,
         std::cout << "             Please be patient. " << std::endl;
         std::cout << "             This can take a while for a large supercell." << std::endl << std::endl;
 
-        findsym(nat, aa, x, SymmList);
+   //     findsym(nat, aa, x, SymmList);
+        findsym_spglib(nat, aa, x, system->kd, SymmList, tolerance);
         // The order in SymmList changes for each run because it was generated
         // with OpenMP. Therefore, we sort the list here to have the same result. 
         std::sort(SymmList.begin() + 1, SymmList.end());
@@ -532,6 +533,73 @@ void Symmetry::find_crystal_symmetry(int nat,
         }
 
     }
+}
+
+void Symmetry::findsym_spglib(const int nat,
+    double aa[3][3],
+    double **x, const int *types,
+    std::vector<SymmetryOperation> &symop_all, const double symprec) 
+{
+    int i, j;
+    int nsym;
+    double (*position)[3];
+    double (*translation)[3];
+    int (*rotation)[3][3];
+    int spgnum;
+    char symbol[11];
+    double aa_tmp[3][3];
+    int *types_tmp;
+    int natmin;
+
+    memory->allocate(position, nat);
+    memory->allocate(types_tmp, nat);
+
+ 
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            aa_tmp[i][j] = aa[i][j];
+        }
+    }
+    for (i = 0; i < nat; ++i) {
+        types_tmp[i] = types[i];
+        for (j = 0; j < 3; ++j) {
+            position[i][j] = x[i][j];
+        }
+    }
+    // First find the number of symmetry operations
+    nsym = spg_get_multiplicity(aa_tmp, position, types_tmp, nat, symprec);
+
+    if (nsym == 0) error->exit("findsym_spglib", "Error occured in spg_get_multiplicity");
+
+    memory->allocate(translation, nsym);
+    memory->allocate(rotation, nsym);
+
+    // Store symmetry operations
+    nsym = spg_get_symmetry(rotation, translation, nsym,
+        aa_tmp, position, types_tmp, nat, symprec);
+
+
+    spgnum = spg_get_international(symbol, aa_tmp, position, types_tmp, nat, symprec);
+
+    symop_all.clear();
+    for (i = 0; i < nsym; ++i) symop_all.push_back(SymmetryOperation(rotation[i], translation[i]));
+
+    memory->deallocate(rotation);
+    memory->deallocate(translation);
+
+    natmin = spg_find_primitive(aa_tmp, position, types_tmp, nat, symprec);
+
+    std::cout << "natmin (spglib) = " << std::setw(5) << natmin << std::endl;
+
+    for (i = 0; i < natmin; ++i) {
+        std::cout << std::setw(5) << types_tmp[i];
+        for (j = 0; j < 3; ++j) {
+            std::cout << std::setw(15) << position[i][j];
+        }
+        std::cout << std::endl;
+    }
+    memory->deallocate(types_tmp);
+    memory->deallocate(position);
 }
 
 

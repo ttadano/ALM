@@ -14,6 +14,9 @@
 #include <string>
 #include <fstream>
 #include <vector>
+extern "C" {
+#include "spglib.h"
+}
 
 #ifdef _USE_EIGEN
 #include <Eigen/Core>
@@ -130,6 +133,9 @@ namespace ALM_NS
         void findsym(int, double [3][3], double **,
                      std::vector<SymmetryOperation> &);
 
+        void findsym_spglib(const int, double[3][3], double **,
+             const int *, std::vector<SymmetryOperation> &, const double);
+
         bool is_translation(int **);
         bool is_proper(double [3][3]);
 
@@ -150,4 +156,3 @@ namespace ALM_NS
         std::vector<SymmetryOperation> SymmList;
     };
 }
-

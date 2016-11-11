@@ -10,3 +10,4 @@ Debug/
 *.db
 *.opendb
 *.filters
+/src/alm.vcxproj.user
