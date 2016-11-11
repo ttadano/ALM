@@ -19,7 +19,7 @@ namespace ALM_NS
     class Files : protected Pointers
     {
     public:
-        Files(class ALM *);
+        Files(class ALMCore *);
         ~Files();
 
         void init();

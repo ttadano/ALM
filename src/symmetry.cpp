@@ -29,7 +29,7 @@
 
 using namespace ALM_NS;
 
-Symmetry::Symmetry(ALM *alm) : Pointers(alm)
+Symmetry::Symmetry(ALMCore *alm) : Pointers(alm)
 {
     file_sym = "SYMM_INFO";
 }

@@ -1,5 +1,5 @@
 /*
- writes.h
+ writer.h
 
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
@@ -10,11 +10,10 @@
 
 #pragma once
 
-#include "pointers.h"
-#include "fcs.h"
 #include <string>
 #include <fstream>
 #include <vector>
+#include "alm_core.h"
 
 namespace ALM_NS
 {
@@ -56,26 +55,21 @@ namespace ALM_NS
         SystemInfo() {};
     };
 
-    class Writes: protected Pointers
+    class Writer
     {
     public:
-        Writes(class ALM *);
-        ~Writes();
+        Writer();
+        ~Writer();
 
-        bool print_hessian;
-
-        void writeall();
-        void write_input_vars();
-        void write_displacement_pattern();
+        void writeall(ALMCore *);
+        void write_input_vars(ALMCore *);
+        void write_displacement_pattern(ALMCore *);
 
     private:
-        void write_force_constants();
-        void write_fcs_all();
-        void write_misc_xml();
-        void write_hessian();
-        void format_force_constant(const int, const std::vector<FcProperty> *, double **);
+        void write_force_constants(ALMCore *);
+        void write_misc_xml(ALMCore *);
+        void write_hessian(ALMCore *);
 
-        std::ofstream ofs_info;
         std::string double2string(const double, const int nprec = 15);
     };
 }

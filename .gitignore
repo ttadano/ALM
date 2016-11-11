@@ -1,0 +1,10 @@
+*.o
+*~
+alm
+_build
+TAGS
+.vs/
+Release/
+Debug/
+*.obj
+*.db

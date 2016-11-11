@@ -45,7 +45,7 @@
 using namespace ALM_NS;
 
 
-Fitting::Fitting(ALM *alm): Pointers(alm)
+Fitting::Fitting(ALMCore *alm): Pointers(alm)
 {
     seed = static_cast<unsigned int>(time(NULL));
 #ifdef _VSL

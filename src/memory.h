@@ -20,7 +20,7 @@ namespace ALM_NS
     class Memory: protected Pointers
     {
     public:
-        Memory(class ALM *);
+        Memory(class ALMCore *);
         ~Memory();
 
         // allocator

@@ -16,7 +16,7 @@
 
 using namespace ALM_NS;
 
-Timer::Timer(ALM *alm): Pointers(alm)
+Timer::Timer(ALMCore *alm): Pointers(alm)
 {
 #if defined(WIN32) || defined(_WIN32)
     QueryPerformanceCounter(&time_ref);
