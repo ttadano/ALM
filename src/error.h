@@ -18,7 +18,7 @@ namespace ALM_NS
     class Error : protected Pointers
     {
     public:
-        Error(class ALM *);
+        Error(class ALMCore *);
         ~Error();
 
         void exit(const char *, const char *);

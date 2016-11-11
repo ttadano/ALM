@@ -26,7 +26,7 @@
 
 using namespace ALM_NS;
 
-Fcs::Fcs(ALM *alm) : Pointers(alm) {};
+Fcs::Fcs(ALMCore *alm) : Pointers(alm) {};
 
 Fcs::~Fcs() {};
 
