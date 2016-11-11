@@ -10,15 +10,12 @@
 
 #include <iostream>
 #include <iomanip>
+#include "alm.h"
 #include "alm_core.h"
 #include "alm_cui.h"
 #include "input_parser.h"
-#include "input_setter.h"
 #include "writer.h"
-#include "constraint.h"
-#include "fitting.h"
 #include "version.h"
-#include "patterndisp.h"
 
 using namespace ALM_NS;
 
@@ -35,12 +32,12 @@ void ALMCUI::run(int narg, char **arg)
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     std::cout << std::endl;
 
-    ALMCore *alm = new ALMCore();
-    alm->create();
+    ALM *alm = new ALM();
 
-    // alm->mode is set herein.
+    ALMCore *alm_core = alm->get_alm_core();
+    // alm_core->mode is set herein.
     InputParser *input_parser = new InputParser();
-    input_parser->run(alm, narg, arg);
+    input_parser->run(alm_core, narg, arg);
     delete input_parser;
 
     Writer *writer = new Writer();
@@ -48,17 +45,12 @@ void ALMCUI::run(int narg, char **arg)
 
     alm->initialize();
 
-    if (alm->mode == "fitting") {
-
-        alm->constraint->setup();
-        alm->fitting->fitmain();
+    if (alm_core->mode == "fitting") {
+        alm->run_fitting();
         writer->writeall(alm);
-
-    } else if (alm->mode == "suggest") {
-
-        alm->displace->gen_displacement_pattern();
+    } else if (alm_core->mode == "suggest") {
+        alm->run_suggest();
         writer->write_displacement_pattern(alm);
-
     }
 
     delete writer;

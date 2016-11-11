@@ -19,8 +19,9 @@ set(soserial "1")
 
 # Source code
 include_directories("${PROJECT_SOURCE_DIR}/src")
-set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
-	    ${PROJECT_SOURCE_DIR}/src/constraint.cpp
+set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
+            ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
+            ${PROJECT_SOURCE_DIR}/src/constraint.cpp
             ${PROJECT_SOURCE_DIR}/src/error.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
