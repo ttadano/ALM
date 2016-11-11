@@ -31,12 +31,8 @@ void InputParser::run(InputSetter *input,
                       const int narg,
                       const char * const *arg,
                       Error *error,
-                      Memory *memory,
-                      const std::string mode)
+                      Memory *memory)
 {
-    int maxorder;
-    int nat;
-
     if (narg == 1) {
 
         from_stdin = true;
@@ -52,11 +48,64 @@ void InputParser::run(InputSetter *input,
         }
     }
 
+    parse_input(input, error, memory);
+}
+
+void InputParser::parse_input(InputSetter *input,
+                              Error *error,
+                              Memory *memory)
+{
+    // The order of calling methods in this method is important.
+    // Since following methods rely on variables those already
+    // parsed.
+    // Those below are set as the private class variables. See input_parser.h.
+    //  std::string *kdname;
+    //  std::string mode;
+    //  int maxorder;
+    //  int nat;
+    //  int nkd;
+
     if (!locate_tag("&general")) {
         error->exit("parse_input",
                     "&general entry not found in the input file");
     }
+
+    // kdname is allocated in this method.
     parse_general_vars(input, error, memory);
+
+    if (!locate_tag("&cell")) {
+        error->exit("parse_input",
+                    "&cell entry not found in the input file");
+    }
+    parse_cell_parameter(input, error);
+
+    if (!locate_tag("&position")) {
+        error->exit("parse_input",
+                    "&position entry not found in the input file");
+    }
+    parse_atomic_positions(input, error, memory);
+
+    if (!locate_tag("&interaction")) {
+        error->exit("parse_input",
+                    "&interaction entry not found in the input file");
+    }
+    parse_interaction_vars(input, error, memory);
+
+    if (!locate_tag("&cutoff")) {
+        error->exit("parse_input",
+                    "&cutoff entry not found in the input file");
+    }
+    parse_cutoff_radii(input, error, memory);
+
+    if (mode == "fitting") {
+        if (!locate_tag("&fitting")) {
+            error->exit("parse_input",
+                        "&fitting entry not found in the input file");
+        }
+        parse_fitting_vars(input, error);
+    }
+
+    memory->deallocate(kdname);
 }
 
 void InputParser::parse_general_vars(InputSetter *input,
@@ -64,16 +113,14 @@ void InputParser::parse_general_vars(InputSetter *input,
                                      Memory *memory)
 {
     int i, j;
-    std::string prefix, mode, str_tmp, str_disp_basis;
-    int nat, nkd, nsym;
+    std::string prefix, str_tmp, str_disp_basis;
+    int nsym;
     int is_printsymmetry, is_periodic[3];
     int icount, ncount;
-    int maxorder;
     bool trim_dispsign_for_evenfunc;
     bool lspin;
     bool print_hessian;
     int noncollinear, trevsym;
-    std::string *kdname;
     double **magmom, magmag;
     double tolerance;
 
@@ -302,39 +349,7 @@ void InputParser::parse_general_vars(InputSetter *input,
                             magmom,
                             tolerance);
 
-    if (!locate_tag("&cell")) {
-        error->exit("parse_input",
-                    "&cell entry not found in the input file");
-    }
-    parse_cell_parameter(input, error);
 
-    if (!locate_tag("&position")) {
-        error->exit("parse_input",
-                    "&position entry not found in the input file");
-    }
-    parse_atomic_positions(input, nat, error, memory);
-
-    if (!locate_tag("&interaction")) {
-        error->exit("parse_input",
-                    "&interaction entry not found in the input file");
-    }
-    maxorder = parse_interaction_vars(input, error, memory);
-
-    if (!locate_tag("&cutoff")) {
-        error->exit("parse_input",
-                    "&cutoff entry not found in the input file");
-    }
-    parse_cutoff_radii(input, nkd, maxorder, kdname, error, memory);
-
-    if (mode == "fitting") {
-        if (!locate_tag("&fitting")) {
-            error->exit("parse_input",
-                        "&fitting entry not found in the input file");
-        }
-        parse_fitting_vars(input, error);
-    }
-
-    memory->deallocate(kdname);
     memory->deallocate(magmom);
     
     kdname_v.clear();
@@ -435,12 +450,11 @@ void InputParser::parse_cell_parameter(InputSetter *input,
 }
 
 
-int InputParser::parse_interaction_vars(InputSetter *input,
-                                        Error *error,
-                                        Memory *memory)
+void InputParser::parse_interaction_vars(InputSetter *input,
+                                         Error *error,
+                                         Memory *memory)
 {
     int i;
-    int maxorder;
     int *nbody_include;
 
     std::vector<std::string> nbody_v;
@@ -509,8 +523,6 @@ int InputParser::parse_interaction_vars(InputSetter *input,
 
     nbody_v.clear();
     no_defaults.clear();
-
-    return maxorder;
 }
 
 
@@ -651,7 +663,6 @@ void InputParser::parse_fitting_vars(InputSetter *input,
 }
 
 void InputParser::parse_atomic_positions(InputSetter *input,
-                                         const int nat,
                                          Error *error,
                                          Memory *memory)
 {
@@ -757,9 +768,6 @@ void InputParser::parse_atomic_positions(InputSetter *input,
 }
 
 void InputParser::parse_cutoff_radii(InputSetter *input,
-                                     const int nkd,
-                                     const int maxorder,
-                                     const std::string *kdname,
                                      Error *error,
                                      Memory *memory)
 {

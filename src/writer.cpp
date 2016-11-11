@@ -54,7 +54,7 @@ void Writer::write_input_vars(ALMCore *alm)
     for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->interaction->is_periodic[i];
     std::cout << std::endl;
     std::cout << "  MAGMOM = " << alm->system->str_magmom << std::endl;
-    std::cout << "  HESSIAN = " << print_hessian << std::endl;
+    std::cout << "  HESSIAN = " << alm->print_hessian << std::endl;
     std::cout << std::endl;
 
 
@@ -94,7 +94,7 @@ void Writer::writeall(ALMCore *alm)
     std::cout << " The following files are created:" << std::endl << std::endl;
     write_force_constants(alm);
     write_misc_xml(alm);
-    if (print_hessian) write_hessian(alm);
+    if (alm->print_hessian) write_hessian(alm);
     std::cout << std::endl;
 }
 

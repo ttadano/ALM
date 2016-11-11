@@ -29,30 +29,33 @@ namespace ALM_NS
 		 const int narg,
 		 const char * const *arg,
 		 Error *error,
-		 Memory *memory,
-		 const std::string mode);
+		 Memory *memory);
         std::string str_magmom;
 
     private:
         std::ifstream ifs_input;
         bool from_stdin;
+	std::string *kdname;
+	std::string mode;
+	int maxorder;
+	int nat;
+	int nkd;
 
+	void parse_input(InputSetter *input,
+			 Error *error,
+			 Memory *memory);
 	void parse_general_vars(InputSetter *input,
 				Error *error,
 				Memory *memory);
         void parse_cell_parameter(InputSetter *input,
 				  Error *error);
         void parse_atomic_positions(InputSetter *input,
-				    const int nat,
 				    Error *error,
 				    Memory *memory);
-        int parse_interaction_vars(InputSetter *input,
-				   Error *error,
-				   Memory *memory);
+        void parse_interaction_vars(InputSetter *input,
+				    Error *error,
+				    Memory *memory);
         void parse_cutoff_radii(InputSetter *input,
-				const int nkd,
-				const int maxorder,
-				const std::string *kdname,
 				Error *error,
 				Memory *memory);
         void parse_fitting_vars(InputSetter *input,

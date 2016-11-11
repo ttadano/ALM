@@ -61,8 +61,6 @@ namespace ALM_NS
         Writer();
         ~Writer();
 
-        bool print_hessian;
-
         void writeall(ALMCore *);
         void write_input_vars(ALMCore *);
         void write_displacement_pattern(ALMCore *);
