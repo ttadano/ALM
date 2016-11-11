@@ -9,3 +9,4 @@ Debug/
 *.obj
 *.db
 *.opendb
+*.filters
