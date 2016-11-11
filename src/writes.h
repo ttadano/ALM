@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pointers.h"
+#include "fcs.h"
 #include <string>
 #include <fstream>
 #include <vector>
@@ -69,8 +70,10 @@ namespace ALM_NS
 
     private:
         void write_force_constants();
+        void write_fcs_all();
         void write_misc_xml();
         void write_hessian();
+        void format_force_constant(const int, const std::vector<FcProperty> *, double **);
 
         std::ofstream ofs_info;
         std::string double2string(const double, const int nprec = 15);

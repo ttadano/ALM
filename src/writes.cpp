@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -30,7 +30,7 @@
 
 using namespace ALM_NS;
 
-Writes::Writes(ALM *alm): Pointers(alm) {}
+Writes::Writes(ALM *alm) : Pointers(alm) {}
 
 Writes::~Writes() {}
 
@@ -71,7 +71,8 @@ void Writes::write_input_vars()
         std::cout << "  DBASIS = " << displace->disp_basis << std::endl;
         std::cout << std::endl;
 
-    } else if (alm->mode == "fitting") {
+    }
+    else if (alm->mode == "fitting") {
         std::cout << " Fitting:" << std::endl;
         std::cout << "  DFILE = " << files->file_disp << std::endl;
         std::cout << "  FFILE = " << files->file_force << std::endl;
@@ -95,6 +96,7 @@ void Writes::writeall()
     write_force_constants();
     write_misc_xml();
     if (print_hessian) write_hessian();
+    write_fcs_all();
     std::cout << std::endl;
 }
 
@@ -164,14 +166,15 @@ void Writes::write_force_constants()
                 if (iter_cluster != interaction->mindist_cluster[order][j].end()) {
                     multiplicity = (*iter_cluster).cell.size();
                     distmax = (*iter_cluster).distmax;
-                } else {
+                }
+                else {
                     std::cout << std::setw(5) << j;
                     for (l = 0; l < order + 1; ++l) {
                         std::cout << std::setw(5) << atom_tmp[l];
                     }
                     std::cout << std::endl;
                     error->exit("write_force_constants",
-                                "This cannot happen.");
+                        "This cannot happen.");
                 }
                 ofs_fcs << std::setw(4) << multiplicity;
 
@@ -198,8 +201,8 @@ void Writes::write_force_constants()
 
 
             for (std::vector<ConstraintClass>::iterator p = constraint->const_symmetry[order].begin();
-                 p != constraint->const_symmetry[order].end();
-                 ++p) {
+                p != constraint->const_symmetry[order].end();
+                ++p) {
                 ofs_fcs << "   0 = " << std::scientific << std::setprecision(6);
                 ConstraintClass const_pointer = *p;
                 for (j = 0; j < nparam; ++j) {
@@ -283,14 +286,14 @@ void Writes::write_displacement_pattern()
         ofs_pattern.open(files->file_disp_pattern[order].c_str(), std::ios::out);
         if (!ofs_pattern)
             error->exit("write_displacement_pattern",
-                        "Cannot open file_disp_pattern");
+                "Cannot open file_disp_pattern");
 
         counter = 0;
 
         ofs_pattern << "Basis : " << displace->disp_basis[0] << std::endl;
 
         for (std::vector<AtomWithDirection>::iterator it = displace->pattern_all[order].begin();
-             it != displace->pattern_all[order].end(); ++it) {
+            it != displace->pattern_all[order].end(); ++it) {
             AtomWithDirection entry = *it;
 
             ++counter;
@@ -359,7 +362,7 @@ void Writes::write_misc_xml()
 
     for (i = 0; i < system_structure.nspecies; ++i) {
         ptree &child = pt.add("Data.Structure.AtomicElements.element",
-                              system->kdname[i]);
+            system->kdname[i]);
         child.put("<xmlattr>.number", i + 1);
     }
 
@@ -395,7 +398,7 @@ void Writes::write_misc_xml()
     for (i = 0; i < system_structure.ntran; ++i) {
         for (j = 0; j < system_structure.natmin; ++j) {
             ptree &child = pt.add("Data.Symmetry.Translations.map",
-                                  symmetry->map_p2s[j][i] + 1);
+                symmetry->map_p2s[j][i] + 1);
             child.put("<xmlattr>.tran", i + 1);
             child.put("<xmlattr>.atom", j + 1);
         }
@@ -433,12 +436,12 @@ void Writes::write_misc_xml()
         j = symmetry->map_s2p[pair_tmp[0]].atom_num;
 
         ptree &child = pt.add("Data.ForceConstants.HarmonicUnique.FC2",
-                              double2string(fitting->params[k]));
+            double2string(fitting->params[k]));
         child.put("<xmlattr>.pairs",
-                  boost::lexical_cast<std::string>(fcs->fc_set[0][ihead].elems[0])
-                  + " " + boost::lexical_cast<std::string>(fcs->fc_set[0][ihead].elems[1]));
+            boost::lexical_cast<std::string>(fcs->fc_set[0][ihead].elems[0])
+            + " " + boost::lexical_cast<std::string>(fcs->fc_set[0][ihead].elems[1]));
         child.put("<xmlattr>.multiplicity",
-                  interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size());
+            interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size());
         ihead += fcs->ndup[0][ui];
         ++k;
     }
@@ -469,17 +472,18 @@ void Writes::write_misc_xml()
                 MinimumDistanceCluster(atom_tmp, cell_dummy));
             if (iter_cluster == interaction->mindist_cluster[1][j].end()) {
                 error->exit("load_reference_system_xml",
-                            "Cubic force constant is not found.");
-            } else {
+                    "Cubic force constant is not found.");
+            }
+            else {
                 multiplicity = (*iter_cluster).cell.size();
             }
 
             ptree &child = pt.add("Data.ForceConstants.CubicUnique.FC3",
-                                  double2string(fitting->params[k]));
+                double2string(fitting->params[k]));
             child.put("<xmlattr>.pairs",
-                      boost::lexical_cast<std::string>(fcs->fc_set[1][ihead].elems[0])
-                      + " " + boost::lexical_cast<std::string>(fcs->fc_set[1][ihead].elems[1])
-                      + " " + boost::lexical_cast<std::string>(fcs->fc_set[1][ihead].elems[2]));
+                boost::lexical_cast<std::string>(fcs->fc_set[1][ihead].elems[0])
+                + " " + boost::lexical_cast<std::string>(fcs->fc_set[1][ihead].elems[1])
+                + " " + boost::lexical_cast<std::string>(fcs->fc_set[1][ihead].elems[2]));
             child.put("<xmlattr>.multiplicity", multiplicity);
             ihead += fcs->ndup[1][ui];
             ++k;
@@ -490,7 +494,7 @@ void Writes::write_misc_xml()
 
     std::sort(fcs->fc_set[0].begin(), fcs->fc_set[0].end());
 
-    for (std::vector<FcProperty>::iterator it = fcs->fc_set[0].begin(); 
+    for (std::vector<FcProperty>::iterator it = fcs->fc_set[0].begin();
         it != fcs->fc_set[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
@@ -500,16 +504,16 @@ void Writes::write_misc_xml()
         }
         j = symmetry->map_s2p[pair_tmp[0]].atom_num;
         for (std::vector<DistInfo>::iterator it2 = interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].begin();
-             it2 != interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].end(); ++it2) {
+            it2 != interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].end(); ++it2) {
             ptree &child = pt.add("Data.ForceConstants.HARMONIC.FC2",
-                                  double2string(fitting->params[ip] * fctmp.coef
-                                      / static_cast<double>(interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size())));
+                double2string(fitting->params[ip] * fctmp.coef
+                    / static_cast<double>(interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size())));
 
             child.put("<xmlattr>.pair1", boost::lexical_cast<std::string>(j + 1)
-                      + " " + boost::lexical_cast<std::string>(fctmp.elems[0] % 3 + 1));
+                + " " + boost::lexical_cast<std::string>(fctmp.elems[0] % 3 + 1));
             child.put("<xmlattr>.pair2", boost::lexical_cast<std::string>(pair_tmp[1] + 1)
-                      + " " + boost::lexical_cast<std::string>(fctmp.elems[1] % 3 + 1)
-                      + " " + boost::lexical_cast<std::string>((*it2).cell + 1));
+                + " " + boost::lexical_cast<std::string>(fctmp.elems[1] % 3 + 1)
+                + " " + boost::lexical_cast<std::string>((*it2).cell + 1));
         }
     }
 
@@ -525,7 +529,7 @@ void Writes::write_misc_xml()
 
         std::sort(fcs->fc_set[order].begin(), fcs->fc_set[order].end());
 
-        for (std::vector<FcProperty>::iterator it = fcs->fc_set[order].begin(); 
+        for (std::vector<FcProperty>::iterator it = fcs->fc_set[order].begin();
             it != fcs->fc_set[order].end(); ++it) {
             FcProperty fctmp = *it;
             ip = fctmp.mother + ishift;
@@ -557,20 +561,21 @@ void Writes::write_misc_xml()
                     std::vector<int> cell_now = (*iter_cluster).cell[imult];
 
                     ptree &child = pt.add(elementname,
-                                          double2string(fitting->params[ip] * fctmp.coef
-                                              / static_cast<double>(multiplicity)));
+                        double2string(fitting->params[ip] * fctmp.coef
+                            / static_cast<double>(multiplicity)));
 
                     child.put("<xmlattr>.pair1", boost::lexical_cast<std::string>(j + 1)
-                              + " " + boost::lexical_cast<std::string>(fctmp.elems[0] % 3 + 1));
+                        + " " + boost::lexical_cast<std::string>(fctmp.elems[0] % 3 + 1));
 
                     for (k = 1; k < order + 2; ++k) {
                         child.put("<xmlattr>.pair" + boost::lexical_cast<std::string>(k + 1),
-                                  boost::lexical_cast<std::string>(pair_tmp[k] + 1)
-                                  + " " + boost::lexical_cast<std::string>(fctmp.elems[k] % 3 + 1)
-                                  + " " + boost::lexical_cast<std::string>(cell_now[k - 1] + 1));
+                            boost::lexical_cast<std::string>(pair_tmp[k] + 1)
+                            + " " + boost::lexical_cast<std::string>(fctmp.elems[k] % 3 + 1)
+                            + " " + boost::lexical_cast<std::string>(cell_now[k - 1] + 1));
                     }
                 }
-            } else {
+            }
+            else {
                 error->exit("write_misc_xml", "This cannot happen.");
             }
         }
@@ -584,8 +589,8 @@ void Writes::write_misc_xml()
 
 #if BOOST_VERSION >= 105600
     write_xml(file_xml, pt, std::locale(),
-              xml_writer_make_settings<ptree::key_type>(' ', indent,
-                                                        widen<std::string>("utf-8")));
+        xml_writer_make_settings<ptree::key_type>(' ', indent,
+            widen<std::string>("utf-8")));
 #else
     write_xml(file_xml, pt, std::locale(),
         xml_writer_make_settings(' ', indent, widen<char>("utf-8")));
@@ -595,6 +600,87 @@ void Writes::write_misc_xml()
 
     std::cout << " Input data for the phonon code ANPHON      : " << file_xml << std::endl;
 }
+
+void Writes::write_fcs_all()
+{
+    int order, ishift = 0;
+    int imult, ip;
+    int j, k;
+    int *pair_tmp;
+
+    std::ofstream ofs;
+    std::string file_fc;
+
+    std::vector<int> atom_tmp;
+    std::vector<std::vector<int> > cell_dummy;
+    std::set<MinimumDistanceCluster>::iterator iter_cluster;
+
+    std::vector<int> vec_xyz;
+    std::vector<int> vec_atom;
+
+    int multiplicity;
+    double val;
+
+    memory->allocate(pair_tmp, interaction->maxorder + 1);
+
+    for (order = 0; order < interaction->maxorder; ++order) {
+
+        file_fc = "FORCE_CONSTANT" + boost::lexical_cast<std::string>(order + 2);
+        ofs.open(file_fc.c_str(), std::ios::out);
+
+        for (std::vector<FcProperty>::iterator it = fcs->fc_set[order].begin();
+            it != fcs->fc_set[order].end(); ++it) {
+            FcProperty fctmp = *it;
+            ip = fctmp.mother + ishift;
+
+            for (k = 0; k < order + 2; ++k) {
+                pair_tmp[k] = fctmp.elems[k] / 3;
+            }
+            j = symmetry->map_s2p[pair_tmp[0]].atom_num;
+
+            atom_tmp.clear();
+
+            for (k = 1; k < order + 2; ++k) {
+                atom_tmp.push_back(pair_tmp[k]);
+            }
+            std::sort(atom_tmp.begin(), atom_tmp.end());
+
+
+            iter_cluster = interaction->mindist_cluster[order][j].find(
+                MinimumDistanceCluster(atom_tmp, cell_dummy));
+
+            if (iter_cluster != interaction->mindist_cluster[order][j].end()) {
+                multiplicity = (*iter_cluster).cell.size();
+
+                val = fitting->params[ip] * fctmp.coef / static_cast<double>(multiplicity);
+
+                for (imult = 0; imult < multiplicity; ++imult) {
+                    std::vector<int> cell_now = (*iter_cluster).cell[imult];
+
+
+                    ofs << std::setw(23) << std::setprecision(15) << std::scientific << val;
+
+                    ofs << std::setw(5) << j + 1 << std::setw(5) << fctmp.elems[0] % 3 + 1;
+
+                    for (k = 1; k < order + 2; ++k) {
+                        ofs << std::setw(10) << pair_tmp[k] + 1;
+                        ofs << std::setw(5) << fctmp.elems[k] % 3 + 1 << std::setw(5) << cell_now[k - 1] + 1;
+                    }
+                    ofs << std::endl;
+                }
+            }
+            else {
+                error->exit("write_misc_xml", "This cannot happen.");
+            }
+        }
+        ishift += fcs->ndup[order].size();
+        ofs.close();
+
+    }
+
+}
+
+
 
 void Writes::write_hessian()
 {
@@ -614,7 +700,7 @@ void Writes::write_hessian()
     }
 
     for (std::vector<FcProperty>::iterator it = fcs->fc_set[0].begin();
-         it != fcs->fc_set[0].end(); ++it) {
+        it != fcs->fc_set[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
@@ -648,6 +734,7 @@ void Writes::write_hessian()
 
     std::cout << " Complete Hessian matrix                    : " << files->file_hes << std::endl;
 }
+
 
 std::string Writes::double2string(const double d, const int nprec)
 {
