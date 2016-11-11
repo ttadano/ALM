@@ -41,9 +41,9 @@ void ALMCUI::run(int narg, char **arg)
     // Here it's tricky.
     // In alm->input can access to the public variables of alm.
     // So alm->mode is set in this part.
-    InputParser *parser = new InputParser();
-    parser->run(alm->input, narg, arg, alm->error, alm->memory);
-    delete parser;
+    InputParser *input_parser = new InputParser();
+    input_parser->run(alm, narg, arg);
+    delete input_parser;
 
     Writer *writer = new Writer();
     writer->write_input_vars(alm);

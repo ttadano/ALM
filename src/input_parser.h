@@ -14,6 +14,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "alm_core.h"
 #include "input_setter.h"
 #include "memory.h"
 #include "error.h"
@@ -25,11 +26,9 @@ namespace ALM_NS
     public:
         InputParser();
         ~InputParser();
-	void run(InputSetter *input,
+	void run(ALMCore *alm,
 		 const int narg,
-		 const char * const *arg,
-		 Error *error,
-		 Memory *memory);
+		 const char * const *arg);
         std::string str_magmom;
 
     private:
@@ -41,25 +40,13 @@ namespace ALM_NS
 	int nat;
 	int nkd;
 
-	void parse_input(InputSetter *input,
-			 Error *error,
-			 Memory *memory);
-	void parse_general_vars(InputSetter *input,
-				Error *error,
-				Memory *memory);
-        void parse_cell_parameter(InputSetter *input,
-				  Error *error);
-        void parse_atomic_positions(InputSetter *input,
-				    Error *error,
-				    Memory *memory);
-        void parse_interaction_vars(InputSetter *input,
-				    Error *error,
-				    Memory *memory);
-        void parse_cutoff_radii(InputSetter *input,
-				Error *error,
-				Memory *memory);
-        void parse_fitting_vars(InputSetter *input,
-				Error *error);
+	void parse_input(ALMCore *alm);
+	void parse_general_vars(ALMCore *alm);
+	void parse_cell_parameter(ALMCore *alm);
+        void parse_atomic_positions(ALMCore *alm);
+        void parse_interaction_vars(ALMCore *alm);
+        void parse_cutoff_radii(ALMCore *alm);
+        void parse_fitting_vars(ALMCore *alm);
         int locate_tag(std::string);
         void split_str_by_space(const std::string, std::vector<std::string> &);
         bool is_endof_entry(std::string);

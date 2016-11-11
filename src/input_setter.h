@@ -10,55 +10,19 @@
 
 #pragma once
 
-#include "pointers.h"
+#include "alm_core.h"
 #include <string>
 
 namespace ALM_NS
 {
-    class InputSetter: protected Pointers
+    class InputSetter
     {
     public:
-        InputSetter(class ALMCore *);
+        InputSetter();
         ~InputSetter();
-	void set_input(const std::string prefix,
-		       const std::string mode,
-		       const std::string str_disp_basis,
-		       const std::string str_magmom,
-		       const int nat,
-		       const int nkd,
-		       const int nsym,
-		       const int is_printsymmetry,
-		       const int is_periodic[3],
-		       const bool trim_dispsign_for_evenfunc,
-		       const bool lspin,
-		       const bool print_hessian,
-		       const int noncollinear,
-		       const int trevsym,
-		       const std::string *kdname,
-		       const double * const *magmom,
-		       const double tolerance,
-		       const double a,
-		       const double lavec_tmp[3][3],
-		       const int maxorder,
-		       const int *nbody_include,
-		       const double * const * const * rcs,
-		       const int ndata,
-		       const int nstart,
-		       const int nend,
-		       const int nskip,
-		       const int nboot,
-		       const std::string dfile,
-		       const std::string ffile,
-		       const int multiply_data,
-		       const int constraint_flag,
-		       const std::string rotation_axis,
-		       const std::string fc2_file,
-		       const std::string fc3_file,
-		       const bool fix_harmonic,
-		       const bool fix_cubic,
-		       const int *kd,
-		       const double * const *xeq);
-	void set_general_vars(const std::string prefix,
+
+	void set_general_vars(ALMCore *alm,
+			      const std::string prefix,
 			      const std::string mode,
 			      const std::string str_disp_basis,
 			      const std::string str_magmom,
@@ -75,14 +39,18 @@ namespace ALM_NS
 			      const std::string *kdname,
 			      const double * const *magmom,
 			      const double tolerance);
-	void set_cell_parameter(const double a,
+	void set_cell_parameter(ALMCore *alm,
+				const double a,
 				const double lavec_tmp[3][3]);
-	void set_interaction_vars(const int maxorder,
+	void set_interaction_vars(ALMCore *alm,
+				  const int maxorder,
 				  const int *nbody_include);
-	void set_cutoff_radii(const int maxorder,
+	void set_cutoff_radii(ALMCore *alm,
+			      const int maxorder,
 			      const int nkd,
 			      const double * const * const * rcs);
-	void set_fitting_vars(const int ndata,
+	void set_fitting_vars(ALMCore *alm,
+			      const int ndata,
 			      const int nstart,
 			      const int nend,
 			      const int nskip,
@@ -96,7 +64,8 @@ namespace ALM_NS
 			      const std::string fc3_file,
 			      const bool fix_harmonic,
 			      const bool fix_cubic);
-	void set_atomic_positions(const int nat,
+	void set_atomic_positions(ALMCore *alm,
+				  const int nat,
 				  const int *kd,
 				  const double * const *xeq);
     };
