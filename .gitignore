@@ -1,0 +1,5 @@
+*.o
+*~
+alm
+_build
+TAGS

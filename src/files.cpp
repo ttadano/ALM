@@ -17,7 +17,7 @@
 
 using namespace ALM_NS;
 
-Files::Files(ALM *alm): Pointers(alm) {}
+Files::Files(ALMCore *alm): Pointers(alm) {}
 
 Files::~Files()
 {

@@ -55,7 +55,7 @@ namespace ALM_NS
     class Fcs: protected Pointers
     {
     public:
-        Fcs(class ALM *);
+        Fcs(class ALMCore *);
         ~Fcs();
 
         void init();

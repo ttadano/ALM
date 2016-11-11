@@ -1,5 +1,5 @@
 /*
- input.cpp
+ input_parser.cpp
 
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
@@ -8,32 +8,29 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include "input.h"
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include "alm_core.h"
+#include "input_parser.h"
+#include "input_setter.h"
 #include "memory.h"
-#include "files.h"
-#include "interaction.h"
-#include "system.h"
-#include "symmetry.h"
 #include "error.h"
-#include "fitting.h"
-#include "constraint.h"
-#include "writes.h"
-#include "patterndisp.h"
 #include <algorithm>
 #include <map>
+#include <set>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
 using namespace ALM_NS;
 
-Input::Input(ALM *alm, int narg, char **arg): Pointers(alm) {}
+InputParser::InputParser() {}
 
-Input::~Input() {}
+InputParser::~InputParser() {}
 
-void Input::parse_input(int narg, char **arg)
+void InputParser::run(ALMCore *alm,
+                      const int narg,
+                      const char * const *arg)
 {
     if (narg == 1) {
 
@@ -50,57 +47,75 @@ void Input::parse_input(int narg, char **arg)
         }
     }
 
-    if (!locate_tag("&general")) {
-        error->exit("parse_input",
-                    "&general entry not found in the input file");
-    }
-    parse_general_vars();
-
-    if (!locate_tag("&cell")) {
-        error->exit("parse_input",
-                    "&cell entry not found in the input file");
-    }
-    parse_cell_parameter();
-
-    if (!locate_tag("&interaction")) {
-        error->exit("parse_input",
-                    "&interaction entry not found in the input file");
-    }
-    parse_interaction_vars();
-
-    if (!locate_tag("&cutoff")) {
-        error->exit("parse_input",
-                    "&cutoff entry not found in the input file");
-    }
-    parse_cutoff_radii();
-
-    if (alm->mode == "fitting") {
-        if (!locate_tag("&fitting")) {
-            error->exit("parse_input",
-                        "&fitting entry not found in the input file");
-        }
-        parse_fitting_vars();
-    }
-
-    if (!locate_tag("&position")) {
-        error->exit("parse_input",
-                    "&position entry not found in the input file");
-    }
-    parse_atomic_positions();
+    parse_input(alm);
 }
 
-void Input::parse_general_vars()
+void InputParser::parse_input(ALMCore *alm)
+{
+    // The order of calling methods in this method is important.
+    // Since following methods rely on variables those already
+    // parsed.
+    // Those below are set as the private class variables. See input_parser.h.
+    //  std::string *kdname;
+    //  std::string mode;
+    //  int maxorder;
+    //  int nat;
+    //  int nkd;
+
+    if (!locate_tag("&general")) {
+        alm->error->exit("parse_input",
+                         "&general entry not found in the input file");
+    }
+
+    // kdname is allocated in this method.
+    parse_general_vars(alm);
+    
+    if (!locate_tag("&cell")) {
+        alm->error->exit("parse_input",
+                         "&cell entry not found in the input file");
+    }
+    parse_cell_parameter(alm);
+
+    if (!locate_tag("&position")) {
+        alm->error->exit("parse_input",
+                         "&position entry not found in the input file");
+    }
+    parse_atomic_positions(alm);
+
+    if (!locate_tag("&interaction")) {
+        alm->error->exit("parse_input",
+                         "&interaction entry not found in the input file");
+    }
+    parse_interaction_vars(alm);
+
+    if (!locate_tag("&cutoff")) {
+        alm->error->exit("parse_input",
+                         "&cutoff entry not found in the input file");
+    }
+    parse_cutoff_radii(alm);
+
+    if (mode == "fitting") {
+        if (!locate_tag("&fitting")) {
+            alm->error->exit("parse_input",
+                             "&fitting entry not found in the input file");
+        }
+        parse_fitting_vars(alm);
+    }
+
+    alm->memory->deallocate(kdname);
+}
+
+void InputParser::parse_general_vars(ALMCore *alm)
 {
     int i, j;
-    std::string prefix, mode, str_tmp, str_disp_basis;
-    int nat, nkd, nsym;
+    std::string prefix, str_tmp, str_disp_basis;
+    int nsym;
     int is_printsymmetry, is_periodic[3];
     int icount, ncount;
     bool trim_dispsign_for_evenfunc;
     bool lspin;
     bool print_hessian;
     int noncollinear, trevsym;
-    std::string *kdname;
     double **magmom, magmag;
     double tolerance;
 
@@ -117,16 +132,16 @@ void Input::parse_general_vars()
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, general_var_dict);
+    get_var_dict(str_allowed_list, general_var_dict, alm->error);
 
     boost::split(no_defaults, str_no_defaults, boost::is_space());
 
     for (std::vector<std::string>::iterator it = no_defaults.begin();
          it != no_defaults.end(); ++it) {
         if (general_var_dict.find(*it) == general_var_dict.end()) {
-            error->exit("parse_general_vars",
-                        "The following variable is not found in &general input region: ",
-                        (*it).c_str());
+            alm->error->exit("parse_general_vars",
+                             "The following variable is not found in &general input region: ",
+                             (*it).c_str());
         }
     }
 
@@ -135,31 +150,31 @@ void Input::parse_general_vars()
 
     std::transform(mode.begin(), mode.end(), mode.begin(), tolower);
     if (mode != "fitting" && mode != "suggest") {
-        error->exit("parse_general_vars", "Invalid MODE variable");
+        alm->error->exit("parse_general_vars", "Invalid MODE variable");
     }
 
-    assign_val(nat, "NAT", general_var_dict);
-    assign_val(nkd, "NKD", general_var_dict);
+    assign_val(nat, "NAT", general_var_dict, alm->error);
+    assign_val(nkd, "NKD", general_var_dict, alm->error);
 
     if (general_var_dict["NSYM"].empty()) {
         nsym = 0;
     } else {
-        assign_val(nsym, "NSYM", general_var_dict);
+        assign_val(nsym, "NSYM", general_var_dict, alm->error);
     }
 
     if (general_var_dict["PRINTSYM"].empty()) {
         is_printsymmetry = 0;
     } else {
-        assign_val(is_printsymmetry, "PRINTSYM", general_var_dict);
+        assign_val(is_printsymmetry, "PRINTSYM", general_var_dict, alm->error);
     }
 
     split_str_by_space(general_var_dict["KD"], kdname_v);
 
     if (kdname_v.size() != nkd) {
-        error->exit("parse_general_vars",
-                    "The number of entries for KD is inconsistent with NKD");
+        alm->error->exit("parse_general_vars",
+                         "The number of entries for KD is inconsistent with NKD");
     } else {
-        memory->allocate(kdname, nkd);
+        alm->memory->allocate(kdname, nkd);
         for (i = 0; i < nkd; ++i) {
             kdname[i] = kdname_v[i];
         }
@@ -178,23 +193,23 @@ void Input::parse_general_vars()
             }
             catch (std::exception &e) {
                 std::cout << e.what() << std::endl;
-                error->exit("parse_general_vars",
-                            "The PERIODIC tag must be a set of integers.");
+                alm->error->exit("parse_general_vars",
+                                 "The PERIODIC tag must be a set of integers.");
             }
         }
     } else {
-        error->exit("parse_general_vars",
-                    "Invalid number of entries for PERIODIC");
+        alm->error->exit("parse_general_vars",
+                         "Invalid number of entries for PERIODIC");
     }
 
     if (general_var_dict["TOLERANCE"].empty()) {
         tolerance = 1.0e-6;
     } else {
-        assign_val(tolerance, "TOLERANCE", general_var_dict);
+        assign_val(tolerance, "TOLERANCE", general_var_dict, alm->error);
     }
 
     // Convert MAGMOM input to array
-    memory->allocate(magmom, nat, 3);
+    alm->memory->allocate(magmom, nat, 3);
     lspin = false;
 
     for (i = 0; i < nat; ++i) {
@@ -206,17 +221,17 @@ void Input::parse_general_vars()
     if (general_var_dict["NONCOLLINEAR"].empty()) {
         noncollinear = 0;
     } else {
-        assign_val(noncollinear, "NONCOLLINEAR", general_var_dict);
+        assign_val(noncollinear, "NONCOLLINEAR", general_var_dict, alm->error);
     }
     if (general_var_dict["TREVSYM"].empty()) {
         trevsym = 1;
     } else {
-        assign_val(trevsym, "TREVSYM", general_var_dict);
+        assign_val(trevsym, "TREVSYM", general_var_dict, alm->error);
     }
     if (general_var_dict["HESSIAN"].empty()) {
         print_hessian = false;
     } else {
-        assign_val(print_hessian, "HESSIAN", general_var_dict);
+        assign_val(print_hessian, "HESSIAN", general_var_dict, alm->error);
     }
 
     if (!general_var_dict["MAGMOM"].empty()) {
@@ -228,12 +243,12 @@ void Input::parse_general_vars()
             for (std::vector<std::string>::const_iterator it = magmom_v.begin();
                  it != magmom_v.end(); ++it) {
                 if ((*it).find("*") != std::string::npos) {
-                    error->exit("parse_general_vars",
-                                "Wild card '*' is not supported when NONCOLLINEAR = 1.");
+                    alm->error->exit("parse_general_vars",
+                                     "Wild card '*' is not supported when NONCOLLINEAR = 1.");
                 } else {
                     magmag = boost::lexical_cast<double>((*it));
                     if (icount / 3 >= nat) {
-                        error->exit("parse_general_vars", "Too many entries for MAGMOM.");
+                        alm->error->exit("parse_general_vars", "Too many entries for MAGMOM.");
                     }
                     magmom[icount / 3][icount % 3] = magmag;
                     ++icount;
@@ -241,8 +256,8 @@ void Input::parse_general_vars()
             }
 
             if (icount != 3 * nat) {
-                error->exit("parse_general_vars",
-                            "Number of entries for MAGMOM must be 3*NAT when NONCOLLINEAR = 1.");
+                alm->error->exit("parse_general_vars",
+                                 "Number of entries for MAGMOM must be 3*NAT when NONCOLLINEAR = 1.");
             }
         } else {
             icount = 0;
@@ -252,16 +267,16 @@ void Input::parse_general_vars()
 
                 if ((*it).find("*") != std::string::npos) {
                     if ((*it) == "*") {
-                        error->exit("parse_general_vars",
+                        alm->error->exit("parse_general_vars",
                                     "Please place '*' without space for the MAGMOM-tag.");
                     }
                     boost::split(str_split, (*it), boost::is_any_of("*"));
                     if (str_split.size() != 2) {
-                        error->exit("parse_general_vars",
+                        alm->error->exit("parse_general_vars",
                                     "Invalid format for the MAGMOM-tag.");
                     } else {
                         if (str_split[0].empty() || str_split[1].empty()) {
-                            error->exit("parse_general_vars",
+                            alm->error->exit("parse_general_vars",
                                         "Please place '*' without space for the MAGMOM-tag.");
                         }
                         try {
@@ -269,7 +284,7 @@ void Input::parse_general_vars()
                             ncount = static_cast<int>(boost::lexical_cast<double>(str_split[0]));
                         }
                         catch (std::exception &e) {
-                            error->exit("parse_general_vars", "Bad format for MAGMOM.");
+                            alm->error->exit("parse_general_vars", "Bad format for MAGMOM.");
                         }
 
                         for (i = icount; i < icount + ncount; ++i) {
@@ -284,12 +299,11 @@ void Input::parse_general_vars()
                 }
             }
             if (icount != nat) {
-                error->exit("parse_general_vars",
-                            "Number of entries for MAGMOM must be NAT.");
+                alm->error->exit("parse_general_vars",
+                                 "Number of entries for MAGMOM must be NAT.");
             }
         }
     }
-
 
     if (mode == "suggest") {
         if (general_var_dict["DBASIS"].empty()) {
@@ -300,60 +314,48 @@ void Input::parse_general_vars()
         std::transform(str_disp_basis.begin(), str_disp_basis.end(),
                        str_disp_basis.begin(), toupper);
         if ((str_disp_basis[0] != 'C') && (str_disp_basis[0] != 'F')) {
-            error->exit("parse_general_vars", "Invalid DBASIS");
+            alm->error->exit("parse_general_vars", "Invalid DBASIS");
         }
 
         if (general_var_dict["TRIMEVEN"].empty()) {
             trim_dispsign_for_evenfunc = true;
         } else {
             assign_val(trim_dispsign_for_evenfunc,
-                       "TRIMEVEN", general_var_dict);
+                       "TRIMEVEN", general_var_dict, alm->error);
         }
 
     }
 
-    files->job_title = prefix;
-    alm->mode = mode;
-    system->nat = nat;
-    system->nkd = nkd;
-    symmetry->nsym = nsym;
-    symmetry->is_printsymmetry = is_printsymmetry;
-    symmetry->tolerance = tolerance;
-    this->str_magmom = general_var_dict["MAGMOM"];
-    memory->allocate(system->kdname, nkd);
-    memory->allocate(system->magmom, nat, 3);
+    InputSetter *input_setter = new InputSetter();
+    input_setter->set_general_vars(alm,
+                                   prefix,
+                                   mode,
+                                   str_disp_basis,
+                                   general_var_dict["MAGMOM"],
+                                   nat,
+                                   nkd,
+                                   nsym,
+                                   is_printsymmetry,
+                                   is_periodic,
+                                   trim_dispsign_for_evenfunc,
+                                   lspin,
+                                   print_hessian,
+                                   noncollinear,
+                                   trevsym,
+                                   kdname,
+                                   magmom,
+                                   tolerance);
+    delete input_setter;
 
-    for (i = 0; i < nkd; ++i) {
-        system->kdname[i] = kdname[i];
-    }
-    for (i = 0; i < 3; ++i) {
-        interaction->is_periodic[i] = is_periodic[i];
-    }
-    for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
-            system->magmom[i][j] = magmom[i][j];
-        }
-    }
-    system->lspin = lspin;
-    system->noncollinear = noncollinear;
-    symmetry->trev_sym_mag = trevsym;
-    writes->print_hessian = print_hessian;
-
-    if (mode == "suggest") {
-        displace->disp_basis = str_disp_basis;
-        displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
-    }
-
-    memory->deallocate(kdname);
-    memory->deallocate(magmom);
-
+    alm->memory->deallocate(magmom);
+    
     kdname_v.clear();
     periodic_v.clear();
     no_defaults.clear();
     general_var_dict.clear();
 }
 
-void Input::parse_cell_parameter()
+void InputParser::parse_cell_parameter(ALMCore *alm)
 {
     int i, j;
     double a;
@@ -408,8 +410,8 @@ void Input::parse_cell_parameter()
     }
 
     if (line_vec.size() != 4) {
-        error->exit("parse_cell_parameter",
-                    "Too few or too much lines for the &cell field.\n \
+        alm->error->exit("parse_cell_parameter",
+                         "Too few or too much lines for the &cell field.\n \
                                             The number of valid lines for the &cell field should be 4.");
     }
 
@@ -423,8 +425,8 @@ void Input::parse_cell_parameter()
             if (line_split.size() == 1) {
                 a = boost::lexical_cast<double>(line_split[0]);
             } else {
-                error->exit("parse_cell_parameter",
-                            "Unacceptable format for &cell field.");
+                alm->error->exit("parse_cell_parameter",
+                                 "Unacceptable format for &cell field.");
             }
 
         } else {
@@ -434,23 +436,21 @@ void Input::parse_cell_parameter()
                     lavec_tmp[j][i - 1] = boost::lexical_cast<double>(line_split[j]);
                 }
             } else {
-                error->exit("parse_cell_parameter",
-                            "Unacceptable format for &cell field.");
+                alm->error->exit("parse_cell_parameter",
+                                 "Unacceptable format for &cell field.");
             }
         }
     }
 
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
-            system->lavec[i][j] = a * lavec_tmp[i][j];
-        }
-    }
+    InputSetter *input_setter = new InputSetter();
+    input_setter->set_cell_parameter(alm, a, lavec_tmp);
+    delete input_setter;
 }
 
-void Input::parse_interaction_vars()
+
+void InputParser::parse_interaction_vars(ALMCore *alm)
 {
     int i;
-    int maxorder;
     int *nbody_include;
 
     std::vector<std::string> nbody_v;
@@ -466,25 +466,25 @@ void Input::parse_interaction_vars()
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, interaction_var_dict);
+    get_var_dict(str_allowed_list, interaction_var_dict, alm->error);
 
     boost::split(no_defaults, str_no_defaults, boost::is_space());
 
     for (std::vector<std::string>::iterator it = no_defaults.begin();
          it != no_defaults.end(); ++it) {
         if (interaction_var_dict.find(*it) == interaction_var_dict.end()) {
-            error->exit("parse_interaction_vars",
-                        "The following variable is not found in &interaction input region: ",
-                        (*it).c_str());
+            alm->error->exit("parse_interaction_vars",
+                             "The following variable is not found in &interaction input region: ",
+                             (*it).c_str());
         }
     }
 
-    assign_val(maxorder, "NORDER", interaction_var_dict);
+    assign_val(maxorder, "NORDER", interaction_var_dict, alm->error);
     if (maxorder < 1)
-        error->exit("parse_interaction_vars",
-                    "maxorder has to be a positive integer");
+        alm->error->exit("parse_interaction_vars",
+                         "maxorder has to be a positive integer");
 
-    memory->allocate(nbody_include, maxorder);
+    alm->memory->allocate(nbody_include, maxorder);
 
     boost::split(nbody_v, interaction_var_dict["NBODY"], boost::is_space());
 
@@ -499,33 +499,275 @@ void Input::parse_interaction_vars()
             }
             catch (std::exception &e) {
                 std::cout << e.what() << std::endl;
-                error->exit("parse_interaction_vars",
-                            "NBODY must be an integer.");
+                alm->error->exit("parse_interaction_vars",
+                                 "NBODY must be an integer.");
             }
         }
     } else {
-        error->exit("parse_interaction_vars",
-                    "The number of entry of NBODY has to be equal to NORDER");
+        alm->error->exit("parse_interaction_vars",
+                         "The number of entry of NBODY has to be equal to NORDER");
     }
 
     if (nbody_include[0] != 2) {
-        error->warn("parce_input",
-                    "Harmonic interaction is always 2 body (except on-site 1 body)");
+        alm->error->warn("parce_input",
+                         "Harmonic interaction is always 2 body (except on-site 1 body)");
     }
 
-    interaction->maxorder = maxorder;
-    memory->allocate(interaction->nbody_include, maxorder);
 
-    for (i = 0; i < maxorder; ++i) {
-        interaction->nbody_include[i] = nbody_include[i];
-    }
+    InputSetter *input_setter = new InputSetter();
+    input_setter->set_interaction_vars(alm, maxorder, nbody_include);
+    delete input_setter;
 
-    memory->deallocate(nbody_include);
+    alm->memory->deallocate(nbody_include);
+
     nbody_v.clear();
     no_defaults.clear();
 }
 
-void Input::parse_cutoff_radii()
+
+void InputParser::parse_fitting_vars(ALMCore *alm)
+{
+    int ndata, nstart, nend, nskip, nboot;
+    std::string dfile, ffile;
+    int multiply_data, constraint_flag;
+    std::string rotation_axis;
+    std::string fc2_file, fc3_file;
+
+    std::string str_allowed_list = "NDATA NSTART NEND NSKIP NBOOT DFILE FFILE MULTDAT ICONST ROTAXIS FC2XML FC3XML";
+    std::string str_no_defaults = "NDATA DFILE FFILE";
+    std::vector<std::string> no_defaults;
+
+    std::map<std::string, std::string> fitting_var_dict;
+
+    bool fix_harmonic, fix_cubic;
+
+    if (from_stdin) {
+        std::cin.ignore();
+    } else {
+        ifs_input.ignore();
+    }
+
+    get_var_dict(str_allowed_list, fitting_var_dict, alm->error);
+
+    boost::split(no_defaults, str_no_defaults, boost::is_space());
+
+    for (std::vector<std::string>::iterator it = no_defaults.begin();
+         it != no_defaults.end(); ++it) {
+        if (fitting_var_dict.find(*it) == fitting_var_dict.end()) {
+            alm->error->exit("parse_fitting_vars",
+                             "The following variable is not found in &fitting input region: ",
+                             (*it).c_str());
+        }
+    }
+
+    assign_val(ndata, "NDATA", fitting_var_dict, alm->error);
+
+    if (fitting_var_dict["NSTART"].empty()) {
+        nstart = 1;
+    } else {
+        assign_val(nstart, "NSTART", fitting_var_dict, alm->error);
+    }
+    if (fitting_var_dict["NEND"].empty()) {
+        nend = ndata;
+    } else {
+        assign_val(nend, "NEND", fitting_var_dict, alm->error);
+    }
+    if (fitting_var_dict["NSKIP"].empty()) {
+        nskip = 0;
+    } else {
+        assign_val(nskip, "NSKIP", fitting_var_dict, alm->error);
+    }
+
+    if (ndata <= 0 || nstart <= 0 || nend <= 0
+        || nstart > ndata || nend > ndata || nstart > nend) {
+        alm->error->exit("parce_fitting_vars",
+                         "ndata, nstart, nend are not consistent with each other");
+    }
+
+    if (nskip < -1)
+        alm->error->exit("parce_fitting_vars",
+                         "nskip has to be larger than -2.");
+    if (nskip == -1) {
+
+        if (fitting_var_dict["NBOOT"].empty()) {
+            alm->error->exit("parse_fitting_vars",
+                             "NBOOT has to be given when NSKIP=-1");
+        } else {
+            assign_val(nboot, "NBOOT", fitting_var_dict, alm->error);
+        }
+
+        if (nboot <= 0)
+            alm->error->exit("parce_input",
+                             "nboot has to be a positive integer");
+    } else {
+        nboot = 0;
+    }
+
+    dfile = fitting_var_dict["DFILE"];
+    ffile = fitting_var_dict["FFILE"];
+
+
+    if (fitting_var_dict["MULTDAT"].empty()) {
+        multiply_data = 1;
+    } else {
+        assign_val(multiply_data, "MULTDAT", fitting_var_dict, alm->error);
+    }
+
+    if (fitting_var_dict["ICONST"].empty()) {
+        constraint_flag = 1;
+    } else {
+        assign_val(constraint_flag, "ICONST", fitting_var_dict, alm->error);
+    }
+
+    fc2_file = fitting_var_dict["FC2XML"];
+    if (fc2_file.empty()) {
+        fix_harmonic = false;
+    } else {
+        fix_harmonic = true;
+    }
+
+    fc3_file = fitting_var_dict["FC3XML"];
+    if (fc3_file.empty()) {
+        fix_cubic = false;
+    } else {
+        fix_cubic = true;
+    }
+
+    if (constraint_flag % 10 >= 2) {
+        rotation_axis = fitting_var_dict["ROTAXIS"];
+        if (rotation_axis.empty()) {
+            alm->error->exit("parse_fitting_vars",
+                             "ROTAXIS has to be given when ICONST=2 or 3");
+        }
+    }
+
+    InputSetter *input_setter = new InputSetter();
+    input_setter->set_fitting_vars(alm,
+                                   ndata,
+                                   nstart,
+                                   nend,
+                                   nskip,
+                                   nboot,
+                                   dfile,
+                                   ffile,
+                                   multiply_data,
+                                   constraint_flag,
+                                   rotation_axis,
+                                   fc2_file,
+                                   fc3_file,
+                                   fix_harmonic,
+                                   fix_cubic);
+    delete input_setter;
+
+    fitting_var_dict.clear();
+}
+
+void InputParser::parse_atomic_positions(ALMCore *alm)
+{
+    int i, j;
+    std::string line, line_wo_comment;
+    std::string str_tmp;
+    std::string::size_type pos_first_comment_tag;
+    std::vector<std::string> str_v, pos_line;
+    double **xeq;
+    int *kd;
+
+    if (from_stdin) {
+        std::cin.ignore();
+    } else {
+        ifs_input.ignore();
+    }
+
+    str_v.clear();
+
+    if (from_stdin) {
+
+        while (std::getline(std::cin, line)) {
+
+            pos_first_comment_tag = line.find_first_of('#');
+
+            if (pos_first_comment_tag == std::string::npos) {
+                line_wo_comment = line;
+            } else {
+                line_wo_comment = line.substr(0, pos_first_comment_tag);
+            }
+
+
+            boost::trim_left(line_wo_comment);
+            if (line_wo_comment.empty()) continue;
+            if (is_endof_entry(line_wo_comment)) break;
+
+            str_v.push_back(line_wo_comment);
+        }
+
+    } else {
+
+        while (std::getline(ifs_input, line)) {
+
+            pos_first_comment_tag = line.find_first_of('#');
+
+            if (pos_first_comment_tag == std::string::npos) {
+                line_wo_comment = line;
+            } else {
+                line_wo_comment = line.substr(0, pos_first_comment_tag);
+            }
+
+
+            boost::trim_left(line_wo_comment);
+            if (line_wo_comment.empty()) continue;
+            if (is_endof_entry(line_wo_comment)) break;
+
+            str_v.push_back(line_wo_comment);
+        }
+    }
+
+
+    if (str_v.size() != nat) {
+        alm->error->exit("parse_atomic_positions",
+                         "The number of entries for atomic positions should be NAT");
+    }
+
+    alm->memory->allocate(xeq, nat, 3);
+    alm->memory->allocate(kd, nat);
+
+
+    for (i = 0; i < nat; ++i) {
+
+        split_str_by_space(str_v[i], pos_line);
+
+        if (pos_line.size() == 4) {
+            try {
+                kd[i] = boost::lexical_cast<int>(pos_line[0]);
+            }
+            catch (std::exception &e) {
+                std::cout << e.what() << std::endl;
+                alm->error->exit("parse_atomic_positions",
+                                 "Invalid entry for the &position field at line ",
+                                 i + 1);
+            }
+
+            for (j = 0; j < 3; ++j) {
+                xeq[i][j] = boost::lexical_cast<double>(pos_line[j + 1]);
+            }
+
+        } else {
+            alm->error->exit("parse_atomic_positions",
+                             "Bad format for &position region");
+        }
+    }
+
+
+    InputSetter *input_setter = new InputSetter();
+    input_setter->set_atomic_positions(alm, nat, kd, xeq);
+    delete input_setter;
+    
+    alm->memory->deallocate(xeq);
+    alm->memory->deallocate(kd);
+    pos_line.clear();
+    str_v.clear();
+}
+
+void InputParser::parse_cutoff_radii(ALMCore *alm)
 {
     std::string line, line_wo_comment;
     std::string::size_type pos_first_comment_tag;
@@ -579,8 +821,6 @@ void Input::parse_cutoff_radii()
     }
 
     int i, j, k;
-    int nkd = system->nkd;
-    int maxorder = interaction->maxorder;
     int ikd, jkd;
     int order;
     std::vector<std::string> cutoff_line;
@@ -592,7 +832,7 @@ void Input::parse_cutoff_radii()
     double ***rcs;
     bool ***undefined_cutoff;
 
-    memory->allocate(undefined_cutoff, maxorder, nkd, nkd);
+    alm->memory->allocate(undefined_cutoff, maxorder, nkd, nkd);
 
     for (order = 0; order < maxorder; ++order) {
         for (i = 0; i < nkd; ++i) {
@@ -602,13 +842,13 @@ void Input::parse_cutoff_radii()
         }
     }
 
-    memory->allocate(rcs, maxorder, nkd, nkd);
+    alm->memory->allocate(rcs, maxorder, nkd, nkd);
 
     element_allowed.clear();
 
     for (i = 0; i < nkd; ++i) {
-        element_allowed.insert(system->kdname[i]);
-        kd_map.insert(std::map<std::string, int>::value_type(system->kdname[i], i));
+        element_allowed.insert(kdname[i]);
+        kd_map.insert(std::map<std::string, int>::value_type(kdname[i], i));
     }
 
     element_allowed.insert("*");
@@ -620,21 +860,21 @@ void Input::parse_cutoff_radii()
         split_str_by_space(*it, cutoff_line);
 
         if (cutoff_line.size() < maxorder + 1) {
-            error->exit("parse_cutoff_radii",
-                        "Invalid format for &cutoff entry");
+            alm->error->exit("parse_cutoff_radii",
+                             "Invalid format for &cutoff entry");
         }
 
         boost::split(str_pair, cutoff_line[0], boost::is_any_of("-"));
 
         if (str_pair.size() != 2) {
-            error->exit("parse_cutoff_radii2",
-                        "Invalid format for &cutoff entry");
+            alm->error->exit("parse_cutoff_radii2",
+                             "Invalid format for &cutoff entry");
         }
 
         for (i = 0; i < 2; ++i) {
             if (element_allowed.find(str_pair[i]) == element_allowed.end()) {
-                error->exit("parse_cutoff_radii2",
-                            "Invalid format for &cutoff entry");
+                alm->error->exit("parse_cutoff_radii2",
+                                 "Invalid format for &cutoff entry");
             }
         }
 
@@ -691,278 +931,23 @@ void Input::parse_cutoff_radii()
                         << order + 2 << "th-order terms" << std::endl;
                     std::cout << " are not defined between elements " << std::setw(3) << j + 1
                         << " and " << std::setw(3) << k + 1 << std::endl;
-                    error->exit("parse_cutoff_radii", "Incomplete cutoff radii");
+                    alm->error->exit("parse_cutoff_radii", "Incomplete cutoff radii");
                 }
             }
         }
     }
-    memory->deallocate(undefined_cutoff);
+    alm->memory->deallocate(undefined_cutoff);
 
-    memory->allocate(interaction->rcs, maxorder, nkd, nkd);
+    InputSetter *input_setter = new InputSetter();
+    input_setter->set_cutoff_radii(alm, maxorder, nkd, rcs);
+    delete input_setter;
 
-    for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < nkd; ++j) {
-            for (k = 0; k < nkd; ++k) {
-                interaction->rcs[i][j][k] = rcs[i][j][k];
-            }
-        }
-    }
-
-    memory->deallocate(rcs);
+    alm->memory->deallocate(rcs);
 }
 
-void Input::parse_fitting_vars()
-{
-    int ndata, nstart, nend, nskip, nboot;
-    std::string dfile, ffile;
-    int multiply_data, constraint_flag;
-    std::string rotation_axis;
-    std::string fc2_file, fc3_file;
-
-    std::string str_allowed_list = "NDATA NSTART NEND NSKIP NBOOT DFILE FFILE MULTDAT ICONST ROTAXIS FC2XML FC3XML";
-    std::string str_no_defaults = "NDATA DFILE FFILE";
-    std::vector<std::string> no_defaults;
-
-    std::map<std::string, std::string> fitting_var_dict;
-
-    bool fix_harmonic, fix_cubic;
-
-    if (from_stdin) {
-        std::cin.ignore();
-    } else {
-        ifs_input.ignore();
-    }
-
-    get_var_dict(str_allowed_list, fitting_var_dict);
-
-    boost::split(no_defaults, str_no_defaults, boost::is_space());
-
-    for (std::vector<std::string>::iterator it = no_defaults.begin();
-         it != no_defaults.end(); ++it) {
-        if (fitting_var_dict.find(*it) == fitting_var_dict.end()) {
-            error->exit("parse_fitting_vars",
-                        "The following variable is not found in &fitting input region: ",
-                        (*it).c_str());
-        }
-    }
-
-    assign_val(ndata, "NDATA", fitting_var_dict);
-
-    if (fitting_var_dict["NSTART"].empty()) {
-        nstart = 1;
-    } else {
-        assign_val(nstart, "NSTART", fitting_var_dict);
-    }
-    if (fitting_var_dict["NEND"].empty()) {
-        nend = ndata;
-    } else {
-        assign_val(nend, "NEND", fitting_var_dict);
-    }
-    if (fitting_var_dict["NSKIP"].empty()) {
-        nskip = 0;
-    } else {
-        assign_val(nskip, "NSKIP", fitting_var_dict);
-    }
-
-    if (ndata <= 0 || nstart <= 0 || nend <= 0
-        || nstart > ndata || nend > ndata || nstart > nend) {
-        error->exit("parce_fitting_vars",
-                    "ndata, nstart, nend are not consistent with each other");
-    }
-
-    if (nskip < -1)
-        error->exit("parce_fitting_vars",
-                    "nskip has to be larger than -2.");
-    if (nskip == -1) {
-
-        if (fitting_var_dict["NBOOT"].empty()) {
-            error->exit("parse_fitting_vars",
-                        "NBOOT has to be given when NSKIP=-1");
-        } else {
-            assign_val(nboot, "NBOOT", fitting_var_dict);
-        }
-
-        if (nboot <= 0)
-            error->exit("parce_input",
-                        "nboot has to be a positive integer");
-    } else {
-        nboot = 0;
-    }
-
-    dfile = fitting_var_dict["DFILE"];
-    ffile = fitting_var_dict["FFILE"];
-
-
-    if (fitting_var_dict["MULTDAT"].empty()) {
-        multiply_data = 1;
-    } else {
-        assign_val(multiply_data, "MULTDAT", fitting_var_dict);
-    }
-
-    if (fitting_var_dict["ICONST"].empty()) {
-        constraint_flag = 1;
-    } else {
-        assign_val(constraint_flag, "ICONST", fitting_var_dict);
-    }
-
-    fc2_file = fitting_var_dict["FC2XML"];
-    if (fc2_file.empty()) {
-        fix_harmonic = false;
-    } else {
-        fix_harmonic = true;
-    }
-
-    fc3_file = fitting_var_dict["FC3XML"];
-    if (fc3_file.empty()) {
-        fix_cubic = false;
-    } else {
-        fix_cubic = true;
-    }
-
-    if (constraint_flag % 10 >= 2) {
-        rotation_axis = fitting_var_dict["ROTAXIS"];
-        if (rotation_axis.empty()) {
-            error->exit("parse_fitting_vars",
-                        "ROTAXIS has to be given when ICONST=2 or 3");
-        }
-    }
-
-    system->ndata = ndata;
-    system->nstart = nstart;
-    system->nend = nend;
-    system->nskip = nskip;
-
-    fitting->nboot = nboot;
-    files->file_disp = dfile;
-    files->file_force = ffile;
-    symmetry->multiply_data = multiply_data;
-    constraint->constraint_mode = constraint_flag;
-    constraint->rotation_axis = rotation_axis;
-    constraint->fc2_file = fc2_file;
-    constraint->fix_harmonic = fix_harmonic;
-    constraint->fc3_file = fc3_file;
-    constraint->fix_cubic = fix_cubic;
-
-    fitting_var_dict.clear();
-}
-
-void Input::parse_atomic_positions()
-{
-    int i, j;
-    std::string line, line_wo_comment;
-    std::string str_tmp;
-    std::string::size_type pos_first_comment_tag;
-    std::vector<std::string> str_v, pos_line;
-    double **xeq;
-    int *kd;
-
-    int nat = system->nat;
-
-    if (from_stdin) {
-        std::cin.ignore();
-    } else {
-        ifs_input.ignore();
-    }
-
-    str_v.clear();
-
-    if (from_stdin) {
-
-        while (std::getline(std::cin, line)) {
-
-            pos_first_comment_tag = line.find_first_of('#');
-
-            if (pos_first_comment_tag == std::string::npos) {
-                line_wo_comment = line;
-            } else {
-                line_wo_comment = line.substr(0, pos_first_comment_tag);
-            }
-
-
-            boost::trim_left(line_wo_comment);
-            if (line_wo_comment.empty()) continue;
-            if (is_endof_entry(line_wo_comment)) break;
-
-            str_v.push_back(line_wo_comment);
-        }
-
-    } else {
-
-        while (std::getline(ifs_input, line)) {
-
-            pos_first_comment_tag = line.find_first_of('#');
-
-            if (pos_first_comment_tag == std::string::npos) {
-                line_wo_comment = line;
-            } else {
-                line_wo_comment = line.substr(0, pos_first_comment_tag);
-            }
-
-
-            boost::trim_left(line_wo_comment);
-            if (line_wo_comment.empty()) continue;
-            if (is_endof_entry(line_wo_comment)) break;
-
-            str_v.push_back(line_wo_comment);
-        }
-    }
-
-
-    if (str_v.size() != nat) {
-        error->exit("parse_atomic_positions",
-                    "The number of entries for atomic positions should be NAT");
-    }
-
-    memory->allocate(xeq, nat, 3);
-    memory->allocate(kd, nat);
-
-
-    for (i = 0; i < nat; ++i) {
-
-        split_str_by_space(str_v[i], pos_line);
-
-        if (pos_line.size() == 4) {
-            try {
-                kd[i] = boost::lexical_cast<int>(pos_line[0]);
-            }
-            catch (std::exception &e) {
-                std::cout << e.what() << std::endl;
-                error->exit("parse_atomic_positions",
-                            "Invalid entry for the &position field at line ",
-                            i + 1);
-            }
-
-            for (j = 0; j < 3; ++j) {
-                xeq[i][j] = boost::lexical_cast<double>(pos_line[j + 1]);
-            }
-
-        } else {
-            error->exit("parse_atomic_positions",
-                        "Bad format for &position region");
-        }
-    }
-
-
-    memory->allocate(system->xcoord, nat, 3);
-    memory->allocate(system->kd, nat);
-
-    for (i = 0; i < nat; ++i) {
-
-        system->kd[i] = kd[i];
-
-        for (j = 0; j < 3; ++j) {
-            system->xcoord[i][j] = xeq[i][j];
-        }
-    }
-
-    memory->deallocate(xeq);
-    memory->deallocate(kd);
-    pos_line.clear();
-    str_v.clear();
-}
-
-void Input::get_var_dict(const std::string keywords,
-                         std::map<std::string, std::string> &var_dict)
+void InputParser::get_var_dict(const std::string keywords,
+                               std::map<std::string, std::string> &var_dict,
+                               Error *error)
 {
     std::string line, key, val;
     std::string line_wo_comment;
@@ -1097,7 +1082,7 @@ void Input::get_var_dict(const std::string keywords,
 }
 
 
-int Input::locate_tag(std::string key)
+int InputParser::locate_tag(std::string key)
 {
     int ret = 0;
     std::string line;
@@ -1132,7 +1117,7 @@ int Input::locate_tag(std::string key)
     }
 }
 
-bool Input::is_endof_entry(std::string str)
+bool InputParser::is_endof_entry(std::string str)
 {
     if (str[0] == '/') {
         return true;
@@ -1141,8 +1126,8 @@ bool Input::is_endof_entry(std::string str)
     }
 }
 
-void Input::split_str_by_space(const std::string str,
-                               std::vector<std::string> &str_vec)
+void InputParser::split_str_by_space(const std::string str,
+                                     std::vector<std::string> &str_vec)
 {
     std::string str_tmp;
     std::istringstream is(str);
@@ -1161,9 +1146,10 @@ void Input::split_str_by_space(const std::string str,
 }
 
 template <typename T>
-void Input::assign_val(T &val,
-                       const std::string key,
-                       std::map<std::string, std::string> dict)
+void InputParser::assign_val(T &val,
+                             const std::string key,
+                             std::map<std::string, std::string> dict,
+                             Error *error)
 {
     // Assign a value to the variable "key" using the boost::lexica_cast.
 

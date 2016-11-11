@@ -216,7 +216,7 @@ namespace ALM_NS
     class Interaction: protected Pointers
     {
     public:
-        Interaction(class ALM *);
+        Interaction(class ALMCore *);
         ~Interaction();
 
         int is_periodic[3];

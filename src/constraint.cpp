@@ -28,7 +28,7 @@
 
 using namespace ALM_NS;
 
-Constraint::Constraint(ALM *alm) : Pointers(alm) {}
+Constraint::Constraint(ALMCore *alm) : Pointers(alm) {}
 
 Constraint::~Constraint()
 {

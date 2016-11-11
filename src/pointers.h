@@ -10,17 +10,16 @@
 
 #pragma once
 
-#include "alamode.h"
+#include "alm_core.h"
 
 namespace ALM_NS
 {
     class Pointers
     {
     public:
-        Pointers(ALM *ptr) :
+        Pointers(ALMCore *ptr) :
             alm(ptr),
             memory(ptr->memory),
-            input(ptr->input),
             system(ptr->system),
             interaction(ptr->interaction),
             fcs(ptr->fcs),
@@ -29,16 +28,14 @@ namespace ALM_NS
             constraint(ptr->constraint),
             files(ptr->files),
             displace(ptr->displace),
-            writes(ptr->writes),
             error(ptr->error),
             timer(ptr->timer) {}
 
         virtual ~Pointers() {}
 
     protected:
-        ALM *alm;
+        ALMCore *alm;
         Memory *&memory;
-        Input *&input;
         System *&system;
         Interaction *&interaction;
         Fcs *&fcs;
@@ -47,7 +44,6 @@ namespace ALM_NS
         Constraint *&constraint;
         Files *&files;
         Displace *&displace;
-        Writes *&writes;
         Error *&error;
         Timer *&timer;
     };

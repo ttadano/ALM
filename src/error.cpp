@@ -15,7 +15,7 @@
 
 using namespace ALM_NS;
 
-Error::Error(ALM *alm): Pointers(alm) {}
+Error::Error(ALMCore *alm): Pointers(alm) {}
 
 Error::~Error() {}
 
