@@ -121,7 +121,7 @@ namespace ALM_NS
     class Displace: protected Pointers
     {
     public:
-        Displace(class ALM *);
+        Displace(class ALMCore *);
         ~Displace();
 
         bool trim_dispsign_for_evenfunc;

@@ -30,7 +30,7 @@
 
 using namespace ALM_NS;
 
-System::System(ALM *alm): Pointers(alm) {}
+System::System(ALMCore *alm): Pointers(alm) {}
 
 System::~System()
 {

@@ -28,7 +28,7 @@ or http://opensource.org/licenses/mit-license.php for information.
 
 using namespace ALM_NS;
 
-Interaction::Interaction(ALM *alm) : Pointers(alm) {}
+Interaction::Interaction(ALMCore *alm) : Pointers(alm) {}
 
 Interaction::~Interaction()
 {

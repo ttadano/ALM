@@ -38,7 +38,7 @@ namespace ALM_NS
     class System: protected Pointers
     {
     public:
-        System(class ALM *);
+        System(class ALMCore *);
         ~System();
         void init();
         void recips(double [3][3], double [3][3]);
@@ -53,6 +53,7 @@ namespace ALM_NS
         double **xcoord; // fractional coordinate
         double **x_cartesian;
         double **magmom;
+	std::string str_magmom;
         int noncollinear;
         std::string *kdname;
 

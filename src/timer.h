@@ -25,7 +25,7 @@ namespace ALM_NS
     class Timer : protected Pointers
     {
     public:
-        Timer(class ALM *);
+        Timer(class ALMCore *);
         ~Timer();
 
         void reset();
