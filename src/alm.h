@@ -11,8 +11,6 @@
 #pragma once
 
 #include "alm_core.h"
-#include "fcs.h"
-#include "fitting.h"
 
 namespace ALM_NS
 {
@@ -22,17 +20,53 @@ namespace ALM_NS
         ALM();
         ~ALM();
 
-	void initialize();
-	void finalize();
-	ALMCore * get_alm_core();
-	int get_fc_length(const int fc_order);  // harmonic=2, ...
-	void get_fc(double *fc_value,
-		    int *elem_indices, // (len(fc_value), fc_order) is flatten.
-		    const int fc_order); // harmonic=2, ...
-	void run_fitting();
-	void run_suggest();
+        void initialize();
+        void finalize();
+        void set_run_mode(const std::string mode);
+        void set_output_control_params(const std::string prefix,
+                                       const int is_printsymmetry,
+                                       const bool print_hessian);
+        void set_symmetry_params(const int nsym,
+                                 const double tolerance);
+        void set_displacement_params(const std::string str_disp_basis,
+                                     const bool trim_dispsign_for_evenfunc);
+        void set_periodicity(const int is_periodic[3]);
+        void set_cell(const int nat,
+                      const int nkd,
+                      const double lavec[3][3],
+                      const double * const *xcoord,
+                      const int *kd,
+                      const std::string *kdname);
+        void set_magnetic_params(const double * const *magmom,
+                                 const bool lspin,
+                                 const int noncollinear,
+                                 const int trevsym,
+                                 const std::string str_magmom);
+        void set_force_file_params(const int ndata,
+                                   const int nstart,
+                                   const int nend);
+        void set_fitting_constraint(const int constraint_flag,
+                                    const std::string rotation_axis);
+        void set_fitting_params(const int nskip,
+                                const int nboot,
+                                const int multiply_data);
+        void set_fitting_filenames(const std::string dfile,
+                                   const std::string ffile);
+        void set_fitting_fc2_filename(const std::string fc2_file);
+        void set_fitting_fc3_filename(const std::string fc3_file);
+        void set_interaction_vars(const int maxorder,
+                                  const int *nbody_include);
+        void set_cutoff_radii(const double * const * const * rcs);
+
+        ALMCore * get_alm_core();
+        int get_fc_length(const int fc_order);  // harmonic=2, ...
+        void get_fc(double *fc_value,
+                    int *elem_indices, // (len(fc_value), fc_order) is flatten.
+                    const int fc_order); // harmonic=2, ...
+        void run_fitting();
+        void run_suggest();
 
     private:
-	ALMCore *alm_core;
+        ALMCore *alm_core;
     };
 }
