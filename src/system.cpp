@@ -30,7 +30,34 @@
 
 using namespace ALM_NS;
 
-System::System(ALMCore *alm): Pointers(alm) {}
+System::System(ALMCore *alm): Pointers(alm)
+{
+    // Default values
+    nat = 0;
+    nkd = 0;
+    kd = NULL;
+    kdname = NULL;
+    ndata = 0;
+    nstart = 0;
+    nend = 0;
+    nskip = 0;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            lavec[i][j] = 0;
+            rlavec[i][j] = 0;
+        }
+    }
+    x_cartesian = NULL;
+    xcoord = NULL;
+    cell_volume = 0;
+
+    str_magmom = "";
+    atomlist_class = NULL;
+    nclassatom = 0;
+    lspin = false;
+    noncollinear = 0;
+    magmom = NULL;
+}
 
 System::~System()
 {
@@ -115,9 +142,7 @@ void System::init()
     cout.unsetf(ios::scientific);
 
     // Generate Cartesian coordinate
-
     memory->allocate(x_cartesian, nat, 3);
-
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
             x_cartesian[i][j] = xcoord[i][j];

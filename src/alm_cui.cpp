@@ -40,20 +40,20 @@ void ALMCUI::run(int narg, char **arg)
     input_parser->run(alm_core, narg, arg);
     delete input_parser;
 
-    Writer *writer = new Writer();
-    writer->write_input_vars(alm);
 
     alm->initialize();
+    alm->run();
 
+
+    Writer *writer = new Writer();
+    writer->write_input_vars(alm);
     if (alm_core->mode == "fitting") {
-        alm->run_fitting();
         writer->writeall(alm);
     } else if (alm_core->mode == "suggest") {
-        alm->run_suggest();
         writer->write_displacement_pattern(alm);
     }
-
     delete writer;
+
 
     alm->finalize();
     delete alm;

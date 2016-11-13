@@ -49,12 +49,18 @@ void ALM::set_run_mode(const std::string mode)
     alm_core->mode = mode;
 }
 
-void ALM::set_output_control_params(const std::string prefix, // PREFIX
-                                    const int is_printsymmetry, // PRINTSYM
-                                    const bool print_hessian) // HESSIAN
+void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
 {
     alm_core->files->job_title = prefix;
+}
+
+void ALM::set_is_print_symmetry(const int is_printsymmetry) // PRINTSYM
+{
     alm_core->symmetry->is_printsymmetry = is_printsymmetry;
+}
+
+void ALM::set_is_print_hessians(const bool print_hessian) // HESSIAN
+{
     alm_core->print_hessian = print_hessian;
 }
 
@@ -83,17 +89,27 @@ void ALM::set_periodicity(const int is_periodic[3]) // PERIODIC
 void ALM::set_cell(const int nat,
                    const int nkd,
                    const double lavec[3][3],
-                   const double * const *xcoord,
-                   const int *kd,
-                   const std::string *kdname)
+                   const double xcoord[][3],
+                   const int kd[],
+                   const std::string kdname[])
 {
     int i, j;
 
     alm_core->system->nat = nat;
     alm_core->system->nkd = nkd;
-    alm_core->memory->allocate(alm_core->system->kdname, nkd);
-    alm_core->memory->allocate(alm_core->system->xcoord, nat, 3);
-    alm_core->memory->allocate(alm_core->system->kd, nat);
+    if (!alm_core->system->kdname) {
+        alm_core->memory->allocate(alm_core->system->kdname, nkd);
+    }
+    if (!alm_core->system->xcoord) {
+        alm_core->memory->allocate(alm_core->system->xcoord, nat, 3);
+    }
+    if (!alm_core->system->kd) {
+        alm_core->memory->allocate(alm_core->system->kd, nat);
+    }
+    if (!alm_core->system->magmom) {
+        alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
+    }
+
     for (i = 0; i < nkd; ++i) {
         alm_core->system->kdname[i] = kdname[i];
     }
@@ -108,12 +124,19 @@ void ALM::set_cell(const int nat,
             alm_core->system->xcoord[i][j] = xcoord[i][j];
         }
     }
+
+    for (i = 0; i < nat; ++i) {
+        for (j = 0; j < 3; ++j) {
+            alm_core->system->magmom[i][j] = 0.0;
+        }
+    }
+
 }
 
 void ALM::set_magnetic_params(const double * const *magmom, // MAGMOM
                               const bool lspin, // MAGMOM
                               const int noncollinear, // NONCOLLINEAR
-                              const int trevsym, // TREVSYM
+                              const int trev_sym_mag, // TREVSYM
                               const std::string str_magmom) // MAGMOM
 {
     int i, j, nat;
@@ -122,7 +145,11 @@ void ALM::set_magnetic_params(const double * const *magmom, // MAGMOM
     alm_core->system->lspin = lspin;
     alm_core->system->noncollinear = noncollinear;
     alm_core->system->str_magmom = str_magmom;
-    alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
+    alm_core->symmetry->trev_sym_mag = trev_sym_mag;
+
+    if (!alm_core->system->magmom) {
+        alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
+    }
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
             alm_core->system->magmom[i][j] = magmom[i][j];
@@ -191,7 +218,7 @@ void ALM::set_fitting_fc3_filename(const std::string fc3_file) // FC3XML
 void ALM::set_interaction_vars(const int maxorder, // NORDER harmonic=1
                                const int *nbody_include) // NBODY
 {
-    int i;
+    int i, j, k, nkd;
 
     // nbody_include is defined as follows:
     //
@@ -206,10 +233,24 @@ void ALM::set_interaction_vars(const int maxorder, // NORDER harmonic=1
     // }
 
     alm_core->interaction->maxorder = maxorder;
-    alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
+    if (!alm_core->interaction->nbody_include) {
+        alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
+    }
+    nkd = alm_core->system->nkd;
+    if (!alm_core->interaction->rcs) {
+        alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+    }
 
     for (i = 0; i < maxorder; ++i) {
         alm_core->interaction->nbody_include[i] = nbody_include[i];
+    }
+
+    for (i = 0; i < maxorder; ++i) {
+        for (j = 0; j < nkd; ++j) {
+            for (k = 0; k < nkd; ++k) {
+                alm_core->interaction->rcs[i][j][k] = -1.0;
+            }
+        }
     }
 }
 
@@ -219,7 +260,9 @@ void ALM::set_cutoff_radii(const double * const * const * rcs)
 
     nkd = alm_core->system->nkd;
     maxorder = alm_core->interaction->maxorder;
-    alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+    if (!alm_core->interaction->rcs) {
+        alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+    }
 
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
@@ -291,6 +334,14 @@ void ALM::get_fc(double *fc_value,
     }
 }
 
+void ALM::run()
+{
+    if (alm_core->mode == "fitting") {
+        run_fitting();
+    } else if (alm_core->mode == "suggest") {
+        run_suggest();
+    }
+}
 void ALM::run_fitting()
 {
     alm_core->constraint->setup();

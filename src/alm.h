@@ -23,9 +23,9 @@ namespace ALM_NS
         void initialize();
         void finalize();
         void set_run_mode(const std::string mode);
-        void set_output_control_params(const std::string prefix,
-                                       const int is_printsymmetry,
-                                       const bool print_hessian);
+        void set_output_filename_prefix(const std::string prefix);
+        void set_is_print_symmetry(const int is_printsymmetry);
+        void set_is_print_hessians(const bool print_hessian);
         void set_symmetry_params(const int nsym,
                                  const double tolerance);
         void set_displacement_params(const std::string str_disp_basis,
@@ -34,13 +34,13 @@ namespace ALM_NS
         void set_cell(const int nat,
                       const int nkd,
                       const double lavec[3][3],
-                      const double * const *xcoord,
-                      const int *kd,
-                      const std::string *kdname);
+                      const double xcoord[][3],
+                      const int kd[],
+                      const std::string kdname[]);
         void set_magnetic_params(const double * const *magmom,
                                  const bool lspin,
                                  const int noncollinear,
-                                 const int trevsym,
+                                 const int trev_sym_mag,
                                  const std::string str_magmom);
         void set_force_file_params(const int ndata,
                                    const int nstart,
@@ -58,15 +58,16 @@ namespace ALM_NS
                                   const int *nbody_include);
         void set_cutoff_radii(const double * const * const * rcs);
 
-        ALMCore * get_alm_core();
+        ALM_NS::ALMCore * get_alm_core();
         int get_fc_length(const int fc_order);  // harmonic=2, ...
         void get_fc(double *fc_value,
                     int *elem_indices, // (len(fc_value), fc_order) is flatten.
                     const int fc_order); // harmonic=2, ...
-        void run_fitting();
-        void run_suggest();
+        void run();
 
     private:
-        ALMCore *alm_core;
+        ALM_NS::ALMCore *alm_core;
+        void run_fitting();
+        void run_suggest();
     };
 }
