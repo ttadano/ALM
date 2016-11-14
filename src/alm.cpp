@@ -157,13 +157,26 @@ void ALM::set_magnetic_params(const double * const *magmom, // MAGMOM
     }
 }
 
-void ALM::set_force_file_params(const int ndata, // NDATA
-                                const int nstart, // NSTART
-                                const int nend) // NEND
+void ALM::set_displacement_and_force(const int ndata,
+				     const int nmulti,
+				     const double * const *u,
+				     const double * const *f)
 {
-    alm_core->system->ndata = ndata;
-    alm_core->system->nstart = nstart;
-    alm_core->system->nend = nend;
+    int nat = alm_core->system->nat;
+    if (!alm_core->fitting->u) {
+        alm_core->memory->allocate(alm_core->fitting->u, ndata * nmulti, 3 * nat);
+    }
+    if (!alm_core->fitting->f) {
+        alm_core->memory->allocate(alm_core->fitting->f, ndata * nmulti, 3 * nat);
+    }
+    alm_core->fitting->nmulti = nmulti;
+
+    for (int i = 0; i < ndata * nmulti; i++) {
+	for (int j = 0; j < 3 * nat; j++) {
+	    alm_core->fitting->u[i][j] = u[i][j];
+	    alm_core->fitting->f[i][j] = f[i][j];
+	}
+    }
 }
 
 void ALM::set_fitting_constraint(const int constraint_flag, // ICONST

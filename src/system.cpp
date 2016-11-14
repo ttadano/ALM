@@ -38,7 +38,7 @@ System::System(ALMCore *alm): Pointers(alm)
     kd = NULL;
     kdname = NULL;
     ndata = 0;
-    nstart = 0;
+    nstart = 1;
     nend = 0;
     nskip = 0;
     for (int i = 0; i < 3; i++) {

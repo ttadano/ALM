@@ -64,4 +64,4 @@ install(TARGETS almcxx_static ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Header file
 install(FILES ${PROJECT_SOURCE_DIR}/src/alm.h DESTINATION ${PROJECT_SOURCE_DIR}/include)
-install(FILES ${PROJECT_SOURCE_DIR}/src/alm_core.h DESTINATION ${PROJECT_SOURCE_DIR}/include)
+

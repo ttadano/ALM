@@ -46,7 +46,7 @@ Symmetry::Symmetry(ALMCore *alm) : Pointers(alm)
     sym_available = NULL;
     ntran = 0;
     natmin = 0;
-    multiply_data = 0;
+    multiply_data = 1;
     tolerance = 1e-6;
 }
 

@@ -10,10 +10,11 @@
 
 #pragma once
 
-#include "alm_core.h"
+#include <string>
 
 namespace ALM_NS
 {
+    class ALMCore;
     class ALM
     {
     public:
@@ -42,9 +43,10 @@ namespace ALM_NS
                                  const int noncollinear,
                                  const int trev_sym_mag,
                                  const std::string str_magmom);
-        void set_force_file_params(const int ndata,
-                                   const int nstart,
-                                   const int nend);
+	void set_displacement_and_force(const int ndata,
+					const int nmulti,
+					const double * const *u,
+					const double * const *f);
         void set_fitting_constraint(const int constraint_flag,
                                     const std::string rotation_axis);
         void set_fitting_params(const int nskip,
@@ -58,7 +60,7 @@ namespace ALM_NS
                                   const int *nbody_include);
         void set_cutoff_radii(const double * const * const * rcs);
 
-        ALM_NS::ALMCore * get_alm_core();
+        ALMCore * get_alm_core();
         int get_fc_length(const int fc_order);  // harmonic=2, ...
         void get_fc(double *fc_value,
                     int *elem_indices, // (len(fc_value), fc_order) is flatten.
@@ -66,7 +68,7 @@ namespace ALM_NS
         void run();
 
     private:
-        ALM_NS::ALMCore *alm_core;
+        ALMCore *alm_core;
         void run_fitting();
         void run_suggest();
     };

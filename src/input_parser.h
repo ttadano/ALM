@@ -29,6 +29,7 @@ namespace ALM_NS
 	void run(ALMCore *alm,
 		 const int narg,
 		 const char * const *arg);
+	void parse_displacement_and_force(ALMCore *alm);
         std::string str_magmom;
 
     private:
@@ -60,5 +61,14 @@ namespace ALM_NS
 			const std::string,
 			std::map<std::string, std::string>,
 			Error *);
+	void data_multiplier(ALMCore *alm,
+			     const int nat,
+			     const int ndata,
+			     const int nstart,
+			     const int nend,
+			     const int ndata_used,
+			     const int multiply_data,
+			     const std::string file_disp,
+			     const std::string file_force);
     };
 }

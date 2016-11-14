@@ -14,6 +14,7 @@
 #include "alm_core.h"
 #include "alm_cui.h"
 #include "input_parser.h"
+#include "input_parser.h"
 #include "writer.h"
 #include "version.h"
 
@@ -38,10 +39,14 @@ void ALMCUI::run(int narg, char **arg)
     // alm_core->mode is set herein.
     InputParser *input_parser = new InputParser();
     input_parser->run(alm_core, narg, arg);
-    delete input_parser;
-
 
     alm->initialize();
+
+    if (alm_core->mode == "fitting") {
+	input_parser->parse_displacement_and_force(alm_core);
+    }
+    delete input_parser;
+
     alm->run();
 
 

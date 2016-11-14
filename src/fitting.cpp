@@ -54,6 +54,12 @@ Fitting::Fitting(ALMCore *alm): Pointers(alm)
 #else
     std::srand(seed);
 #endif
+
+    params = NULL;
+    nboot = 0;
+    u = NULL;
+    f = NULL;
+    nmulti = 0;
 }
 
 Fitting::~Fitting()
@@ -69,20 +75,14 @@ void Fitting::fitmain()
     int nat = system->nat;
     int natmin = symmetry->natmin;
     int ntran = symmetry->ntran;
-
-    int ndata = system->ndata;
     int nstart = system->nstart;
     int nend = system->nend;
     int nskip = system->nskip;
-
     int N, M, N_new;
     int maxorder = interaction->maxorder;
     int P = constraint->P;
-
-    int nmulti;
     int ndata_used = nend - nstart + 1;
 
-    double **u, **f;
     double **amat, *fsum;
     double *fsum_orig;
     double *param_tmp;
@@ -100,11 +100,6 @@ void Fitting::fitmain()
         << std::endl << std::endl;
 
     // Read displacement-force training data set from files
-
-    data_multiplier(nat, ndata, nstart, nend, ndata_used, nmulti,
-                    symmetry->multiply_data, u, f,
-                    files->file_disp, files->file_force);
-
     N = 0;
     for (i = 0; i < maxorder; ++i) {
         N += fcs->ndup[i].size();
@@ -117,7 +112,6 @@ void Fitting::fitmain()
     M = 3 * natmin * ndata_used * nmulti;
 
     if (constraint->constraint_algebraic) {
-
         N_new = 0;
         for (i = 0; i < maxorder; ++i) {
             N_new += constraint->index_bimap[i].size();
@@ -132,9 +126,7 @@ void Fitting::fitmain()
         calc_matrix_elements_algebraic_constraint(M, N, N_new, nat, natmin, ndata_used,
                                                   nmulti, maxorder, u, f, amat, fsum,
                                                   fsum_orig);
-
     } else {
-
         memory->allocate(amat, M, N);
         memory->allocate(fsum, M);
 
@@ -219,170 +211,6 @@ void Fitting::fitmain()
     timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
-}
-
-void Fitting::data_multiplier(const int nat,
-                              const int ndata,
-                              const int nstart,
-                              const int nend,
-                              const int ndata_used,
-                              int &nmulti,
-                              const int multiply_data,
-                              double **&u,
-                              double **&f,
-                              const std::string file_disp,
-                              const std::string file_force)
-{
-    int i, j, k;
-    int idata, itran, isym;
-    int n_mapped;
-    double u_in, f_in;
-    double *u_tmp, *f_tmp;
-    std::vector<int> vec_data;
-    unsigned int nline_f, nline_u;
-    unsigned int nreq;
-
-    std::ifstream ifs_disp, ifs_force;
-
-    ifs_disp.open(file_disp.c_str(), std::ios::in);
-    if (!ifs_disp) error->exit("openfiles", "cannot open disp file");
-    ifs_force.open(file_force.c_str(), std::ios::in);
-    if (!ifs_force) error->exit("openfiles", "cannot open force file");
-
-    nreq = 3 * nat * ndata;
-
-    memory->allocate(u_tmp, nreq);
-    memory->allocate(f_tmp, nreq);
-
-    // Read displacements from DFILE
-
-    nline_u = 0;
-    while (ifs_disp >> u_in) {
-        u_tmp[nline_u++] = u_in;
-        if (nline_u == nreq) break;
-    }
-    if (nline_u < nreq)
-        error->exit("data_multiplier",
-                    "The number of lines in DFILE is too small for the given NDATA = ",
-                    ndata);
-
-    // Read forces from FFILE
-
-    nline_f = 0;
-    while (ifs_force >> f_in) {
-        f_tmp[nline_f++] = f_in;
-        if (nline_f == nreq) break;
-    }
-    if (nline_f < nreq)
-        error->exit("data_multiplier",
-                    "The number of lines in FFILE is too small for the given NDATA = ",
-                    ndata);
-
-    // Multiply data
-
-    if (multiply_data == 0) {
-
-        std::cout << " MULTDAT = 0: Given displacement-force data sets will be used as is."
-            << std::endl << std::endl;
-
-        nmulti = 1;
-
-        memory->allocate(u, ndata_used * nmulti, 3 * nat);
-        memory->allocate(f, ndata_used * nmulti, 3 * nat);
-
-        idata = 0;
-
-        for (i = 0; i < ndata; ++i) {
-            if (i < nstart - 1) continue;
-            if (i > nend - 1) break;
-
-            for (j = 0; j < nat; ++j) {
-                for (k = 0; k < 3; ++k) {
-                    u[idata][3 * j + k] = u_tmp[3 * nat * i + 3 * j + k];
-                    f[idata][3 * j + k] = f_tmp[3 * nat * i + 3 * j + k];
-                }
-            }
-            ++idata;
-        }
-
-    } else if (multiply_data == 1) {
-
-        std::cout << "  MULTDAT = 1: Generate symmetrically equivalent displacement-force " << std::endl;
-        std::cout << "               data sets by using pure translational operations only." << std::endl << std::endl;
-
-        nmulti = symmetry->ntran;
-
-        memory->allocate(u, ndata_used * nmulti, 3 * nat);
-        memory->allocate(f, ndata_used * nmulti, 3 * nat);
-
-        idata = 0;
-
-        for (i = 0; i < ndata; ++i) {
-            if (i < nstart - 1) continue;
-            if (i > nend - 1) break;
-
-            for (itran = 0; itran < symmetry->ntran; ++itran) {
-                for (j = 0; j < nat; ++j) {
-                    n_mapped = symmetry->map_sym[j][symmetry->symnum_tran[itran]];
-
-                    for (k = 0; k < 3; ++k) {
-                        u[idata][3 * n_mapped + k] = u_tmp[3 * nat * i + 3 * j + k];
-                        f[idata][3 * n_mapped + k] = f_tmp[3 * nat * i + 3 * j + k];
-                    }
-                }
-                ++idata;
-            }
-        }
-
-    } else if (multiply_data == 2) {
-
-        double u_rot[3], f_rot[3];
-
-        std::cout << "  MULTDAT = 2: Generate symmetrically equivalent displacement-force" << std::endl;
-        std::cout << "                data sets. (including rotational part) " << std::endl << std::endl;
-
-        nmulti = symmetry->nsym;
-
-        memory->allocate(u, ndata_used * nmulti, 3 * nat);
-        memory->allocate(f, ndata_used * nmulti, 3 * nat);
-
-        idata = 0;
-
-        for (i = 0; i < ndata; ++i) {
-            if (i < nstart - 1) continue;
-            if (i > nend - 1) break;
-
-#pragma omp parallel for private(j, n_mapped, k, u_rot, f_rot)
-            for (isym = 0; isym < symmetry->nsym; ++isym) {
-                for (j = 0; j < nat; ++j) {
-                    n_mapped = symmetry->map_sym[j][isym];
-
-                    for (k = 0; k < 3; ++k) {
-                        u_rot[k] = u_tmp[3 * nat * i + 3 * j + k];
-                        f_rot[k] = f_tmp[3 * nat * i + 3 * j + k];
-                    }
-
-                    rotvec(u_rot, u_rot, symmetry->symrel[isym]);
-                    rotvec(f_rot, f_rot, symmetry->symrel[isym]);
-
-                    for (k = 0; k < 3; ++k) {
-                        u[nmulti * idata + isym][3 * n_mapped + k] = u_rot[k];
-                        f[nmulti * idata + isym][3 * n_mapped + k] = f_rot[k];
-                    }
-                }
-            }
-            ++idata;
-        }
-
-    } else {
-        error->exit("data_multiplier", "Unsupported MULTDAT");
-    }
-
-    memory->deallocate(u_tmp);
-    memory->deallocate(f_tmp);
-
-    ifs_disp.close();
-    ifs_force.close();
 }
 
 void Fitting::fit_without_constraints(int N,
