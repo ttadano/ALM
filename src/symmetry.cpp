@@ -32,6 +32,22 @@ using namespace ALM_NS;
 Symmetry::Symmetry(ALMCore *alm) : Pointers(alm)
 {
     file_sym = "SYMM_INFO";
+
+    // Default values
+    nsym = 0;
+    is_printsymmetry = 0;
+    trev_sym_mag = 1;
+    symnum_tran = NULL;
+    tnons = NULL;
+    symrel = NULL;
+    map_sym = NULL;
+    map_p2s = NULL;
+    map_s2p = NULL;
+    sym_available = NULL;
+    ntran = 0;
+    natmin = 0;
+    multiply_data = 1;
+    tolerance = 1e-6;
 }
 
 Symmetry::~Symmetry()

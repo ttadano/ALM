@@ -38,6 +38,10 @@ ALMCore::ALMCore()
     timer = new Timer(this);
 
     std::cout << " Job started at " << timer->DateAndTime() << std::endl;
+
+    // Default values
+    mode = "suggest";
+    print_hessian = false;
 }
 
 void ALMCore::create()
