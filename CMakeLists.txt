@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -fopenmp")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2 -fopenmp")
-set(CMAKE_CXX_COMPILER "g++")
+set(CMAKE_CXX_COMPILER "g++-6")
 # set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_BUILD_TYPE RELEASE)
 
