@@ -3,3 +3,6 @@
 alm
 _build
 TAGS
+include
+lib
+a.out

@@ -13,7 +13,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include "alm_core.h"
+#include "alm.h"
 
 namespace ALM_NS
 {
@@ -61,14 +61,14 @@ namespace ALM_NS
         Writer();
         ~Writer();
 
-        void writeall(ALMCore *);
-        void write_input_vars(ALMCore *);
-        void write_displacement_pattern(ALMCore *);
+        void writeall(ALM *);
+        void write_input_vars(ALM *);
+        void write_displacement_pattern(ALM *);
 
     private:
-        void write_force_constants(ALMCore *);
-        void write_misc_xml(ALMCore *);
-        void write_hessian(ALMCore *);
+        void write_force_constants(ALM *);
+        void write_misc_xml(ALM *);
+        void write_hessian(ALM *);
 
         std::string double2string(const double, const int nprec = 15);
     };

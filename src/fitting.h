@@ -32,10 +32,9 @@ namespace ALM_NS
         unsigned int nboot;
         unsigned int seed;
 
-        void data_multiplier(const int, const int, const int, const int, const int,
-                             int &, const int,
-                             double **&, double **&,
-                             const std::string, const std::string);
+	double **u;
+	double **f;
+	int nmulti;
 
         void calc_matrix_elements_algebraic_constraint(const int, const int, const int, const int,
                                                        const int, const int, const int, const int,

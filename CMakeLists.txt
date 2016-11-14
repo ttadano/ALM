@@ -19,13 +19,13 @@ set(soserial "1")
 
 # Source code
 include_directories("${PROJECT_SOURCE_DIR}/src")
-set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
-	    ${PROJECT_SOURCE_DIR}/src/constraint.cpp
+set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
+            ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
+            ${PROJECT_SOURCE_DIR}/src/constraint.cpp
             ${PROJECT_SOURCE_DIR}/src/error.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
             ${PROJECT_SOURCE_DIR}/src/fitting.cpp
-            ${PROJECT_SOURCE_DIR}/src/input_setter.cpp
             ${PROJECT_SOURCE_DIR}/src/interaction.cpp
             ${PROJECT_SOURCE_DIR}/src/memory.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
@@ -42,6 +42,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
 add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
                    ${PROJECT_SOURCE_DIR}/src/alm_cui.cpp
 		   ${PROJECT_SOURCE_DIR}/src/input_parser.cpp
+		   ${PROJECT_SOURCE_DIR}/src/input_setter.cpp
 		   ${SOURCES})
 target_link_libraries(alm ${Boost_LIBRARIES} gomp lapack)
 # add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp)
@@ -62,4 +63,5 @@ set_property(TARGET almcxx_static PROPERTY OUTPUT_NAME almcxx)
 install(TARGETS almcxx_static ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Header file
-# install(FILES ${PROJECT_SOURCE_DIR}/src/alm.h DESTINATION ${PROJECT_SOURCE_DIR}/include)
+install(FILES ${PROJECT_SOURCE_DIR}/src/alm.h DESTINATION ${PROJECT_SOURCE_DIR}/include)
+
