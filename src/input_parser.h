@@ -26,10 +26,10 @@ namespace ALM_NS
     public:
         InputParser();
         ~InputParser();
-	void run(ALMCore *alm,
-		 const int narg,
-		 const char * const *arg);
-	void parse_displacement_and_force(ALMCore *alm);
+        void run(ALMCore *alm,
+                 const int narg,
+                 const char * const *arg);
+        void parse_displacement_and_force(ALMCore *alm);
         std::string str_magmom;
 
     private:
@@ -61,14 +61,31 @@ namespace ALM_NS
 			const std::string,
 			std::map<std::string, std::string>,
 			Error *);
+        int get_num_expansions(ALMCore *alm,
+			       const int multiply_data);
+	void parse_disp_force_files(ALMCore *alm,
+				    double **u,
+				    double **f,
+				    const int nat,
+				    const int ndata,
+				    const int nstart,
+				    const int nend,
+				    const std::string file_disp,
+				    const std::string file_force);
 	void data_multiplier(ALMCore *alm,
+			     double ** u_out,
+			     double ** f_out,
+			     const double * const * u_in,
+			     const double * const * f_in,
 			     const int nat,
-			     const int ndata,
-			     const int nstart,
-			     const int nend,
 			     const int ndata_used,
-			     const int multiply_data,
-			     const std::string file_disp,
-			     const std::string file_force);
+			     const int nmulti,
+			     const int multiply_data);
+	void set_displacement_and_force(ALMCore *alm,
+					const double * const * u,
+					const double * const * f,
+					const int nat,
+					const int ndata_used,
+					const int nmulti);
     };
 }
