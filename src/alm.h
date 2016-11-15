@@ -43,10 +43,10 @@ namespace ALM_NS
                                  const int noncollinear,
                                  const int trev_sym_mag,
                                  const std::string str_magmom);
-	void set_displacement_and_force(const int ndata,
-					const int nmulti,
-					const double * const *u,
-					const double * const *f);
+	void set_displacement_and_force(const double * u_in,
+					const double * f_in,
+					const int nat,
+					const int ndata_used);
         void set_fitting_constraint(const int constraint_flag,
                                     const std::string rotation_axis);
         void set_fitting_params(const int nskip,

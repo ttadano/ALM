@@ -40,6 +40,9 @@ void ALMCUI::run(int narg, char **arg)
     InputParser *input_parser = new InputParser();
     input_parser->run(alm_core, narg, arg);
 
+    Writer *writer = new Writer();
+    writer->write_input_vars(alm);
+
     alm->initialize();
 
     if (alm_core->mode == "fitting") {
@@ -49,9 +52,6 @@ void ALMCUI::run(int narg, char **arg)
 
     alm->run();
 
-
-    Writer *writer = new Writer();
-    writer->write_input_vars(alm);
     if (alm_core->mode == "fitting") {
         writer->writeall(alm);
     } else if (alm_core->mode == "suggest") {

@@ -21,6 +21,7 @@
 #include "constraint.h"
 #include "timer.h"
 #include "patterndisp.h"
+#include "error.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -55,6 +56,7 @@ void ALMCore::create()
     fitting = new Fitting(this);
     constraint = new Constraint(this);
     displace = new Displace(this);
+    error = new Error(this);
 }
 
 void ALMCore::initialize()
@@ -84,5 +86,6 @@ void ALMCore::finalize()
     delete constraint;
     delete displace;
     delete memory;
+    delete error;
 }
 

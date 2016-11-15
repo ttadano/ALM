@@ -213,6 +213,15 @@ void Fitting::fitmain()
     std::cout << std::endl;
 }
 
+void Fitting::set_displacement_and_force(const double * const * u_in,
+					 const double * const * f_in,
+					 const int nat,
+					 const int ndata_used)
+{
+    int multiply_data = symmetry->multiply_data;
+    data_multiplier(u_in, f_in, nat, ndata_used, multiply_data);
+}
+
 void Fitting::fit_without_constraints(int N,
                                       int M,
                                       double **amat,
@@ -1050,6 +1059,96 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
     std::cout << "done!" << std::endl << std::endl;
 }
 
+void Fitting::data_multiplier(const double * const * u_in,
+			      const double * const * f_in,
+			      const int nat,
+			      const int ndata_used,
+			      const int multiply_data)
+{
+    int i, j, k;
+    int idata, itran, isym;
+    int n_mapped;
+    double u_rot[3], f_rot[3];
+
+    set_number_for_multiplier(multiply_data);
+
+    if (nmulti > 0) {
+	if (!u) {
+	    memory->allocate(u, ndata_used * nmulti, 3 * nat);
+	}
+	if (!f) {
+	    memory->allocate(f, ndata_used * nmulti, 3 * nat);
+	}
+    }
+
+    // Multiply data
+    if (multiply_data == 0) {
+        std::cout << " MULTDAT = 0: Given displacement-force data sets will be used as is."
+            << std::endl << std::endl;
+        idata = 0;
+        for (i = 0; i < ndata_used; ++i) {
+            for (j = 0; j < nat; ++j) {
+                for (k = 0; k < 3; ++k) {
+                    u[i][3 * j + k] = u_in[i][3 * j + k];
+                    f[i][3 * j + k] = f_in[i][3 * j + k];
+                }
+            }
+        }
+    } else if (multiply_data == 1) {
+        std::cout << "  MULTDAT = 1: Generate symmetrically equivalent displacement-force " << std::endl;
+        std::cout << "               data sets by using pure translational operations only." << std::endl << std::endl;
+        idata = 0;
+        for (i = 0; i < ndata_used; ++i) {
+            for (itran = 0; itran < symmetry->ntran; ++itran) {
+                for (j = 0; j < nat; ++j) {
+                    n_mapped = symmetry->map_sym[j][symmetry->symnum_tran[itran]];
+                    for (k = 0; k < 3; ++k) {
+                        u[idata][3 * n_mapped + k] = u_in[i][3 * j + k];
+                        f[idata][3 * n_mapped + k] = f_in[i][3 * j + k];
+                    }
+                }
+                ++idata;
+            }
+        }
+    } else if (multiply_data == 2) {
+        std::cout << "  MULTDAT = 2: Generate symmetrically equivalent displacement-force" << std::endl;
+        std::cout << "                data sets. (including rotational part) " << std::endl << std::endl;
+        idata = 0;
+        for (i = 0; i < ndata_used; ++i) {
+#pragma omp parallel for private(j, n_mapped, k, u_rot, f_rot)
+            for (isym = 0; isym < symmetry->nsym; ++isym) {
+                for (j = 0; j < nat; ++j) {
+                    n_mapped = symmetry->map_sym[j][isym];
+                    for (k = 0; k < 3; ++k) {
+                        u_rot[k] = u_in[i][3 * j + k];
+                        f_rot[k] = f_in[i][3 * j + k];
+                    }
+                    rotvec(u_rot, u_rot, symmetry->symrel[isym]);
+                    rotvec(f_rot, f_rot, symmetry->symrel[isym]);
+                    for (k = 0; k < 3; ++k) {
+                        u[nmulti * idata + isym][3 * n_mapped + k] = u_rot[k];
+                        f[nmulti * idata + isym][3 * n_mapped + k] = f_rot[k];
+                    }
+                }
+            }
+            ++idata;
+        }
+    } else {
+        error->exit("data_multiplier", "Unsupported MULTDAT");
+    }
+}
+
+void Fitting::set_number_for_multiplier(const int multiply_data)
+{
+    nmulti = 0;
+    if (multiply_data == 0) {
+        nmulti = 1;
+    } else if (multiply_data == 1) {
+        nmulti = symmetry->ntran;
+    } else if (multiply_data == 2) {
+        nmulti = symmetry->nsym;
+    }
+}
 
 int Fitting::inprim_index(const int n)
 {

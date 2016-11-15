@@ -36,6 +36,10 @@ namespace ALM_NS
 	double **f;
 	int nmulti;
 
+	void set_displacement_and_force(const double * const * u_in,
+					const double * const * f_in,
+					const int nat,
+					const int ndata_used);
         void calc_matrix_elements_algebraic_constraint(const int, const int, const int, const int,
                                                        const int, const int, const int, const int,
                                                        double **, double **, double **, double *, double *);
@@ -49,6 +53,12 @@ namespace ALM_NS
 
     private:
 
+	void data_multiplier(const double * const * u_in,
+			     const double * const * f_in,
+			     const int nat,
+			     const int ndata_used,
+			     const int multiply_data);
+	void set_number_for_multiplier(const int multiply_data);
         int inprim_index(const int);
         void fit_without_constraints(int, int, double **, double *, double *);
         void fit_algebraic_constraints(int, int, double **, double *,
