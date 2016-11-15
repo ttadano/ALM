@@ -157,26 +157,31 @@ void ALM::set_magnetic_params(const double * const *magmom, // MAGMOM
     }
 }
 
-void ALM::set_displacement_and_force(const int ndata,
-				     const int nmulti,
-				     const double * const *u,
-				     const double * const *f)
+void ALM::set_displacement_and_force(const double * u_in,
+				     const double * f_in,
+				     const int nat,
+				     const int ndata_used)
 {
-    int nat = alm_core->system->nat;
-    if (!alm_core->fitting->u) {
-        alm_core->memory->allocate(alm_core->fitting->u, ndata * nmulti, 3 * nat);
-    }
-    if (!alm_core->fitting->f) {
-        alm_core->memory->allocate(alm_core->fitting->f, ndata * nmulti, 3 * nat);
-    }
-    alm_core->fitting->nmulti = nmulti;
+    double **u;
+    double **f;
 
-    for (int i = 0; i < ndata * nmulti; i++) {
-	for (int j = 0; j < 3 * nat; j++) {
-	    alm_core->fitting->u[i][j] = u[i][j];
-	    alm_core->fitting->f[i][j] = f[i][j];
-	}
+    alm_core->system->ndata = ndata_used;
+    alm_core->system->nstart = 1;
+    alm_core->system->nend = ndata_used;
+
+    alm_core->memory->allocate(u, ndata_used, 3 * nat);
+    alm_core->memory->allocate(f, ndata_used, 3 * nat);
+
+    for (int i = 0; i < ndata_used; i++) {
+        for (int j = 0; j < 3 * nat; j++) {
+            u[i][j] = u_in[i * nat * 3 + j];
+            f[i][j] = f_in[i * nat * 3 + j];
+        }
     }
+    alm_core->fitting->set_displacement_and_force(u, f, nat, ndata_used);
+
+    alm_core->memory->deallocate(u);
+    alm_core->memory->deallocate(f);
 }
 
 void ALM::set_fitting_constraint(const int constraint_flag, // ICONST
