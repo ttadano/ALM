@@ -21,8 +21,6 @@ namespace ALM_NS
         ALM();
         ~ALM();
 
-        void initialize();
-        void finalize();
         void set_run_mode(const std::string mode);
         void set_output_filename_prefix(const std::string prefix);
         void set_is_print_symmetry(const int is_printsymmetry);

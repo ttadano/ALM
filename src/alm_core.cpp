@@ -73,10 +73,6 @@ ALMCore::~ALMCore()
     std::cout << std::endl << " Job finished at " 
         << timer->DateAndTime() << std::endl;
     delete timer;
-}
-
-void ALMCore::finalize()
-{
     delete files;
     delete interaction;
     delete fcs;

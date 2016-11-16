@@ -52,7 +52,6 @@ Interaction::~Interaction()
     memory->deallocate(x_image);
     memory->deallocate(exist_image);
     memory->deallocate(str_order);
-    memory->deallocate(nbody_include);
     memory->deallocate(pairs);
     memory->deallocate(mindist_pairs);
     memory->deallocate(interaction_pair);

@@ -14,7 +14,6 @@
 #include "alm_core.h"
 #include "alm_cui.h"
 #include "input_parser.h"
-#include "input_parser.h"
 #include "writer.h"
 #include "version.h"
 
@@ -43,7 +42,6 @@ void ALMCUI::run(int narg, char **arg)
     Writer *writer = new Writer();
     writer->write_input_vars(alm);
 
-    alm->initialize();
 
     if (alm_core->mode == "fitting") {
 	input_parser->parse_displacement_and_force(alm_core);
@@ -59,8 +57,6 @@ void ALMCUI::run(int narg, char **arg)
     }
     delete writer;
 
-
-    alm->finalize();
     delete alm;
 }
 

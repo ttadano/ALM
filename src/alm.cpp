@@ -8,6 +8,7 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include <iostream>
 #include <string>
 #include "alm.h"
 #include "alm_core.h"
@@ -31,17 +32,32 @@ ALM::ALM()
 
 ALM::~ALM()
 {
+    if (alm_core->system->kdname) {
+        alm_core->memory->deallocate(alm_core->system->kdname);
+    }
+    alm_core->system->kdname = NULL;
+    if (alm_core->system->xcoord) {
+        alm_core->memory->deallocate(alm_core->system->xcoord);
+    }
+    alm_core->system->xcoord = NULL;
+    if (alm_core->system->kd) {
+        alm_core->memory->deallocate(alm_core->system->kd);
+    }
+    alm_core->system->kd = NULL;
+    if (alm_core->system->magmom) {
+        alm_core->memory->deallocate(alm_core->system->magmom);
+    }
+    alm_core->system->magmom = NULL;
+    if (alm_core->interaction->nbody_include) {
+        alm_core->memory->deallocate(alm_core->interaction->nbody_include);
+    }
+    alm_core->interaction->nbody_include = NULL;
+    if (alm_core->interaction->rcs) {
+        alm_core->memory->deallocate(alm_core->interaction->rcs);
+    }
+    alm_core->interaction->rcs = NULL;
+
     delete alm_core;
-}
-
-void ALM::initialize()
-{
-    alm_core->initialize();
-}
-
-void ALM::finalize()
-{
-    alm_core->finalize();
 }
 
 void ALM::set_run_mode(const std::string mode)
@@ -259,9 +275,15 @@ void ALM::set_interaction_vars(const int maxorder, // NORDER harmonic=1
         alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
     }
 
-    for (i = 0; i < maxorder; ++i) {
-        alm_core->interaction->nbody_include[i] = nbody_include[i];
-    }
+    if (nbody_include) {
+        for (i = 0; i < maxorder; ++i) {
+            alm_core->interaction->nbody_include[i] = nbody_include[i];
+        }
+    } else {
+        for (i = 0; i < maxorder; ++i) {
+            alm_core->interaction->nbody_include[i] = i + 2;
+        }
+    }        
 
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
@@ -296,14 +318,14 @@ ALMCore * ALM::get_alm_core()
     return alm_core;
 }
 
-int ALM::get_fc_length(const int fc_order)  // harmonic=2, ...
+int ALM::get_fc_length(const int fc_order)  // harmonic=1, ...
 {
     int id, order, num_unique_elems, num_equiv_elems;
     Fcs *fcs;
 
     fcs = alm_core->fcs;
     id = 0;
-    order = fc_order - 2;
+    order = fc_order - 1;
     if (fcs->ndup[order].size() < 1) {return 0;}
     num_unique_elems = fcs->ndup[order].size();
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
@@ -314,8 +336,8 @@ int ALM::get_fc_length(const int fc_order)  // harmonic=2, ...
 }
 
 void ALM::get_fc(double *fc_value,
-                 int *elem_indices, // (len(fc_value), fc_order) is flatten.
-                 const int fc_order) // harmonic=2, ...
+                 int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
+                 const int fc_order) // harmonic=1, ...
 {
     int j, k, ip, id;
     int order, num_unique_elems, num_equiv_elems, maxorder;
@@ -327,7 +349,7 @@ void ALM::get_fc(double *fc_value,
     fitting = alm_core->fitting;
     maxorder = alm_core->interaction->maxorder;
     ip = 0;
-    for (order = 0; order < maxorder; ++order) {
+    for (order = 0; order < fc_order; ++order) {
         if (fcs->ndup[order].size() < 1) {continue;} // 
         id = 0;
         num_unique_elems = fcs->ndup[order].size();
@@ -335,12 +357,12 @@ void ALM::get_fc(double *fc_value,
             num_equiv_elems = fcs->ndup[order][iuniq];
             fc_elem = fitting->params[ip];
             for (j = 0; j < num_equiv_elems; ++j) {
-                if (order == fc_order - 2) {
+                if (order == fc_order - 1) {
                     // coef is normally 1 or -1.
                     coef = fcs->fc_set[order][id].coef;
                     fc_value[id] = fc_elem * coef;
-                    for (k = 0; k < fc_order; ++k) {
-                        elem_indices[id * fc_order + k] = 
+                    for (k = 0; k < fc_order + 1; ++k) {
+                        elem_indices[id * (fc_order + 1) + k] = 
                             fcs->fc_set[order][id].elems[k];
                     }
                 }
@@ -348,12 +370,12 @@ void ALM::get_fc(double *fc_value,
             }
             ++ip;
         }
-        if (order >= fc_order - 2) {break;}
     }
 }
 
 void ALM::run()
 {
+    alm_core->initialize();
     if (alm_core->mode == "fitting") {
         run_fitting();
     } else if (alm_core->mode == "suggest") {

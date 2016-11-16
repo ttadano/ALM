@@ -57,15 +57,20 @@ Fitting::Fitting(ALMCore *alm): Pointers(alm)
 
     params = NULL;
     nboot = 0;
-    u = NULL;
-    f = NULL;
-    nmulti = 0;
+    u_in = NULL;
+    f_in = NULL;
 }
 
 Fitting::~Fitting()
 {
-    if (alm->mode == "fitting") {
+    if (params) {
         memory->deallocate(params);
+    }
+    if (u_in) {
+        memory->deallocate(u_in);
+    }
+    if (f_in) {
+        memory->deallocate(f_in);
     }
 }
 
@@ -87,6 +92,12 @@ void Fitting::fitmain()
     double *fsum_orig;
     double *param_tmp;
 
+    int multiply_data = symmetry->multiply_data;
+    int nmulti = get_number_for_multiplier(multiply_data);
+
+    double **u;
+    double **f;
+
     std::cout << " FITTING" << std::endl;
     std::cout << " =======" << std::endl << std::endl;
 
@@ -99,7 +110,15 @@ void Fitting::fitmain()
     std::cout << "  " << ndata_used << " entries will be used for fitting."
         << std::endl << std::endl;
 
-    // Read displacement-force training data set from files
+
+    if (nmulti > 0) {
+        memory->allocate(u, ndata_used * nmulti, 3 * nat);
+        memory->allocate(f, ndata_used * nmulti, 3 * nat);
+    } else {
+        error->exit("fitmain", "nmulti has to be larger than 0.");
+    }
+    data_multiplier(u, f, nat, ndata_used, nmulti, multiply_data);
+
     N = 0;
     for (i = 0; i < maxorder; ++i) {
         N += fcs->ndup[i].size();
@@ -213,13 +232,23 @@ void Fitting::fitmain()
     std::cout << std::endl;
 }
 
-void Fitting::set_displacement_and_force(const double * const * u_in,
-					 const double * const * f_in,
+void Fitting::set_displacement_and_force(const double * const * disp_in,
+					 const double * const * force_in,
 					 const int nat,
 					 const int ndata_used)
 {
-    int multiply_data = symmetry->multiply_data;
-    data_multiplier(u_in, f_in, nat, ndata_used, multiply_data);
+    if (!u_in) {
+        memory->allocate(u_in, ndata_used, 3 * nat);
+    }
+    if (!f_in) {
+        memory->allocate(f_in, ndata_used, 3 * nat);
+    }
+    for (int i = 0; i < ndata_used; i++) {
+        for (int j = 0; j < 3 * nat; j++) {
+            u_in[i][j] = disp_in[i][j];
+            f_in[i][j] = force_in[i][j];
+        }
+    }
 }
 
 void Fitting::fit_without_constraints(int N,
@@ -1059,27 +1088,17 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
     std::cout << "done!" << std::endl << std::endl;
 }
 
-void Fitting::data_multiplier(const double * const * u_in,
-			      const double * const * f_in,
-			      const int nat,
+void Fitting::data_multiplier(double **u,
+                              double **f,
+                              const int nat,
 			      const int ndata_used,
+                              const int nmulti,
 			      const int multiply_data)
 {
     int i, j, k;
     int idata, itran, isym;
     int n_mapped;
     double u_rot[3], f_rot[3];
-
-    set_number_for_multiplier(multiply_data);
-
-    if (nmulti > 0) {
-	if (!u) {
-	    memory->allocate(u, ndata_used * nmulti, 3 * nat);
-	}
-	if (!f) {
-	    memory->allocate(f, ndata_used * nmulti, 3 * nat);
-	}
-    }
 
     // Multiply data
     if (multiply_data == 0) {
@@ -1138,9 +1157,9 @@ void Fitting::data_multiplier(const double * const * u_in,
     }
 }
 
-void Fitting::set_number_for_multiplier(const int multiply_data)
+int Fitting::get_number_for_multiplier(const int multiply_data)
 {
-    nmulti = 0;
+    int nmulti = 0;
     if (multiply_data == 0) {
         nmulti = 1;
     } else if (multiply_data == 1) {
@@ -1148,6 +1167,7 @@ void Fitting::set_number_for_multiplier(const int multiply_data)
     } else if (multiply_data == 2) {
         nmulti = symmetry->nsym;
     }
+    return nmulti;
 }
 
 int Fitting::inprim_index(const int n)

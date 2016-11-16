@@ -187,8 +187,6 @@ int main()
     // rcs[maxorder, nkd, nkd]
     // double rcs[1][1][1] = {{{-1.0}}};
 
-    alm->initialize();
-
     double u[ndata_used * nat * 3];
     double f[ndata_used * nat * 3];
     parse_displacement_and_force_files
@@ -197,6 +195,23 @@ int main()
     alm->set_displacement_and_force(u, f, nat, ndata_used);
 
     alm->run();
+
+    int fc_length = alm->get_fc_length(1);
+    std::cout << "fc_length: " << fc_length << std::endl;
+
+    double fc_value[fc_length];
+    int elem_indices[fc_length * 2];
+
+    alm->get_fc(fc_value, elem_indices, 1);
+
+    for (int i = 0; i < fc_length; i++) {
+        std::cout << i + 1 << ":" << " " << fc_value[i] <<
+            " " << 
+            elem_indices[i * 2] / 3 + 1 << "-" << elem_indices[i * 2] % 3 + 1 <<
+            " " <<
+            elem_indices[i * 2 + 1] / 3 + 1 << "-" << elem_indices[i * 2 + 1] % 3 + 1 <<
+                  std::endl;
+    }
 
     delete alm;
 
