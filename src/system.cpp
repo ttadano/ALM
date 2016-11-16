@@ -63,7 +63,6 @@ System::~System()
 {
     memory->deallocate(x_cartesian);
     memory->deallocate(atomlist_class);
-    memory->deallocate(magmom);
 }
 
 void System::init()

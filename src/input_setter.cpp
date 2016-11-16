@@ -26,6 +26,34 @@ InputSetter::InputSetter() {}
 
 InputSetter::~InputSetter() {}
 
+void InputSetter::deallocate(ALMCore *alm_core)
+{
+    if (alm_core->system->kdname) {
+        alm_core->memory->deallocate(alm_core->system->kdname);
+    }
+    alm_core->system->kdname = NULL;
+    if (alm_core->system->xcoord) {
+        alm_core->memory->deallocate(alm_core->system->xcoord);
+    }
+    alm_core->system->xcoord = NULL;
+    if (alm_core->system->kd) {
+        alm_core->memory->deallocate(alm_core->system->kd);
+    }
+    alm_core->system->kd = NULL;
+    if (alm_core->system->magmom) {
+        alm_core->memory->deallocate(alm_core->system->magmom);
+    }
+    alm_core->system->magmom = NULL;
+    if (alm_core->interaction->nbody_include) {
+        alm_core->memory->deallocate(alm_core->interaction->nbody_include);
+    }
+    alm_core->interaction->nbody_include = NULL;
+    if (alm_core->interaction->rcs) {
+        alm_core->memory->deallocate(alm_core->interaction->rcs);
+    }
+    alm_core->interaction->rcs = NULL;
+}
+
 void InputSetter::set_general_vars(
     ALMCore *alm_core,
     const std::string prefix,

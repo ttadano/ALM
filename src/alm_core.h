@@ -34,7 +34,6 @@ namespace ALM_NS
         ~ALMCore();
         void create();
         void initialize();
-        void finalize();
 
         std::string mode; // "suggest" or "fitting"
 	bool print_hessian;

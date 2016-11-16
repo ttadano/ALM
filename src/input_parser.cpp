@@ -446,8 +446,8 @@ void InputParser::parse_general_vars(ALMCore *alm)
                                    tolerance);
     delete input_setter;
 
-    alm->memory->deallocate(magmom);
-    
+    alm->memory->allocate(magmom, nat, 3);
+
     kdname_v.clear();
     periodic_v.clear();
     no_defaults.clear();

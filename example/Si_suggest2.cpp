@@ -90,8 +90,8 @@ int main()
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, 1, lavec, xcoord, kd, kdname);
 
-    int nbody_include[1] = {2};
-    alm->set_interaction_vars(1, nbody_include);
+    // int nbody_include[2] = {2, 3};
+    alm->set_interaction_vars(2, NULL);
 
     // rcs[maxorder, nkd, nkd]
     double rcs[1][1][1] = {{{-1.0}}};

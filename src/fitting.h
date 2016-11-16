@@ -32,9 +32,8 @@ namespace ALM_NS
         unsigned int nboot;
         unsigned int seed;
 
-	double **u;
-	double **f;
-	int nmulti;
+	double **u_in;
+	double **f_in;
 
 	void set_displacement_and_force(const double * const * u_in,
 					const double * const * f_in,
@@ -53,12 +52,13 @@ namespace ALM_NS
 
     private:
 
-	void data_multiplier(const double * const * u_in,
-			     const double * const * f_in,
+	void data_multiplier(double **u,
+			     double **f,
 			     const int nat,
 			     const int ndata_used,
+			     const int nmulti,
 			     const int multiply_data);
-	void set_number_for_multiplier(const int multiply_data);
+	int get_number_for_multiplier(const int multiply_data);
         int inprim_index(const int);
         void fit_without_constraints(int, int, double **, double *, double *);
         void fit_algebraic_constraints(int, int, double **, double *,

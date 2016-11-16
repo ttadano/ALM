@@ -21,6 +21,7 @@ namespace ALM_NS
         InputSetter();
         ~InputSetter();
 
+	void deallocate(ALMCore *alm_core);
 	void set_general_vars(ALMCore *alm_core,
 			      const std::string prefix,
 			      const std::string mode,
