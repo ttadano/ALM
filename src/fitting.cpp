@@ -88,26 +88,15 @@ void Fitting::fitmain()
     int P = constraint->P;
     int ndata_used = nend - nstart + 1;
 
-    double **u;
-    double **f;
-
     double **amat, *fsum;
     double *fsum_orig;
     double *param_tmp;
 
-
     int multiply_data = symmetry->multiply_data;
     int nmulti = get_number_for_multiplier(multiply_data);
 
-    if (nmulti > 0) {
-        memory->allocate(u, ndata_used * nmulti, 3 * nat);
-        memory->allocate(f, ndata_used * nmulti, 3 * nat);
-    } else {
-        error->exit("fitmain", "nmulti has to be larger than 0.");
-    }
-
-    data_multiplier(u, f, nat, ndata_used, nmulti, multiply_data);
-
+    double **u;
+    double **f;
 
     std::cout << " FITTING" << std::endl;
     std::cout << " =======" << std::endl << std::endl;
@@ -121,7 +110,15 @@ void Fitting::fitmain()
     std::cout << "  " << ndata_used << " entries will be used for fitting."
         << std::endl << std::endl;
 
-    // Read displacement-force training data set from files
+
+    if (nmulti > 0) {
+        memory->allocate(u, ndata_used * nmulti, 3 * nat);
+        memory->allocate(f, ndata_used * nmulti, 3 * nat);
+    } else {
+        error->exit("fitmain", "nmulti has to be larger than 0.");
+    }
+    data_multiplier(u, f, nat, ndata_used, nmulti, multiply_data);
+
     N = 0;
     for (i = 0; i < maxorder; ++i) {
         N += fcs->ndup[i].size();
