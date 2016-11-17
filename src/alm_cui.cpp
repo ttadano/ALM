@@ -23,7 +23,7 @@ ALMCUI::ALMCUI() {}
 
 void ALMCUI::run(int narg, char **arg)
 {
-    // std::cout.rdbuf( NULL );
+    // std::cout.rdbuf( nullptr );
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     std::cout << " +                         Program ALM                             +" << std::endl;
     std::cout << " +                             Ver.";

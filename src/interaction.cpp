@@ -32,19 +32,19 @@ Interaction::Interaction(ALMCore *alm) : Pointers(alm)
 {
     maxorder = 0;
     is_periodic[0] = 1; is_periodic[1] = 1; is_periodic[2] = 1;
-    nbody_include = NULL;
+    nbody_include = nullptr;
 
     nneib = 0;
     maxorder = 0;
-    rcs = NULL;
-    x_image = NULL;
-    exist_image = NULL;
-    str_order = NULL;
-    distall = NULL;
-    mindist_pairs = NULL;
-    pairs = NULL;
-    interaction_pair = NULL;
-    mindist_cluster = NULL;
+    rcs = nullptr;
+    x_image = nullptr;
+    exist_image = nullptr;
+    str_order = nullptr;
+    distall = nullptr;
+    mindist_pairs = nullptr;
+    pairs = nullptr;
+    interaction_pair = nullptr;
+    mindist_cluster = nullptr;
 }
 
 Interaction::~Interaction()

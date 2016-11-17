@@ -22,7 +22,7 @@ Timer::Timer(ALMCore *alm): Pointers(alm)
     QueryPerformanceCounter(&time_ref);
     QueryPerformanceFrequency(&frequency);
 #else
-    gettimeofday(&time_ref, NULL);
+    gettimeofday(&time_ref, nullptr);
 #endif
 }
 
@@ -33,7 +33,7 @@ void Timer::reset()
 #if defined(WIN32) || defined(_WIN32)
     QueryPerformanceCounter(&time_ref);
 #else
-    gettimeofday(&time_ref, NULL);
+    gettimeofday(&time_ref, nullptr);
 #endif
 }
 
@@ -46,7 +46,7 @@ double Timer::elapsed()
         / static_cast<double>(frequency.QuadPart);
 #else
     timeval time_now;
-    gettimeofday(&time_now, NULL);
+    gettimeofday(&time_now, nullptr);
     return (time_now.tv_sec - time_ref.tv_sec) + (time_now.tv_usec - time_ref.tv_usec) * 1.0e-6;
 #endif
 }

@@ -40,10 +40,10 @@ Constraint::Constraint(ALMCore *alm) : Pointers(alm)
     fc3_file = "";
     exist_constraint = false;
     extra_constraint_from_symmetry = false;
-    const_symmetry = NULL;
-    const_fix = NULL;
-    const_relate = NULL;
-    index_bimap = NULL;
+    const_symmetry = nullptr;
+    const_fix = nullptr;
+    const_relate = nullptr;
+    index_bimap = nullptr;
     P = 0;
 }
 

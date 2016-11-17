@@ -47,7 +47,7 @@ using namespace ALM_NS;
 
 Fitting::Fitting(ALMCore *alm): Pointers(alm)
 {
-    seed = static_cast<unsigned int>(time(NULL));
+    seed = static_cast<unsigned int>(time(nullptr));
 #ifdef _VSL
     brng = VSL_BRNG_MT19937;
     vslNewStream(&stream, brng, seed);
@@ -55,9 +55,9 @@ Fitting::Fitting(ALMCore *alm): Pointers(alm)
     std::srand(seed);
 #endif
 
-    params = NULL;
-    u_in = NULL;
-    f_in = NULL;
+    params = nullptr;
+    u_in = nullptr;
+    f_in = nullptr;
 }
 
 Fitting::~Fitting()

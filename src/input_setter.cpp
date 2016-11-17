@@ -31,27 +31,27 @@ void InputSetter::deallocate(ALMCore *alm_core)
     if (alm_core->system->kdname) {
         alm_core->memory->deallocate(alm_core->system->kdname);
     }
-    alm_core->system->kdname = NULL;
+    alm_core->system->kdname = nullptr;
     if (alm_core->system->xcoord) {
         alm_core->memory->deallocate(alm_core->system->xcoord);
     }
-    alm_core->system->xcoord = NULL;
+    alm_core->system->xcoord = nullptr;
     if (alm_core->system->kd) {
         alm_core->memory->deallocate(alm_core->system->kd);
     }
-    alm_core->system->kd = NULL;
+    alm_core->system->kd = nullptr;
     if (alm_core->system->magmom) {
         alm_core->memory->deallocate(alm_core->system->magmom);
     }
-    alm_core->system->magmom = NULL;
+    alm_core->system->magmom = nullptr;
     if (alm_core->interaction->nbody_include) {
         alm_core->memory->deallocate(alm_core->interaction->nbody_include);
     }
-    alm_core->interaction->nbody_include = NULL;
+    alm_core->interaction->nbody_include = nullptr;
     if (alm_core->interaction->rcs) {
         alm_core->memory->deallocate(alm_core->interaction->rcs);
     }
-    alm_core->interaction->rcs = NULL;
+    alm_core->interaction->rcs = nullptr;
 }
 
 void InputSetter::set_general_vars(
