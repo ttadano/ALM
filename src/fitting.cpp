@@ -233,9 +233,9 @@ void Fitting::fitmain()
 }
 
 void Fitting::set_displacement_and_force(const double * const * disp_in,
-					 const double * const * force_in,
-					 const int nat,
-					 const int ndata_used)
+                                         const double * const * force_in,
+                                         const int nat,
+                                         const int ndata_used)
 {
     if (!u_in) {
         memory->allocate(u_in, ndata_used, 3 * nat);
@@ -1091,9 +1091,9 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
 void Fitting::data_multiplier(double **u,
                               double **f,
                               const int nat,
-			      const int ndata_used,
+                              const int ndata_used,
                               const int nmulti,
-			      const int multiply_data)
+                              const int multiply_data)
 {
     int i, j, k;
     int idata, itran, isym;

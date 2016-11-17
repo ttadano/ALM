@@ -73,21 +73,21 @@ void InputParser::parse_displacement_and_force(ALMCore *alm)
     alm->memory->allocate(u, ndata_used, 3 * nat);
     alm->memory->allocate(f, ndata_used, 3 * nat);
     parse_displacement_and_force_files(alm->error, u, f, nat, ndata, nstart, nend,
-				       file_disp, file_force);
+                                       file_disp, file_force);
     alm->fitting->set_displacement_and_force(u, f, nat, ndata_used);
     alm->memory->deallocate(u);
     alm->memory->deallocate(f);
 }
 
 void InputParser::parse_displacement_and_force_files(Error *error,
-						     double **u,
-						     double **f,
-						     const int nat,
-						     const int ndata,
-						     const int nstart,
-						     const int nend,
-						     const std::string file_disp,
-						     const std::string file_force)
+                                                     double **u,
+                                                     double **f,
+                                                     const int nat,
+                                                     const int ndata,
+                                                     const int nstart,
+                                                     const int nend,
+                                                     const std::string file_disp,
+                                                     const std::string file_force)
 {
     int i, j, k;
     int idata;
@@ -133,16 +133,16 @@ void InputParser::parse_displacement_and_force_files(Error *error,
 
     idata = 0;
     for (i = 0; i < ndata; ++i) {
-	if (i < nstart - 1) continue;
-	if (i > nend - 1) break;
+    if (i < nstart - 1) continue;
+    if (i > nend - 1) break;
 
-	for (j = 0; j < nat; ++j) {
-	    for (k = 0; k < 3; ++k) {
-		u[idata][3 * j + k] = u_tmp[3 * nat * i + 3 * j + k];
-		f[idata][3 * j + k] = f_tmp[3 * nat * i + 3 * j + k];
-	    }
-	}
-	++idata;
+    for (j = 0; j < nat; ++j) {
+        for (k = 0; k < 3; ++k) {
+        u[idata][3 * j + k] = u_tmp[3 * nat * i + 3 * j + k];
+        f[idata][3 * j + k] = f_tmp[3 * nat * i + 3 * j + k];
+        }
+    }
+    ++idata;
     }
 
     ifs_disp.close();

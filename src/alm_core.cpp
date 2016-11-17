@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -32,8 +32,8 @@ using namespace ALM_NS;
 ALMCore::ALMCore()
 {
 #ifdef _OPENMP
-    std::cout << " Number of OpenMP threads = " 
-              << omp_get_max_threads() << std::endl << std::endl;
+    std::cout << " Number of OpenMP threads = "
+        << omp_get_max_threads() << std::endl << std::endl;
 #endif
 
     timer = new Timer(this);
@@ -70,7 +70,7 @@ void ALMCore::initialize()
 
 ALMCore::~ALMCore()
 {
-    std::cout << std::endl << " Job finished at " 
+    std::cout << std::endl << " Job finished at "
         << timer->DateAndTime() << std::endl;
     delete timer;
     delete files;
@@ -84,4 +84,3 @@ ALMCore::~ALMCore()
     delete memory;
     delete error;
 }
-
