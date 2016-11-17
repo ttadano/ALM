@@ -31,27 +31,27 @@ void InputSetter::deallocate(ALMCore *alm_core)
     if (alm_core->system->kdname) {
         alm_core->memory->deallocate(alm_core->system->kdname);
     }
-    alm_core->system->kdname = NULL;
+    alm_core->system->kdname = nullptr;
     if (alm_core->system->xcoord) {
         alm_core->memory->deallocate(alm_core->system->xcoord);
     }
-    alm_core->system->xcoord = NULL;
+    alm_core->system->xcoord = nullptr;
     if (alm_core->system->kd) {
         alm_core->memory->deallocate(alm_core->system->kd);
     }
-    alm_core->system->kd = NULL;
+    alm_core->system->kd = nullptr;
     if (alm_core->system->magmom) {
         alm_core->memory->deallocate(alm_core->system->magmom);
     }
-    alm_core->system->magmom = NULL;
+    alm_core->system->magmom = nullptr;
     if (alm_core->interaction->nbody_include) {
         alm_core->memory->deallocate(alm_core->interaction->nbody_include);
     }
-    alm_core->interaction->nbody_include = NULL;
+    alm_core->interaction->nbody_include = nullptr;
     if (alm_core->interaction->rcs) {
         alm_core->memory->deallocate(alm_core->interaction->rcs);
     }
-    alm_core->interaction->rcs = NULL;
+    alm_core->interaction->rcs = nullptr;
 }
 
 void InputSetter::set_general_vars(
@@ -158,8 +158,6 @@ void InputSetter::set_fitting_vars(ALMCore *alm_core,
                                    const int ndata,
                                    const int nstart,
                                    const int nend,
-                                   const int nskip,
-                                   const int nboot,
                                    const std::string dfile,
                                    const std::string ffile,
                                    const int multiply_data,
@@ -173,9 +171,7 @@ void InputSetter::set_fitting_vars(ALMCore *alm_core,
     alm_core->system->ndata = ndata;
     alm_core->system->nstart = nstart;
     alm_core->system->nend = nend;
-    alm_core->system->nskip = nskip;
 
-    alm_core->fitting->nboot = nboot;
     alm_core->files->file_disp = dfile;
     alm_core->files->file_force = ffile;
     alm_core->symmetry->multiply_data = multiply_data;

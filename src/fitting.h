@@ -29,16 +29,15 @@ namespace ALM_NS
         void fitmain();
 
         double *params;
-        unsigned int nboot;
         unsigned int seed;
 
-	double **u_in;
-	double **f_in;
+        double **u_in;
+        double **f_in;
 
-	void set_displacement_and_force(const double * const * u_in,
-					const double * const * f_in,
-					const int nat,
-					const int ndata_used);
+        void set_displacement_and_force(const double * const * u_in,
+                                        const double * const * f_in,
+                                        const int nat,
+                                        const int ndata_used);
         void calc_matrix_elements_algebraic_constraint(const int, const int, const int, const int,
                                                        const int, const int, const int, const int,
                                                        double **, double **, double **, double *, double *);
@@ -52,13 +51,13 @@ namespace ALM_NS
 
     private:
 
-	void data_multiplier(double **u,
-			     double **f,
-			     const int nat,
-			     const int ndata_used,
-			     const int nmulti,
-			     const int multiply_data);
-	int get_number_for_multiplier(const int multiply_data);
+        void data_multiplier(double **u,
+                             double **f,
+                             const int nat,
+                             const int ndata_used,
+                             const int nmulti,
+                             const int multiply_data);
+        int get_number_for_multiplier(const int multiply_data);
         int inprim_index(const int);
         void fit_without_constraints(int, int, double **, double *, double *);
         void fit_algebraic_constraints(int, int, double **, double *,
@@ -67,16 +66,9 @@ namespace ALM_NS
         void fit_with_constraints(int, int, int, double **, double *,
                                   double *, double **, double *);
 
-        void fit_consecutively(int, int, const int, const int,
-                               const int, const int,
-                               double **, double *, double **, double *);
-
         void calc_matrix_elements(const int, const int, const int,
                                   const int, const int, const int, const int,
                                   double **, double **, double **, double *);
-
-        void fit_bootstrap(int, int, int, int, int,
-                           double **, double *, double **, double *);
 
         int factorial(const int);
         int rankSVD(const int, const int, double *, const double);

@@ -18,7 +18,7 @@ namespace ALM_NS
     class ALMCore
     {
     public:
-	class InputSetter *input;
+        class InputSetter *input;
         class Memory *memory;
         class System *system;
         class Interaction *interaction;
@@ -36,7 +36,7 @@ namespace ALM_NS
         void initialize();
 
         std::string mode; // "suggest" or "fitting"
-	bool print_hessian;
+        bool print_hessian;
     };
 }
 

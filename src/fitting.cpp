@@ -47,7 +47,7 @@ using namespace ALM_NS;
 
 Fitting::Fitting(ALMCore *alm): Pointers(alm)
 {
-    seed = static_cast<unsigned int>(time(NULL));
+    seed = static_cast<unsigned int>(time(nullptr));
 #ifdef _VSL
     brng = VSL_BRNG_MT19937;
     vslNewStream(&stream, brng, seed);
@@ -55,10 +55,9 @@ Fitting::Fitting(ALMCore *alm): Pointers(alm)
     std::srand(seed);
 #endif
 
-    params = NULL;
-    nboot = 0;
-    u_in = NULL;
-    f_in = NULL;
+    params = nullptr;
+    u_in = nullptr;
+    f_in = nullptr;
 }
 
 Fitting::~Fitting()
@@ -82,7 +81,6 @@ void Fitting::fitmain()
     int ntran = symmetry->ntran;
     int nstart = system->nstart;
     int nend = system->nend;
-    int nskip = system->nskip;
     int N, M, N_new;
     int maxorder = interaction->maxorder;
     int P = constraint->P;
@@ -160,50 +158,21 @@ void Fitting::fitmain()
 
     memory->allocate(param_tmp, N);
 
-    if (nskip == 0) {
 
-        // Fitting with singular value decomposition or QR-Decomposition
+    // Fitting with singular value decomposition or QR-Decomposition
 
-        if (constraint->constraint_algebraic) {
-            fit_algebraic_constraints(N_new, M, amat, fsum, param_tmp,
-                                      fsum_orig, maxorder);
+    if (constraint->constraint_algebraic) {
+        fit_algebraic_constraints(N_new, M, amat, fsum, param_tmp,
+                                  fsum_orig, maxorder);
 
-        } else if (constraint->exist_constraint) {
-            fit_with_constraints(N, M, P, amat, fsum, param_tmp,
-                                 constraint->const_mat,
-                                 constraint->const_rhs);
-        } else {
-            fit_without_constraints(N, M, amat, fsum, param_tmp);
-        }
-
-    } else if (nskip > 0) {
-
-        // Execute fittings consecutively with different input data.
-
-        if (constraint->exist_constraint) {
-            fit_consecutively(N, P, natmin, ndata_used, nmulti, nskip, amat, fsum,
-                              constraint->const_mat,
-                              constraint->const_rhs);
-        } else {
-            error->exit("fitmain", "nskip has to be 0 when constraint_mode = 0");
-        }
+    } else if (constraint->exist_constraint) {
+        fit_with_constraints(N, M, P, amat, fsum, param_tmp,
+                             constraint->const_mat,
+                             constraint->const_rhs);
     } else {
-
-        // Execute bootstrap simulation for estimating deviations of parameters.
-
-        if (constraint->exist_constraint) {
-            fit_bootstrap(N, P, natmin, ndata_used, nmulti, amat, fsum,
-                          constraint->const_mat,
-                          constraint->const_rhs);
-
-            fit_with_constraints(N, M, P, amat, fsum, param_tmp,
-                                 constraint->const_mat,
-                                 constraint->const_rhs);
-        } else {
-            error->exit("fitmain",
-                        "bootstrap analysis for LSE without constraint is not supported yet");
-        }
+        fit_without_constraints(N, M, amat, fsum, param_tmp);
     }
+
 
     // Copy force constants to public variable "params"
 
@@ -233,9 +202,9 @@ void Fitting::fitmain()
 }
 
 void Fitting::set_displacement_and_force(const double * const * disp_in,
-					 const double * const * force_in,
-					 const int nat,
-					 const int ndata_used)
+                                         const double * const * force_in,
+                                         const int nat,
+                                         const int ndata_used)
 {
     if (!u_in) {
         memory->allocate(u_in, ndata_used, 3 * nat);
@@ -570,277 +539,6 @@ void Fitting::fit_algebraic_constraints(int N,
 }
 
 
-void Fitting::fit_bootstrap(int N,
-                            int P,
-                            int natmin,
-                            int ndata_used,
-                            int nmulti,
-                            double **amat,
-                            double *bvec,
-                            double **cmat,
-                            double *dvec)
-{
-    int i, j;
-    unsigned long k, l;
-    int M_Start, M_End;
-    int mset;
-    unsigned int iboot;
-    int M;
-
-    mset = 3 * natmin * nmulti;
-
-    M_Start = 0;
-    M_End = mset * ndata_used;
-
-    M = M_End - M_Start;
-
-
-    std::string file_fcs_bootstrap;
-    file_fcs_bootstrap = files->job_title + ".fcs_bootstrap";
-
-    std::ofstream ofs_fcs_boot;
-    ofs_fcs_boot.open(file_fcs_bootstrap.c_str(), std::ios::out);
-    if (!ofs_fcs_boot)
-        error->exit("fit_bootstrap",
-                    "cannot open file_fcs_bootstrap");
-
-    ofs_fcs_boot.setf(std::ios::scientific);
-
-    double f_residual, f_square;
-    double *fsum2;
-    int INFO;
-    double *WORK, *x;
-    double *amat_mod, *cmat_mod;
-    double *const_tmp;
-
-    int *rnd_index;
-    int iloc;
-
-    memory->allocate(x, N);
-    memory->allocate(cmat_mod, P * N);
-    memory->allocate(const_tmp, P);
-
-    std::cout << "  NSKIP < 0: Bootstrap analysis for error estimation." << std::endl;
-    std::cout << "             The number of trials is NBOOT (=" << nboot << ")" << std::endl;
-    std::cout << std::endl;
-    std::cout << "  Relative errors and FCs are stored in file: "
-        << file_fcs_bootstrap << std::endl;
-
-    ofs_fcs_boot << "# Relative Error(%), FCs ...";
-
-    for (i = 0; i < interaction->maxorder; ++i) {
-        ofs_fcs_boot << std::setw(10) << fcs->ndup[i].size();
-    }
-    ofs_fcs_boot << std::endl;
-
-    memory->allocate(fsum2, M);
-    memory->allocate(amat_mod, N * M);
-    memory->allocate(rnd_index, ndata_used);
-
-    int LWORK = P + std::min<int>(M, N) + 100 * std::max<int>(M, N);
-    memory->allocate(WORK, LWORK);
-
-    for (iboot = 0; iboot < nboot; ++iboot) {
-#ifdef _VSL
-        // Use Intel MKL VSL if available
-        viRngUniform(VSL_METHOD_IUNIFORM_STD, stream, ndata_used, rnd_index, 0, ndata_used);
-#else
-        for (i = 0; i < ndata_used; ++i) {
-            // random number uniformly distributed in [0, ndata_used)
-            rnd_index[i] = std::rand() % ndata_used;
-        }
-#endif
-
-        f_square = 0.0;
-        k = 0;
-        for (i = 0; i < ndata_used; ++i) {
-            iloc = rnd_index[i];
-            for (j = iloc * mset; j < (iloc + 1) * mset; ++j) {
-                fsum2[k++] = bvec[j];
-                f_square += std::pow(bvec[j], 2);
-            }
-        }
-        l = 0;
-        for (j = 0; j < N; ++j) {
-            for (i = 0; i < ndata_used; ++i) {
-                iloc = rnd_index[i];
-                for (k = iloc * mset; k < (iloc + 1) * mset; ++k) {
-                    amat_mod[l++] = amat[k][j];
-                }
-            }
-        }
-
-        k = 0;
-        for (j = 0; j < N; ++j) {
-            for (i = 0; i < P; ++i) {
-                cmat_mod[k++] = cmat[i][j];
-            }
-        }
-
-        for (i = 0; i < P; ++i) {
-            const_tmp[i] = dvec[i];
-        }
-
-        dgglse_(&M, &N, &P, amat_mod, &M, cmat_mod, &P,
-                fsum2, const_tmp, x, WORK, &LWORK, &INFO);
-
-        f_residual = 0.0;
-        for (i = N - P; i < M; ++i) {
-            f_residual += std::pow(fsum2[i], 2);
-        }
-
-        ofs_fcs_boot << 100.0 * std::sqrt(f_residual / f_square);
-
-        for (i = 0; i < N; ++i) {
-            ofs_fcs_boot << std::setw(15) << x[i];
-        }
-        ofs_fcs_boot << std::endl;
-    }
-    ofs_fcs_boot.close();
-
-    memory->deallocate(x);
-    memory->deallocate(fsum2);
-    memory->deallocate(cmat_mod);
-    memory->deallocate(const_tmp);
-    memory->deallocate(amat_mod);
-    memory->deallocate(rnd_index);
-    memory->deallocate(WORK);
-
-    std::cout << "  Bootstrap analysis finished." << std::endl;
-    std::cout << "  Normal fitting will be performed" << std::endl;
-}
-
-
-void Fitting::fit_consecutively(int N,
-                                int P,
-                                const int natmin,
-                                const int ndata_used,
-                                const int nmulti,
-                                const int nskip,
-                                double **amat,
-                                double *bvec,
-                                double **cmat,
-                                double *dvec)
-{
-    int i, j;
-    unsigned long k;
-    int iend;
-    int M_Start, M_End;
-    int mset;
-    int M;
-
-    mset = 3 * natmin * nmulti;
-
-    M_Start = 0;
-
-
-    std::string file_fcs_sequence;
-    file_fcs_sequence = files->job_title + ".fcs_sequence";
-
-    std::ofstream ofs_fcs_seq;
-    ofs_fcs_seq.open(file_fcs_sequence.c_str(), std::ios::out);
-    if (!ofs_fcs_seq)
-        error->exit("fit_consecutively",
-                    "cannot open file_fcs_sequence");
-
-    ofs_fcs_seq.setf(std::ios::scientific);
-
-    double f_residual, f_square;
-    double *fsum2;
-    int INFO;
-    double *WORK, *x;
-    double *amat_mod, *cmat_mod;
-    double *const_tmp;
-
-    memory->allocate(x, N);
-    memory->allocate(cmat_mod, P * N);
-    memory->allocate(const_tmp, P);
-
-    std::cout << "  NSKIP > 0: Fitting will be performed consecutively" << std::endl;
-    std::cout << "             with variously changing NEND as NEND = NSTART + i*NSKIP" << std::endl;
-    std::cout << std::endl;
-    std::cout << "  Relative errors and FCs will be stored in the file "
-        << file_fcs_sequence << std::endl;
-
-    ofs_fcs_seq << "# Relative Error(%), FCS...";
-
-    for (i = 0; i < interaction->maxorder; ++i) {
-        ofs_fcs_seq << std::setw(10) << fcs->ndup[i].size();
-    }
-    ofs_fcs_seq << std::endl;
-
-    for (iend = 1; iend <= ndata_used; iend += nskip) {
-
-        M_End = mset * iend;
-        M = M_End - M_Start;
-
-        memory->allocate(fsum2, M);
-
-        f_square = 0.0;
-        j = 0;
-        for (i = M_Start; i < M_End; ++i) {
-            fsum2[j++] = bvec[i];
-            f_square += std::pow(bvec[i], 2);
-        }
-
-        memory->allocate(amat_mod, M * N);
-
-        // Transpose matrix A
-        k = 0;
-        for (j = 0; j < N; ++j) {
-            for (i = M_Start; i < M_End; ++i) {
-                amat_mod[k++] = amat[i][j];
-            }
-        }
-
-        k = 0;
-        for (j = 0; j < N; ++j) {
-            for (i = 0; i < P; ++i) {
-                cmat_mod[k++] = cmat[i][j];
-            }
-        }
-
-        for (i = 0; i < P; ++i) {
-            const_tmp[i] = dvec[i];
-        }
-
-        // Fitting
-
-        int LWORK = P + std::min<int>(M, N) + 100 * std::max<int>(M, N);
-        memory->allocate(WORK, LWORK);
-
-        dgglse_(&M, &N, &P, amat_mod, &M, cmat_mod, &P,
-                fsum2, const_tmp, x, WORK, &LWORK, &INFO);
-
-        memory->deallocate(amat_mod);
-        memory->deallocate(WORK);
-
-        f_residual = 0.0;
-        for (i = N - P; i < M; ++i) {
-            f_residual += std::pow(fsum2[i], 2);
-        }
-
-        ofs_fcs_seq << 100.0 * std::sqrt(f_residual / f_square);
-
-        for (i = 0; i < N; ++i) {
-            ofs_fcs_seq << std::setw(15) << x[i];
-        }
-        ofs_fcs_seq << std::endl;
-        memory->deallocate(fsum2);
-    }
-
-    for (i = 0; i < N; ++i) {
-        bvec[i] = x[i];
-    }
-
-    memory->deallocate(cmat_mod);
-    memory->deallocate(const_tmp);
-    memory->deallocate(x);
-
-    ofs_fcs_seq.close();
-
-    std::cout << "  Consecutive fitting finished." << std::endl;
-}
 
 void Fitting::calc_matrix_elements(const int M,
                                    const int N,
@@ -1091,9 +789,9 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
 void Fitting::data_multiplier(double **u,
                               double **f,
                               const int nat,
-			      const int ndata_used,
+                              const int ndata_used,
                               const int nmulti,
-			      const int multiply_data)
+                              const int multiply_data)
 {
     int i, j, k;
     int idata, itran, isym;

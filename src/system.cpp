@@ -35,28 +35,27 @@ System::System(ALMCore *alm): Pointers(alm)
     // Default values
     nat = 0;
     nkd = 0;
-    kd = NULL;
-    kdname = NULL;
+    kd = nullptr;
+    kdname = nullptr;
     ndata = 0;
     nstart = 1;
     nend = 0;
-    nskip = 0;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             lavec[i][j] = 0;
             rlavec[i][j] = 0;
         }
     }
-    x_cartesian = NULL;
-    xcoord = NULL;
+    x_cartesian = nullptr;
+    xcoord = nullptr;
     cell_volume = 0;
 
     str_magmom = "";
-    atomlist_class = NULL;
+    atomlist_class = nullptr;
     nclassatom = 0;
     lspin = false;
     noncollinear = 0;
-    magmom = NULL;
+    magmom = nullptr;
 }
 
 System::~System()

@@ -28,9 +28,9 @@ using namespace ALM_NS;
 
 Fcs::Fcs(ALMCore *alm) : Pointers(alm)
 {
-    nzero = NULL;
-    ndup = NULL;
-    fc_set = NULL;
+    nzero = nullptr;
+    ndup = nullptr;
+    fc_set = nullptr;
 };
 
 Fcs::~Fcs() {};

@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -23,7 +23,7 @@ ALMCUI::ALMCUI() {}
 
 void ALMCUI::run(int narg, char **arg)
 {
-    // std::cout.rdbuf( NULL );
+    // std::cout.rdbuf( nullptr );
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     std::cout << " +                         Program ALM                             +" << std::endl;
     std::cout << " +                             Ver.";
@@ -44,7 +44,7 @@ void ALMCUI::run(int narg, char **arg)
 
 
     if (alm_core->mode == "fitting") {
-	input_parser->parse_displacement_and_force(alm_core);
+        input_parser->parse_displacement_and_force(alm_core);
     }
     delete input_parser;
 
