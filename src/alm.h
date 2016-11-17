@@ -48,7 +48,7 @@ namespace ALM_NS
                                         const int ndata_used);
         void set_fitting_constraint(const int constraint_flag,
                                     const std::string rotation_axis);
-        void set_fitting_params(const int multiply_data);
+        void set_multiplier_option(const int multiply_data);
         void set_fitting_filenames(const std::string dfile,
                                    const std::string ffile);
         void set_fitting_fc2_filename(const std::string fc2_file);

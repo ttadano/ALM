@@ -207,7 +207,7 @@ void ALM::set_fitting_constraint(const int constraint_flag, // ICONST
     alm_core->constraint->rotation_axis = rotation_axis;
 }
 
-void ALM::set_fitting_params(const int multiply_data) // MULTDAT
+void ALM::set_multiplier_option(const int multiply_data) // MULTDAT
 {
     alm_core->symmetry->multiply_data = multiply_data;
 }
