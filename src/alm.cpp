@@ -294,9 +294,9 @@ void ALM::set_interaction_vars(const int maxorder, // NORDER harmonic=1
     }
 }
 
-void ALM::set_cutoff_radii(const double * const * const * rcs)
+void ALM::set_cutoff_radii(const double * rcs)
 {
-    int i, j, k, nkd, maxorder;
+    int i, j, k, nkd, maxorder, count;
 
     nkd = alm_core->system->nkd;
     maxorder = alm_core->interaction->maxorder;
@@ -304,10 +304,12 @@ void ALM::set_cutoff_radii(const double * const * const * rcs)
         alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
     }
 
+    count = 0;
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                alm_core->interaction->rcs[i][j][k] = rcs[i][j][k];
+                alm_core->interaction->rcs[i][j][k] = rcs[count];
+                count++;
             }
         }
     }
@@ -350,14 +352,14 @@ void ALM::get_fc(double *fc_value,
     maxorder = alm_core->interaction->maxorder;
     ip = 0;
     for (order = 0; order < fc_order; ++order) {
-        if (fcs->ndup[order].size() < 1) {continue;} // 
+        if (fcs->ndup[order].size() < 1) {continue;}
         id = 0;
         num_unique_elems = fcs->ndup[order].size();
         for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
-            num_equiv_elems = fcs->ndup[order][iuniq];
-            fc_elem = fitting->params[ip];
-            for (j = 0; j < num_equiv_elems; ++j) {
-                if (order == fc_order - 1) {
+            if (order == fc_order - 1) {
+                fc_elem = fitting->params[ip];
+                num_equiv_elems = fcs->ndup[order][iuniq];
+                for (j = 0; j < num_equiv_elems; ++j) {
                     // coef is normally 1 or -1.
                     coef = fcs->fc_set[order][id].coef;
                     fc_value[id] = fc_elem * coef;
@@ -365,8 +367,8 @@ void ALM::get_fc(double *fc_value,
                         elem_indices[id * (fc_order + 1) + k] = 
                             fcs->fc_set[order][id].elems[k];
                     }
+                    ++id;
                 }
-                ++id;
             }
             ++ip;
         }
