@@ -158,8 +158,6 @@ void InputSetter::set_fitting_vars(ALMCore *alm_core,
                                    const int ndata,
                                    const int nstart,
                                    const int nend,
-                                   const int nskip,
-                                   const int nboot,
                                    const std::string dfile,
                                    const std::string ffile,
                                    const int multiply_data,
@@ -173,9 +171,7 @@ void InputSetter::set_fitting_vars(ALMCore *alm_core,
     alm_core->system->ndata = ndata;
     alm_core->system->nstart = nstart;
     alm_core->system->nend = nend;
-    alm_core->system->nskip = nskip;
 
-    alm_core->fitting->nboot = nboot;
     alm_core->files->file_disp = dfile;
     alm_core->files->file_force = ffile;
     alm_core->symmetry->multiply_data = multiply_data;

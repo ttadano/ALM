@@ -29,7 +29,6 @@ namespace ALM_NS
         void fitmain();
 
         double *params;
-        unsigned int nboot;
         unsigned int seed;
 
         double **u_in;
@@ -67,16 +66,9 @@ namespace ALM_NS
         void fit_with_constraints(int, int, int, double **, double *,
                                   double *, double **, double *);
 
-        void fit_consecutively(int, int, const int, const int,
-                               const int, const int,
-                               double **, double *, double **, double *);
-
         void calc_matrix_elements(const int, const int, const int,
                                   const int, const int, const int, const int,
                                   double **, double **, double **, double *);
-
-        void fit_bootstrap(int, int, int, int, int,
-                           double **, double *, double **, double *);
 
         int factorial(const int);
         int rankSVD(const int, const int, double *, const double);

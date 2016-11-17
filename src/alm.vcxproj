@@ -77,6 +77,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="alm.cpp" />
     <ClCompile Include="alm_core.cpp" />
     <ClCompile Include="alm_cui.cpp" />
     <ClCompile Include="constraint.cpp" />
@@ -96,6 +97,7 @@
     <ClCompile Include="writer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="alm.h" />
     <ClInclude Include="alm_core.h" />
     <ClInclude Include="alm_cui.h" />
     <ClInclude Include="combination.h" />

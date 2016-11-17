@@ -174,9 +174,9 @@ void ALM::set_magnetic_params(const double * const *magmom, // MAGMOM
 }
 
 void ALM::set_displacement_and_force(const double * u_in,
-				     const double * f_in,
-				     const int nat,
-				     const int ndata_used)
+                     const double * f_in,
+                     const int nat,
+                     const int ndata_used)
 {
     double **u;
     double **f;
@@ -207,12 +207,8 @@ void ALM::set_fitting_constraint(const int constraint_flag, // ICONST
     alm_core->constraint->rotation_axis = rotation_axis;
 }
 
-void ALM::set_fitting_params(const int nskip, // NSKIP
-                             const int nboot, // NBOOT
-                             const int multiply_data) // MULTDAT
+void ALM::set_fitting_params(const int multiply_data) // MULTDAT
 {
-    alm_core->system->nskip = nskip;
-    alm_core->fitting->nboot = nboot;
     alm_core->symmetry->multiply_data = multiply_data;
 }
 

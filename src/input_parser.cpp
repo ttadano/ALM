@@ -104,8 +104,11 @@ void InputParser::parse_displacement_and_force_files(Error *error,
 
     nreq = 3 * nat * ndata;
 
-    double u_tmp[nreq];
-    double f_tmp[nreq];
+//    double u_tmp[nreq];
+    std::vector<double> u_tmp, f_tmp;
+//    double f_tmp[nreq];
+    u_tmp.reserve(nreq);
+    f_tmp.reserve(nreq);
 
     // Read displacements from DFILE
 
@@ -144,7 +147,8 @@ void InputParser::parse_displacement_and_force_files(Error *error,
     }
     ++idata;
     }
-
+    u_tmp.clear();
+    f_tmp.clear();
     ifs_disp.close();
     ifs_force.close();
 }
@@ -626,13 +630,13 @@ void InputParser::parse_interaction_vars(ALMCore *alm)
 
 void InputParser::parse_fitting_vars(ALMCore *alm)
 {
-    int ndata, nstart, nend, nskip, nboot;
+    int ndata, nstart, nend;
     std::string dfile, ffile;
     int multiply_data, constraint_flag;
     std::string rotation_axis;
     std::string fc2_file, fc3_file;
 
-    std::string str_allowed_list = "NDATA NSTART NEND NSKIP NBOOT DFILE FFILE MULTDAT ICONST ROTAXIS FC2XML FC3XML";
+    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE MULTDAT ICONST ROTAXIS FC2XML FC3XML";
     std::string str_no_defaults = "NDATA DFILE FFILE";
     std::vector<std::string> no_defaults;
 
@@ -671,35 +675,11 @@ void InputParser::parse_fitting_vars(ALMCore *alm)
     } else {
         assign_val(nend, "NEND", fitting_var_dict, alm->error);
     }
-    if (fitting_var_dict["NSKIP"].empty()) {
-        nskip = 0;
-    } else {
-        assign_val(nskip, "NSKIP", fitting_var_dict, alm->error);
-    }
 
     if (ndata <= 0 || nstart <= 0 || nend <= 0
         || nstart > ndata || nend > ndata || nstart > nend) {
         alm->error->exit("parce_fitting_vars",
                          "ndata, nstart, nend are not consistent with each other");
-    }
-
-    if (nskip < -1)
-        alm->error->exit("parce_fitting_vars",
-                         "nskip has to be larger than -2.");
-    if (nskip == -1) {
-
-        if (fitting_var_dict["NBOOT"].empty()) {
-            alm->error->exit("parse_fitting_vars",
-                             "NBOOT has to be given when NSKIP=-1");
-        } else {
-            assign_val(nboot, "NBOOT", fitting_var_dict, alm->error);
-        }
-
-        if (nboot <= 0)
-            alm->error->exit("parce_input",
-                             "nboot has to be a positive integer");
-    } else {
-        nboot = 0;
     }
 
     dfile = fitting_var_dict["DFILE"];
@@ -745,8 +725,6 @@ void InputParser::parse_fitting_vars(ALMCore *alm)
                                    ndata,
                                    nstart,
                                    nend,
-                                   nskip,
-                                   nboot,
                                    dfile,
                                    ffile,
                                    multiply_data,

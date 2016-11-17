@@ -54,8 +54,6 @@ namespace ALM_NS
                               const int ndata,
                               const int nstart,
                               const int nend,
-                              const int nskip,
-                              const int nboot,
                               const std::string dfile,
                               const std::string ffile,
                               const int multiply_data,

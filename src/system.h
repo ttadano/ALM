@@ -52,7 +52,7 @@ namespace ALM_NS
         void load_reference_system_xml(std::string, const int, double*);
 
         int nat, nkd;
-        int ndata, nstart, nend, nskip;
+        int ndata, nstart, nend;
         int* kd;
         double lavec[3][3], rlavec[3][3];
         double** xcoord; // fractional coordinate
