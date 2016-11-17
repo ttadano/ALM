@@ -29,7 +29,7 @@ Displace::Displace(ALMCore *alm) : Pointers(alm)
 {
     trim_dispsign_for_evenfunc = true;
     disp_basis = "CART";
-    pattern_all = NULL;
+    pattern_all = nullptr;
 }
 
 Displace::~Displace()

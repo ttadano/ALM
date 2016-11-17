@@ -35,27 +35,27 @@ ALM::~ALM()
     if (alm_core->system->kdname) {
         alm_core->memory->deallocate(alm_core->system->kdname);
     }
-    alm_core->system->kdname = NULL;
+    alm_core->system->kdname = nullptr;
     if (alm_core->system->xcoord) {
         alm_core->memory->deallocate(alm_core->system->xcoord);
     }
-    alm_core->system->xcoord = NULL;
+    alm_core->system->xcoord = nullptr;
     if (alm_core->system->kd) {
         alm_core->memory->deallocate(alm_core->system->kd);
     }
-    alm_core->system->kd = NULL;
+    alm_core->system->kd = nullptr;
     if (alm_core->system->magmom) {
         alm_core->memory->deallocate(alm_core->system->magmom);
     }
-    alm_core->system->magmom = NULL;
+    alm_core->system->magmom = nullptr;
     if (alm_core->interaction->nbody_include) {
         alm_core->memory->deallocate(alm_core->interaction->nbody_include);
     }
-    alm_core->interaction->nbody_include = NULL;
+    alm_core->interaction->nbody_include = nullptr;
     if (alm_core->interaction->rcs) {
         alm_core->memory->deallocate(alm_core->interaction->rcs);
     }
-    alm_core->interaction->rcs = NULL;
+    alm_core->interaction->rcs = nullptr;
 
     delete alm_core;
 }
@@ -174,9 +174,9 @@ void ALM::set_magnetic_params(const double * const *magmom, // MAGMOM
 }
 
 void ALM::set_displacement_and_force(const double * u_in,
-				     const double * f_in,
-				     const int nat,
-				     const int ndata_used)
+                     const double * f_in,
+                     const int nat,
+                     const int ndata_used)
 {
     double **u;
     double **f;
@@ -207,12 +207,8 @@ void ALM::set_fitting_constraint(const int constraint_flag, // ICONST
     alm_core->constraint->rotation_axis = rotation_axis;
 }
 
-void ALM::set_fitting_params(const int nskip, // NSKIP
-                             const int nboot, // NBOOT
-                             const int multiply_data) // MULTDAT
+void ALM::set_multiplier_option(const int multiply_data) // MULTDAT
 {
-    alm_core->system->nskip = nskip;
-    alm_core->fitting->nboot = nboot;
     alm_core->symmetry->multiply_data = multiply_data;
 }
 

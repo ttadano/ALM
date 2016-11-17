@@ -6,3 +6,10 @@ TAGS
 include
 lib
 a.out
+*.obj
+Release/
+Debug/
+.vs/
+*.db
+alm.VC.VC.opendb
+src/alm.vcxproj.user

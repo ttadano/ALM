@@ -15,6 +15,7 @@
 namespace ALM_NS
 {
     class ALMCore;
+
     class ALM
     {
     public:
@@ -36,20 +37,18 @@ namespace ALM_NS
                       const double xcoord[][3],
                       const int kd[],
                       const std::string kdname[]);
-        void set_magnetic_params(const double * const *magmom,
+        void set_magnetic_params(const double* const * magmom,
                                  const bool lspin,
                                  const int noncollinear,
                                  const int trev_sym_mag,
                                  const std::string str_magmom);
-	void set_displacement_and_force(const double * u_in,
-					const double * f_in,
-					const int nat,
-					const int ndata_used);
+        void set_displacement_and_force(const double* u_in,
+                                        const double* f_in,
+                                        const int nat,
+                                        const int ndata_used);
         void set_fitting_constraint(const int constraint_flag,
                                     const std::string rotation_axis);
-        void set_fitting_params(const int nskip,
-                                const int nboot,
-                                const int multiply_data);
+        void set_multiplier_option(const int multiply_data);
         void set_fitting_filenames(const std::string dfile,
                                    const std::string ffile);
         void set_fitting_fc2_filename(const std::string fc2_file);
@@ -57,16 +56,15 @@ namespace ALM_NS
         void set_interaction_vars(const int maxorder,
                                   const int *nbody_include);
 	void set_cutoff_radii(const double * rcs);
-
-        ALMCore * get_alm_core();
-        int get_fc_length(const int fc_order);  // harmonic=2, ...
-        void get_fc(double *fc_value,
-                    int *elem_indices, // (len(fc_value), fc_order) is flatten.
+        ALMCore* get_alm_core();
+        int get_fc_length(const int fc_order); // harmonic=2, ...
+        void get_fc(double* fc_value,
+                    int* elem_indices, // (len(fc_value), fc_order) is flatten.
                     const int fc_order); // harmonic=2, ...
         void run();
 
     private:
-        ALMCore *alm_core;
+        ALMCore* alm_core;
         void run_fitting();
         void run_suggest();
     };
