@@ -3,10 +3,6 @@
 alm
 _build
 TAGS
-.vs/
-Release/
-Debug/
-*.obj
-*.db
-*.opendb
-*.filters
+include
+lib
+a.out

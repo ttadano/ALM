@@ -8,14 +8,20 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include <cmath>
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include "alm_core.h"
+#include "files.h"
+#include "fitting.h"
+#include "error.h"
 #include "input_parser.h"
 #include "input_setter.h"
+#include "mathfunctions.h"
 #include "memory.h"
-#include "error.h"
+#include "symmetry.h"
+#include "system.h"
 #include <algorithm>
 #include <map>
 #include <set>
@@ -48,6 +54,99 @@ void InputParser::run(ALMCore *alm,
     }
 
     parse_input(alm);
+}
+
+void InputParser::parse_displacement_and_force(ALMCore *alm)
+{
+    int nat = alm->system->nat;
+    int ndata = alm->system->ndata;
+    int nstart = alm->system->nstart;
+    int nend = alm->system->nend;
+    int ndata_used = nend - nstart + 1;
+    double **u;
+    double **f;
+
+    // Read displacement-force training data set from files
+    std::string file_disp = alm->files->file_disp;
+    std::string file_force = alm->files->file_force;
+
+    alm->memory->allocate(u, ndata_used, 3 * nat);
+    alm->memory->allocate(f, ndata_used, 3 * nat);
+    parse_displacement_and_force_files(alm->error, u, f, nat, ndata, nstart, nend,
+				       file_disp, file_force);
+    alm->fitting->set_displacement_and_force(u, f, nat, ndata_used);
+    alm->memory->deallocate(u);
+    alm->memory->deallocate(f);
+}
+
+void InputParser::parse_displacement_and_force_files(Error *error,
+						     double **u,
+						     double **f,
+						     const int nat,
+						     const int ndata,
+						     const int nstart,
+						     const int nend,
+						     const std::string file_disp,
+						     const std::string file_force)
+{
+    int i, j, k;
+    int idata;
+    double u_in, f_in;
+    unsigned int nline_f, nline_u;
+    unsigned int nreq;
+
+    std::ifstream ifs_disp, ifs_force;
+
+    ifs_disp.open(file_disp.c_str(), std::ios::in);
+    if (!ifs_disp) error->exit("openfiles", "cannot open disp file");
+    ifs_force.open(file_force.c_str(), std::ios::in);
+    if (!ifs_force) error->exit("openfiles", "cannot open force file");
+
+    nreq = 3 * nat * ndata;
+
+    double u_tmp[nreq];
+    double f_tmp[nreq];
+
+    // Read displacements from DFILE
+
+    nline_u = 0;
+    while (ifs_disp >> u_in) {
+        u_tmp[nline_u++] = u_in;
+        if (nline_u == nreq) break;
+    }
+    if (nline_u < nreq)
+        error->exit("data_multiplier",
+                    "The number of lines in DFILE is too small for the given NDATA = ",
+                    ndata);
+
+    // Read forces from FFILE
+
+    nline_f = 0;
+    while (ifs_force >> f_in) {
+        f_tmp[nline_f++] = f_in;
+        if (nline_f == nreq) break;
+    }
+    if (nline_f < nreq)
+        error->exit("data_multiplier",
+                    "The number of lines in FFILE is too small for the given NDATA = ",
+                    ndata);
+
+    idata = 0;
+    for (i = 0; i < ndata; ++i) {
+	if (i < nstart - 1) continue;
+	if (i > nend - 1) break;
+
+	for (j = 0; j < nat; ++j) {
+	    for (k = 0; k < 3; ++k) {
+		u[idata][3 * j + k] = u_tmp[3 * nat * i + 3 * j + k];
+		f[idata][3 * j + k] = f_tmp[3 * nat * i + 3 * j + k];
+	    }
+	}
+	++idata;
+    }
+
+    ifs_disp.close();
+    ifs_force.close();
 }
 
 void InputParser::parse_input(ALMCore *alm)
@@ -347,8 +446,8 @@ void InputParser::parse_general_vars(ALMCore *alm)
                                    tolerance);
     delete input_setter;
 
-    alm->memory->deallocate(magmom);
-    
+    alm->memory->allocate(magmom, nat, 3);
+
     kdname_v.clear();
     periodic_v.clear();
     no_defaults.clear();
@@ -1166,3 +1265,4 @@ void InputParser::assign_val(T &val,
         }
     }
 }
+

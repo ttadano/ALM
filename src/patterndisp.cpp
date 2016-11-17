@@ -25,7 +25,12 @@ or http://opensource.org/licenses/mit-license.php for information.
 
 using namespace ALM_NS;
 
-Displace::Displace(ALMCore *alm) : Pointers(alm) {}
+Displace::Displace(ALMCore *alm) : Pointers(alm)
+{
+    trim_dispsign_for_evenfunc = true;
+    disp_basis = "CART";
+    pattern_all = NULL;
+}
 
 Displace::~Displace()
 {

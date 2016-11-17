@@ -21,6 +21,7 @@
 #include "constraint.h"
 #include "timer.h"
 #include "patterndisp.h"
+#include "error.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -38,6 +39,10 @@ ALMCore::ALMCore()
     timer = new Timer(this);
 
     std::cout << " Job started at " << timer->DateAndTime() << std::endl;
+
+    // Default values
+    mode = "suggest";
+    print_hessian = false;
 }
 
 void ALMCore::create()
@@ -51,6 +56,7 @@ void ALMCore::create()
     fitting = new Fitting(this);
     constraint = new Constraint(this);
     displace = new Displace(this);
+    error = new Error(this);
 }
 
 void ALMCore::initialize()
@@ -67,10 +73,6 @@ ALMCore::~ALMCore()
     std::cout << std::endl << " Job finished at " 
         << timer->DateAndTime() << std::endl;
     delete timer;
-}
-
-void ALMCore::finalize()
-{
     delete files;
     delete interaction;
     delete fcs;
@@ -80,5 +82,6 @@ void ALMCore::finalize()
     delete constraint;
     delete displace;
     delete memory;
+    delete error;
 }
 

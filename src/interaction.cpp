@@ -28,14 +28,30 @@ or http://opensource.org/licenses/mit-license.php for information.
 
 using namespace ALM_NS;
 
-Interaction::Interaction(ALMCore *alm) : Pointers(alm) {}
+Interaction::Interaction(ALMCore *alm) : Pointers(alm)
+{
+    maxorder = 0;
+    is_periodic[0] = 1; is_periodic[1] = 1; is_periodic[2] = 1;
+    nbody_include = NULL;
+
+    nneib = 0;
+    maxorder = 0;
+    rcs = NULL;
+    x_image = NULL;
+    exist_image = NULL;
+    str_order = NULL;
+    distall = NULL;
+    mindist_pairs = NULL;
+    pairs = NULL;
+    interaction_pair = NULL;
+    mindist_cluster = NULL;
+}
 
 Interaction::~Interaction()
 {
     memory->deallocate(x_image);
     memory->deallocate(exist_image);
     memory->deallocate(str_order);
-    memory->deallocate(nbody_include);
     memory->deallocate(pairs);
     memory->deallocate(mindist_pairs);
     memory->deallocate(interaction_pair);

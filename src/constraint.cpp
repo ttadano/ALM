@@ -8,6 +8,7 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include <iostream>
 #include <iomanip>
 #include "constraint.h"
 #include "interaction.h"
@@ -28,7 +29,23 @@
 
 using namespace ALM_NS;
 
-Constraint::Constraint(ALMCore *alm) : Pointers(alm) {}
+Constraint::Constraint(ALMCore *alm) : Pointers(alm) 
+{
+    constraint_mode = 1;
+    rotation_axis = "";
+    fix_harmonic = false;
+    fix_cubic = false;
+    constraint_algebraic = 0;
+    fc2_file = "";
+    fc3_file = "";
+    exist_constraint = false;
+    extra_constraint_from_symmetry = false;
+    const_symmetry = NULL;
+    const_fix = NULL;
+    const_relate = NULL;
+    index_bimap = NULL;
+    P = 0;
+}
 
 Constraint::~Constraint()
 {
