@@ -56,8 +56,6 @@ namespace ALM_NS
         void set_interaction_vars(const int maxorder,
                                   const int *nbody_include);
 	void set_cutoff_radii(const double * rcs);
->>>>>>> upstream/develop
-
         ALMCore* get_alm_core();
         int get_fc_length(const int fc_order); // harmonic=2, ...
         void get_fc(double* fc_value,
