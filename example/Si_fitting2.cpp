@@ -202,10 +202,8 @@ int main()
     // Run
     alm->set_run_mode("fitting");
     alm->set_output_filename_prefix("si222API");
-    alm->set_cell(64, 1, lavec, xcoord, kd, kdname);
-
-    int nbody_include[2] = {2, 3};
-    alm->set_interaction_vars(2, nbody_include);
+    alm->set_cell(64, lavec, xcoord, kd, kdname);
+    alm->set_norder(2);
 
     // rcs[maxorder, nkd, nkd] to be flattened.
     double rcs[2] = {-1.0, 7.3};

@@ -179,13 +179,8 @@ int main()
     // Run
     alm->set_run_mode("fitting");
     alm->set_output_filename_prefix("si222API");
-    alm->set_cell(64, 1, lavec, xcoord, kd, kdname);
-
-    int nbody_include[1] = {2};
-    alm->set_interaction_vars(1, nbody_include);
-
-    // rcs[maxorder, nkd, nkd]
-    // double rcs[1][1][1] = {{{-1.0}}};
+    alm->set_cell(64, lavec, xcoord, kd, kdname);
+    alm->set_norder(1);
 
     double u[ndata_used * nat * 3];
     double f[ndata_used * nat * 3];

@@ -79,22 +79,23 @@ int main()
          { 0.8750000000000000, 0.6250000000000000, 0.8750000000000000},
          { 0.8750000000000000, 0.8750000000000000, 0.1250000000000000},
          { 0.8750000000000000, 0.8750000000000000, 0.6250000000000000}};
-    int nkd = 1;
     int kd[64] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::string kdname[1] = {"Si"};
+    // int kd[64] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    //               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    //               2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    //               2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
+    // std::string kdname[2] = {"Si", "O"};
 
     alm->set_run_mode("suggest");
     alm->set_output_filename_prefix("si222API");
-    alm->set_cell(64, 1, lavec, xcoord, kd, kdname);
-
+    alm->set_cell(64, lavec, xcoord, kd, kdname);
+    alm->set_norder(1);
     int nbody_include[1] = {2};
-    alm->set_interaction_vars(1, nbody_include);
-
-    // rcs[maxorder, nkd, nkd]
-    double rcs[1][1][1] = {{{-1.0}}};
+    alm->set_interaction_range(nbody_include);
 
     alm->run();
 

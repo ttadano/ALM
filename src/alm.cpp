@@ -60,41 +60,41 @@ ALM::~ALM()
     delete alm_core;
 }
 
-void ALM::set_run_mode(const std::string mode)
+const void ALM::set_run_mode(const std::string mode)
 {
     alm_core->mode = mode;
 }
 
-void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
+const void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
 {
     alm_core->files->job_title = prefix;
 }
 
-void ALM::set_is_print_symmetry(const int is_printsymmetry) // PRINTSYM
+const void ALM::set_is_print_symmetry(const int is_printsymmetry) // PRINTSYM
 {
     alm_core->symmetry->is_printsymmetry = is_printsymmetry;
 }
 
-void ALM::set_is_print_hessians(const bool print_hessian) // HESSIAN
+const void ALM::set_is_print_hessians(const bool print_hessian) // HESSIAN
 {
     alm_core->print_hessian = print_hessian;
 }
 
-void ALM::set_symmetry_params(const int nsym, // NSYM
-                              const double tolerance) // TOLERANCE
+const void ALM::set_symmetry_params(const int nsym, // NSYM
+                                    const double tolerance) // TOLERANCE
 {
     alm_core->symmetry->nsym = nsym;
     alm_core->symmetry->tolerance = tolerance;
 }
 
-void ALM::set_displacement_params(const std::string str_disp_basis, // DBASIS
-                                  const bool trim_dispsign_for_evenfunc) // TRIMEVEN
+const void ALM::set_displacement_params(const std::string str_disp_basis, // DBASIS
+                                        const bool trim_dispsign_for_evenfunc) // TRIMEVEN
 {
     alm_core->displace->disp_basis = str_disp_basis;
     alm_core->displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
 }
 
-void ALM::set_periodicity(const int is_periodic[3]) // PERIODIC
+const void ALM::set_periodicity(const int is_periodic[3]) // PERIODIC
 {
     int i;
     for (i = 0; i < 3; ++i) {
@@ -102,25 +102,42 @@ void ALM::set_periodicity(const int is_periodic[3]) // PERIODIC
     }
 }
 
-void ALM::set_cell(const int nat,
-                   const int nkd,
-                   const double lavec[3][3],
-                   const double xcoord[][3],
-                   const int kd[],
-                   const std::string kdname[])
+const void ALM::set_cell(const int nat,
+                         const double lavec[3][3],
+                         const double xcoord[][3],
+                         const int kd[],
+                         const std::string kdname[])
 {
-    int i, j;
+    int i, j, nkd;
+    int nkd_vals[nat];
+    bool kd_exist;
 
-    alm_core->system->nat = nat;
-    alm_core->system->nkd = nkd;
-    if (!alm_core->system->kdname) {
-        alm_core->memory->allocate(alm_core->system->kdname, nkd);
+    nkd_vals[0] = kd[0];
+    nkd = 1;
+    for (i = 1; i < nat; ++i) {
+        kd_exist = false;
+        for (j = 0; j < nkd; ++j) {
+            if (nkd_vals[j] == kd[i]) {
+                kd_exist = true;
+                break;
+            }
+        }
+        if (!kd_exist) {
+            nkd_vals[nkd] = kd[i];
+            ++nkd;
+        }
     }
+
+    alm_core->system->nkd = nkd;
+    alm_core->system->nat = nat;
     if (!alm_core->system->xcoord) {
         alm_core->memory->allocate(alm_core->system->xcoord, nat, 3);
     }
     if (!alm_core->system->kd) {
         alm_core->memory->allocate(alm_core->system->kd, nat);
+    }
+    if (!alm_core->system->kdname) {
+        alm_core->memory->allocate(alm_core->system->kdname, nkd);
     }
     if (!alm_core->system->magmom) {
         alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
@@ -149,11 +166,11 @@ void ALM::set_cell(const int nat,
 
 }
 
-void ALM::set_magnetic_params(const double * const *magmom, // MAGMOM
-                              const bool lspin, // MAGMOM
-                              const int noncollinear, // NONCOLLINEAR
-                              const int trev_sym_mag, // TREVSYM
-                              const std::string str_magmom) // MAGMOM
+const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
+                                    const bool lspin, // MAGMOM
+                                    const int noncollinear, // NONCOLLINEAR
+                                    const int trev_sym_mag, // TREVSYM
+                                    const std::string str_magmom) // MAGMOM
 {
     int i, j, nat;
 
@@ -168,15 +185,15 @@ void ALM::set_magnetic_params(const double * const *magmom, // MAGMOM
     }
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
-            alm_core->system->magmom[i][j] = magmom[i][j];
+            alm_core->system->magmom[i][j] = magmom[i * 3 + j];
         }
     }
 }
 
-void ALM::set_displacement_and_force(const double * u_in,
-                     const double * f_in,
-                     const int nat,
-                     const int ndata_used)
+const void ALM::set_displacement_and_force(const double * u_in,
+                                           const double * f_in,
+                                           const int nat,
+                                           const int ndata_used)
 {
     double **u;
     double **f;
@@ -200,87 +217,41 @@ void ALM::set_displacement_and_force(const double * u_in,
     alm_core->memory->deallocate(f);
 }
 
-void ALM::set_fitting_constraint(const int constraint_flag, // ICONST
-                                 const std::string rotation_axis) // ROTAXIS
+const void ALM::set_fitting_constraint(const int constraint_flag, // ICONST
+                                       const std::string rotation_axis) // ROTAXIS
 {
     alm_core->constraint->constraint_mode = constraint_flag;
     alm_core->constraint->rotation_axis = rotation_axis;
 }
 
-void ALM::set_multiplier_option(const int multiply_data) // MULTDAT
+const void ALM::set_multiplier_option(const int multiply_data) // MULTDAT
 {
     alm_core->symmetry->multiply_data = multiply_data;
 }
 
-void ALM::set_fitting_filenames(const std::string dfile, // DFILE
-                                const std::string ffile) // FFILE
+const void ALM::set_fitting_filenames(const std::string dfile, // DFILE
+                                      const std::string ffile) // FFILE
 {
     alm_core->files->file_disp = dfile;
     alm_core->files->file_force = ffile;
 }
 
-void ALM::set_fitting_fc2_filename(const std::string fc2_file) // FC2XML
-{
-    bool fix_harmonic;
-
-    alm_core->constraint->fc2_file = fc2_file;
-    if (fc2_file.empty()) {
-        fix_harmonic = false;
-    } else {
-        fix_harmonic = true;
-    }
-    alm_core->constraint->fix_harmonic = fix_harmonic;
-}
-
-void ALM::set_fitting_fc3_filename(const std::string fc3_file) // FC3XML
-{
-    bool fix_cubic;
-
-    alm_core->constraint->fc3_file = fc3_file;
-    if (fc3_file.empty()) {
-        fix_cubic = false;
-    } else {
-        fix_cubic = true;
-    }
-    alm_core->constraint->fix_cubic = fix_cubic;
-}
-
-void ALM::set_interaction_vars(const int maxorder, // NORDER harmonic=1
-                               const int *nbody_include) // NBODY
+const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
 {
     int i, j, k, nkd;
-
-    // nbody_include is defined as follows:
-    //
-    // if (nbody_v[0].empty()) { // Default [2, 3, 4, ..., NORDER + 1]
-    //     for (i = 0; i < maxorder; ++i) {
-    //         nbody_include[i] = i + 2;
-    //     }
-    // } else if (nbody_v.size() == maxorder) {
-    //     for (i = 0; i < maxorder; ++i) {
-    //         nbody_include[i] = boost::lexical_cast<int>(nbody_v[i]);
-    //     }
-    // }
 
     alm_core->interaction->maxorder = maxorder;
     if (!alm_core->interaction->nbody_include) {
         alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
     }
+    for (i = 0; i < maxorder; ++i) {
+        alm_core->interaction->nbody_include[i] = i + 2;
+    }
+
     nkd = alm_core->system->nkd;
     if (!alm_core->interaction->rcs) {
         alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
     }
-
-    if (nbody_include) {
-        for (i = 0; i < maxorder; ++i) {
-            alm_core->interaction->nbody_include[i] = nbody_include[i];
-        }
-    } else {
-        for (i = 0; i < maxorder; ++i) {
-            alm_core->interaction->nbody_include[i] = i + 2;
-        }
-    }        
-
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
@@ -290,7 +261,20 @@ void ALM::set_interaction_vars(const int maxorder, // NORDER harmonic=1
     }
 }
 
-void ALM::set_cutoff_radii(const double * rcs)
+const void ALM::set_interaction_range(const int *nbody_include) // NBODY
+{
+    int maxorder = alm_core->interaction->maxorder;
+    if (maxorder > 0) {
+        if (!alm_core->interaction->nbody_include) {
+            alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
+        }
+        for (int i = 0; i < maxorder; ++i) {
+            alm_core->interaction->nbody_include[i] = nbody_include[i];
+        }
+    }
+}
+
+const void ALM::set_cutoff_radii(const double * rcs)
 {
     int i, j, k, nkd, maxorder, count;
 
@@ -316,7 +300,7 @@ ALMCore * ALM::get_alm_core()
     return alm_core;
 }
 
-int ALM::get_fc_length(const int fc_order)  // harmonic=1, ...
+const int ALM::get_fc_length(const int fc_order)  // harmonic=1, ...
 {
     int id, order, num_unique_elems, num_equiv_elems;
     Fcs *fcs;
@@ -333,9 +317,9 @@ int ALM::get_fc_length(const int fc_order)  // harmonic=1, ...
     return id;
 }
 
-void ALM::get_fc(double *fc_value,
-                 int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
-                 const int fc_order) // harmonic=1, ...
+const void ALM::get_fc(double *fc_value,
+                       int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
+                       const int fc_order) // harmonic=1, ...
 {
     int j, k, ip, id;
     int order, num_unique_elems, num_equiv_elems, maxorder;
@@ -371,7 +355,7 @@ void ALM::get_fc(double *fc_value,
     }
 }
 
-void ALM::run()
+const void ALM::run()
 {
     alm_core->initialize();
     if (alm_core->mode == "fitting") {
@@ -380,13 +364,14 @@ void ALM::run()
         run_suggest();
     }
 }
-void ALM::run_fitting()
+
+const void ALM::run_fitting()
 {
     alm_core->constraint->setup();
     alm_core->fitting->fitmain();
 }
 
-void ALM::run_suggest()
+const void ALM::run_suggest()
 {
     alm_core->displace->gen_displacement_pattern();
 }
