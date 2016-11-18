@@ -17,6 +17,8 @@ static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
 static PyObject * py_set_norder(PyObject *self, PyObject *args);
 static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args);
+static PyObject * py_get_fc_length(PyObject *self, PyObject *args);
+static PyObject * py_get_fc(PyObject *self, PyObject *args);
 
 struct module_state {
   PyObject *error;
@@ -46,7 +48,8 @@ static PyMethodDef _alm_methods[] = {
   {"set_displacement_and_force", py_set_displacement_and_force, METH_VARARGS, ""},
   {"set_norder", py_set_norder, METH_VARARGS, ""},
   {"set_cutoff_radii", py_set_cutoff_radii, METH_VARARGS, ""},
-  /* {"get_fc", py_get_fc, METH_VARARGS, ""}, */
+  {"get_fc_length", py_get_fc_length, METH_VARARGS, ""},
+  {"get_fc", py_get_fc, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 
@@ -221,49 +224,37 @@ static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-/* static PyObject * py_get_fc(PyObject *self, PyObject *args) */
-/* { */
-/*   int fc_order; */
-/*   PyArrayObject* py_fc_value; */
-/*   PyArrayObject* py_elem_indices; */
+static PyObject * py_get_fc_length(PyObject *self, PyObject *args)
+{
+  int fc_order;
+  int fc_length;
 
-/*   if (!PyArg_ParseTuple(args, "OOi", */
-/* 			&py_fc_value, */
-/* 			&py_elem_indices, */
-/* 			&fc_order)) { */
-/*     return NULL; */
-/*   } */
+  if (!PyArg_ParseTuple(args, "i",
+			&fc_order)) {
+    return NULL;
+  }
 
-/*   double (*fc_value) = (double(*))PyArray_DATA(fc_value); */
-/*   int (*elem_indices) = (int(*))PyArray_DATA(elem_indices); */
+  fc_length = alm_get_fc_length(fc_order);
 
-/*   alm_get_fc(fc_value, elem_indices, fc_order); */
+  return PyLong_FromLong((long) fc_length);
+}
 
-/*   Py_RETURN_NONE; */
-/* } */
+static PyObject * py_get_fc(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_fc_values;
+  PyArrayObject* py_elem_indices;
 
-/* static PyObject * py_get_fc_length(PyObject *self, PyObject *args) */
-/* { */
-/*   int fc_order; */
+  if (!PyArg_ParseTuple(args, "OO",
+			&py_fc_values,
+			&py_elem_indices)) {
+    return NULL;
+  }
 
-/*   if (!PyArg_ParseTuple(args, "i", */
-/* 			&fc_order)) { */
-/*     return NULL; */
-/*   } */
+  double (*fc_values) = (double(*))PyArray_DATA(py_fc_values);
+  int (*elem_indices) = (int(*))PyArray_DATA(py_elem_indices);
+  const int fc_order = PyArray_DIMS(py_elem_indices)[1] - 1;
 
-/*   alm_get_fc_length(fc_order); */
+  alm_get_fc(fc_values, elem_indices, fc_order);
 
-/*   return PyLong_FromLong((long) fc_order); */
-/* } */
-
-/* static PyObject * py_get_fc_length(PyObject *self, PyObject *args) */
-/* { */
-/*   PyArrayObject* py_lavec; */
-/*   PyArrayObject* py_xcoord; */
-/*   PyArrayObject* py_kd; */
-/*   if (!PyArg_ParseTuple(args, "OO", */
-/* 			&py_lavec, */
-/* 			&py_xcoord)) { */
-/*     return NULL; */
-/*   } */
-/* } */
+  Py_RETURN_NONE;
+}

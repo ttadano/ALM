@@ -1,5 +1,5 @@
 #
-#  suggest_Si.cpp
+#  Si_suggest.py
 #
 #  This is an example to run ALM in the suggest mode.
 #

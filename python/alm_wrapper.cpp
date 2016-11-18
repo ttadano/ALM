@@ -112,13 +112,14 @@ extern "C" {
 
     int alm_get_fc_length(const int fc_order)  // harmonic=1, ...
     {
-        return 0;
+        return alm->get_fc_length(fc_order);
     }
 
-    void alm_get_fc(double *fc_value,
-                    int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
+    void alm_get_fc(double *fc_values,
+                    int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
                     const int fc_order)
     {
+        alm->get_fc(fc_values, elem_indices, fc_order);
     }
 
     void alm_run_suggest(void)

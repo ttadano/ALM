@@ -5,4 +5,5 @@ from .alm import (alm_new,
                   set_cell,
                   set_displacement_and_force,
                   set_norder,
-                  set_cutoff_radii)
+                  set_cutoff_radii,
+                  get_fc)

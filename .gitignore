@@ -5,6 +5,7 @@ build
 TAGS
 include
 lib
+src/alm
 a.out
 *.obj
 Release/
