@@ -48,18 +48,35 @@ Symmetry::Symmetry(ALMCore *alm) : Pointers(alm)
     natmin = 0;
     multiply_data = 1;
     tolerance = 1e-6;
+    symrel_int = nullptr;
 }
 
 Symmetry::~Symmetry()
 {
-    memory->deallocate(symrel);
-    memory->deallocate(symrel_int);
-    memory->deallocate(tnons);
-    memory->deallocate(map_sym);
-    memory->deallocate(map_p2s);
-    memory->deallocate(map_s2p);
-    memory->deallocate(symnum_tran);
-    memory->deallocate(sym_available);
+    if (symrel) {
+        memory->deallocate(symrel);
+    }
+    if (symrel_int) {
+        memory->deallocate(symrel_int);
+    }
+    if (tnons) {
+        memory->deallocate(tnons);
+    }
+    if (map_sym) {
+        memory->deallocate(map_sym);
+    }
+    if (map_p2s) {
+        memory->deallocate(map_p2s);
+    }
+    if (map_s2p) {
+        memory->deallocate(map_s2p);
+    }
+    if (symnum_tran) {
+        memory->deallocate(symnum_tran);
+    }
+    if (sym_available) {
+        memory->deallocate(sym_available);
+    }
 }
 
 void Symmetry::init()

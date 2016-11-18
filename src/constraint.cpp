@@ -40,6 +40,8 @@ Constraint::Constraint(ALMCore *alm) : Pointers(alm)
     fc3_file = "";
     exist_constraint = false;
     extra_constraint_from_symmetry = false;
+    const_mat = nullptr;
+    const_rhs = nullptr;
     const_symmetry = nullptr;
     const_fix = nullptr;
     const_relate = nullptr;
@@ -51,15 +53,27 @@ Constraint::~Constraint()
 {
     if (exist_constraint && alm->mode == "fitting") {
 
-        memory->deallocate(const_symmetry);
+        if (const_symmetry) {
+            memory->deallocate(const_symmetry);
+        }
 
         if (constraint_algebraic) {
-            memory->deallocate(const_fix);
-            memory->deallocate(const_relate);
-            memory->deallocate(index_bimap);
+            if (const_fix) {
+                memory->deallocate(const_fix);
+            }
+            if (const_relate) {
+                memory->deallocate(const_relate);
+            }
+            if (index_bimap) {
+                memory->deallocate(index_bimap);
+            }
         } else {
-            memory->deallocate(const_mat);
-            memory->deallocate(const_rhs);
+            if (const_mat) {
+                memory->deallocate(const_mat);
+            }
+            if (const_rhs) {
+                memory->deallocate(const_rhs);
+            }
         }
     }
 }

@@ -45,6 +45,24 @@ ALMCore::ALMCore()
     print_hessian = false;
 }
 
+ALMCore::~ALMCore()
+{
+    std::cout << std::endl << " Job finished at "
+        << timer->DateAndTime() << std::endl;
+    
+    delete timer;
+    delete files;
+    delete interaction;
+    delete fcs;
+    delete symmetry;
+    delete system;
+    delete fitting;
+    delete constraint;
+    delete displace;
+    delete memory;
+    delete error;
+}
+
 void ALMCore::create()
 {
     memory = new Memory(this);
@@ -68,19 +86,3 @@ void ALMCore::initialize()
     fcs->init();
 }
 
-ALMCore::~ALMCore()
-{
-    std::cout << std::endl << " Job finished at "
-        << timer->DateAndTime() << std::endl;
-    delete timer;
-    delete files;
-    delete interaction;
-    delete fcs;
-    delete symmetry;
-    delete system;
-    delete fitting;
-    delete constraint;
-    delete displace;
-    delete memory;
-    delete error;
-}

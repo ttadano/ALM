@@ -60,8 +60,24 @@ System::System(ALMCore *alm): Pointers(alm)
 
 System::~System()
 {
-    memory->deallocate(x_cartesian);
-    memory->deallocate(atomlist_class);
+    if (kd) {
+        memory->deallocate(kd);
+    }
+    if (kdname) {
+        memory->deallocate(kdname);
+    }
+    if (x_cartesian) {
+        memory->deallocate(x_cartesian);
+    }
+    if (xcoord) {
+        memory->deallocate(xcoord);
+    }
+    if (atomlist_class) {
+        memory->deallocate(atomlist_class);
+    }
+    if (magmom) {
+        memory->deallocate(magmom);
+    }
 }
 
 void System::init()

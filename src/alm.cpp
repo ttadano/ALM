@@ -157,7 +157,6 @@ const void ALM::set_cell(const int nat,
             alm_core->system->xcoord[i][j] = xcoord[i][j];
         }
     }
-
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
             alm_core->system->magmom[i][j] = 0.0;

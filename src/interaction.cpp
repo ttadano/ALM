@@ -49,14 +49,30 @@ Interaction::Interaction(ALMCore *alm) : Pointers(alm)
 
 Interaction::~Interaction()
 {
-    memory->deallocate(x_image);
-    memory->deallocate(exist_image);
-    memory->deallocate(str_order);
-    memory->deallocate(pairs);
-    memory->deallocate(mindist_pairs);
-    memory->deallocate(interaction_pair);
-    memory->deallocate(mindist_cluster);
-    memory->deallocate(distall);
+    if (x_image) {
+        memory->deallocate(x_image);
+    }
+    if (exist_image) {
+        memory->deallocate(exist_image);
+    }
+    if (str_order) {
+        memory->deallocate(str_order);
+    }
+    if (pairs) {
+        memory->deallocate(pairs);
+    }
+    if (mindist_pairs) {
+        memory->deallocate(mindist_pairs);
+    }
+    if (interaction_pair) {
+        memory->deallocate(interaction_pair);
+    }
+    if (mindist_cluster) {
+        memory->deallocate(mindist_cluster);
+    }
+    if (distall) {
+        memory->deallocate(distall);
+    }
 }
 
 void Interaction::init()

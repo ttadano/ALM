@@ -1,15 +1,18 @@
 import os
-from setuptools import setup, Extension
+# from setuptools import setup, Extension
+from distutils.core import setup, Extension
 import numpy
 include_dirs_numpy = [numpy.get_include()]
 
 extension = Extension('alm._alm',
-                      libraries=['stdc++'],
                       include_dirs=include_dirs_numpy,
+                      library_dirs=["../lib"],
                       extra_compile_args = ['-fopenmp'],
-                      extra_link_args=['libalmcxx.a'],
-                      sources=['_alm.c',
-                               'alm_wrapper.cpp'])
+                      extra_link_args=['-lstdc++',
+                                       '-lalmcxx',
+                                       '-lgomp',
+                                       '-llapack'],
+                      sources=['_alm.c', 'alm_wrapper.cpp'])
 
 setup(name='alm',
       version='0.9.8',

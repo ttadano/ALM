@@ -31,9 +31,24 @@ Fcs::Fcs(ALMCore *alm) : Pointers(alm)
     nzero = nullptr;
     ndup = nullptr;
     fc_set = nullptr;
+    nints = nullptr;
 };
 
-Fcs::~Fcs() {};
+Fcs::~Fcs()
+{
+    if (nzero) {
+        memory->deallocate(nzero);
+    }
+    if (ndup) {
+        memory->deallocate(ndup);
+    }
+    if (fc_set) {
+        memory->deallocate(fc_set);
+    }
+    if (nints) {
+        memory->deallocate(nints);
+    }
+};
 
 void Fcs::init()
 {
@@ -78,7 +93,9 @@ void Fcs::init()
     }
 
     memory->deallocate(nints);
+    nints = nullptr;
     memory->deallocate(nzero);
+    nzero = nullptr;
     timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
