@@ -1,7 +1,7 @@
 *.o
 *~
-alm
 _build
+build
 TAGS
 include
 lib
