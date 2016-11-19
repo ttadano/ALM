@@ -45,8 +45,9 @@ namespace ALM_NS
 					      const double* f_in,
 					      const int nat,
 					      const int ndata_used);
-        const void set_fitting_constraint(const int constraint_flag,
-					  const std::string rotation_axis);
+        const void set_fitting_constraint_type(const int constraint_flag);
+        const void set_fitting_constraint_rotation_axis
+        (const std::string rotation_axis);
         const void set_multiplier_option(const int multiply_data);
         const void set_fitting_filenames(const std::string dfile,
 					 const std::string ffile);

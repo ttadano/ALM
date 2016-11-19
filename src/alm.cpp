@@ -136,18 +136,26 @@ const void ALM::set_cell(const int nat,
 
     alm_core->system->nkd = nkd;
     alm_core->system->nat = nat;
-    if (!alm_core->system->xcoord) {
-        alm_core->memory->allocate(alm_core->system->xcoord, nat, 3);
+
+    if (alm_core->system->xcoord) {
+        alm_core->memory->deallocate(alm_core->system->xcoord);
     }
-    if (!alm_core->system->kd) {
-        alm_core->memory->allocate(alm_core->system->kd, nat);
+    alm_core->memory->allocate(alm_core->system->xcoord, nat, 3);
+
+    if (alm_core->system->kd) {
+        alm_core->memory->deallocate(alm_core->system->kd);
     }
-    if (!alm_core->system->kdname) {
-        alm_core->memory->allocate(alm_core->system->kdname, nkd);
+    alm_core->memory->allocate(alm_core->system->kd, nat);
+
+    if (alm_core->system->kdname) {
+        alm_core->memory->deallocate(alm_core->system->kdname);
     }
-    if (!alm_core->system->magmom) {
-        alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
+    alm_core->memory->allocate(alm_core->system->kdname, nkd);
+
+    if (alm_core->system->magmom) {
+        alm_core->memory->deallocate(alm_core->system->magmom);
     }
+    alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
 
     for (i = 0; i < nkd; ++i) {
         alm_core->system->kdname[i] = kdname[i];
@@ -185,9 +193,11 @@ const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
     alm_core->system->str_magmom = str_magmom;
     alm_core->symmetry->trev_sym_mag = trev_sym_mag;
 
-    if (!alm_core->system->magmom) {
-        alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
+    if (alm_core->system->magmom) {
+        alm_core->memory->deallocate(alm_core->system->magmom);
     }
+    alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
+
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
             alm_core->system->magmom[i][j] = magmom[i * 3 + j];
@@ -222,10 +232,14 @@ const void ALM::set_displacement_and_force(const double * u_in,
     alm_core->memory->deallocate(f);
 }
 
-const void ALM::set_fitting_constraint(const int constraint_flag, // ICONST
-                                       const std::string rotation_axis) // ROTAXIS
+const void ALM::set_fitting_constraint_type(const int constraint_flag) // ICONST
 {
     alm_core->constraint->constraint_mode = constraint_flag;
+}
+
+const void ALM::set_fitting_constraint_rotation_axis
+(const std::string rotation_axis) // ROTAXIS
+{
     alm_core->constraint->rotation_axis = rotation_axis;
 }
 
@@ -246,17 +260,21 @@ const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
     int i, j, k, nkd;
 
     alm_core->interaction->maxorder = maxorder;
-    if (!alm_core->interaction->nbody_include) {
-        alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
+    if (alm_core->interaction->nbody_include) {
+        alm_core->memory->deallocate(alm_core->interaction->nbody_include);
     }
+    alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
+
     for (i = 0; i < maxorder; ++i) {
         alm_core->interaction->nbody_include[i] = i + 2;
     }
 
     nkd = alm_core->system->nkd;
-    if (!alm_core->interaction->rcs) {
-        alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+    if (alm_core->interaction->rcs) {
+        alm_core->memory->deallocate(alm_core->interaction->rcs);
     }
+    alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
@@ -270,9 +288,10 @@ const void ALM::set_interaction_range(const int *nbody_include) // NBODY
 {
     int maxorder = alm_core->interaction->maxorder;
     if (maxorder > 0) {
-        if (!alm_core->interaction->nbody_include) {
-            alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
+        if (alm_core->interaction->nbody_include) {
+            alm_core->memory->deallocate(alm_core->interaction->nbody_include);
         }
+        alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
         for (int i = 0; i < maxorder; ++i) {
             alm_core->interaction->nbody_include[i] = nbody_include[i];
         }
@@ -285,7 +304,10 @@ const void ALM::set_cutoff_radii(const double * rcs)
 
     nkd = alm_core->system->nkd;
     maxorder = alm_core->interaction->maxorder;
-    if (!alm_core->interaction->rcs) {
+    if (maxorder > 0) {
+        if (alm_core->interaction->rcs) {
+            alm_core->memory->deallocate(alm_core->interaction->rcs);
+        }
         alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
     }
 
@@ -344,7 +366,7 @@ const int ALM::get_displacement_patterns(int *atom_indices,
         }
     }
 
-    // Cartesian or Fractional
+    // 0:Cartesian or 1:Fractional. -1 means something wrong.
     if (alm_core->displace->disp_basis[0] == 'C') {
         return 0;
     } else if (alm_core->displace->disp_basis[0] == 'F') {

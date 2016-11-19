@@ -157,7 +157,9 @@ void Fitting::fitmain()
 
 
     // Copy force constants to public variable "params"
-
+    if (params) {
+        memory->deallocate(params);
+    }
     memory->allocate(params, N);
 
     if (constraint->constraint_algebraic) {
@@ -188,12 +190,16 @@ void Fitting::set_displacement_and_force(const double * const * disp_in,
                                          const int nat,
                                          const int ndata_used)
 {
-    if (!u_in) {
-        memory->allocate(u_in, ndata_used, 3 * nat);
+    if (u_in) {
+        memory->deallocate(u_in);
     }
-    if (!f_in) {
-        memory->allocate(f_in, ndata_used, 3 * nat);
+    memory->allocate(u_in, ndata_used, 3 * nat);
+
+    if (f_in) {
+        memory->deallocate(f_in);
     }
+    memory->allocate(f_in, ndata_used, 3 * nat);
+
     for (int i = 0; i < ndata_used; i++) {
         for (int j = 0; j < 3 * nat; j++) {
             u_in[i][j] = disp_in[i][j];

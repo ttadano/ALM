@@ -39,6 +39,8 @@ Fcs::~Fcs()
 void Fcs::init()
 {
     int i;
+    int *nints;
+    int *nzero;
     int maxorder = interaction->maxorder;
 
     std::cout << " FORCE CONSTANT" << std::endl;
@@ -46,11 +48,19 @@ void Fcs::init()
 
     memory->allocate(nints, maxorder);
     memory->allocate(nzero, maxorder);
+
+    if (fc_set) {
+        memory->deallocate(fc_set);
+    }
     memory->allocate(fc_set, maxorder);
+
+    if (ndup) {
+        memory->deallocate(ndup);
+    }
     memory->allocate(ndup, maxorder);
 
     for (i = 0; i < maxorder; ++i) nzero[i] = 0;
-    generate_fclists(maxorder);
+    generate_fclists(maxorder, nzero);
 
     std::cout << std::endl;
     for (i = 0; i < maxorder; ++i) {
@@ -89,29 +99,21 @@ void Fcs::init()
 
 void Fcs::set_default_variables()
 {
-    nzero = nullptr;
     ndup = nullptr;
     fc_set = nullptr;
-    nints = nullptr;
 }
 
 void Fcs::deallocate_variables()
 {
-    if (nzero) {
-        memory->deallocate(nzero);
-    }
     if (ndup) {
         memory->deallocate(ndup);
     }
     if (fc_set) {
         memory->deallocate(fc_set);
     }
-    if (nints) {
-        memory->deallocate(nints);
-    }
 }
 
-void Fcs::generate_fclists(int maxorder)
+void Fcs::generate_fclists(int maxorder, int *nzero)
 {
     int i, j;
     int i1, i2;

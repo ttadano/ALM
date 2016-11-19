@@ -48,7 +48,14 @@ void Symmetry::init()
     setup_symmetry_operation(nat, nsym, system->lavec, system->rlavec,
                              system->xcoord, system->kd);
 
+    if (tnons) {
+        memory->deallocate(tnons);
+    }
     memory->allocate(tnons, nsym, 3);
+
+    if (symrel_int) {
+        memory->deallocate(symrel_int);
+    }
     memory->allocate(symrel_int, nsym, 3, 3);
 
     int isym = 0;
@@ -66,10 +73,19 @@ void Symmetry::init()
     }
 
     std::cout << "  Number of symmetry operations = " << nsym << std::endl;
+    
+    if (symrel) {
+        memory->deallocate(symrel);
+    }
     memory->allocate(symrel, nsym, 3, 3);
+
     symop_in_cart(system->lavec, system->rlavec);
 
+    if (sym_available) {
+        memory->deallocate(sym_available);
+    }
     memory->allocate(sym_available, nsym);
+
     int nsym_fc;
     symop_availability_check(symrel, sym_available, nsym, nsym_fc);
 
@@ -86,8 +102,19 @@ void Symmetry::init()
 
     pure_translations();
 
+    if (map_sym) {
+        memory->deallocate(map_sym);
+    }
     memory->allocate(map_sym, nat, nsym);
+
+    if (map_p2s) {
+        memory->deallocate(map_p2s);
+    }
     memory->allocate(map_p2s, natmin, ntran);
+
+    if (map_s2p) {
+        memory->deallocate(map_s2p);
+    }
     memory->allocate(map_s2p, nat);
 
     genmaps(nat, system->xcoord, map_sym, map_p2s, map_s2p);
@@ -665,6 +692,9 @@ void Symmetry::pure_translations()
                     "nat != natmin * ntran. Something is wrong in the structure.");
     }
 
+    if (symnum_tran) {
+        memory->deallocate(symnum_tran);
+    }
     memory->allocate(symnum_tran, ntran);
 
     int isym = 0;

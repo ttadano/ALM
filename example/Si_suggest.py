@@ -4,10 +4,9 @@
 #  This is an example to run ALM in the suggest mode.
 #
 
-import alm
+from alm import ALM
 import numpy as np
 
-alm.alm_new()
 lavec = [[20.406, 0, 0],
          [0, 20.406, 0],
          [0, 0, 20.406]]
@@ -80,8 +79,10 @@ kd = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
       14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
       14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
       14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14];
-alm.set_cell(lavec, xcoord, kd)
-alm.set_norder(1)
-alm.run_suggest()
-print(alm.get_displacement_patterns(1))
-alm.alm_delete()
+
+# alm.alm_new() and alm.alm_delete() are done by 'with' statement
+with ALM() as alm:
+    alm.set_cell(lavec, xcoord, kd)
+    alm.set_norder(1)
+    alm.run_suggest()
+    print(alm.get_displacement_patterns(1))

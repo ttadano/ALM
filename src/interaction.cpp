@@ -68,12 +68,39 @@ void Interaction::init()
     }
 
     nneib = 27;
+    if (x_image) {
+        memory->deallocate(x_image);
+    }
     memory->allocate(x_image, nneib, nat, 3);
+
+    if (exist_image) {
+        memory->deallocate(exist_image);
+    }
     memory->allocate(exist_image, nneib);
+
+    if (distall) {
+        memory->deallocate(distall);
+    }
     memory->allocate(distall, nat, nat);
+
+    if (mindist_pairs) {
+        memory->deallocate(mindist_pairs);
+    }
     memory->allocate(mindist_pairs, nat, nat);
+
+    if (interaction_pair) {
+        memory->deallocate(interaction_pair);
+    }
     memory->allocate(interaction_pair, maxorder, symmetry->natmin);
+
+    if (mindist_cluster) {
+        memory->deallocate(mindist_cluster);
+    }
     memory->allocate(mindist_cluster, maxorder, symmetry->natmin);
+
+    if (pairs) {
+        memory->deallocate(pairs);
+    }
     memory->allocate(pairs, maxorder);
 
     generate_coordinate_of_periodic_images(nat, system->xcoord,

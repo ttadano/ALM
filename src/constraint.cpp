@@ -96,7 +96,12 @@ void Constraint::setup()
     }
 
     extra_constraint_from_symmetry = false;
+
+    if (const_symmetry) {
+        memory->deallocate(const_symmetry);
+    }
     memory->allocate(const_symmetry, interaction->maxorder);
+
     constraint_from_symmetry(const_symmetry);
     for (int order = 0; order < interaction->maxorder; ++order) {
         if (const_symmetry[order].size() > 0) extra_constraint_from_symmetry = true;
@@ -229,8 +234,19 @@ void Constraint::setup()
                 std::cout << "  WARNING : Inter-order constraints for rotational invariance will be neglected." << std::endl;
             }
 
+            if (const_fix) {
+                memory->deallocate(const_fix);
+            }
             memory->allocate(const_fix, maxorder);
+
+            if (const_relate) {
+                memory->deallocate(const_relate);
+            }
             memory->allocate(const_relate, maxorder);
+
+            if (index_bimap) {
+                memory->deallocate(index_bimap);
+            }
             memory->allocate(index_bimap, maxorder);
 
             get_mapping_constraint(maxorder, const_self, const_fix,
@@ -256,7 +272,15 @@ void Constraint::setup()
                 Pmax -= const_self[1].size();
                 Pmax += fcs->ndup[1].size();
             }
+
+            if (const_mat) {
+                memory->deallocate(const_mat);
+            }
             memory->allocate(const_mat, Pmax, N);
+
+            if (const_rhs) {
+                memory->deallocate(const_rhs);
+            }
             memory->allocate(const_rhs, Pmax);
 
             calc_constraint_matrix(N, P);
@@ -265,9 +289,13 @@ void Constraint::setup()
         }
 
         memory->deallocate(const_translation);
+        const_translation = nullptr;
         memory->deallocate(const_rotation_self);
+        const_rotation_self = nullptr;
         memory->deallocate(const_rotation_cross);
+        const_rotation_cross = nullptr;
         memory->deallocate(const_self);
+        const_self = nullptr;
 
         timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;

@@ -60,8 +60,6 @@ namespace ALM_NS
 
         void init();
 
-        int *nzero;
-
         std::vector<int> *ndup;
         std::vector<FcProperty> *fc_set;
 
@@ -75,10 +73,9 @@ namespace ALM_NS
         double coef_sym(const int, const int, const int *, const int *);
 
     private:
-        int *nints;
 	void set_default_variables();
 	void deallocate_variables();
-        void generate_fclists(int);
+	void generate_fclists(int maxorder, int *nzero);
         bool is_ascending(const int, const int *);
     };
 }
