@@ -6,6 +6,8 @@
 */
 
 #include "alm.h"
+#include <iostream>
+#include <string>
 
 int main()
 {
@@ -90,14 +92,42 @@ int main()
     //               2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
     // std::string kdname[2] = {"Si", "O"};
 
+    const int fc_order = 1;
     alm->set_run_mode("suggest");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);
-    alm->set_norder(1);
-    int nbody_include[1] = {2};
+    alm->set_norder(fc_order);
+    int nbody_include[fc_order] = {2};
     alm->set_interaction_range(nbody_include);
-
     alm->run();
+
+    const int num_patterns = alm->get_number_of_displacement_patterns(fc_order);
+    int numbers[num_patterns];
+    alm->get_numbers_of_displacements(numbers, fc_order);
+    int total_num_disps = 0;
+    for (int i = 0; i < num_patterns; i++) {
+        total_num_disps += numbers[i];
+    }
+    int atom_indices[total_num_disps];
+    double disp_patterns[total_num_disps * 3];
+    const int basis = alm->get_displacement_pattern(atom_indices,
+                                                    disp_patterns,
+                                                    fc_order);
+
+    const std::string str_basis[2] = {"Cartesian", "Fractional"};
+    std::cout << "Basis: " << str_basis[basis] << std::endl;
+    int i_atom = 0;
+    int i_disp = 0;
+    for (int i = 0; i < num_patterns; i++) {
+        std::cout << i + 1 << " : " << numbers[i] << std::endl;
+        for (int j = 0; j < numbers[i]; j++) {
+            std::cout << "  " << atom_indices[i_atom] + 1  << " : ";
+            ++i_atom;
+            std::cout << disp_patterns[i_disp] << " "; ++i_disp;
+            std::cout << disp_patterns[i_disp] << " "; ++i_disp;
+            std::cout << disp_patterns[i_disp] << std::endl; ++i_disp;
+        }
+    }
 
     delete alm;
 

@@ -304,6 +304,55 @@ ALMCore * ALM::get_alm_core()
     return alm_core;
 }
 
+const int ALM::get_number_of_displacement_patterns(const int fc_order) // harmonic=1, ...
+{
+    int order = fc_order - 1;
+
+    return alm_core->displace->pattern_all[order].size();
+}
+
+const void ALM::get_numbers_of_displacements(int *numbers,
+                                             const int fc_order) // harmonic=1, ...
+{
+    int order = fc_order - 1;
+
+    for (int i = 0; i < alm_core->displace->pattern_all[order].size(); ++i) {
+        numbers[i] = alm_core->displace->pattern_all[order][i].atoms.size();
+    }
+}
+
+const int ALM::get_displacement_pattern(int *atom_indices,
+                                        double *disp_patterns,
+                                        const int fc_order) // harmonic=1, ...
+{
+    int i_atom, i_disp;
+    AtomWithDirection *displacements;
+    int order = fc_order - 1;
+
+    i_atom = 0;
+    i_disp = 0;
+    for (int i = 0; i < alm_core->displace->pattern_all[order].size(); ++i) {
+        displacements = &alm_core->displace->pattern_all[order][i];
+        for (int j = 0; j < displacements->atoms.size(); ++j) {
+            atom_indices[i_atom] = displacements->atoms[j];
+            ++i_atom;
+            for (int k = 0; k < 3; ++k) {
+                disp_patterns[i_disp] = displacements->directions[3 * j + k];
+                ++i_disp;
+            }
+        }
+    }
+
+    // Cartesian or Fractional
+    if (alm_core->displace->disp_basis[0] == 'C') {
+        return 0;
+    } else if (alm_core->displace->disp_basis[0] == 'F') {
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
 const int ALM::get_fc_length(const int fc_order)  // harmonic=1, ...
 {
     int id, order, num_unique_elems, num_equiv_elems;
