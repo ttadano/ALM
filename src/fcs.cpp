@@ -28,26 +28,12 @@ using namespace ALM_NS;
 
 Fcs::Fcs(ALMCore *alm) : Pointers(alm)
 {
-    nzero = nullptr;
-    ndup = nullptr;
-    fc_set = nullptr;
-    nints = nullptr;
+    set_default_variables();
 };
 
 Fcs::~Fcs()
 {
-    if (nzero) {
-        memory->deallocate(nzero);
-    }
-    if (ndup) {
-        memory->deallocate(ndup);
-    }
-    if (fc_set) {
-        memory->deallocate(fc_set);
-    }
-    if (nints) {
-        memory->deallocate(nints);
-    }
+    deallocate_variables();
 };
 
 void Fcs::init()
@@ -101,6 +87,29 @@ void Fcs::init()
     std::cout << std::endl;
 }
 
+void Fcs::set_default_variables()
+{
+    nzero = nullptr;
+    ndup = nullptr;
+    fc_set = nullptr;
+    nints = nullptr;
+}
+
+void Fcs::deallocate_variables()
+{
+    if (nzero) {
+        memory->deallocate(nzero);
+    }
+    if (ndup) {
+        memory->deallocate(ndup);
+    }
+    if (fc_set) {
+        memory->deallocate(fc_set);
+    }
+    if (nints) {
+        memory->deallocate(nints);
+    }
+}
 
 void Fcs::generate_fclists(int maxorder)
 {

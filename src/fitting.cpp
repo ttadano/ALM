@@ -47,30 +47,12 @@ using namespace ALM_NS;
 
 Fitting::Fitting(ALMCore *alm): Pointers(alm)
 {
-    seed = static_cast<unsigned int>(time(nullptr));
-#ifdef _VSL
-    brng = VSL_BRNG_MT19937;
-    vslNewStream(&stream, brng, seed);
-#else
-    std::srand(seed);
-#endif
-
-    params = nullptr;
-    u_in = nullptr;
-    f_in = nullptr;
+    set_default_variables();
 }
 
 Fitting::~Fitting()
 {
-    if (params) {
-        memory->deallocate(params);
-    }
-    if (u_in) {
-        memory->deallocate(u_in);
-    }
-    if (f_in) {
-        memory->deallocate(f_in);
-    }
+    deallocate_variables();
 }
 
 void Fitting::fitmain()
@@ -784,6 +766,34 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
     }
 
     std::cout << "done!" << std::endl << std::endl;
+}
+
+void Fitting::set_default_variables()
+{
+    seed = static_cast<unsigned int>(time(nullptr));
+#ifdef _VSL
+    brng = VSL_BRNG_MT19937;
+    vslNewStream(&stream, brng, seed);
+#else
+    std::srand(seed);
+#endif
+
+    params = nullptr;
+    u_in = nullptr;
+    f_in = nullptr;
+}
+
+void Fitting::deallocate_variables()
+{
+    if (params) {
+        memory->deallocate(params);
+    }
+    if (u_in) {
+        memory->deallocate(u_in);
+    }
+    if (f_in) {
+        memory->deallocate(f_in);
+    }
 }
 
 void Fitting::data_multiplier(double **u,

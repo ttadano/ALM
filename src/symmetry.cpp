@@ -15,11 +15,9 @@
 #include "symmetry.h"
 #include "system.h"
 #include "memory.h"
-#include "constants.h"
 #include "timer.h"
 #include "error.h"
 #include "interaction.h"
-#include "files.h"
 #include <vector>
 #include <algorithm>
 
@@ -31,52 +29,12 @@ using namespace ALM_NS;
 
 Symmetry::Symmetry(ALMCore *alm) : Pointers(alm)
 {
-    file_sym = "SYMM_INFO";
-
-    // Default values
-    nsym = 0;
-    is_printsymmetry = 0;
-    trev_sym_mag = 1;
-    symnum_tran = nullptr;
-    tnons = nullptr;
-    symrel = nullptr;
-    map_sym = nullptr;
-    map_p2s = nullptr;
-    map_s2p = nullptr;
-    sym_available = nullptr;
-    ntran = 0;
-    natmin = 0;
-    multiply_data = 1;
-    tolerance = 1e-6;
-    symrel_int = nullptr;
+    set_default_variables();
 }
 
 Symmetry::~Symmetry()
 {
-    if (symrel) {
-        memory->deallocate(symrel);
-    }
-    if (symrel_int) {
-        memory->deallocate(symrel_int);
-    }
-    if (tnons) {
-        memory->deallocate(tnons);
-    }
-    if (map_sym) {
-        memory->deallocate(map_sym);
-    }
-    if (map_p2s) {
-        memory->deallocate(map_p2s);
-    }
-    if (map_s2p) {
-        memory->deallocate(map_s2p);
-    }
-    if (symnum_tran) {
-        memory->deallocate(symnum_tran);
-    }
-    if (sym_available) {
-        memory->deallocate(sym_available);
-    }
+    deallocate_variables();
 }
 
 void Symmetry::init()
@@ -153,6 +111,56 @@ void Symmetry::init()
     timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
+}
+
+void Symmetry::set_default_variables()
+{
+    file_sym = "SYMM_INFO";
+
+    // Default values
+    nsym = 0;
+    is_printsymmetry = 0;
+    trev_sym_mag = 1;
+    symnum_tran = nullptr;
+    tnons = nullptr;
+    symrel = nullptr;
+    map_sym = nullptr;
+    map_p2s = nullptr;
+    map_s2p = nullptr;
+    sym_available = nullptr;
+    ntran = 0;
+    natmin = 0;
+    multiply_data = 1;
+    tolerance = 1e-6;
+    symrel_int = nullptr;
+}
+
+void Symmetry::deallocate_variables()
+{
+    if (symrel) {
+        memory->deallocate(symrel);
+    }
+    if (symrel_int) {
+        memory->deallocate(symrel_int);
+    }
+    if (tnons) {
+        memory->deallocate(tnons);
+    }
+    if (map_sym) {
+        memory->deallocate(map_sym);
+    }
+    if (map_p2s) {
+        memory->deallocate(map_p2s);
+    }
+    if (map_s2p) {
+        memory->deallocate(map_s2p);
+    }
+    if (symnum_tran) {
+        memory->deallocate(symnum_tran);
+    }
+    if (sym_available) {
+        memory->deallocate(sym_available);
+    }
 }
 
 void Symmetry::setup_symmetry_operation(int nat,

@@ -121,6 +121,9 @@ namespace ALM_NS
 
         std::vector<ConstraintClass> *const_self;
 
+	void set_default_variables();
+	void deallocate_variables();
+
         int levi_civita(const int, const int, const int);
 
         void translational_invariance();

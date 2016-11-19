@@ -76,6 +76,8 @@ namespace ALM_NS
 
     private:
         int *nints;
+	void set_default_variables();
+	void deallocate_variables();
         void generate_fclists(int);
         bool is_ascending(const int, const int *);
     };

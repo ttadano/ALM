@@ -30,6 +30,7 @@ namespace ALM_NS
 				       const double tolerance);
         const void set_displacement_params(const std::string str_disp_basis,
 					   const bool trim_dispsign_for_evenfunc);
+	const void set_displacement_basis(const std::string str_disp_basis);
         const void set_periodicity(const int is_periodic[3]);
         const void set_cell(const int nat,
 			    const double lavec[3][3],

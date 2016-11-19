@@ -119,7 +119,8 @@ namespace ALM_NS
         bool *sym_available;
 
     private:
-
+	void set_default_variables();
+	void deallocate_variables();
         void setup_symmetry_operation(int, unsigned int &,
                                       double [3][3], double [3][3],
                                       double **, int *);

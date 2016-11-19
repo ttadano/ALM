@@ -94,6 +94,11 @@ const void ALM::set_displacement_params(const std::string str_disp_basis, // DBA
     alm_core->displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
 }
 
+const void ALM::set_displacement_basis(const std::string str_disp_basis) // DBASIS
+{
+    alm_core->displace->disp_basis = str_disp_basis;
+}
+
 const void ALM::set_periodicity(const int is_periodic[3]) // PERIODIC
 {
     int i;

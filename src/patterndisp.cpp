@@ -27,16 +27,12 @@ using namespace ALM_NS;
 
 Displace::Displace(ALMCore *alm) : Pointers(alm)
 {
-    trim_dispsign_for_evenfunc = true;
-    disp_basis = "CART";
-    pattern_all = nullptr;
+    set_default_variables();
 }
 
 Displace::~Displace()
 {
-    if (alm->mode == "suggest") {
-        memory->deallocate(pattern_all);
-    }
+    deallocate_variables();
 }
 
 void Displace::gen_displacement_pattern()
@@ -133,6 +129,18 @@ void Displace::gen_displacement_pattern()
 
 
     std::cout << " done!" << std::endl;
+}
+
+void Displace::set_default_variables()
+{
+    trim_dispsign_for_evenfunc = true;
+    disp_basis = "CART";
+    pattern_all = nullptr;
+}
+
+void Displace::deallocate_variables()
+{
+    memory->deallocate(pattern_all);
 }
 
 void Displace::generate_pattern_all(const int N,

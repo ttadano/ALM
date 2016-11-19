@@ -32,52 +32,12 @@ using namespace ALM_NS;
 
 System::System(ALMCore *alm): Pointers(alm)
 {
-    // Default values
-    nat = 0;
-    nkd = 0;
-    kd = nullptr;
-    kdname = nullptr;
-    ndata = 0;
-    nstart = 1;
-    nend = 0;
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            lavec[i][j] = 0;
-            rlavec[i][j] = 0;
-        }
-    }
-    x_cartesian = nullptr;
-    xcoord = nullptr;
-    cell_volume = 0;
-
-    str_magmom = "";
-    atomlist_class = nullptr;
-    nclassatom = 0;
-    lspin = false;
-    noncollinear = 0;
-    magmom = nullptr;
+    set_default_variables();
 }
 
 System::~System()
 {
-    if (kd) {
-        memory->deallocate(kd);
-    }
-    if (kdname) {
-        memory->deallocate(kdname);
-    }
-    if (x_cartesian) {
-        memory->deallocate(x_cartesian);
-    }
-    if (xcoord) {
-        memory->deallocate(xcoord);
-    }
-    if (atomlist_class) {
-        memory->deallocate(atomlist_class);
-    }
-    if (magmom) {
-        memory->deallocate(magmom);
-    }
+    deallocate_variables();
 }
 
 void System::init()
@@ -587,6 +547,56 @@ double System::volume(double vec1[3], double vec2[3], double vec3[3])
         + vec1[2] * (vec2[0] * vec3[1] - vec2[1] * vec3[0]));
 
     return vol;
+}
+
+void System::set_default_variables()
+{
+    // Default values
+    nat = 0;
+    nkd = 0;
+    kd = nullptr;
+    kdname = nullptr;
+    ndata = 0;
+    nstart = 1;
+    nend = 0;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            lavec[i][j] = 0;
+            rlavec[i][j] = 0;
+        }
+    }
+    x_cartesian = nullptr;
+    xcoord = nullptr;
+    cell_volume = 0;
+
+    str_magmom = "";
+    atomlist_class = nullptr;
+    nclassatom = 0;
+    lspin = false;
+    noncollinear = 0;
+    magmom = nullptr;
+}
+
+void System::deallocate_variables()
+{
+    if (kd) {
+        memory->deallocate(kd);
+    }
+    if (kdname) {
+        memory->deallocate(kdname);
+    }
+    if (x_cartesian) {
+        memory->deallocate(x_cartesian);
+    }
+    if (xcoord) {
+        memory->deallocate(xcoord);
+    }
+    if (atomlist_class) {
+        memory->deallocate(atomlist_class);
+    }
+    if (magmom) {
+        memory->deallocate(magmom);
+    }
 }
 
 void System::setup_atomic_class(int *kd)
