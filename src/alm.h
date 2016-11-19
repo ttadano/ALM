@@ -26,10 +26,9 @@ namespace ALM_NS
         const void set_output_filename_prefix(const std::string prefix);
         const void set_is_print_symmetry(const int is_printsymmetry);
         const void set_is_print_hessians(const bool print_hessian);
-        const void set_symmetry_params(const int nsym,
-				       const double tolerance);
-        const void set_displacement_params(const std::string str_disp_basis,
-					   const bool trim_dispsign_for_evenfunc);
+        const void set_symmetry_param(const int nsym);
+        const void set_symmetry_tolerance(const double tolerance);
+        const void set_displacement_param(const bool trim_dispsign_for_evenfunc);
 	const void set_displacement_basis(const std::string str_disp_basis);
         const void set_periodicity(const int is_periodic[3]);
         const void set_cell(const int nat,
@@ -58,10 +57,10 @@ namespace ALM_NS
         const int get_number_of_displacement_patterns(const int fc_order); // harmonic=1, ...
         const void get_numbers_of_displacements(int *numbers,
                                                 const int fc_order); // harmonic=1, ...
-        const int get_displacement_pattern(int *atom_indices,
-                                           double *disp_patterns,
-                                           const int fc_order); // harmonic=1, ...
-        const int get_fc_length(const int fc_order); // harmonic=2, ...
+        const int get_displacement_patterns(int *atom_indices,
+                                            double *disp_patterns,
+                                            const int fc_order); // harmonic=1, ...
+        const int get_number_of_fc_elements(const int fc_order); // harmonic=2, ...
         const void get_fc(double* fc_value,
 			  int* elem_indices, // (len(fc_value), fc_order) is flatten.
 			  const int fc_order); // harmonic=2, ...

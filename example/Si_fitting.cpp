@@ -191,7 +191,7 @@ int main()
 
     alm->run();
 
-    int fc_length = alm->get_fc_length(1);
+    int fc_length = alm->get_number_of_fc_elements(1);
     std::cout << "fc_length: " << fc_length << std::endl;
 
     double fc_value[fc_length];

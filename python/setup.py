@@ -9,7 +9,7 @@ extension = Extension('alm._alm',
                       library_dirs=["../lib"],
                       extra_compile_args = ['-fopenmp'],
                       extra_link_args=['-lstdc++',
-                                       '-lalmcxx',
+                                       '../lib/libalmcxx.a',
                                        '-lgomp',
                                        '-llapack'],
                       sources=['_alm.c', 'alm_wrapper.cpp'])

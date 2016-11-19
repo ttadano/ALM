@@ -84,4 +84,8 @@ alm.set_cell(lavec, xcoord, kd)
 alm.set_norder(2)
 alm.set_cutoff_radii([-1, 7.3])
 alm.run_suggest()
+for fc_order in (1, 2):
+    print("fc_order: %d" % fc_order)
+    for d in alm.get_displacement_patterns(fc_order):
+        print(d)
 alm.alm_delete()

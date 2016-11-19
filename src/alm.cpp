@@ -80,17 +80,18 @@ const void ALM::set_is_print_hessians(const bool print_hessian) // HESSIAN
     alm_core->print_hessian = print_hessian;
 }
 
-const void ALM::set_symmetry_params(const int nsym, // NSYM
-                                    const double tolerance) // TOLERANCE
+const void ALM::set_symmetry_param(const int nsym) // NSYM
 {
     alm_core->symmetry->nsym = nsym;
+}
+
+const void ALM::set_symmetry_tolerance(const double tolerance) // TOLERANCE
+{
     alm_core->symmetry->tolerance = tolerance;
 }
 
-const void ALM::set_displacement_params(const std::string str_disp_basis, // DBASIS
-                                        const bool trim_dispsign_for_evenfunc) // TRIMEVEN
+const void ALM::set_displacement_param(const bool trim_dispsign_for_evenfunc) // TRIMEVEN
 {
-    alm_core->displace->disp_basis = str_disp_basis;
     alm_core->displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
 }
 
@@ -321,9 +322,9 @@ const void ALM::get_numbers_of_displacements(int *numbers,
     }
 }
 
-const int ALM::get_displacement_pattern(int *atom_indices,
-                                        double *disp_patterns,
-                                        const int fc_order) // harmonic=1, ...
+const int ALM::get_displacement_patterns(int *atom_indices,
+                                         double *disp_patterns,
+                                         const int fc_order) // harmonic=1, ...
 {
     int i_atom, i_disp;
     AtomWithDirection *displacements;
@@ -353,7 +354,7 @@ const int ALM::get_displacement_pattern(int *atom_indices,
     }
 }
 
-const int ALM::get_fc_length(const int fc_order)  // harmonic=1, ...
+const int ALM::get_number_of_fc_elements(const int fc_order)  // harmonic=1, ...
 {
     int id, order, num_unique_elems, num_equiv_elems;
     Fcs *fcs;

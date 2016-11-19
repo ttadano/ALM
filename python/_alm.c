@@ -17,7 +17,11 @@ static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
 static PyObject * py_set_norder(PyObject *self, PyObject *args);
 static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args);
-static PyObject * py_get_fc_length(PyObject *self, PyObject *args);
+static PyObject * py_get_number_of_displacement_patterns
+(PyObject *self, PyObject *args);
+static PyObject * py_get_numbers_of_displacements(PyObject *self, PyObject *args);
+static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args);
+static PyObject * py_get_number_of_fc_elements(PyObject *self, PyObject *args);
 static PyObject * py_get_fc(PyObject *self, PyObject *args);
 
 struct module_state {
@@ -48,7 +52,12 @@ static PyMethodDef _alm_methods[] = {
   {"set_displacement_and_force", py_set_displacement_and_force, METH_VARARGS, ""},
   {"set_norder", py_set_norder, METH_VARARGS, ""},
   {"set_cutoff_radii", py_set_cutoff_radii, METH_VARARGS, ""},
-  {"get_fc_length", py_get_fc_length, METH_VARARGS, ""},
+  {"get_number_of_displacement_patterns", py_get_number_of_displacement_patterns,
+   METH_VARARGS, ""},
+  {"get_numbers_of_displacements", py_get_numbers_of_displacements,
+   METH_VARARGS, ""},
+  {"get_displacement_patterns", py_get_displacement_patterns, METH_VARARGS, ""},
+  {"get_number_of_fc_elements", py_get_number_of_fc_elements, METH_VARARGS, ""},
   {"get_fc", py_get_fc, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
@@ -224,19 +233,75 @@ static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_get_fc_length(PyObject *self, PyObject *args)
+static PyObject * py_get_number_of_displacement_patterns
+(PyObject *self, PyObject *args)
 {
   int fc_order;
-  int fc_length;
+  int num_patterns;
 
   if (!PyArg_ParseTuple(args, "i",
 			&fc_order)) {
     return NULL;
   }
 
-  fc_length = alm_get_fc_length(fc_order);
+  num_patterns = alm_get_number_of_displacement_patterns(fc_order);
 
-  return PyLong_FromLong((long) fc_length);
+  return PyLong_FromLong((long) num_patterns);
+}
+
+static PyObject * py_get_numbers_of_displacements(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_numbers;
+  int fc_order;
+
+  if (!PyArg_ParseTuple(args, "Oi",
+			&py_numbers,
+			&fc_order)) {
+    return NULL;
+  }
+
+  int (*numbers) = (int(*))PyArray_DATA(py_numbers);
+
+  alm_get_numbers_of_displacements(numbers, fc_order);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_atom_indices;
+  PyArrayObject* py_disp_patterns;
+  int fc_order;
+
+  if (!PyArg_ParseTuple(args, "OOi",
+			&py_atom_indices,
+			&py_disp_patterns,
+			&fc_order)) {
+    return NULL;
+  }
+
+  int (*atom_indices) = (int(*))PyArray_DATA(py_atom_indices);
+  double (*disp_patterns) = (double(*))PyArray_DATA(py_disp_patterns);
+
+  const int disp_basis = alm_get_displacement_patterns(atom_indices,
+						       disp_patterns,
+						       fc_order);
+
+  return PyLong_FromLong((long) disp_basis);
+}
+
+static PyObject * py_get_number_of_fc_elements(PyObject *self, PyObject *args)
+{
+  int fc_order;
+
+  if (!PyArg_ParseTuple(args, "i",
+			&fc_order)) {
+    return NULL;
+  }
+
+  const int num_fc_elems = alm_get_number_of_fc_elements(fc_order);
+
+  return PyLong_FromLong((long) num_fc_elems);
 }
 
 static PyObject * py_get_fc(PyObject *self, PyObject *args)

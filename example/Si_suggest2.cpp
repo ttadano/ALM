@@ -21,9 +21,9 @@ void show_disp_patterns(const int fc_order,
     }
     int atom_indices[total_num_disps];
     double disp_patterns[total_num_disps * 3];
-    const int basis = alm->get_displacement_pattern(atom_indices,
-                                                    disp_patterns,
-                                                    fc_order);
+    const int basis = alm->get_displacement_patterns(atom_indices,
+                                                     disp_patterns,
+                                                     fc_order);
 
     const std::string str_basis[2] = {"Cartesian", "Fractional"};
     std::cout << "Basis: " << str_basis[basis] << std::endl;

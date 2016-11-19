@@ -12,7 +12,7 @@
 
 void show_fc(ALM_NS::ALM *alm, const int fc_order)
 {
-    int fc_length = alm->get_fc_length(fc_order); // harmonic=1, ...
+    int fc_length = alm->get_number_of_fc_elements(fc_order); // harmonic=1, ...
     std::cout << "fc_length: " << fc_length << std::endl;
 
     int n = fc_order + 1;

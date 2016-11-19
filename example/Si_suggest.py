@@ -83,4 +83,5 @@ kd = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
 alm.set_cell(lavec, xcoord, kd)
 alm.set_norder(1)
 alm.run_suggest()
+print(alm.get_displacement_patterns(1))
 alm.alm_delete()
