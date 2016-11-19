@@ -213,7 +213,7 @@ int main()
     double f[ndata_used * nat * 3];
     parse_displacement_and_force_files
 	(u, f, nat, ndata, nstart, nend,
-	 "reference/disp.dat", "reference/force.dat");
+	 "disp.dat", "force.dat");
     alm->set_displacement_and_force(u, f, nat, ndata_used);
 
     alm->run();

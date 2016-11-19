@@ -80,8 +80,8 @@ kd = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
       14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
       14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14];
 
-force = np.loadtxt("reference/force.dat").reshape((-1, 64, 3))[[0]]
-disp = np.loadtxt("reference/disp.dat").reshape((-1, 64, 3))[[0]]
+force = np.loadtxt("force.dat").reshape((-1, 64, 3))[[0]]
+disp = np.loadtxt("disp.dat").reshape((-1, 64, 3))[[0]]
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
 with ALM() as alm:
