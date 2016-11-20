@@ -179,24 +179,19 @@ int main()
     // Run
     alm->set_run_mode("fitting");
     alm->set_output_filename_prefix("si222API");
-    alm->set_cell(64, 1, lavec, xcoord, kd, kdname);
-
-    int nbody_include[1] = {2};
-    alm->set_interaction_vars(1, nbody_include);
-
-    // rcs[maxorder, nkd, nkd]
-    // double rcs[1][1][1] = {{{-1.0}}};
+    alm->set_cell(64, lavec, xcoord, kd, kdname);
+    alm->set_norder(1);
 
     double u[ndata_used * nat * 3];
     double f[ndata_used * nat * 3];
     parse_displacement_and_force_files
 	(u, f, nat, ndata, nstart, nend,
-	 "reference/disp.dat", "reference/force.dat");
+	 "disp.dat", "force.dat");
     alm->set_displacement_and_force(u, f, nat, ndata_used);
 
     alm->run();
 
-    int fc_length = alm->get_fc_length(1);
+    int fc_length = alm->get_number_of_fc_elements(1);
     std::cout << "fc_length: " << fc_length << std::endl;
 
     double fc_value[fc_length];

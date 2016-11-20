@@ -1,8 +1,16 @@
 *.o
 *~
-alm
 _build
+build
 TAGS
 include
 lib
+src/alm
 a.out
+*.obj
+Release/
+Debug/
+.vs/
+*.db
+alm.VC.VC.opendb
+src/alm.vcxproj.user

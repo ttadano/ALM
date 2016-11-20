@@ -258,6 +258,8 @@ namespace ALM_NS
         }
 
     private:
+	void set_default_variables();
+	void deallocate_variables();
         void generate_coordinate_of_periodic_images(const unsigned int, double **,
                                                     const int [3], double ***, int *);
 
