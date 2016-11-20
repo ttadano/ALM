@@ -59,6 +59,9 @@ class ALM:
             self._id,
             np.array(u, dtype='double', order='C'),
             np.array(f, dtype='double', order='C'))
+
+    def set_fitting_constraint_type(self, iconst):
+        alm.set_fitting_constraint_type(self._id, iconst)
     
     def set_norder(self, norder):
         if self._id is None:
