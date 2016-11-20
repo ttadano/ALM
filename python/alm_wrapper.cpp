@@ -5,6 +5,9 @@
 #include <iostream>
 
 extern "C" {
+
+    #define MAX_NUM_ALM 10
+
     static const std::string atom_name[] = {
         "X", "H", "He", "Li", "Be", "B", "C", "N", "O", "F",
         "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K",
@@ -19,16 +22,53 @@ extern "C" {
         "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt",
         "Ds", "Rg", "Cn", "Uut", "Uuq", "Uup", "Uuh", "Uus", "Uuo"};
 
-    static ALM_NS::ALM *alm;
+    static ALM_NS::ALM *alm[MAX_NUM_ALM];
+    static int is_alm_used[MAX_NUM_ALM];
+    static int is_alm_init = 0;
 
-    void alm_new(void)
+    void alm_init(void)
     {
-        alm = new ALM_NS::ALM();
+        int id;
+        for (id = 0; id < MAX_NUM_ALM; id++) {
+            if (alm[id]) {
+                delete alm[id];
+            }
+            alm[id] = NULL;
+            is_alm_used[id] = 0;
+        }
+        is_alm_init = 1;
     }
 
-    void alm_delete(void)
+    int alm_new(void)
     {
-        delete alm;
+        int id;
+
+        if (!is_alm_init) {
+            alm_init();
+        }
+
+        for (id = 0; id < MAX_NUM_ALM; id++) {
+            if (!is_alm_used[id]) {
+                alm[id] = new ALM_NS::ALM();
+                is_alm_used[id] = 1;
+                break;
+            }
+        }
+
+        if (id == MAX_NUM_ALM) {
+            return -1;
+        } else {
+            return id;
+        }
+    }
+
+    void alm_delete(const int id)
+    {
+        if (alm[id]) {
+            delete alm[id];
+            alm[id] = NULL;
+            is_alm_used[id] = 0;
+        }
     }
 
     // void set_output_filename_prefix(const std::string prefix);
@@ -40,7 +80,8 @@ extern "C" {
     // void set_displacement_basis(const std::string str_disp_basis);
     // void set_periodicity(const int is_periodic[3]);
 
-    void alm_set_cell(const int nat,
+    void alm_set_cell(const int id,
+                      const int nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
                       const int kd[])
@@ -73,7 +114,7 @@ extern "C" {
         }
 
 
-        alm->set_cell(nat, lavec, xcoord, kd_new, kdname);
+        alm[id]->set_cell(nat, lavec, xcoord, kd_new, kdname);
     }
 
     // void set_magnetic_params(const double* magmom,
@@ -82,75 +123,89 @@ extern "C" {
     //   		       const int trev_sym_mag,
     //   		       const std::string str_magmom);
 
-    void alm_set_displacement_and_force(const double* u_in,
+    void alm_set_displacement_and_force(const int id,
+                                        const double* u_in,
                                         const double* f_in,
                                         const int nat,
                                         const int ndata_used)
     {
-        alm->set_displacement_and_force(u_in, f_in, nat, ndata_used);
+        alm[id]->set_displacement_and_force(u_in, f_in, nat, ndata_used);
     }
 
-    // void set_fitting_constraint(const int constraint_flag,
-    //   			  const std::string rotation_axis);
+    void alm_set_fitting_constraint_type(const int id,
+                                         const int constraint_flag) // ICONST
+    {
+        alm[id]->set_fitting_constraint_type(constraint_flag);
+    }
+
+    // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
     // void set_multiplier_option(const int multiply_data);
     // void set_fitting_filenames(const std::string dfile,
     //   			 const std::string ffile);
-    void alm_set_norder(const int maxorder)
+    void alm_set_norder(const int id,
+                        const int maxorder)
     {
-        alm->set_norder(maxorder);
+        alm[id]->set_norder(maxorder);
     }
 
-    void alm_set_interaction_range(const int *nbody_include)
+    void alm_set_interaction_range(const int id,
+                                   const int *nbody_include)
     {
-        alm->set_interaction_range(nbody_include);
+        alm[id]->set_interaction_range(nbody_include);
     }
 
-    void alm_set_cutoff_radii(const double * rcs)
+    void alm_set_cutoff_radii(const int id,
+                              const double * rcs)
     {
-        alm->set_cutoff_radii(rcs);
+        alm[id]->set_cutoff_radii(rcs);
     }
 
-    int alm_get_number_of_displacement_patterns(const int fc_order) // harmonic=1,
+    int alm_get_number_of_displacement_patterns(const int id,
+                                                const int fc_order) // harmonic=1,
     {
-        return alm->get_number_of_displacement_patterns(fc_order);
+        return alm[id]->get_number_of_displacement_patterns(fc_order);
     }
 
-    void alm_get_numbers_of_displacements(int *numbers,
+    void alm_get_numbers_of_displacements(const int id,
+                                          int *numbers,
                                           const int fc_order) // harmonic=1,
     {
-        alm->get_numbers_of_displacements(numbers, fc_order);        
+        alm[id]->get_numbers_of_displacements(numbers, fc_order);        
     }
 
-    int alm_get_displacement_patterns(int *atom_indices,
+    int alm_get_displacement_patterns(const int id,
+                                      int *atom_indices,
                                       double *disp_patterns,
                                       const int fc_order) // harmonic=1,
     {
-        return alm->get_displacement_patterns(atom_indices,
+        return alm[id]->get_displacement_patterns(atom_indices,
                                               disp_patterns,
                                               fc_order);
     }
 
-    int alm_get_number_of_fc_elements(const int fc_order)  // harmonic=1, ...
+    int alm_get_number_of_fc_elements(const int id,
+                                      const int fc_order)  // harmonic=1, ...
     {
-        return alm->get_number_of_fc_elements(fc_order);
+        return alm[id]->get_number_of_fc_elements(fc_order);
     }
 
-    void alm_get_fc(double *fc_values,
+    void alm_get_fc(const int id,
+                    double *fc_values,
                     int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
                     const int fc_order)
     {
-        alm->get_fc(fc_values, elem_indices, fc_order);
+        alm[id]->get_fc(fc_values, elem_indices, fc_order);
     }
 
-    void alm_run_suggest(void)
+    void alm_run_suggest(const int id)
     {
-        alm->set_run_mode("suggest");
-        alm->run();
+        alm[id]->set_run_mode("suggest");
+        alm[id]->run();
     }
 
-    void alm_run_fitting(void)
+    void alm_run_fitting(const int id)
     {
-        alm->set_run_mode("fitting");
-        alm->run();
+        alm[id]->set_run_mode("fitting");
+        alm[id]->run();
     }
 }

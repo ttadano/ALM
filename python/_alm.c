@@ -125,50 +125,58 @@ static PyObject * py_alm_new(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  alm_new();
+  const int id = alm_new();
 
-  Py_RETURN_NONE;
+  return PyLong_FromLong((long) id);
 }
 
 static PyObject * py_alm_delete(PyObject *self, PyObject *args)
 {
-  if (!PyArg_ParseTuple(args, "")) {
+  int id;
+  if (!PyArg_ParseTuple(args, "i",
+			&id)) {
     return NULL;
   }
 
-  alm_delete();
+  alm_delete(id);
 
   Py_RETURN_NONE;
 }
 
 static PyObject * py_run_suggest(PyObject *self, PyObject *args)
 {
-  if (!PyArg_ParseTuple(args, "")) {
+  int id;
+  if (!PyArg_ParseTuple(args, "i",
+			&id)) {
     return NULL;
   }
 
-  alm_run_suggest();
+  alm_run_suggest(id);
 
   Py_RETURN_NONE;
 }
 
 static PyObject * py_run_fitting(PyObject *self, PyObject *args)
 {
-  if (!PyArg_ParseTuple(args, "")) {
+  int id;
+  if (!PyArg_ParseTuple(args, "i",
+			&id)) {
     return NULL;
   }
 
-  alm_run_fitting();
+  alm_run_fitting(id);
 
   Py_RETURN_NONE;
 }
 
 static PyObject * py_set_cell(PyObject *self, PyObject *args)
 {
+  int id;
   PyArrayObject* py_lavec;
   PyArrayObject* py_xcoord;
   PyArrayObject* py_kd;
-  if (!PyArg_ParseTuple(args, "OOO",
+  if (!PyArg_ParseTuple(args, "iOOO",
+			&id,
 			&py_lavec,
                         &py_xcoord,
                         &py_kd)) {
@@ -180,16 +188,18 @@ static PyObject * py_set_cell(PyObject *self, PyObject *args)
   const int* kd = (int*)PyArray_DATA(py_kd);
   const int nat = PyArray_DIMS(py_kd)[0];
 
-  alm_set_cell(nat, lavec, xcoord, kd);
+  alm_set_cell(id, nat, lavec, xcoord, kd);
 
   Py_RETURN_NONE;
 }
 
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args)
 {
+  int id;
   PyArrayObject* py_u;
   PyArrayObject* py_f;
-  if (!PyArg_ParseTuple(args, "OO",
+  if (!PyArg_ParseTuple(args, "iOO",
+			&id,
                         &py_u,
                         &py_f)) {
     return NULL;
@@ -200,35 +210,38 @@ static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args)
 
   const int ndata_used = PyArray_DIMS(py_f)[0];
   const int nat = PyArray_DIMS(py_f)[1];
-  alm_set_displacement_and_force(u, f, nat, ndata_used);
+  alm_set_displacement_and_force(id, u, f, nat, ndata_used);
 
   Py_RETURN_NONE;
 }
 
 static PyObject * py_set_norder(PyObject *self, PyObject *args)
 {
-  int norder;
-  if (!PyArg_ParseTuple(args, "i",
+  int id, norder;
+  if (!PyArg_ParseTuple(args, "ii",
+			&id,
                         &norder)) {
     return NULL;
   }
 
-  alm_set_norder(norder);
+  alm_set_norder(id, norder);
 
   Py_RETURN_NONE;
 }
 
 static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args)
 {
+  int id;
   PyArrayObject* py_rcs;
-  if (!PyArg_ParseTuple(args, "O",
+  if (!PyArg_ParseTuple(args, "iO",
+			&id,
                         &py_rcs)) {
     return NULL;
   }
 
   double *rcs = (double(*))PyArray_DATA(py_rcs);
 
-  alm_set_cutoff_radii(rcs);
+  alm_set_cutoff_radii(id, rcs);
 
   Py_RETURN_NONE;
 }
@@ -236,25 +249,28 @@ static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args)
 static PyObject * py_get_number_of_displacement_patterns
 (PyObject *self, PyObject *args)
 {
+  int id;
   int fc_order;
   int num_patterns;
 
-  if (!PyArg_ParseTuple(args, "i",
+  if (!PyArg_ParseTuple(args, "ii",
+			&id,
 			&fc_order)) {
     return NULL;
   }
 
-  num_patterns = alm_get_number_of_displacement_patterns(fc_order);
+  num_patterns = alm_get_number_of_displacement_patterns(id, fc_order);
 
   return PyLong_FromLong((long) num_patterns);
 }
 
 static PyObject * py_get_numbers_of_displacements(PyObject *self, PyObject *args)
 {
+  int id, fc_order;
   PyArrayObject* py_numbers;
-  int fc_order;
 
-  if (!PyArg_ParseTuple(args, "Oi",
+  if (!PyArg_ParseTuple(args, "iOi",
+			&id,
 			&py_numbers,
 			&fc_order)) {
     return NULL;
@@ -262,18 +278,19 @@ static PyObject * py_get_numbers_of_displacements(PyObject *self, PyObject *args
 
   int (*numbers) = (int(*))PyArray_DATA(py_numbers);
 
-  alm_get_numbers_of_displacements(numbers, fc_order);
+  alm_get_numbers_of_displacements(id, numbers, fc_order);
 
   Py_RETURN_NONE;
 }
 
 static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args)
 {
+  int id, fc_order;
   PyArrayObject* py_atom_indices;
   PyArrayObject* py_disp_patterns;
-  int fc_order;
 
-  if (!PyArg_ParseTuple(args, "OOi",
+  if (!PyArg_ParseTuple(args, "iOOi",
+			&id,
 			&py_atom_indices,
 			&py_disp_patterns,
 			&fc_order)) {
@@ -283,7 +300,8 @@ static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args)
   int (*atom_indices) = (int(*))PyArray_DATA(py_atom_indices);
   double (*disp_patterns) = (double(*))PyArray_DATA(py_disp_patterns);
 
-  const int disp_basis = alm_get_displacement_patterns(atom_indices,
+  const int disp_basis = alm_get_displacement_patterns(id,
+						       atom_indices,
 						       disp_patterns,
 						       fc_order);
 
@@ -292,24 +310,27 @@ static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args)
 
 static PyObject * py_get_number_of_fc_elements(PyObject *self, PyObject *args)
 {
-  int fc_order;
+  int id, fc_order;
 
-  if (!PyArg_ParseTuple(args, "i",
+  if (!PyArg_ParseTuple(args, "ii",
+			&id,
 			&fc_order)) {
     return NULL;
   }
 
-  const int num_fc_elems = alm_get_number_of_fc_elements(fc_order);
+  const int num_fc_elems = alm_get_number_of_fc_elements(id, fc_order);
 
   return PyLong_FromLong((long) num_fc_elems);
 }
 
 static PyObject * py_get_fc(PyObject *self, PyObject *args)
 {
+  int id;
   PyArrayObject* py_fc_values;
   PyArrayObject* py_elem_indices;
 
-  if (!PyArg_ParseTuple(args, "OO",
+  if (!PyArg_ParseTuple(args, "iOO",
+			&id,
 			&py_fc_values,
 			&py_elem_indices)) {
     return NULL;
@@ -319,7 +340,7 @@ static PyObject * py_get_fc(PyObject *self, PyObject *args)
   int (*elem_indices) = (int(*))PyArray_DATA(py_elem_indices);
   const int fc_order = PyArray_DIMS(py_elem_indices)[1] - 1;
 
-  alm_get_fc(fc_values, elem_indices, fc_order);
+  alm_get_fc(id, fc_values, elem_indices, fc_order);
 
   Py_RETURN_NONE;
 }
