@@ -15,6 +15,7 @@ static PyObject * py_run_suggest(PyObject *self, PyObject *args);
 static PyObject * py_run_fitting(PyObject *self, PyObject *args);
 static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
+static PyObject * py_set_fitting_constraint_type(PyObject *self, PyObject *args);
 static PyObject * py_set_norder(PyObject *self, PyObject *args);
 static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_displacement_patterns
@@ -50,6 +51,7 @@ static PyMethodDef _alm_methods[] = {
   {"run_fitting", py_run_fitting, METH_VARARGS, ""},
   {"set_cell", py_set_cell, METH_VARARGS, ""},
   {"set_displacement_and_force", py_set_displacement_and_force, METH_VARARGS, ""},
+  {"set_fitting_constraint_type", py_set_fitting_constraint_type, METH_VARARGS, ""},
   {"set_norder", py_set_norder, METH_VARARGS, ""},
   {"set_cutoff_radii", py_set_cutoff_radii, METH_VARARGS, ""},
   {"get_number_of_displacement_patterns", py_get_number_of_displacement_patterns,
@@ -211,6 +213,20 @@ static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args)
   const int ndata_used = PyArray_DIMS(py_f)[0];
   const int nat = PyArray_DIMS(py_f)[1];
   alm_set_displacement_and_force(id, u, f, nat, ndata_used);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_set_fitting_constraint_type(PyObject *self, PyObject *args)
+{
+  int id, iconst;
+  if (!PyArg_ParseTuple(args, "ii",
+			&id,
+                        &iconst)) {
+    return NULL;
+  }
+
+  alm_set_fitting_constraint_type(id, iconst);
 
   Py_RETURN_NONE;
 }
