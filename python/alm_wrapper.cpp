@@ -160,6 +160,12 @@ extern "C" {
         alm[id]->set_cutoff_radii(rcs);
     }
 
+    int alm_get_atom_mapping_by_pure_translations(const int id,
+                                                  int *map_p2s)
+    {
+        return alm[id]->get_atom_mapping_by_pure_translations(map_p2s);
+    }
+
     int alm_get_number_of_displacement_patterns(const int id,
                                                 const int fc_order) // harmonic=1,
     {

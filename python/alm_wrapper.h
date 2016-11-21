@@ -43,6 +43,8 @@ extern "C" {
                                    const int *nbody_include);
     void alm_set_cutoff_radii(const int id,
                               const double * rcs);
+    int alm_get_atom_mapping_by_pure_translations(const int id,
+                                                  int *map_p2s);
     int alm_get_number_of_displacement_patterns(const int id,
                                                 const int fc_order); // harmonic=1,
     void alm_get_numbers_of_displacements(const int id,

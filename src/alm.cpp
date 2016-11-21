@@ -327,6 +327,20 @@ ALMCore * ALM::get_alm_core()
     return alm_core;
 }
 
+const int ALM::get_atom_mapping_by_pure_translations(int *map_p2s)
+{
+    const int ntran = alm_core->symmetry->ntran;
+    const int natmin = alm_core->symmetry->natmin;
+
+    for (int i = 0; i < ntran; ++i) {
+        for (int j = 0; j < natmin; ++j) {
+            map_p2s[i * natmin + j] = alm_core->symmetry->map_p2s[j][i];
+        }
+    }
+    return ntran;
+}
+
+
 const int ALM::get_number_of_displacement_patterns(const int fc_order) // harmonic=1, ...
 {
     int order = fc_order - 1;

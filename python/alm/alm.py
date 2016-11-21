@@ -2,8 +2,12 @@ import numpy as np
 from . import _alm as alm
 
 class ALM:
-    def __init__(self):
+    def __init__(self, lavec, xcoord, kd, norder):
         self._id = None
+        self._lavec = np.array(lavec, dtype='double', order='C')
+        self._xcoord = np.array(xcoord, dtype='double', order='C')
+        self._kd = np.array(kd, dtype='intc', order='C')
+        self._norder = norder
 
     def __enter__(self):
         self.alm_new()
@@ -18,6 +22,8 @@ class ALM:
             if self._id < 0:
                 print("Too many ALM objects")
                 raise
+            self._set_cell()
+            self._set_norder()
         else:
             print("This ALM object is already initialized.")
             raise
@@ -42,15 +48,6 @@ class ALM:
 
         alm.run_fitting(self._id)
     
-    def set_cell(self, lavec, xcoord, kd):
-        if self._id is None:
-            self._show_error_message()
-
-        alm.set_cell(self._id,
-                     np.array(lavec, dtype='double', order='C'),
-                     np.array(xcoord, dtype='double', order='C'),
-                     np.array(kd, dtype='intc', order='C'))
-    
     def set_displacement_and_force(self, u, f):
         if self._id is None:
             self._show_error_message()
@@ -63,18 +60,20 @@ class ALM:
     def set_fitting_constraint_type(self, iconst):
         alm.set_fitting_constraint_type(self._id, iconst)
     
-    def set_norder(self, norder):
-        if self._id is None:
-            self._show_error_message()
-
-        alm.set_norder(self._id, norder)
-    
     def set_cutoff_radii(self, rcs):
         if self._id is None:
             self._show_error_message()
 
         alm.set_cutoff_radii(self._id,
                              np.array(rcs, dtype='double', order='C'))
+
+    def get_atom_mapping_by_pure_translations(self):
+        if self._id is None:
+            self._show_error_message()
+
+        map_p2s = np.zeros(len(self._xcoord), dtype='intc')
+        ntrans = alm.get_atom_mapping_by_pure_translations(self._id, map_p2s)
+        return map_p2s.reshape((ntrans, -1))
     
     def get_displacement_patterns(self, fc_order):
         if self._id is None:
@@ -109,6 +108,18 @@ class ALM:
                                 dtype='intc', order='C')
         alm.get_fc(self._id, fc_values, elem_indices)
         return fc_values, elem_indices
+    
+    def _set_cell(self):
+        if self._id is None:
+            self._show_error_message()
+
+        alm.set_cell(self._id, self._lavec, self._xcoord, self._kd)
+    
+    def _set_norder(self):
+        if self._id is None:
+            self._show_error_message()
+
+        alm.set_norder(self._id, self._norder)
     
     def get_id(self):
         return self._id

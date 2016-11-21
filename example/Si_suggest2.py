@@ -81,11 +81,10 @@ kd = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
       14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14];
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
-with ALM() as alm:
-    alm.set_cell(lavec, xcoord, kd)
-    alm.set_norder(2)
+with ALM(lavec, xcoord, kd, 2) as alm:
     alm.set_cutoff_radii([-1, 7.3])
     alm.run_suggest()
+    print(alm.get_atom_mapping_by_pure_translations())
     for fc_order in (1, 2):
         print("fc_order: %d" % fc_order)
         for d in alm.get_displacement_patterns(fc_order):

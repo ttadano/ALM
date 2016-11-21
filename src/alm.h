@@ -55,6 +55,7 @@ namespace ALM_NS
         const void set_interaction_range(const int *nbody_include);
 	const void set_cutoff_radii(const double * rcs);
         ALMCore* get_alm_core();
+        const int get_atom_mapping_by_pure_translations(int *map_p2s);
         const int get_number_of_displacement_patterns(const int fc_order); // harmonic=1, ...
         const void get_numbers_of_displacements(int *numbers,
                                                 const int fc_order); // harmonic=1, ...
