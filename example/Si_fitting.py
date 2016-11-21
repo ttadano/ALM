@@ -84,9 +84,7 @@ force = np.loadtxt("force.dat").reshape((-1, 64, 3))[[0]]
 disp = np.loadtxt("disp.dat").reshape((-1, 64, 3))[[0]]
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
-with ALM() as alm:
-    alm.set_cell(lavec, xcoord, kd)
-    alm.set_norder(1)
+with ALM(lavec, xcoord, kd, 1) as alm:
     alm.set_cutoff_radii([-1, 7.3])
     alm.set_displacement_and_force(disp, force)
     alm.run_fitting()

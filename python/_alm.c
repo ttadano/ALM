@@ -18,6 +18,8 @@ static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
 static PyObject * py_set_fitting_constraint_type(PyObject *self, PyObject *args);
 static PyObject * py_set_norder(PyObject *self, PyObject *args);
 static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args);
+static PyObject * py_get_atom_mapping_by_pure_translations
+(PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_displacement_patterns
 (PyObject *self, PyObject *args);
 static PyObject * py_get_numbers_of_displacements(PyObject *self, PyObject *args);
@@ -54,6 +56,8 @@ static PyMethodDef _alm_methods[] = {
   {"set_fitting_constraint_type", py_set_fitting_constraint_type, METH_VARARGS, ""},
   {"set_norder", py_set_norder, METH_VARARGS, ""},
   {"set_cutoff_radii", py_set_cutoff_radii, METH_VARARGS, ""},
+  {"get_atom_mapping_by_pure_translations", py_get_atom_mapping_by_pure_translations,
+   METH_VARARGS, ""},
   {"get_number_of_displacement_patterns", py_get_number_of_displacement_patterns,
    METH_VARARGS, ""},
   {"get_numbers_of_displacements", py_get_numbers_of_displacements,
@@ -260,6 +264,24 @@ static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args)
   alm_set_cutoff_radii(id, rcs);
 
   Py_RETURN_NONE;
+}
+
+static PyObject * py_get_atom_mapping_by_pure_translations
+(PyObject *self, PyObject *args)
+{
+  int id;
+  PyArrayObject* py_map_p2s;
+
+  if (!PyArg_ParseTuple(args, "iO",
+			&id,
+			&py_map_p2s)) {
+    return NULL;
+  }
+
+  int *map_p2s = (int(*))PyArray_DATA(py_map_p2s);
+  const int num_trans = alm_get_atom_mapping_by_pure_translations(id, map_p2s);
+
+  return PyLong_FromLong((long) num_trans);
 }
 
 static PyObject * py_get_number_of_displacement_patterns
