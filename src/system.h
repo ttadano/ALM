@@ -70,6 +70,8 @@ namespace ALM_NS
 
 
     private:
+	void set_default_variables();
+	void deallocate_variables();
         double volume(double [3], double [3], double [3]);
         void setup_atomic_class(int*);
     };

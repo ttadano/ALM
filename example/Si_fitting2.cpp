@@ -10,6 +10,29 @@
 #include <iostream>
 #include <fstream>
 
+void show_fc(ALM_NS::ALM *alm, const int fc_order)
+{
+    int fc_length = alm->get_number_of_fc_elements(fc_order); // harmonic=1, ...
+    std::cout << "fc_length: " << fc_length << std::endl;
+
+    int n = fc_order + 1;
+
+    double fc_value[fc_length];
+    int elem_indices[fc_length * n];
+
+    alm->get_fc(fc_value, elem_indices, fc_order);
+
+    for (int i = 0; i < fc_length; i++) {
+        std::cout << i + 1 << ":" << " " << fc_value[i] << " ";
+
+        for (int j = 0; j < n; j++) {
+            std::cout << elem_indices[i * n + j] / 3 + 1 << "-" <<
+                elem_indices[i * n + j] % 3 + 1 << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
 void parse_displacement_and_force_files(double *u,
 					double *f,
 					const int nat,
@@ -171,9 +194,9 @@ int main()
 
 
     int nat = 64;
-    int ndata = 1;
+    int ndata = 21;
     int nstart = 1;
-    int nend = 1;
+    int nend = 21;
     int ndata_used = nend - nstart + 1;
 
     // Run
@@ -181,7 +204,11 @@ int main()
     alm->set_run_mode("fitting");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);
-    alm->set_norder(1);
+    alm->set_norder(2);
+
+    // rcs[maxorder, nkd, nkd] to be flattened.
+    double rcs[2] = {-1.0, 7.3};
+    alm->set_cutoff_radii(rcs);
 
     double u[ndata_used * nat * 3];
     double f[ndata_used * nat * 3];
@@ -192,23 +219,9 @@ int main()
 
     alm->run();
 
-    int fc_length = alm->get_number_of_fc_elements(1);
-    std::cout << "fc_length: " << fc_length << std::endl;
-
-    double fc_value[fc_length];
-    int elem_indices[fc_length * 2];
-
-    alm->get_fc(fc_value, elem_indices, 1);
-
-    for (int i = 0; i < fc_length; i++) {
-        std::cout << i + 1 << ":" << " " << fc_value[i] <<
-            " " << 
-            elem_indices[i * 2] / 3 + 1 << "-" << elem_indices[i * 2] % 3 + 1 <<
-            " " <<
-            elem_indices[i * 2 + 1] / 3 + 1 << "-" << elem_indices[i * 2 + 1] % 3 + 1 <<
-                  std::endl;
+    for (int fc_order = 1; fc_order < 3; fc_order++) {
+        show_fc(alm, fc_order);
     }
-
     delete alm;
 
     return 1;

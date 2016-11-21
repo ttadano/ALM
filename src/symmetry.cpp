@@ -15,11 +15,9 @@
 #include "symmetry.h"
 #include "system.h"
 #include "memory.h"
-#include "constants.h"
 #include "timer.h"
 #include "error.h"
 #include "interaction.h"
-#include "files.h"
 #include <vector>
 #include <algorithm>
 
@@ -31,35 +29,12 @@ using namespace ALM_NS;
 
 Symmetry::Symmetry(ALMCore *alm) : Pointers(alm)
 {
-    file_sym = "SYMM_INFO";
-
-    // Default values
-    nsym = 0;
-    is_printsymmetry = 0;
-    trev_sym_mag = 1;
-    symnum_tran = nullptr;
-    tnons = nullptr;
-    symrel = nullptr;
-    map_sym = nullptr;
-    map_p2s = nullptr;
-    map_s2p = nullptr;
-    sym_available = nullptr;
-    ntran = 0;
-    natmin = 0;
-    multiply_data = 1;
-    tolerance = 1e-6;
+    set_default_variables();
 }
 
 Symmetry::~Symmetry()
 {
-    memory->deallocate(symrel);
-    memory->deallocate(symrel_int);
-    memory->deallocate(tnons);
-    memory->deallocate(map_sym);
-    memory->deallocate(map_p2s);
-    memory->deallocate(map_s2p);
-    memory->deallocate(symnum_tran);
-    memory->deallocate(sym_available);
+    deallocate_variables();
 }
 
 void Symmetry::init()
@@ -73,7 +48,14 @@ void Symmetry::init()
     setup_symmetry_operation(nat, nsym, system->lavec, system->rlavec,
                              system->xcoord, system->kd);
 
+    if (tnons) {
+        memory->deallocate(tnons);
+    }
     memory->allocate(tnons, nsym, 3);
+
+    if (symrel_int) {
+        memory->deallocate(symrel_int);
+    }
     memory->allocate(symrel_int, nsym, 3, 3);
 
     int isym = 0;
@@ -91,10 +73,19 @@ void Symmetry::init()
     }
 
     std::cout << "  Number of symmetry operations = " << nsym << std::endl;
+    
+    if (symrel) {
+        memory->deallocate(symrel);
+    }
     memory->allocate(symrel, nsym, 3, 3);
+
     symop_in_cart(system->lavec, system->rlavec);
 
+    if (sym_available) {
+        memory->deallocate(sym_available);
+    }
     memory->allocate(sym_available, nsym);
+
     int nsym_fc;
     symop_availability_check(symrel, sym_available, nsym, nsym_fc);
 
@@ -111,8 +102,19 @@ void Symmetry::init()
 
     pure_translations();
 
+    if (map_sym) {
+        memory->deallocate(map_sym);
+    }
     memory->allocate(map_sym, nat, nsym);
+
+    if (map_p2s) {
+        memory->deallocate(map_p2s);
+    }
     memory->allocate(map_p2s, natmin, ntran);
+
+    if (map_s2p) {
+        memory->deallocate(map_s2p);
+    }
     memory->allocate(map_s2p, nat);
 
     genmaps(nat, system->xcoord, map_sym, map_p2s, map_s2p);
@@ -136,6 +138,56 @@ void Symmetry::init()
     timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
+}
+
+void Symmetry::set_default_variables()
+{
+    file_sym = "SYMM_INFO";
+
+    // Default values
+    nsym = 0;
+    is_printsymmetry = 0;
+    trev_sym_mag = 1;
+    symnum_tran = nullptr;
+    tnons = nullptr;
+    symrel = nullptr;
+    map_sym = nullptr;
+    map_p2s = nullptr;
+    map_s2p = nullptr;
+    sym_available = nullptr;
+    ntran = 0;
+    natmin = 0;
+    multiply_data = 1;
+    tolerance = 1e-6;
+    symrel_int = nullptr;
+}
+
+void Symmetry::deallocate_variables()
+{
+    if (symrel) {
+        memory->deallocate(symrel);
+    }
+    if (symrel_int) {
+        memory->deallocate(symrel_int);
+    }
+    if (tnons) {
+        memory->deallocate(tnons);
+    }
+    if (map_sym) {
+        memory->deallocate(map_sym);
+    }
+    if (map_p2s) {
+        memory->deallocate(map_p2s);
+    }
+    if (map_s2p) {
+        memory->deallocate(map_s2p);
+    }
+    if (symnum_tran) {
+        memory->deallocate(symnum_tran);
+    }
+    if (sym_available) {
+        memory->deallocate(sym_available);
+    }
 }
 
 void Symmetry::setup_symmetry_operation(int nat,
@@ -640,6 +692,9 @@ void Symmetry::pure_translations()
                     "nat != natmin * ntran. Something is wrong in the structure.");
     }
 
+    if (symnum_tran) {
+        memory->deallocate(symnum_tran);
+    }
     memory->allocate(symnum_tran, ntran);
 
     int isym = 0;

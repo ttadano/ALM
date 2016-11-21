@@ -47,30 +47,12 @@ using namespace ALM_NS;
 
 Fitting::Fitting(ALMCore *alm): Pointers(alm)
 {
-    seed = static_cast<unsigned int>(time(nullptr));
-#ifdef _VSL
-    brng = VSL_BRNG_MT19937;
-    vslNewStream(&stream, brng, seed);
-#else
-    std::srand(seed);
-#endif
-
-    params = nullptr;
-    u_in = nullptr;
-    f_in = nullptr;
+    set_default_variables();
 }
 
 Fitting::~Fitting()
 {
-    if (params) {
-        memory->deallocate(params);
-    }
-    if (u_in) {
-        memory->deallocate(u_in);
-    }
-    if (f_in) {
-        memory->deallocate(f_in);
-    }
+    deallocate_variables();
 }
 
 void Fitting::fitmain()
@@ -175,7 +157,9 @@ void Fitting::fitmain()
 
 
     // Copy force constants to public variable "params"
-
+    if (params) {
+        memory->deallocate(params);
+    }
     memory->allocate(params, N);
 
     if (constraint->constraint_algebraic) {
@@ -206,12 +190,16 @@ void Fitting::set_displacement_and_force(const double * const * disp_in,
                                          const int nat,
                                          const int ndata_used)
 {
-    if (!u_in) {
-        memory->allocate(u_in, ndata_used, 3 * nat);
+    if (u_in) {
+        memory->deallocate(u_in);
     }
-    if (!f_in) {
-        memory->allocate(f_in, ndata_used, 3 * nat);
+    memory->allocate(u_in, ndata_used, 3 * nat);
+
+    if (f_in) {
+        memory->deallocate(f_in);
     }
+    memory->allocate(f_in, ndata_used, 3 * nat);
+
     for (int i = 0; i < ndata_used; i++) {
         for (int j = 0; j < 3 * nat; j++) {
             u_in[i][j] = disp_in[i][j];
@@ -784,6 +772,34 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
     }
 
     std::cout << "done!" << std::endl << std::endl;
+}
+
+void Fitting::set_default_variables()
+{
+    seed = static_cast<unsigned int>(time(nullptr));
+#ifdef _VSL
+    brng = VSL_BRNG_MT19937;
+    vslNewStream(&stream, brng, seed);
+#else
+    std::srand(seed);
+#endif
+
+    params = nullptr;
+    u_in = nullptr;
+    f_in = nullptr;
+}
+
+void Fitting::deallocate_variables()
+{
+    if (params) {
+        memory->deallocate(params);
+    }
+    if (u_in) {
+        memory->deallocate(u_in);
+    }
+    if (f_in) {
+        memory->deallocate(f_in);
+    }
 }
 
 void Fitting::data_multiplier(double **u,

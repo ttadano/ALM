@@ -31,37 +31,12 @@ using namespace ALM_NS;
 
 Constraint::Constraint(ALMCore *alm) : Pointers(alm) 
 {
-    constraint_mode = 1;
-    rotation_axis = "";
-    fix_harmonic = false;
-    fix_cubic = false;
-    constraint_algebraic = 0;
-    fc2_file = "";
-    fc3_file = "";
-    exist_constraint = false;
-    extra_constraint_from_symmetry = false;
-    const_symmetry = nullptr;
-    const_fix = nullptr;
-    const_relate = nullptr;
-    index_bimap = nullptr;
-    P = 0;
+    set_default_variables();
 }
 
 Constraint::~Constraint()
 {
-    if (exist_constraint && alm->mode == "fitting") {
-
-        memory->deallocate(const_symmetry);
-
-        if (constraint_algebraic) {
-            memory->deallocate(const_fix);
-            memory->deallocate(const_relate);
-            memory->deallocate(index_bimap);
-        } else {
-            memory->deallocate(const_mat);
-            memory->deallocate(const_rhs);
-        }
-    }
+    deallocate_variables();
 }
 
 void Constraint::setup()
@@ -121,7 +96,12 @@ void Constraint::setup()
     }
 
     extra_constraint_from_symmetry = false;
+
+    if (const_symmetry) {
+        memory->deallocate(const_symmetry);
+    }
     memory->allocate(const_symmetry, interaction->maxorder);
+
     constraint_from_symmetry(const_symmetry);
     for (int order = 0; order < interaction->maxorder; ++order) {
         if (const_symmetry[order].size() > 0) extra_constraint_from_symmetry = true;
@@ -254,8 +234,19 @@ void Constraint::setup()
                 std::cout << "  WARNING : Inter-order constraints for rotational invariance will be neglected." << std::endl;
             }
 
+            if (const_fix) {
+                memory->deallocate(const_fix);
+            }
             memory->allocate(const_fix, maxorder);
+
+            if (const_relate) {
+                memory->deallocate(const_relate);
+            }
             memory->allocate(const_relate, maxorder);
+
+            if (index_bimap) {
+                memory->deallocate(index_bimap);
+            }
             memory->allocate(index_bimap, maxorder);
 
             get_mapping_constraint(maxorder, const_self, const_fix,
@@ -281,7 +272,15 @@ void Constraint::setup()
                 Pmax -= const_self[1].size();
                 Pmax += fcs->ndup[1].size();
             }
+
+            if (const_mat) {
+                memory->deallocate(const_mat);
+            }
             memory->allocate(const_mat, Pmax, N);
+
+            if (const_rhs) {
+                memory->deallocate(const_rhs);
+            }
             memory->allocate(const_rhs, Pmax);
 
             calc_constraint_matrix(N, P);
@@ -290,9 +289,13 @@ void Constraint::setup()
         }
 
         memory->deallocate(const_translation);
+        const_translation = nullptr;
         memory->deallocate(const_rotation_self);
+        const_rotation_self = nullptr;
         memory->deallocate(const_rotation_cross);
+        const_rotation_cross = nullptr;
         memory->deallocate(const_self);
+        const_self = nullptr;
 
         timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
@@ -1609,6 +1612,48 @@ void Constraint::remove_redundant_rows(const int n,
     }
 
 #endif
+}
+
+void Constraint::set_default_variables()
+{
+    constraint_mode = 1;
+    rotation_axis = "";
+    fix_harmonic = false;
+    fix_cubic = false;
+    constraint_algebraic = 0;
+    fc2_file = "";
+    fc3_file = "";
+    exist_constraint = false;
+    extra_constraint_from_symmetry = false;
+    const_mat = nullptr;
+    const_rhs = nullptr;
+    const_symmetry = nullptr;
+    const_fix = nullptr;
+    const_relate = nullptr;
+    index_bimap = nullptr;
+    P = 0;
+}
+
+void Constraint::deallocate_variables()
+{
+    if (const_symmetry) {
+        memory->deallocate(const_symmetry);
+    }
+    if (const_fix) {
+        memory->deallocate(const_fix);
+    }
+    if (const_relate) {
+        memory->deallocate(const_relate);
+    }
+    if (index_bimap) {
+        memory->deallocate(index_bimap);
+    }
+    if (const_mat) {
+        memory->deallocate(const_mat);
+    }
+    if (const_rhs) {
+        memory->deallocate(const_rhs);
+    }
 }
 
 int Constraint::levi_civita(const int i, const int j, const int k)

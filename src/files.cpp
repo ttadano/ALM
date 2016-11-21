@@ -17,11 +17,14 @@
 
 using namespace ALM_NS;
 
-Files::Files(ALMCore *alm): Pointers(alm) {}
+Files::Files(ALMCore *alm): Pointers(alm)
+{
+    file_disp_pattern = nullptr;
+}
 
 Files::~Files()
 {
-    if (alm->mode == "suggest") {
+    if (file_disp_pattern) {
         memory->deallocate(file_disp_pattern);
     }
 }

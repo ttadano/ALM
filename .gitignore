@@ -1,10 +1,13 @@
 *.o
 *~
-alm
 _build
+build
+python/dist
+python/alm.egg-info
 TAGS
 include
 lib
+src/alm
 a.out
 *.obj
 Release/

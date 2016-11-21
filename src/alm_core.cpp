@@ -31,18 +31,24 @@ using namespace ALM_NS;
 
 ALMCore::ALMCore()
 {
-#ifdef _OPENMP
-    std::cout << " Number of OpenMP threads = "
-        << omp_get_max_threads() << std::endl << std::endl;
-#endif
-
-    timer = new Timer(this);
-
-    std::cout << " Job started at " << timer->DateAndTime() << std::endl;
-
     // Default values
     mode = "suggest";
     print_hessian = false;
+}
+
+ALMCore::~ALMCore()
+{
+    delete timer;
+    delete files;
+    delete interaction;
+    delete fcs;
+    delete symmetry;
+    delete system;
+    delete fitting;
+    delete constraint;
+    delete displace;
+    delete memory;
+    delete error;
 }
 
 void ALMCore::create()
@@ -57,30 +63,18 @@ void ALMCore::create()
     constraint = new Constraint(this);
     displace = new Displace(this);
     error = new Error(this);
+    timer = new Timer(this);
 }
 
 void ALMCore::initialize()
 {
+#ifdef _OPENMP
+    std::cout << " Number of OpenMP threads = "
+        << omp_get_max_threads() << std::endl << std::endl;
+#endif
     system->init();
     files->init();
     symmetry->init();
     interaction->init();
     fcs->init();
-}
-
-ALMCore::~ALMCore()
-{
-    std::cout << std::endl << " Job finished at "
-        << timer->DateAndTime() << std::endl;
-    delete timer;
-    delete files;
-    delete interaction;
-    delete fcs;
-    delete symmetry;
-    delete system;
-    delete fitting;
-    delete constraint;
-    delete displace;
-    delete memory;
-    delete error;
 }

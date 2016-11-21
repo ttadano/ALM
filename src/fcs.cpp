@@ -28,16 +28,19 @@ using namespace ALM_NS;
 
 Fcs::Fcs(ALMCore *alm) : Pointers(alm)
 {
-    nzero = nullptr;
-    ndup = nullptr;
-    fc_set = nullptr;
+    set_default_variables();
 };
 
-Fcs::~Fcs() {};
+Fcs::~Fcs()
+{
+    deallocate_variables();
+};
 
 void Fcs::init()
 {
     int i;
+    int *nints;
+    int *nzero;
     int maxorder = interaction->maxorder;
 
     std::cout << " FORCE CONSTANT" << std::endl;
@@ -45,11 +48,19 @@ void Fcs::init()
 
     memory->allocate(nints, maxorder);
     memory->allocate(nzero, maxorder);
+
+    if (fc_set) {
+        memory->deallocate(fc_set);
+    }
     memory->allocate(fc_set, maxorder);
+
+    if (ndup) {
+        memory->deallocate(ndup);
+    }
     memory->allocate(ndup, maxorder);
 
     for (i = 0; i < maxorder; ++i) nzero[i] = 0;
-    generate_fclists(maxorder);
+    generate_fclists(maxorder, nzero);
 
     std::cout << std::endl;
     for (i = 0; i < maxorder; ++i) {
@@ -78,14 +89,31 @@ void Fcs::init()
     }
 
     memory->deallocate(nints);
+    nints = nullptr;
     memory->deallocate(nzero);
+    nzero = nullptr;
     timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
 }
 
+void Fcs::set_default_variables()
+{
+    ndup = nullptr;
+    fc_set = nullptr;
+}
 
-void Fcs::generate_fclists(int maxorder)
+void Fcs::deallocate_variables()
+{
+    if (ndup) {
+        memory->deallocate(ndup);
+    }
+    if (fc_set) {
+        memory->deallocate(fc_set);
+    }
+}
+
+void Fcs::generate_fclists(int maxorder, int *nzero)
 {
     int i, j;
     int i1, i2;

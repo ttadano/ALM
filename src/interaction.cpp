@@ -30,33 +30,12 @@ using namespace ALM_NS;
 
 Interaction::Interaction(ALMCore *alm) : Pointers(alm)
 {
-    maxorder = 0;
-    is_periodic[0] = 1; is_periodic[1] = 1; is_periodic[2] = 1;
-    nbody_include = nullptr;
-
-    nneib = 0;
-    maxorder = 0;
-    rcs = nullptr;
-    x_image = nullptr;
-    exist_image = nullptr;
-    str_order = nullptr;
-    distall = nullptr;
-    mindist_pairs = nullptr;
-    pairs = nullptr;
-    interaction_pair = nullptr;
-    mindist_cluster = nullptr;
+    set_default_variables();
 }
 
 Interaction::~Interaction()
 {
-    memory->deallocate(x_image);
-    memory->deallocate(exist_image);
-    memory->deallocate(str_order);
-    memory->deallocate(pairs);
-    memory->deallocate(mindist_pairs);
-    memory->deallocate(interaction_pair);
-    memory->deallocate(mindist_cluster);
-    memory->deallocate(distall);
+    deallocate_variables();
 }
 
 void Interaction::init()
@@ -89,12 +68,39 @@ void Interaction::init()
     }
 
     nneib = 27;
+    if (x_image) {
+        memory->deallocate(x_image);
+    }
     memory->allocate(x_image, nneib, nat, 3);
+
+    if (exist_image) {
+        memory->deallocate(exist_image);
+    }
     memory->allocate(exist_image, nneib);
+
+    if (distall) {
+        memory->deallocate(distall);
+    }
     memory->allocate(distall, nat, nat);
+
+    if (mindist_pairs) {
+        memory->deallocate(mindist_pairs);
+    }
     memory->allocate(mindist_pairs, nat, nat);
+
+    if (interaction_pair) {
+        memory->deallocate(interaction_pair);
+    }
     memory->allocate(interaction_pair, maxorder, symmetry->natmin);
+
+    if (mindist_cluster) {
+        memory->deallocate(mindist_cluster);
+    }
     memory->allocate(mindist_cluster, maxorder, symmetry->natmin);
+
+    if (pairs) {
+        memory->deallocate(pairs);
+    }
     memory->allocate(pairs, maxorder);
 
     generate_coordinate_of_periodic_images(nat, system->xcoord,
@@ -156,6 +162,53 @@ void Interaction::generate_pairs(std::set<IntList> *pair_out,
             }
         }
         memory->deallocate(pair_tmp);
+    }
+}
+
+void Interaction::set_default_variables()
+{
+    maxorder = 0;
+    is_periodic[0] = 1; is_periodic[1] = 1; is_periodic[2] = 1;
+    nbody_include = nullptr;
+
+    nneib = 0;
+    maxorder = 0;
+    rcs = nullptr;
+    x_image = nullptr;
+    exist_image = nullptr;
+    str_order = nullptr;
+    distall = nullptr;
+    mindist_pairs = nullptr;
+    pairs = nullptr;
+    interaction_pair = nullptr;
+    mindist_cluster = nullptr;
+}
+
+void Interaction::deallocate_variables()
+{
+    if (x_image) {
+        memory->deallocate(x_image);
+    }
+    if (exist_image) {
+        memory->deallocate(exist_image);
+    }
+    if (str_order) {
+        memory->deallocate(str_order);
+    }
+    if (pairs) {
+        memory->deallocate(pairs);
+    }
+    if (mindist_pairs) {
+        memory->deallocate(mindist_pairs);
+    }
+    if (interaction_pair) {
+        memory->deallocate(interaction_pair);
+    }
+    if (mindist_cluster) {
+        memory->deallocate(mindist_cluster);
+    }
+    if (distall) {
+        memory->deallocate(distall);
     }
 }
 

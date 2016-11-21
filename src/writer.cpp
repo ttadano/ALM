@@ -291,7 +291,7 @@ void Writer::write_displacement_pattern(ALM *alm)
         ofs_pattern.open(alm_core->files->file_disp_pattern[order].c_str(), std::ios::out);
         if (!ofs_pattern)
             alm_core->error->exit("write_displacement_pattern",
-                        "Cannot open file_disp_pattern");
+                                  "Cannot open file_disp_pattern");
 
         counter = 0;
 
