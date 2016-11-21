@@ -2,6 +2,8 @@
 *~
 _build
 build
+python/dist
+python/alm.egg-info
 TAGS
 include
 lib

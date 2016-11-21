@@ -1,6 +1,6 @@
 import os
-# from setuptools import setup, Extension
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
+# from distutils.core import setup, Extension
 import numpy
 include_dirs_numpy = [numpy.get_include()]
 
