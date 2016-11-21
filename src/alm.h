@@ -23,6 +23,7 @@ namespace ALM_NS
         ~ALM();
 
         const void set_run_mode(const std::string mode);
+        const void set_verbose(const bool verbose);
         const void set_output_filename_prefix(const std::string prefix);
         const void set_is_print_symmetry(const int is_printsymmetry);
         const void set_is_print_hessians(const bool print_hessian);
@@ -70,6 +71,9 @@ namespace ALM_NS
 
     private:
         ALMCore* alm_core;
+        bool verbose;
+        std::ofstream *ofs_alm;
+        std::streambuf *coutbuf;
         const void run_fitting();
         const void run_suggest();
     };

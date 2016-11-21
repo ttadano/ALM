@@ -9,6 +9,7 @@
 */
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "alm.h"
 #include "alm_core.h"
@@ -20,6 +21,7 @@
 #include "memory.h"
 #include "symmetry.h"
 #include "system.h"
+#include "timer.h"
 #include "patterndisp.h"
 
 using namespace ALM_NS;
@@ -28,6 +30,9 @@ ALM::ALM()
 {
     alm_core = new ALMCore();
     alm_core->create();
+    verbose = true;
+    ofs_alm = nullptr;
+    coutbuf = nullptr;
 }
 
 ALM::~ALM()
@@ -63,6 +68,11 @@ ALM::~ALM()
 const void ALM::set_run_mode(const std::string mode)
 {
     alm_core->mode = mode;
+}
+
+const void ALM::set_verbose(const bool verbose_in)
+{
+    verbose = verbose_in;
 }
 
 const void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
@@ -447,11 +457,31 @@ const void ALM::get_fc(double *fc_values,
 
 const void ALM::run()
 {
+    if (!verbose) {
+        ofs_alm = new std::ofstream("alm.log", std::ofstream::out);
+        coutbuf = std::cout.rdbuf();
+        std::cout.rdbuf(ofs_alm->rdbuf());
+    }
+
+    std::cout << " Job started at " << alm_core->timer->DateAndTime() << std::endl;
+
     alm_core->initialize();
     if (alm_core->mode == "fitting") {
         run_fitting();
     } else if (alm_core->mode == "suggest") {
         run_suggest();
+    }
+
+
+    std::cout << std::endl << " Job finished at "
+        << alm_core->timer->DateAndTime() << std::endl;
+
+    if (!verbose) {
+        ofs_alm->close();
+        delete ofs_alm;
+        ofs_alm = nullptr;
+        std::cout.rdbuf(coutbuf);
+        coutbuf = nullptr;
     }
 }
 

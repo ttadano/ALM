@@ -200,6 +200,7 @@ int main()
     int ndata_used = nend - nstart + 1;
 
     // Run
+    alm->set_verbose(false); // ALM log is written to alm.log.
     alm->set_run_mode("fitting");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);

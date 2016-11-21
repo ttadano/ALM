@@ -11,6 +11,8 @@
 /* Declaration of pointers used in the whole program. */
 
 #pragma once
+#include <iostream>
+#include <fstream>
 #include <string>
 
 namespace ALM_NS

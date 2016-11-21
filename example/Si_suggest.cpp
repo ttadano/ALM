@@ -89,6 +89,7 @@ int main()
     std::string kdname[] = {"Si"};
 
     const int fc_order = 1;
+    alm->set_verbose(false); // ALM log is written to alm.log.
     alm->set_run_mode("suggest");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);
@@ -97,7 +98,6 @@ int main()
     alm->set_interaction_range(nbody_include);
     alm->run();
 
-    std::cout << std::endl;
     std::cout << "************ ALM API ************" << std::endl;
     std::cout << "Atom mapping from primitive to supercell:" << std::endl;
     int map_p2s[nat];
