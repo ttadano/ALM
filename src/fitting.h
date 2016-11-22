@@ -50,8 +50,8 @@ namespace ALM_NS
         double gamma(const int, const int *);
 
     private:
-	void set_default_variables();
-	void deallocate_variables();
+        void set_default_variables();
+        void deallocate_variables();
         void data_multiplier(double **u,
                              double **f,
                              const int nat,

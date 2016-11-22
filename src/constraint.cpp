@@ -29,7 +29,7 @@
 
 using namespace ALM_NS;
 
-Constraint::Constraint(ALMCore *alm) : Pointers(alm) 
+Constraint::Constraint(ALMCore *alm) : Pointers(alm)
 {
     set_default_variables();
 }
@@ -325,8 +325,7 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
         if ((order == 0 && !fix_harmonic) || (order == 1 && !fix_cubic) || order > 1) {
             for (i = 0; i < N; ++i) arr_tmp[i] = 0.0;
 
-            for (std::vector<ConstraintClass>::iterator p = const_self[order].begin();
-                 p != const_self[order].end(); ++p) {
+            for (auto p = const_self[order].begin(); p != const_self[order].end(); ++p) {
                 ConstraintClass const_now = *p;
                 for (i = 0; i < nparam; ++i) {
                     arr_tmp[nshift + i] = const_now.w_const[i];
@@ -344,7 +343,7 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
         if (order > 0) {
             int nparam2 = fcs->ndup[order - 1].size() + fcs->ndup[order].size();
             for (i = 0; i < N; ++i) arr_tmp[i] = 0.0;
-            for (std::vector<ConstraintClass>::iterator p = const_rotation_cross[order].begin();
+            for (auto p = const_rotation_cross[order].begin();
                  p != const_rotation_cross[order].end(); ++p) {
                 ConstraintClass const_now = *p;
                 for (i = 0; i < nparam2; ++i) {
@@ -421,8 +420,7 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
         memory->deallocate(const_rhs_tmp);
     }
 
-    for (std::vector<ConstraintClass>::iterator p = const_total.begin();
-         p != const_total.end(); ++p) {
+    for (auto p = const_total.begin(); p != const_total.end(); ++p) {
         for (i = 0; i < N; ++i) {
             const_mat[irow][i] = (*p).w_const[i];
         }
@@ -484,8 +482,7 @@ void Constraint::get_mapping_constraint(const int nmax,
             std::vector<double> alpha_tmp;
             std::vector<unsigned int> p_index_tmp;
 
-            for (std::vector<ConstraintClass>::reverse_iterator p = const_in[order].rbegin();
-                 p != const_in[order].rend(); ++p) {
+            for (auto p = const_in[order].rbegin(); p != const_in[order].rend(); ++p) {
                 p_index_target = -1;
                 for (i = 0; i < nparam; ++i) {
                     if (std::abs((*p).w_const[i]) > const_tol) {
@@ -609,8 +606,7 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
 
         // Generate temporary list of parameters
         list_found.clear();
-        for (std::vector<FcProperty>::iterator p = fcs->fc_set[order].begin();
-             p != fcs->fc_set[order].end(); ++p) {
+        for (auto p = fcs->fc_set[order].begin(); p != fcs->fc_set[order].end(); ++p) {
             for (i = 0; i < order + 2; ++i) index_tmp[i] = (*p).elems[i];
             list_found.insert(FcProperty(order + 2, (*p).coef,
                                          index_tmp, (*p).mother));
@@ -732,11 +728,11 @@ void Constraint::translational_invariance()
     std::vector<int> intlist, data;
     std::set<FcProperty> list_found;
     std::set<FcProperty>::iterator iter_found;
-    std::vector<std::vector<int> > data_vec;
+    std::vector<std::vector<int>> data_vec;
     std::vector<FcProperty> list_vec;
     std::vector<FcProperty>::iterator iter_vec;
     std::vector<int> const_now;
-    std::vector<std::vector<int> > const_mat;
+    std::vector<std::vector<int>> const_mat;
 
     std::cout << "  Generating constraints for translational invariance ..." << std::endl;
 
@@ -759,8 +755,7 @@ void Constraint::translational_invariance()
 
         list_found.clear();
 
-        for (std::vector<FcProperty>::iterator p = fcs->fc_set[order].begin();
-             p != fcs->fc_set[order].end(); ++p) {
+        for (auto p = fcs->fc_set[order].cbegin(); p != fcs->fc_set[order].cend(); ++p) {
             for (i = 0; i < order + 2; ++i) {
                 ind[i] = (*p).elems[i];
             }
@@ -868,7 +863,7 @@ void Constraint::translational_invariance()
                     memory->allocate(intarr_omp, order + 2);
                     memory->allocate(intarr_copy_omp, order + 2);
 
-                    std::vector<std::vector<int> > const_omp;
+                    std::vector<std::vector<int>> const_omp;
                     std::vector<int> data_omp;
                     std::vector<int> const_now_omp;
 
@@ -933,8 +928,7 @@ void Constraint::translational_invariance()
                         // Merge vectors
 #pragma omp critical
                         {
-                            for (std::vector<std::vector<int> >::iterator it = const_omp.begin();
-                                 it != const_omp.end(); ++it) {
+                            for (auto it = const_omp.begin(); it != const_omp.end(); ++it) {
                                 const_mat.push_back(*it);
                             }
                         }
@@ -963,8 +957,7 @@ void Constraint::translational_invariance()
         // Copy to constraint class 
 
         const_translation[order].clear();
-        for (std::vector<std::vector<int> >::reverse_iterator it = const_mat.rbegin();
-             it != const_mat.rend(); ++it) {
+        for (auto it = const_mat.rbegin(); it != const_mat.rend(); ++it) {
             for (i = 0; i < (*it).size(); ++i) {
                 arr_constraint[i] = static_cast<double>((*it)[i]);
             }
@@ -1027,7 +1020,7 @@ void Constraint::rotational_invariance()
     CombinationWithRepetition<int> g;
 
     std::vector<int> atom_tmp;
-    std::vector<std::vector<int> > cell_dummy;
+    std::vector<std::vector<int>> cell_dummy;
     std::set<MinimumDistanceCluster>::iterator iter_cluster;
 
     setup_rotation_axis(valid_rotation_axis);
@@ -1066,8 +1059,7 @@ void Constraint::rotational_invariance()
 
         list_found.clear();
 
-        for (std::vector<FcProperty>::iterator p = fcs->fc_set[order].begin();
-             p != fcs->fc_set[order].end(); ++p) {
+        for (auto p = fcs->fc_set[order].begin(); p != fcs->fc_set[order].end(); ++p) {
             for (i = 0; i < order + 2; ++i) {
                 ind[i] = (*p).elems[i];
             }
@@ -1105,7 +1097,7 @@ void Constraint::rotational_invariance()
 
                             for (j = 0; j < nparam_sub; ++j) arr_constraint[j] = 0.0;
 
-                            for (std::vector<int>::iterator iter_list = interaction_list_now.begin();
+                            for (auto iter_list = interaction_list_now.begin();
                                  iter_list != interaction_list_now.end(); ++iter_list) {
 
                                 jat = *iter_list;
@@ -1230,7 +1222,7 @@ void Constraint::rotational_invariance()
                                         for (j = 0; j < nparam_sub; ++j) arr_constraint[j] = 0.0;
 
                                         // Loop for m_{N+1}, a_{N+1}
-                                        for (std::vector<int>::iterator iter_list = interaction_list.begin();
+                                        for (auto iter_list = interaction_list.begin();
                                              iter_list != interaction_list.end(); ++iter_list) {
                                             jat = *iter_list;
 
@@ -1676,7 +1668,6 @@ bool Constraint::is_allzero(const std::vector<int> vec, int &loc)
 {
     loc = -1;
     for (int i = 0; i < vec.size(); ++i) {
-        //    for(std::vector<int>::const_iterator it = vec.begin(); it != vec.end(); ++it){
         if (std::abs(vec[i]) > 0) {
             loc = i;
             return false;

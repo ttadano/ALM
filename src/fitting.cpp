@@ -10,7 +10,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <fstream>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -24,7 +23,6 @@
 #include "fcs.h"
 #include "interaction.h"
 #include "timer.h"
-#include "combination.h"
 #include "constants.h"
 #include "constraint.h"
 #include "mathfunctions.h"
@@ -297,33 +295,11 @@ void Fitting::fit_with_constraints(int N,
     int nrank;
     double f_square, f_residual;
     double *fsum2;
+    double *mat_tmp;
 
     std::cout << "  Entering fitting routine: QRD with constraints" << std::endl;
 
     memory->allocate(fsum2, M);
-
-#ifdef _USE_EIGEN_DISABLED
-
-    double **mat_tmp2;
-    memory->allocate(mat_tmp2, M + P, N);
-    for (i = 0; i < M; ++i) {
-        for (j = 0; j < N; ++j) {
-            mat_tmp2[i][j] = amat[i][j];
-        }
-    }
-    for (i = 0; i < P; ++i) {
-        for (j = 0; j < N; ++j) {
-            mat_tmp2[M + i][j] = cmat[i][j];
-        }
-    }
-
-    nrank = getRankEigen(M+P, N, mat_tmp2);
-    memory->deallocate(mat_tmp2);
-
-#else
-
-    double *mat_tmp;
-
     memory->allocate(mat_tmp, (M + P) * N);
 
     k = 0;
@@ -339,8 +315,6 @@ void Fitting::fit_with_constraints(int N,
 
     nrank = rankQRD((M + P), N, mat_tmp, eps12);
     memory->deallocate(mat_tmp);
-
-#endif
 
     if (nrank != N) {
         std::cout << std::endl;

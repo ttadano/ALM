@@ -169,8 +169,7 @@ void Displace::generate_pattern_all(const int N,
 
         pattern[order].clear();
 
-        for (std::set<DispAtomSet>::iterator it = dispset_in[order].begin();
-             it != dispset_in[order].end(); ++it) {
+        for (auto it = dispset_in[order].cbegin(); it != dispset_in[order].cend(); ++it) {
 
             atoms.clear();
             directions.clear();
@@ -207,8 +206,7 @@ void Displace::generate_pattern_all(const int N,
             std::copy(directions.begin(), directions.end(),
                       std::back_inserter(directions_copy));
 
-            for (std::vector<std::vector<int>>::const_iterator it2 = sign_reduced.begin();
-                 it2 != sign_reduced.end(); ++it2) {
+            for (auto it2 = sign_reduced.cbegin(); it2 != sign_reduced.cend(); ++it2) {
                 directions.clear();
 
                 for (i = 0; i < (*it2).size(); ++i) {
@@ -369,8 +367,7 @@ void Displace::find_unique_sign_pairs(const int N,
 
     sign_found.clear();
 
-    for (std::vector<std::vector<int>>::const_iterator it = sign_in.begin();
-         it != sign_in.end(); ++it) {
+    for (auto it = sign_in.cbegin(); it != sign_in.cend(); ++it) {
 
         // if the sign has already been found before, cycle the loop.
         // else, add the current sign pairs to the return variable.

@@ -301,7 +301,7 @@ void Writer::write_displacement_pattern(ALM *alm)
 
         ofs_pattern << "Basis : " << alm_core->displace->disp_basis[0] << std::endl;
 
-        for (std::vector<AtomWithDirection>::iterator it = alm_core->displace->pattern_all[order].begin();
+        for (auto it = alm_core->displace->pattern_all[order].begin();
              it != alm_core->displace->pattern_all[order].end(); ++it) {
             AtomWithDirection entry = *it;
 
@@ -504,7 +504,7 @@ void Writer::write_misc_xml(ALM *alm)
 
     std::sort(alm_core->fcs->fc_set[0].begin(), alm_core->fcs->fc_set[0].end());
 
-    for (std::vector<FcProperty>::iterator it = alm_core->fcs->fc_set[0].begin();
+    for (auto it = alm_core->fcs->fc_set[0].begin();
          it != alm_core->fcs->fc_set[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
@@ -513,7 +513,7 @@ void Writer::write_misc_xml(ALM *alm)
             pair_tmp[k] = fctmp.elems[k] / 3;
         }
         j = alm_core->symmetry->map_s2p[pair_tmp[0]].atom_num;
-        for (std::vector<DistInfo>::iterator it2 = alm_core->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].begin();
+        for (auto it2 = alm_core->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].begin();
              it2 != alm_core->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].end(); ++it2) {
             ptree &child = pt.add("Data.ForceConstants.HARMONIC.FC2",
                                   double2string(alm_core->fitting->params[ip] * fctmp.coef
@@ -539,7 +539,7 @@ void Writer::write_misc_xml(ALM *alm)
 
         std::sort(alm_core->fcs->fc_set[order].begin(), alm_core->fcs->fc_set[order].end());
 
-        for (std::vector<FcProperty>::iterator it = alm_core->fcs->fc_set[order].begin();
+        for (auto it = alm_core->fcs->fc_set[order].begin();
              it != alm_core->fcs->fc_set[order].end(); ++it) {
             FcProperty fctmp = *it;
             ip = fctmp.mother + ishift;
@@ -629,7 +629,7 @@ void Writer::write_hessian(ALM *alm)
         }
     }
 
-    for (std::vector<FcProperty>::iterator it = alm_core->fcs->fc_set[0].begin();
+    for (auto it = alm_core->fcs->fc_set[0].begin();
          it != alm_core->fcs->fc_set[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;

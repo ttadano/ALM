@@ -313,8 +313,7 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
 
     list_found.clear();
 
-    for (std::vector<FcProperty>::iterator p = fcs->fc_set[order_fcs].begin();
-         p != fcs->fc_set[order_fcs].end(); ++p) {
+    for (auto p = fcs->fc_set[order_fcs].begin(); p != fcs->fc_set[order_fcs].end(); ++p) {
         FcProperty list_tmp = *p; // Using copy constructor
         for (i = 0; i < nterms; ++i) {
             ind[i] = list_tmp.elems[i];

@@ -159,7 +159,7 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
 
         std::set<IntList> list_found;
 
-        for (std::set<IntList>::iterator iter = interaction->pairs[order].begin();
+        for (auto iter = interaction->pairs[order].begin();
              iter != interaction->pairs[order].end(); ++iter) {
 
             for (i = 0; i < order + 2; ++i) atmn[i] = (*iter).iarray[i];
