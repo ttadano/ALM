@@ -18,9 +18,7 @@
 #include "error.h"
 #include "input_parser.h"
 #include "input_setter.h"
-#include "mathfunctions.h"
 #include "memory.h"
-#include "symmetry.h"
 #include "system.h"
 #include <algorithm>
 #include <map>
@@ -104,11 +102,7 @@ void InputParser::parse_displacement_and_force_files(Error *error,
 
     nreq = 3 * nat * ndata;
 
-//    double u_tmp[nreq];
-    std::vector<double> u_tmp, f_tmp;
-//    double f_tmp[nreq];
-    u_tmp.reserve(nreq);
-    f_tmp.reserve(nreq);
+    std::vector<double> u_tmp(nreq), f_tmp(nreq);
 
     // Read displacements from DFILE
 
@@ -213,7 +207,7 @@ void InputParser::parse_general_vars(ALMCore *alm)
     int i, j;
     std::string prefix, str_tmp, str_disp_basis;
     int nsym;
-    int is_printsymmetry, is_periodic[3];
+    int printsymmetry, is_periodic[3];
     int icount, ncount;
     bool trim_dispsign_for_evenfunc;
     bool lspin;
@@ -266,9 +260,9 @@ void InputParser::parse_general_vars(ALMCore *alm)
     }
 
     if (general_var_dict["PRINTSYM"].empty()) {
-        is_printsymmetry = 0;
+        printsymmetry = 0;
     } else {
-        assign_val(is_printsymmetry, "PRINTSYM", general_var_dict, alm->error);
+        assign_val(printsymmetry, "PRINTSYM", general_var_dict, alm->error);
     }
 
     split_str_by_space(general_var_dict["KD"], kdname_v);
@@ -438,7 +432,7 @@ void InputParser::parse_general_vars(ALMCore *alm)
                                    nat,
                                    nkd,
                                    nsym,
-                                   is_printsymmetry,
+                                   printsymmetry,
                                    is_periodic,
                                    trim_dispsign_for_evenfunc,
                                    lspin,

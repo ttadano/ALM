@@ -8,7 +8,6 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include <iostream>
 #include "files.h"
 #include "error.h"
 #include "memory.h"

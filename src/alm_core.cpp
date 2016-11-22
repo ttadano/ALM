@@ -8,7 +8,6 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include <iostream>
 #include <iomanip>
 #include "alm_core.h"
 #include "interaction.h"
@@ -24,6 +23,7 @@
 #include "error.h"
 
 #ifdef _OPENMP
+#include <iostream>
 #include <omp.h>
 #endif
 

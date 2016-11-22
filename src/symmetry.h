@@ -95,7 +95,7 @@ namespace ALM_NS
         void init();
 
         unsigned int nsym, ntran, natmin;
-        int is_printsymmetry;
+        int printsymmetry;
         int multiply_data;
         int *symnum_tran;
 
@@ -119,8 +119,8 @@ namespace ALM_NS
         bool *sym_available;
 
     private:
-	void set_default_variables();
-	void deallocate_variables();
+        void set_default_variables();
+        void deallocate_variables();
         void setup_symmetry_operation(int, unsigned int &,
                                       double [3][3], double [3][3],
                                       double **, int *);

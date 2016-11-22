@@ -80,9 +80,9 @@ const void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
     alm_core->files->job_title = prefix;
 }
 
-const void ALM::set_is_print_symmetry(const int is_printsymmetry) // PRINTSYM
+const void ALM::set_is_print_symmetry(const int printsymmetry) // PRINTSYM
 {
-    alm_core->symmetry->is_printsymmetry = is_printsymmetry;
+    alm_core->symmetry->printsymmetry = printsymmetry;
 }
 
 const void ALM::set_is_print_hessians(const bool print_hessian) // HESSIAN

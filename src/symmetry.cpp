@@ -59,8 +59,7 @@ void Symmetry::init()
     memory->allocate(symrel_int, nsym, 3, 3);
 
     int isym = 0;
-    for (std::vector<SymmetryOperation>::iterator iter = SymmList.begin();
-         iter != SymmList.end(); ++iter) {
+    for (auto iter = SymmList.begin(); iter != SymmList.end(); ++iter) {
         for (i = 0; i < 3; ++i) {
             for (j = 0; j < 3; ++j) {
                 symrel_int[isym][i][j] = (*iter).rot[i][j];
@@ -146,7 +145,7 @@ void Symmetry::set_default_variables()
 
     // Default values
     nsym = 0;
-    is_printsymmetry = 0;
+    printsymmetry = 0;
     trev_sym_mag = 1;
     symnum_tran = nullptr;
     tnons = nullptr;
@@ -215,15 +214,14 @@ void Symmetry::setup_symmetry_operation(int nat,
         std::sort(SymmList.begin() + 1, SymmList.end());
         nsym = SymmList.size();
 
-        if (is_printsymmetry) {
+        if (printsymmetry) {
             std::ofstream ofs_sym;
             std::cout << "  PRINTSYM = 1: Symmetry information will be stored in SYMM_INFO file."
                 << std::endl << std::endl;
             ofs_sym.open(file_sym.c_str(), std::ios::out);
             ofs_sym << nsym << std::endl;
 
-            for (std::vector<SymmetryOperation>::iterator p = SymmList.begin();
-                 p != SymmList.end(); ++p) {
+            for (auto p = SymmList.begin(); p != SymmList.end(); ++p) {
                 for (i = 0; i < 3; ++i) {
                     for (j = 0; j < 3; ++j) {
                         ofs_sym << std::setw(4) << (*p).rot[i][j];

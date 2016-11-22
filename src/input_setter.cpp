@@ -66,7 +66,7 @@ void InputSetter::set_general_vars(ALMCore *alm_core,
                                    const int nat,
                                    const int nkd,
                                    const int nsym,
-                                   const int is_printsymmetry,
+                                   const int printsymmetry,
                                    const int is_periodic[3],
                                    const bool trim_dispsign_for_evenfunc,
                                    const bool lspin,
@@ -85,7 +85,7 @@ void InputSetter::set_general_vars(ALMCore *alm_core,
     alm_core->system->nkd = nkd;
     alm_core->system->str_magmom = str_magmom;
     alm_core->symmetry->nsym = nsym;
-    alm_core->symmetry->is_printsymmetry = is_printsymmetry;
+    alm_core->symmetry->printsymmetry = printsymmetry;
     alm_core->symmetry->tolerance = tolerance;
     alm_core->memory->allocate(alm_core->system->kdname, nkd);
     alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
