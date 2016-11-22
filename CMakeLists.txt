@@ -5,6 +5,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2 -fopenmp")
 # set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_BUILD_TYPE RELEASE)
 
+project(alm)
+
 if(UNIX)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x")
     set(CMAKE_CXX_COMPILER "g++")
@@ -18,7 +20,6 @@ if(WIN32)
     endif()
 endif()
 
-project(alm)
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 

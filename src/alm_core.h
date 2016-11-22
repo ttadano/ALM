@@ -38,7 +38,6 @@ namespace ALM_NS
         void initialize();
 
         std::string mode; // "suggest" or "fitting"
-        bool print_hessian;
     };
 }
 

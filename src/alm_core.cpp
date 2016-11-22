@@ -33,7 +33,6 @@ ALMCore::ALMCore()
 {
     // Default values
     mode = "suggest";
-    print_hessian = false;
 }
 
 ALMCore::~ALMCore()

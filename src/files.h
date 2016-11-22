@@ -24,6 +24,7 @@ namespace ALM_NS
 
         void init();
 
+        bool print_hessian;
         std::string job_title;
         std::string file_fcs, file_hes;
         std::string file_disp, file_force;

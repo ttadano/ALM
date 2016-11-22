@@ -22,9 +22,13 @@
 
 using namespace ALM_NS;
 
-InputSetter::InputSetter() {}
+InputSetter::InputSetter()
+{
+}
 
-InputSetter::~InputSetter() {}
+InputSetter::~InputSetter()
+{
+}
 
 void InputSetter::deallocate(ALMCore *alm_core)
 {
@@ -54,25 +58,24 @@ void InputSetter::deallocate(ALMCore *alm_core)
     alm_core->interaction->rcs = nullptr;
 }
 
-void InputSetter::set_general_vars(
-    ALMCore *alm_core,
-    const std::string prefix,
-    const std::string mode,
-    const std::string str_disp_basis,
-    const std::string str_magmom,
-    const int nat,
-    const int nkd,
-    const int nsym,
-    const int is_printsymmetry,
-    const int is_periodic[3],
-    const bool trim_dispsign_for_evenfunc,
-    const bool lspin,
-    const bool print_hessian,
-    const int noncollinear,
-    const int trevsym,
-    const std::string *kdname,
-    const double * const *magmom,
-    const double tolerance)
+void InputSetter::set_general_vars(ALMCore *alm_core,
+                                   const std::string prefix,
+                                   const std::string mode,
+                                   const std::string str_disp_basis,
+                                   const std::string str_magmom,
+                                   const int nat,
+                                   const int nkd,
+                                   const int nsym,
+                                   const int is_printsymmetry,
+                                   const int is_periodic[3],
+                                   const bool trim_dispsign_for_evenfunc,
+                                   const bool lspin,
+                                   const bool print_hessian,
+                                   const int noncollinear,
+                                   const int trevsym,
+                                   const std::string *kdname,
+                                   const double * const *magmom,
+                                   const double tolerance)
 {
     int i, j;
 
@@ -101,7 +104,7 @@ void InputSetter::set_general_vars(
     alm_core->system->lspin = lspin;
     alm_core->system->noncollinear = noncollinear;
     alm_core->symmetry->trev_sym_mag = trevsym;
-    alm_core->print_hessian = print_hessian;
+    alm_core->files->print_hessian = print_hessian;
 
     if (mode == "suggest") {
         alm_core->displace->disp_basis = str_disp_basis;
@@ -139,7 +142,7 @@ void InputSetter::set_interaction_vars(ALMCore *alm_core,
 void InputSetter::set_cutoff_radii(ALMCore *alm_core,
                                    const int maxorder,
                                    const int nkd,
-                                   const double * const * const * rcs)
+                                   const double * const * const *rcs)
 {
     int i, j, k;
 

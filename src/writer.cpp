@@ -30,9 +30,13 @@
 
 using namespace ALM_NS;
 
-Writer::Writer() {}
+Writer::Writer()
+{
+}
 
-Writer::~Writer() {}
+Writer::~Writer()
+{
+}
 
 void Writer::write_input_vars(ALM *alm)
 {
@@ -56,7 +60,7 @@ void Writer::write_input_vars(ALM *alm)
     for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm_core->interaction->is_periodic[i];
     std::cout << std::endl;
     std::cout << "  MAGMOM = " << alm_core->system->str_magmom << std::endl;
-    std::cout << "  HESSIAN = " << alm_core->print_hessian << std::endl;
+    std::cout << "  HESSIAN = " << alm_core->files->print_hessian << std::endl;
     std::cout << std::endl;
 
 
@@ -98,7 +102,7 @@ void Writer::writeall(ALM *alm)
     write_force_constants(alm);
     // write_misc_xml breaks data in fcs.
     write_misc_xml(alm);
-    if (alm_core->print_hessian) write_hessian(alm);
+    if (alm_core->files->print_hessian) write_hessian(alm);
     std::cout << std::endl;
 }
 
@@ -112,7 +116,7 @@ void Writer::write_force_constants(ALM *alm)
     std::string str_tmp;
     std::ofstream ofs_fcs;
     std::vector<int> atom_tmp;
-    std::vector<std::vector<int> > cell_dummy;
+    std::vector<std::vector<int>> cell_dummy;
     std::set<MinimumDistanceCluster>::iterator iter_cluster;
 
     ALMCore *alm_core = alm->get_alm_core();
@@ -177,7 +181,7 @@ void Writer::write_force_constants(ALM *alm)
                     }
                     std::cout << std::endl;
                     alm_core->error->exit("write_force_constants",
-                                "This cannot happen.");
+                                          "This cannot happen.");
                 }
                 ofs_fcs << std::setw(4) << multiplicity;
 
@@ -455,7 +459,7 @@ void Writer::write_misc_xml(ALM *alm)
     ihead = 0;
 
     std::vector<int> atom_tmp;
-    std::vector<std::vector<int> > cell_dummy;
+    std::vector<std::vector<int>> cell_dummy;
     std::set<MinimumDistanceCluster>::iterator iter_cluster;
     int multiplicity;
 
@@ -479,7 +483,7 @@ void Writer::write_misc_xml(ALM *alm)
                 MinimumDistanceCluster(atom_tmp, cell_dummy));
             if (iter_cluster == alm_core->interaction->mindist_cluster[1][j].end()) {
                 alm_core->error->exit("load_reference_system_xml",
-                            "Cubic force constant is not found.");
+                                      "Cubic force constant is not found.");
             } else {
                 multiplicity = (*iter_cluster).cell.size();
             }
@@ -500,8 +504,8 @@ void Writer::write_misc_xml(ALM *alm)
 
     std::sort(alm_core->fcs->fc_set[0].begin(), alm_core->fcs->fc_set[0].end());
 
-    for (std::vector<FcProperty>::iterator it = alm_core->fcs->fc_set[0].begin(); 
-        it != alm_core->fcs->fc_set[0].end(); ++it) {
+    for (std::vector<FcProperty>::iterator it = alm_core->fcs->fc_set[0].begin();
+         it != alm_core->fcs->fc_set[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
@@ -535,8 +539,8 @@ void Writer::write_misc_xml(ALM *alm)
 
         std::sort(alm_core->fcs->fc_set[order].begin(), alm_core->fcs->fc_set[order].end());
 
-        for (std::vector<FcProperty>::iterator it = alm_core->fcs->fc_set[order].begin(); 
-            it != alm_core->fcs->fc_set[order].end(); ++it) {
+        for (std::vector<FcProperty>::iterator it = alm_core->fcs->fc_set[order].begin();
+             it != alm_core->fcs->fc_set[order].end(); ++it) {
             FcProperty fctmp = *it;
             ip = fctmp.mother + ishift;
 

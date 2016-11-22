@@ -20,6 +20,7 @@ using namespace ALM_NS;
 Files::Files(ALMCore *alm): Pointers(alm)
 {
     file_disp_pattern = nullptr;
+    print_hessian = false;
 }
 
 Files::~Files()

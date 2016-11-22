@@ -185,8 +185,8 @@ void Fitting::fitmain()
     std::cout << std::endl;
 }
 
-void Fitting::set_displacement_and_force(const double * const * disp_in,
-                                         const double * const * force_in,
+void Fitting::set_displacement_and_force(const double * const *disp_in,
+                                         const double * const *force_in,
                                          const int nat,
                                          const int ndata_used)
 {
@@ -525,7 +525,6 @@ void Fitting::fit_algebraic_constraints(int N,
     memory->deallocate(fsum2);
     memory->deallocate(amat_mod);
 }
-
 
 
 void Fitting::calc_matrix_elements(const int M,

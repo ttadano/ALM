@@ -87,7 +87,7 @@ const void ALM::set_is_print_symmetry(const int is_printsymmetry) // PRINTSYM
 
 const void ALM::set_is_print_hessians(const bool print_hessian) // HESSIAN
 {
-    alm_core->print_hessian = print_hessian;
+    alm_core->files->print_hessian = print_hessian;
 }
 
 const void ALM::set_symmetry_param(const int nsym) // NSYM
@@ -125,7 +125,7 @@ const void ALM::set_cell(const int nat,
                          const std::string kdname[])
 {
     int i, j, nkd;
-    int nkd_vals[nat];
+    std::vector<int> nkd_vals(nat);
     bool kd_exist;
 
     nkd_vals[0] = kd[0];
@@ -186,7 +186,6 @@ const void ALM::set_cell(const int nat,
             alm_core->system->magmom[i][j] = 0.0;
         }
     }
-
 }
 
 const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
@@ -215,8 +214,8 @@ const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
     }
 }
 
-const void ALM::set_displacement_and_force(const double * u_in,
-                                           const double * f_in,
+const void ALM::set_displacement_and_force(const double *u_in,
+                                           const double *f_in,
                                            const int nat,
                                            const int ndata_used)
 {
@@ -308,7 +307,7 @@ const void ALM::set_interaction_range(const int *nbody_include) // NBODY
     }
 }
 
-const void ALM::set_cutoff_radii(const double * rcs)
+const void ALM::set_cutoff_radii(const double *rcs)
 {
     int i, j, k, nkd, maxorder, count;
 
@@ -332,7 +331,7 @@ const void ALM::set_cutoff_radii(const double * rcs)
     }
 }
 
-ALMCore * ALM::get_alm_core()
+ALMCore* ALM::get_alm_core()
 {
     return alm_core;
 }
@@ -400,7 +399,7 @@ const int ALM::get_displacement_patterns(int *atom_indices,
     }
 }
 
-const int ALM::get_number_of_fc_elements(const int fc_order)  // harmonic=1, ...
+const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
 {
     int id, order, num_unique_elems, num_equiv_elems;
     Fcs *fcs;
@@ -408,7 +407,7 @@ const int ALM::get_number_of_fc_elements(const int fc_order)  // harmonic=1, ...
     fcs = alm_core->fcs;
     id = 0;
     order = fc_order - 1;
-    if (fcs->ndup[order].size() < 1) {return 0;}
+    if (fcs->ndup[order].size() < 1) { return 0; }
     num_unique_elems = fcs->ndup[order].size();
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
         num_equiv_elems = fcs->ndup[order][iuniq];
@@ -432,7 +431,7 @@ const void ALM::get_fc(double *fc_values,
     maxorder = alm_core->interaction->maxorder;
     ip = 0;
     for (order = 0; order < fc_order; ++order) {
-        if (fcs->ndup[order].size() < 1) {continue;}
+        if (fcs->ndup[order].size() < 1) { continue; }
         id = 0;
         num_unique_elems = fcs->ndup[order].size();
         for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
@@ -444,7 +443,7 @@ const void ALM::get_fc(double *fc_values,
                     coef = fcs->fc_set[order][id].coef;
                     fc_values[id] = fc_elem * coef;
                     for (k = 0; k < fc_order + 1; ++k) {
-                        elem_indices[id * (fc_order + 1) + k] = 
+                        elem_indices[id * (fc_order + 1) + k] =
                             fcs->fc_set[order][id].elems[k];
                     }
                     ++id;

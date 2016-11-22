@@ -26,7 +26,9 @@ Timer::Timer(ALMCore *alm): Pointers(alm)
 #endif
 }
 
-Timer::~Timer() {}
+Timer::~Timer()
+{
+}
 
 void Timer::reset()
 {

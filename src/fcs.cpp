@@ -14,7 +14,6 @@
 #include <cmath>
 #include "../external/combination.hpp"
 #include <boost/lexical_cast.hpp>
-#include "files.h"
 #include "interaction.h"
 #include "error.h"
 #include "memory.h"
