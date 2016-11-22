@@ -1,27 +1,29 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 set(CMAKE_MACOSX_RPATH 1)
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -fopenmp")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2 -fopenmp")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2")
 # set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_BUILD_TYPE RELEASE)
 
 project(alm)
+#set(CMAKE_CXX_COMPILER "g++")
 
-if(UNIX)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x")
-    set(CMAKE_CXX_COMPILER "g++")
-endif()
 if(WIN32)
     LINK_DIRECTORIES(C:\\lapack)
-    set(CMAKE_CXX_COMPILER "g++-6")
-    find_package(OpenMP)
-    if (OPENMP_FOUND) 
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    endif()
+endif()
+
+# Add openmp flag if available
+find_package(OpenMP)
+if (OPENMP_FOUND) 
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
+
+#set( ENV{BLA_VENDOR} "Intel10_64lp")
+find_package(LAPACK REQUIRED)
+message("DEBUG: LAPACK_LIBRARIES = ${LAPACK_LIBRARIES}")
 
 # Version numbers
 file(READ ${PROJECT_SOURCE_DIR}/src/version.h version_file)
@@ -58,16 +60,20 @@ add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
 		   ${PROJECT_SOURCE_DIR}/src/input_parser.cpp
 		   ${PROJECT_SOURCE_DIR}/src/input_setter.cpp
 		   ${SOURCES})
-target_link_libraries(alm ${Boost_LIBRARIES} lapack)
+target_link_libraries(alm ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
+set_property(TARGET alm PROPERTY CXX_STANDARD 11)
+set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp)
 # target_link_libraries(alm ${almcxx_static} ${Boost_LIBRARIES} lapack)
 
 # Shared library
 add_library(almcxx SHARED ${SOURCES})
-target_link_libraries(almcxx ${Boost_LIBRARIES} lapack)
+target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
 set_property(TARGET almcxx PROPERTY VERSION ${serial})
 set_property(TARGET almcxx PROPERTY SOVERSION ${soserial})
+set_property(TARGET almcxx PROPERTY CXX_STANDARD 11)
+set_property(TARGET almcxx PROPERTY CXX_STANDARD_REQUIRED ON)
 #install(TARGETS almcxx LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 install(TARGETS almcxx DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
@@ -76,6 +82,8 @@ add_library(almcxx_static STATIC ${SOURCES})
 set_property(TARGET almcxx_static PROPERTY VERSION ${serial})
 set_property(TARGET almcxx_static PROPERTY SOVERSION ${soserial})
 set_property(TARGET almcxx_static PROPERTY OUTPUT_NAME almcxx)
+set_property(TARGET almcxx_static PROPERTY CXX_STANDARD 11)
+set_property(TARGET almcxx_static PROPERTY CXX_STANDARD_REQUIRED ON)
 install(TARGETS almcxx_static ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Header file
