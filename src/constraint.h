@@ -28,6 +28,8 @@ namespace ALM_NS
 
         ConstraintClass(const ConstraintClass &a) : w_const(a.w_const) {}
 
+        ConstraintClass(const std::vector<double> &vec) : w_const(vec) {}
+
         ConstraintClass(const int n, const double *arr, const int nshift = 0)
         {
             for (int i = nshift; i < n; ++i) {
@@ -119,6 +121,8 @@ namespace ALM_NS
 
         void setup_rotation_axis(bool [3][3]);
         bool is_allzero(const int, const double *, const int nshift = 0);
+        bool is_allzero(const std::vector<double>);
+
         bool is_allzero(const std::vector<int>, int &);
 
         void remove_redundant_rows(const int, std::vector<ConstraintClass> &,

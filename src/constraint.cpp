@@ -21,6 +21,8 @@
 #include "constants.h"
 #include "error.h"
 #include <boost/bimap.hpp>
+#include <algorithm>
+#include <unordered_set>
 #include "mathfunctions.h"
 
 #ifdef _USE_EIGEN
@@ -575,6 +577,8 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
 
     std::set<FcProperty> list_found;
 
+    timer->print_elapsed();
+
     for (isym = 0; isym < symmetry->nsym; ++isym) {
         if (symmetry->sym_available[isym]) continue;
         has_constraint_from_symm = true;
@@ -602,7 +606,8 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
             }
         }
 
-        // Generate temporary list of parameters
+        // Generate temporary list of parameter
+
         list_found.clear();
         for (auto p = fcs->fc_table[order].begin(); p != fcs->fc_table[order].end(); ++p) {
             for (i = 0; i < order + 2; ++i) index_tmp[i] = (*p).elems[i];
@@ -624,18 +629,24 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
             int *atm_index, *atm_index_symm;
             int *xyz_index;
             double c_tmp;
-            double *arr_constraint;
 
             std::set<FcProperty>::iterator iter_found;
+            std::vector<std::vector<double>> const_omp;
+            std::vector<double> const_omp_now;
 
-            memory->allocate(arr_constraint, nparams);
             memory->allocate(ind, order + 2);
             memory->allocate(atm_index, order + 2);
             memory->allocate(atm_index_symm, order + 2);
             memory->allocate(xyz_index, order + 2);
 
+            const_omp.clear();
+            const_omp_now.resize(nparams);
+
 #pragma omp for private(i, isym, ixyz) 
             for (int ii = 0; ii < nfcs; ++ii) {
+
+
+           //     std::cout << "ii = " << std::setw(5) << ii;
                 FcProperty list_tmp = fcs->fc_table[order][ii];
 
                 for (i = 0; i < order + 2; ++i) {
@@ -651,9 +662,9 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
                         atm_index_symm[i] = symmetry->map_sym[atm_index[i]][isym];
                     if (!fcs->is_inprim(order + 2, atm_index_symm)) continue;
 
-                    for (i = 0; i < nparams; ++i) arr_constraint[i] = 0.0;
+                    for (i = 0; i < nparams; ++i) const_omp_now[i] = 0.0;
 
-                    arr_constraint[list_tmp.mother] = -list_tmp.coef;
+                    const_omp_now[list_tmp.mother] = -list_tmp.coef;
 
                     for (ixyz = 0; ixyz < nxyz; ++ixyz) {
                         for (i = 0; i < order + 2; ++i)
@@ -662,23 +673,40 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
                         i_prim = fcs->min_inprim(order + 2, ind);
                         std::swap(ind[0], ind[i_prim]);
                         fcs->sort_tail(order + 2, ind);
-                        // we should use vector and std::find algorithm instead of set for better performance
+
                         iter_found = list_found.find(FcProperty(order + 2, 1.0, ind, 1));
                         if (iter_found != list_found.end()) {
                             c_tmp = fcs->coef_sym(order + 2, isym, xyz_index, xyzcomponent[ixyz]);
-                            arr_constraint[(*iter_found).mother] += (*iter_found).coef * c_tmp;
+                            const_omp_now[(*iter_found).mother] += (*iter_found).coef * c_tmp;
                         }
                     }
 
-                    if (!is_allzero(nparams, arr_constraint)) {
-#pragma omp critical
-                        const_out[order].push_back(ConstraintClass(nparams,
-                                                                   arr_constraint));
-                    }
+                    if (!is_allzero(const_omp_now)) const_omp.push_back(const_omp_now);
+                }
+
+                // sort--> uniq the array to reduce memory consumption in every 1000 steps
+                if (!(ii%1000)) {
+                    std::sort(const_omp.begin(), const_omp.end());
+                    const_omp.erase(std::unique(const_omp.begin(), const_omp.end()),
+                        const_omp.end());
+                }
+              
+          //      std::cout << " size = " << const_omp.size() << std::endl;
+            }
+            // sort-->uniq the array
+            // Not clear if this section should be moved inside one more inner loop for better performance
+            std::sort(const_omp.begin(), const_omp.end());
+            const_omp.erase(std::unique(const_omp.begin(), const_omp.end()),
+                            const_omp.end());
+
+#pragma omp critical 
+            {
+                for (auto it = const_omp.begin(); it != const_omp.end(); ++it) {
+                    const_out[order].push_back(ConstraintClass(*it));
                 }
             }
+            const_omp.clear();
 
-            memory->deallocate(arr_constraint);
             memory->deallocate(ind);
             memory->deallocate(atm_index);
             memory->deallocate(atm_index_symm);
@@ -686,6 +714,9 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
         }
 
         memory->deallocate(xyzcomponent);
+
+   //     std::cout << " HERE" << std::endl;
+
         remove_redundant_rows(nparams, const_out[order], eps8);
 
         if (has_constraint_from_symm) {
@@ -698,6 +729,8 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
     if (has_constraint_from_symm) {
         std::cout << "  Finished !" << std::endl << std::endl;
     }
+
+    timer->print_elapsed();
 }
 
 void Constraint::translational_invariance()
@@ -1656,6 +1689,17 @@ bool Constraint::is_allzero(const int n, const double *arr, const int nshift)
 {
     for (int i = nshift; i < n; ++i) {
         if (std::abs(arr[i]) > eps10) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Constraint::is_allzero(const std::vector<double> vec)
+{
+    int n = vec.size();
+    for (int i = 0; i < n; ++i) {
+        if (std::abs(vec[i]) > eps10) {
             return false;
         }
     }
