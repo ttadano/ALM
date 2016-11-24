@@ -163,9 +163,9 @@ void Writer::write_force_constants(ALM *alm)
 
                 atom_tmp.clear();
                 for (l = 1; l < order + 2; ++l) {
-                    atom_tmp.push_back(alm_core->fcs->fc_set[order][m].elems[l] / 3);
+                    atom_tmp.push_back(alm_core->fcs->fc_table[order][m].elems[l] / 3);
                 }
-                j = alm_core->symmetry->map_s2p[alm_core->fcs->fc_set[order][m].elems[0] / 3].atom_num;
+                j = alm_core->symmetry->map_s2p[alm_core->fcs->fc_table[order][m].elems[0] / 3].atom_num;
                 std::sort(atom_tmp.begin(), atom_tmp.end());
 
                 iter_cluster = alm_core->interaction->mindist_cluster[order][j].find(
@@ -187,7 +187,7 @@ void Writer::write_force_constants(ALM *alm)
 
                 for (l = 0; l < order + 2; ++l) {
                     ofs_fcs << std::setw(7)
-                        << alm_core->fcs->easyvizint(alm_core->fcs->fc_set[order][m].elems[l]);
+                        << alm_core->fcs->easyvizint(alm_core->fcs->fc_table[order][m].elems[l]);
                 }
                 ofs_fcs << std::setw(12) << std::setprecision(3)
                     << std::fixed << distmax << std::endl;
@@ -258,10 +258,10 @@ void Writer::write_force_constants(ALM *alm)
 
                 for (j = 0; j < alm_core->fcs->ndup[order][iuniq]; ++j) {
                     ofs_fcs << std::setw(5) << j + 1 << std::setw(12)
-                        << std::setprecision(5) << std::fixed << alm_core->fcs->fc_set[order][id].coef;
+                        << std::setprecision(5) << std::fixed << alm_core->fcs->fc_table[order][id].coef;
                     for (k = 0; k < order + 2; ++k) {
                         ofs_fcs << std::setw(6)
-                            << alm_core->fcs->easyvizint(alm_core->fcs->fc_set[order][id].elems[k]);
+                            << alm_core->fcs->easyvizint(alm_core->fcs->fc_table[order][id].elems[k]);
                     }
                     ofs_fcs << std::endl;
                     ++id;
@@ -442,15 +442,15 @@ void Writer::write_misc_xml(ALM *alm)
     for (unsigned int ui = 0; ui < alm_core->fcs->ndup[0].size(); ++ui) {
 
         for (i = 0; i < 2; ++i) {
-            pair_tmp[i] = alm_core->fcs->fc_set[0][ihead].elems[i] / 3;
+            pair_tmp[i] = alm_core->fcs->fc_table[0][ihead].elems[i] / 3;
         }
         j = alm_core->symmetry->map_s2p[pair_tmp[0]].atom_num;
 
         ptree &child = pt.add("Data.ForceConstants.HarmonicUnique.FC2",
                               double2string(alm_core->fitting->params[k]));
         child.put("<xmlattr>.pairs",
-                  boost::lexical_cast<std::string>(alm_core->fcs->fc_set[0][ihead].elems[0])
-                  + " " + boost::lexical_cast<std::string>(alm_core->fcs->fc_set[0][ihead].elems[1]));
+                  boost::lexical_cast<std::string>(alm_core->fcs->fc_table[0][ihead].elems[0])
+                  + " " + boost::lexical_cast<std::string>(alm_core->fcs->fc_table[0][ihead].elems[1]));
         child.put("<xmlattr>.multiplicity",
                   alm_core->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size());
         ihead += alm_core->fcs->ndup[0][ui];
@@ -469,7 +469,7 @@ void Writer::write_misc_xml(ALM *alm)
 
         for (unsigned int ui = 0; ui < alm_core->fcs->ndup[1].size(); ++ui) {
             for (i = 0; i < 3; ++i) {
-                pair_tmp[i] = alm_core->fcs->fc_set[1][ihead].elems[i] / 3;
+                pair_tmp[i] = alm_core->fcs->fc_table[1][ihead].elems[i] / 3;
             }
             j = alm_core->symmetry->map_s2p[pair_tmp[0]].atom_num;
 
@@ -491,9 +491,9 @@ void Writer::write_misc_xml(ALM *alm)
             ptree &child = pt.add("Data.ForceConstants.CubicUnique.FC3",
                                   double2string(alm_core->fitting->params[k]));
             child.put("<xmlattr>.pairs",
-                      boost::lexical_cast<std::string>(alm_core->fcs->fc_set[1][ihead].elems[0])
-                      + " " + boost::lexical_cast<std::string>(alm_core->fcs->fc_set[1][ihead].elems[1])
-                      + " " + boost::lexical_cast<std::string>(alm_core->fcs->fc_set[1][ihead].elems[2]));
+                      boost::lexical_cast<std::string>(alm_core->fcs->fc_table[1][ihead].elems[0])
+                      + " " + boost::lexical_cast<std::string>(alm_core->fcs->fc_table[1][ihead].elems[1])
+                      + " " + boost::lexical_cast<std::string>(alm_core->fcs->fc_table[1][ihead].elems[2]));
             child.put("<xmlattr>.multiplicity", multiplicity);
             ihead += alm_core->fcs->ndup[1][ui];
             ++k;
@@ -502,10 +502,10 @@ void Writer::write_misc_xml(ALM *alm)
 
     int ip, ishift;
 
-    std::sort(alm_core->fcs->fc_set[0].begin(), alm_core->fcs->fc_set[0].end());
+    std::sort(alm_core->fcs->fc_table[0].begin(), alm_core->fcs->fc_table[0].end());
 
-    for (auto it = alm_core->fcs->fc_set[0].begin();
-         it != alm_core->fcs->fc_set[0].end(); ++it) {
+    for (auto it = alm_core->fcs->fc_table[0].begin();
+         it != alm_core->fcs->fc_table[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
@@ -537,10 +537,10 @@ void Writer::write_misc_xml(ALM *alm)
     std::string elementname;
     for (order = 1; order < alm_core->interaction->maxorder; ++order) {
 
-        std::sort(alm_core->fcs->fc_set[order].begin(), alm_core->fcs->fc_set[order].end());
+        std::sort(alm_core->fcs->fc_table[order].begin(), alm_core->fcs->fc_table[order].end());
 
-        for (auto it = alm_core->fcs->fc_set[order].begin();
-             it != alm_core->fcs->fc_set[order].end(); ++it) {
+        for (auto it = alm_core->fcs->fc_table[order].begin();
+             it != alm_core->fcs->fc_table[order].end(); ++it) {
             FcProperty fctmp = *it;
             ip = fctmp.mother + ishift;
 
@@ -629,8 +629,8 @@ void Writer::write_hessian(ALM *alm)
         }
     }
 
-    for (auto it = alm_core->fcs->fc_set[0].begin();
-         it != alm_core->fcs->fc_set[0].end(); ++it) {
+    for (auto it = alm_core->fcs->fc_table[0].begin();
+         it != alm_core->fcs->fc_table[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 

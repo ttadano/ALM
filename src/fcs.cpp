@@ -48,10 +48,10 @@ void Fcs::init()
     memory->allocate(nints, maxorder);
     memory->allocate(nzero, maxorder);
 
-    if (fc_set) {
-        memory->deallocate(fc_set);
+    if (fc_table) {
+        memory->deallocate(fc_table);
     }
-    memory->allocate(fc_set, maxorder);
+    memory->allocate(fc_table, maxorder);
 
     if (ndup) {
         memory->deallocate(ndup);
@@ -70,18 +70,18 @@ void Fcs::init()
     }
     std::cout << std::endl;
 
-    // sort fc_set
+    // sort fc_table
 
     for (int order = 0; order < maxorder; ++order) {
         if (ndup[order].size() > 0) {
-            std::sort(fc_set[order].begin(),
-                      fc_set[order].begin() + ndup[order][0]);
+            std::sort(fc_table[order].begin(),
+                      fc_table[order].begin() + ndup[order][0]);
             int nbegin = ndup[order][0];
             int nend;
             for (int mm = 1; mm < ndup[order].size(); ++mm) {
                 nend = nbegin + ndup[order][mm];
-                std::sort(fc_set[order].begin() + nbegin,
-                          fc_set[order].begin() + nend);
+                std::sort(fc_table[order].begin() + nbegin,
+                          fc_table[order].begin() + nend);
                 nbegin += ndup[order][mm];
             }
         }
@@ -99,7 +99,7 @@ void Fcs::init()
 void Fcs::set_default_variables()
 {
     ndup = nullptr;
-    fc_set = nullptr;
+    fc_table = nullptr;
 }
 
 void Fcs::deallocate_variables()
@@ -107,8 +107,8 @@ void Fcs::deallocate_variables()
     if (ndup) {
         memory->deallocate(ndup);
     }
-    if (fc_set) {
-        memory->deallocate(fc_set);
+    if (fc_table) {
+        memory->deallocate(fc_table);
     }
 }
 
@@ -148,7 +148,7 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
 
         std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
 
-        fc_set[order].clear();
+        fc_table[order].clear();
         ndup[order].clear();
         nmother = 0;
 
@@ -215,7 +215,7 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
                             if (list_found.find(IntList(order + 2, ind_mapped)) == list_found.end()) {
                                 list_found.insert(IntList(order + 2, ind_mapped));
 
-                                fc_set[order].push_back(FcProperty(order + 2, c_tmp,
+                                fc_table[order].push_back(FcProperty(order + 2, c_tmp,
                                                                    ind_mapped, nmother));
                                 ++ndeps;
 
@@ -231,7 +231,7 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
                                         for (j = 0; j < order + 2; ++j) ind_mapped_tmp[j] = ind_mapped[j];
                                         std::swap(ind_mapped_tmp[0], ind_mapped_tmp[i]);
                                         sort_tail(order + 2, ind_mapped_tmp);
-                                        fc_set[order].push_back(FcProperty(order + 2, c_tmp,
+                                        fc_table[order].push_back(FcProperty(order + 2, c_tmp,
                                                                            ind_mapped_tmp, nmother));
 
                                         ++ndeps;
@@ -247,7 +247,7 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
                 } // close symmetry loop
 
                 if (is_zero) {
-                    for (i = 0; i < ndeps; ++i) fc_set[order].pop_back();
+                    for (i = 0; i < ndeps; ++i) fc_table[order].pop_back();
                     ++nzero[order];
                 } else {
                     ndup[order].push_back(ndeps);

@@ -564,14 +564,14 @@ void Fitting::calc_matrix_elements(const int M,
                 for (std::vector<int>::iterator iter = fcs->ndup[order].begin();
                      iter != fcs->ndup[order].end(); ++iter) {
                     for (i = 0; i < *iter; ++i) {
-                        ind[0] = fcs->fc_set[order][mm].elems[0];
-                        k = idata + inprim_index(fcs->fc_set[order][mm].elems[0]);
+                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        k = idata + inprim_index(fcs->fc_table[order][mm].elems[0]);
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
-                            ind[j] = fcs->fc_set[order][mm].elems[j];
-                            amat_tmp *= u[irow][fcs->fc_set[order][mm].elems[j]];
+                            ind[j] = fcs->fc_table[order][mm].elems[j];
+                            amat_tmp *= u[irow][fcs->fc_table[order][mm].elems[j]];
                         }
-                        amat[k][iparam] -= gamma(order + 2, ind) * fcs->fc_set[order][mm].coef * amat_tmp;
+                        amat[k][iparam] -= gamma(order + 2, ind) * fcs->fc_table[order][mm].coef * amat_tmp;
                         ++mm;
                     }
                     ++iparam;
@@ -674,15 +674,15 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
                 for (std::vector<int>::iterator iter = fcs->ndup[order].begin();
                      iter != fcs->ndup[order].end(); ++iter) {
                     for (i = 0; i < *iter; ++i) {
-                        ind[0] = fcs->fc_set[order][mm].elems[0];
+                        ind[0] = fcs->fc_table[order][mm].elems[0];
                         k = inprim_index(ind[0]);
 
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
-                            ind[j] = fcs->fc_set[order][mm].elems[j];
-                            amat_tmp *= u[irow][fcs->fc_set[order][mm].elems[j]];
+                            ind[j] = fcs->fc_table[order][mm].elems[j];
+                            amat_tmp *= u[irow][fcs->fc_table[order][mm].elems[j]];
                         }
-                        amat_orig[k][iparam] -= gamma(order + 2, ind) * fcs->fc_set[order][mm].coef * amat_tmp;
+                        amat_orig[k][iparam] -= gamma(order + 2, ind) * fcs->fc_table[order][mm].coef * amat_tmp;
                         ++mm;
                     }
                     ++iparam;

@@ -107,7 +107,7 @@ void Displace::gen_displacement_pattern()
                 // Here, duplicate entries will be removed. 
                 // For example, (iij) will be reduced to (ij).
                 for (j = 0; j < order + 1; ++j) {
-                    group_tmp.push_back(fcs->fc_set[order][m].elems[j]);
+                    group_tmp.push_back(fcs->fc_table[order][m].elems[j]);
                 }
                 group_tmp.erase(std::unique(group_tmp.begin(), group_tmp.end()),
                                 group_tmp.end());

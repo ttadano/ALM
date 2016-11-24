@@ -14,6 +14,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <iterator>
 
 namespace ALM_NS
 {
@@ -21,20 +22,13 @@ namespace ALM_NS
     {
     public:
         std::vector<int> elems;
-        double coef;
-        int mother;
+        double coef; // factor (usually +1 or -1)
+        int mother; // index of the reducible force constants
 
         FcProperty();
 
-        FcProperty(const FcProperty &obj)
-        {
-            coef = obj.coef;
-            mother = obj.mother;
-            for (std::vector<int>::const_iterator it = obj.elems.begin(); 
-                it != obj.elems.end(); ++it) {
-                elems.push_back(*it);
-            }
-        };
+        FcProperty(const FcProperty &obj) : 
+            coef(obj.coef), mother(obj.mother), elems(obj.elems) {}
 
         FcProperty(const int n, const double c, const int *arr, const int m)
         {
@@ -60,8 +54,8 @@ namespace ALM_NS
 
         void init();
 
-        std::vector<int> *ndup;
-        std::vector<FcProperty> *fc_set;
+        std::vector<int> *ndup; // stores duplicate number of irreducible force constants
+        std::vector<FcProperty> *fc_table; // all force constants
 
         std::string easyvizint(const int);
         void get_xyzcomponent(int, int **);
@@ -73,9 +67,9 @@ namespace ALM_NS
         double coef_sym(const int, const int, const int *, const int *);
 
     private:
-	void set_default_variables();
-	void deallocate_variables();
-	void generate_fclists(int maxorder, int *nzero);
+        void set_default_variables();
+        void deallocate_variables();
+        void generate_fclists(int maxorder, int *nzero);
         bool is_ascending(const int, const int *);
     };
 }

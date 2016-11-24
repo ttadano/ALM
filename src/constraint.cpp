@@ -326,9 +326,8 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
             for (i = 0; i < N; ++i) arr_tmp[i] = 0.0;
 
             for (auto p = const_self[order].begin(); p != const_self[order].end(); ++p) {
-                ConstraintClass const_now = *p;
                 for (i = 0; i < nparam; ++i) {
-                    arr_tmp[nshift + i] = const_now.w_const[i];
+                    arr_tmp[nshift + i] = (*p).w_const[i];
                 }
                 const_total.push_back(ConstraintClass(N, arr_tmp));
             }
@@ -337,7 +336,7 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
     }
     nconst1 = const_total.size();
 
-    // order-crossing constraints
+    // Inter-order constraints
     int nshift2 = 0;
     for (order = 0; order < maxorder; ++order) {
         if (order > 0) {
@@ -345,9 +344,8 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
             for (i = 0; i < N; ++i) arr_tmp[i] = 0.0;
             for (auto p = const_rotation_cross[order].begin();
                  p != const_rotation_cross[order].end(); ++p) {
-                ConstraintClass const_now = *p;
                 for (i = 0; i < nparam2; ++i) {
-                    arr_tmp[nshift2 + i] = const_now.w_const[i];
+                    arr_tmp[nshift2 + i] = (*p).w_const[i];
                 }
                 const_total.push_back(ConstraintClass(N, arr_tmp));
             }
@@ -606,7 +604,7 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
 
         // Generate temporary list of parameters
         list_found.clear();
-        for (auto p = fcs->fc_set[order].begin(); p != fcs->fc_set[order].end(); ++p) {
+        for (auto p = fcs->fc_table[order].begin(); p != fcs->fc_table[order].end(); ++p) {
             for (i = 0; i < order + 2; ++i) index_tmp[i] = (*p).elems[i];
             list_found.insert(FcProperty(order + 2, (*p).coef,
                                          index_tmp, (*p).mother));
@@ -616,7 +614,7 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
         memory->allocate(xyzcomponent, nxyz, order + 2);
         fcs->get_xyzcomponent(order + 2, xyzcomponent);
 
-        int nfcs = fcs->fc_set[order].size();
+        int nfcs = fcs->fc_table[order].size();
 
 #pragma omp parallel 
         {
@@ -638,7 +636,7 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
 
 #pragma omp for private(i, isym, ixyz) 
             for (int ii = 0; ii < nfcs; ++ii) {
-                FcProperty list_tmp = fcs->fc_set[order][ii];
+                FcProperty list_tmp = fcs->fc_table[order][ii];
 
                 for (i = 0; i < order + 2; ++i) {
                     atm_index[i] = list_tmp.elems[i] / 3;
@@ -664,7 +662,7 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
                         i_prim = fcs->min_inprim(order + 2, ind);
                         std::swap(ind[0], ind[i_prim]);
                         fcs->sort_tail(order + 2, ind);
-
+                        // we should use vector and std::find algorithm instead of set for better performance
                         iter_found = list_found.find(FcProperty(order + 2, 1.0, ind, 1));
                         if (iter_found != list_found.end()) {
                             c_tmp = fcs->coef_sym(order + 2, isym, xyz_index, xyzcomponent[ixyz]);
@@ -755,7 +753,7 @@ void Constraint::translational_invariance()
 
         list_found.clear();
 
-        for (auto p = fcs->fc_set[order].cbegin(); p != fcs->fc_set[order].cend(); ++p) {
+        for (auto p = fcs->fc_table[order].cbegin(); p != fcs->fc_table[order].cend(); ++p) {
             for (i = 0; i < order + 2; ++i) {
                 ind[i] = (*p).elems[i];
             }
@@ -1059,7 +1057,7 @@ void Constraint::rotational_invariance()
 
         list_found.clear();
 
-        for (auto p = fcs->fc_set[order].begin(); p != fcs->fc_set[order].end(); ++p) {
+        for (auto p = fcs->fc_table[order].begin(); p != fcs->fc_table[order].end(); ++p) {
             for (i = 0; i < order + 2; ++i) {
                 ind[i] = (*p).elems[i];
             }

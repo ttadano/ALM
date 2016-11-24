@@ -26,13 +26,7 @@ namespace ALM_NS
 
         ConstraintClass();
 
-        ConstraintClass(const ConstraintClass &a)
-        {
-            for (std::vector<double>::const_iterator p = a.w_const.begin(); 
-                p != a.w_const.end(); ++p) {
-                w_const.push_back(*p);
-            }
-        }
+        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const) {}
 
         ConstraintClass(const int n, const double *arr, const int nshift = 0)
         {
@@ -54,11 +48,8 @@ namespace ALM_NS
         unsigned int p_index_target;
         double val_to_fix;
 
-        ConstraintTypeFix(const unsigned int index_in, const double val_in)
-        {
-            p_index_target = index_in;
-            val_to_fix = val_in;
-        }
+        ConstraintTypeFix(const unsigned int index_in, const double val_in) :
+            p_index_target(index_in), val_to_fix(val_in) {}
     };
 
     class ConstraintTypeRelate
@@ -70,12 +61,8 @@ namespace ALM_NS
 
         ConstraintTypeRelate(const unsigned int index_in,
                              const std::vector<double> alpha_in,
-                             const std::vector<unsigned int> p_index_in)
-        {
-            p_index_target = index_in;
-            std::copy(alpha_in.begin(), alpha_in.end(), std::back_inserter(alpha));
-            std::copy(p_index_in.begin(), p_index_in.end(), std::back_inserter(p_index_orig));
-        }
+                             const std::vector<unsigned int> p_index_in) :
+            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in) {}
     };
 
     class Constraint: protected Pointers
@@ -121,8 +108,8 @@ namespace ALM_NS
 
         std::vector<ConstraintClass> *const_self;
 
-	void set_default_variables();
-	void deallocate_variables();
+        void set_default_variables();
+        void deallocate_variables();
 
         int levi_civita(const int, const int, const int);
 
@@ -137,8 +124,6 @@ namespace ALM_NS
         void remove_redundant_rows(const int, std::vector<ConstraintClass> &,
                                    const double tolerance = eps12);
 
-        void remove_redundant_rows2(const int, std::vector<ConstraintClass> &,
-                                    const double tolerance = eps12);
         void rref(int, int, double **, int &, double tolerance = eps12);
     };
 

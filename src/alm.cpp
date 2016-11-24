@@ -440,11 +440,11 @@ const void ALM::get_fc(double *fc_values,
                 num_equiv_elems = fcs->ndup[order][iuniq];
                 for (j = 0; j < num_equiv_elems; ++j) {
                     // coef is normally 1 or -1.
-                    coef = fcs->fc_set[order][id].coef;
+                    coef = fcs->fc_table[order][id].coef;
                     fc_values[id] = fc_elem * coef;
                     for (k = 0; k < fc_order + 1; ++k) {
                         elem_indices[id * (fc_order + 1) + k] =
-                            fcs->fc_set[order][id].elems[k];
+                            fcs->fc_table[order][id].elems[k];
                     }
                     ++id;
                 }

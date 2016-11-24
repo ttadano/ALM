@@ -21,9 +21,13 @@ endif()
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
-#set( ENV{BLA_VENDOR} "Intel10_64lp")
-find_package(LAPACK REQUIRED)
-message("DEBUG: LAPACK_LIBRARIES = ${LAPACK_LIBRARIES}")
+if (UNIX)
+    #set( ENV{BLA_VENDOR} "Intel10_64lp")
+    find_package(LAPACK REQUIRED)
+endif()
+if (WIN32)
+    set(LAPACK_LIBRARIES lapack)
+endif()
 
 # Version numbers
 file(READ ${PROJECT_SOURCE_DIR}/src/version.h version_file)
