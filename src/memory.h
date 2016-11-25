@@ -147,17 +147,36 @@ void deallocate(T ****&arr)
 
 // memsize calculator
 
-unsigned long memsize_in_MB(const int,
-                            const unsigned int);
-unsigned long memsize_in_MB(const int,
-                            const unsigned int,
-                            const unsigned int);
-unsigned long memsize_in_MB(const int,
-                            const unsigned int,
-                            const unsigned int,
-                            const unsigned int);
-unsigned long memsize_in_MB(const int,
-                            const unsigned int,
-                            const unsigned int,
-                            const unsigned int,
-                            const unsigned int);
+inline unsigned long memsize_in_MB(const int size_of_one,
+                                   const unsigned int n1)
+{
+    unsigned long n = n1 * size_of_one;
+    return n / 1000000;
+}
+
+inline unsigned long memsize_in_MB(const int size_of_one,
+                                   const unsigned int n1,
+                                   const unsigned int n2)
+{
+    unsigned long n = n1 * n2 * size_of_one;
+    return n / 1000000;
+}
+
+inline unsigned long memsize_in_MB(const int size_of_one,
+                                   const unsigned int n1,
+                                   const unsigned int n2,
+                                   const unsigned int n3)
+{
+    unsigned long n = n1 * n2 * n3 * size_of_one;
+    return n / 1000000;
+}
+
+inline unsigned long memsize_in_MB(const int size_of_one,
+                                   const unsigned int n1,
+                                   const unsigned int n2,
+                                   const unsigned int n3,
+                                   const unsigned int n4)
+{
+    unsigned long n = n1 * n2 * n3 * n4 * size_of_one;
+    return n / 1000000;
+}

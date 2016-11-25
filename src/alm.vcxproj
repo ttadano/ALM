@@ -89,7 +89,6 @@
     <ClCompile Include="input_setter.cpp" />
     <ClCompile Include="interaction.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="memory.cpp" />
     <ClCompile Include="patterndisp.cpp" />
     <ClCompile Include="symmetry.cpp" />
     <ClCompile Include="system.cpp" />
