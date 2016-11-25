@@ -1,7 +1,7 @@
 /*
  timer.cpp
 
- Copyright (c) 2014 Terumasa Tadano
+ Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
  Please see the file 'LICENCE.txt' in the root directory 
@@ -19,30 +19,46 @@ using namespace ALM_NS;
 Timer::Timer()
 {
 #if defined(WIN32) || defined(_WIN32)
-    QueryPerformanceCounter(&time_ref);
+    QueryPerformanceCounter(&walltime_ref);
     QueryPerformanceFrequency(&frequency);
 #else
-    gettimeofday(&time_ref, nullptr);
+    gettimeofday(&walltime_ref, nullptr);
+    cputime_ref = static_cast<double>(clock());
 #endif
-    std::cout << " Job started at " << this->DateAndTime() << std::endl;
+    lock = false;
 }
 
 Timer::~Timer()
 {
-    std::cout << std::endl << " Job finished at "
-        << this->DateAndTime() << std::endl;
+    walltime.clear();
+    cputime.clear();
 }
 
 void Timer::reset()
 {
 #if defined(WIN32) || defined(_WIN32)
-    QueryPerformanceCounter(&time_ref);
+    QueryPerformanceCounter(&walltime_ref);
 #else
-    gettimeofday(&time_ref, nullptr);
+    gettimeofday(&walltime_ref, nullptr);
 #endif
 }
 
-double Timer::elapsed()
+double Timer::elapsed_walltime()
+{
+#if defined(WIN32) || defined(_WIN32)
+    LARGE_INTEGER time_now;
+    QueryPerformanceCounter(&time_now);
+    return static_cast<double>(time_now.QuadPart - walltime_ref.QuadPart)
+        / static_cast<double>(frequency.QuadPart);
+#else
+    timeval time_now;
+    gettimeofday(&time_now, nullptr);
+    return (time_now.tv_sec - walltime_ref.tv_sec) 
+        + (time_now.tv_usec - walltime_ref.tv_usec) * 1.0e-6;
+#endif
+}
+
+double Timer::elapsed_cputime()
 {
 #if defined(WIN32) || defined(_WIN32)
     LARGE_INTEGER time_now;
@@ -50,15 +66,13 @@ double Timer::elapsed()
     return static_cast<double>(time_now.QuadPart - time_ref.QuadPart)
         / static_cast<double>(frequency.QuadPart);
 #else
-    timeval time_now;
-    gettimeofday(&time_now, nullptr);
-    return (time_now.tv_sec - time_ref.tv_sec) + (time_now.tv_usec - time_ref.tv_usec) * 1.0e-6;
+    return (static_cast<double>(clock()) - cputime_ref) / CLOCKS_PER_SEC;
 #endif
 }
 
 void Timer::print_elapsed()
 {
-    std::cout << "  Time Elapsed: " << elapsed() << " sec."
+    std::cout << "  Time Elapsed: " << elapsed_walltime() << " sec."
         << std::endl << std::endl;
 }
 
@@ -83,4 +97,79 @@ std::string Timer::DateAndTime()
 
     return asctime(local);
 #endif
+}
+
+
+void Timer::start_clock(const std::string str_tag)
+{
+    if (lock) {
+        std::cout << "Error: cannot start clock because it's occupied." << std::endl;
+        exit(1);
+    }
+    // Initialize the counter if the key is new
+    if (walltime.find(str_tag) == walltime.end())  {
+        walltime[str_tag] = 0.0;
+    }
+    if (cputime.find(str_tag) == cputime.end())  {
+        cputime[str_tag] = 0.0;
+    }
+
+    wtime_tmp = elapsed_walltime();
+    ctime_tmp = elapsed_cputime();
+
+    lock = true;
+}
+
+void Timer::stop_clock(const std::string str_tag)
+{
+    if (!lock) {
+        std::cout << "Error: cannot stop clock because it's not initialized." << std::endl;
+        exit(1);
+    }
+    // Initialize the counter if the key is new
+    auto it = walltime.find(str_tag);
+
+    if (it == walltime.end()) {
+        std::cout << "Error: invalid tag for clock" << std::endl;
+        exit(1);
+    }
+
+    double time_tmp = (*it).second;
+    time_tmp += elapsed_walltime() - wtime_tmp;
+    walltime[str_tag] = time_tmp;
+
+    it = cputime.find(str_tag);
+    if (it == cputime.end()) {
+        std::cout << "Error: invalid tag for clock" << std::endl;
+        exit(1);
+    }
+
+    time_tmp = (*it).second;
+    time_tmp += elapsed_cputime() - ctime_tmp;
+    cputime[str_tag] = time_tmp;
+
+    lock = false;
+}
+
+double Timer::get_walltime(const std::string str_tag)
+{
+    auto it = walltime.find(str_tag);
+
+    if (it == walltime.end()) {
+        std::cout << "Error: invalid tag for clock" << std::endl;
+        exit(1);
+    }
+    return (*it).second;
+}
+
+
+double Timer::get_cputime(const std::string str_tag)
+{
+    auto it = cputime.find(str_tag);
+
+    if (it == cputime.end()) {
+        std::cout << "Error: invalid tag for clock" << std::endl;
+        exit(1);
+    }
+    return (*it).second;
 }

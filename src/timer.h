@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+#include <map>
 
 #if defined(WIN32) || defined(_WIN32)
 #include <Windows.h>
@@ -27,18 +28,28 @@ namespace ALM_NS
         Timer();
         ~Timer();
 
-        void reset();
         void print_elapsed();
+        void start_clock(const std::string);
+        void stop_clock(const std::string);
+        double get_walltime(const std::string);
+        double get_cputime(const std::string);
         static std::string DateAndTime();
 
     private:
-        double elapsed();
+        void reset();
+        double elapsed_walltime();
+        double elapsed_cputime();
+        std::map<std::string, double> walltime;
+        std::map<std::string, double> cputime;
+        double wtime_tmp, ctime_tmp;
+        bool lock;
 
 #if defined(WIN32) || defined(_WIN32)
-        LARGE_INTEGER time_ref;
+        LARGE_INTEGER walltime_ref;
         LARGE_INTEGER frequency;
 #else
-        timeval time_ref;
+        timeval walltime_ref;
+        double cputime_ref;
 #endif
     };
 }
