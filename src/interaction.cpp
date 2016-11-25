@@ -47,7 +47,7 @@ void Interaction::init()
     std::cout << " INTERACTION" << std::endl;
     std::cout << " ===========" << std::endl << std::endl;
 
-    memory->allocate(str_order, maxorder);
+    allocate(str_order, maxorder);
     set_ordername();
 
     std::cout << "  +++ Cutoff Radii Matrix in Bohr Unit (NKD x NKD matrix) +++" << std::endl;
@@ -69,39 +69,39 @@ void Interaction::init()
 
     nneib = 27;
     if (x_image) {
-        memory->deallocate(x_image);
+        deallocate(x_image);
     }
-    memory->allocate(x_image, nneib, nat, 3);
+    allocate(x_image, nneib, nat, 3);
 
     if (exist_image) {
-        memory->deallocate(exist_image);
+        deallocate(exist_image);
     }
-    memory->allocate(exist_image, nneib);
+    allocate(exist_image, nneib);
 
     if (distall) {
-        memory->deallocate(distall);
+        deallocate(distall);
     }
-    memory->allocate(distall, nat, nat);
+    allocate(distall, nat, nat);
 
     if (mindist_pairs) {
-        memory->deallocate(mindist_pairs);
+        deallocate(mindist_pairs);
     }
-    memory->allocate(mindist_pairs, nat, nat);
+    allocate(mindist_pairs, nat, nat);
 
     if (interaction_pair) {
-        memory->deallocate(interaction_pair);
+        deallocate(interaction_pair);
     }
-    memory->allocate(interaction_pair, maxorder, symmetry->natmin);
+    allocate(interaction_pair, maxorder, symmetry->natmin);
 
     if (mindist_cluster) {
-        memory->deallocate(mindist_cluster);
+        deallocate(mindist_cluster);
     }
-    memory->allocate(mindist_cluster, maxorder, symmetry->natmin);
+    allocate(mindist_cluster, maxorder, symmetry->natmin);
 
     if (pairs) {
-        memory->deallocate(pairs);
+        deallocate(pairs);
     }
-    memory->allocate(pairs, maxorder);
+    allocate(pairs, maxorder);
 
     generate_coordinate_of_periodic_images(nat, system->xcoord,
                                            is_periodic, x_image, exist_image);
@@ -114,7 +114,7 @@ void Interaction::init()
                           distall, exist_image, mindist_cluster);
     generate_pairs(pairs, mindist_cluster);
 
-    timer->print_elapsed();
+    alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
 }
@@ -140,7 +140,7 @@ void Interaction::generate_pairs(std::set<IntList> *pair_out,
             std::cout << " atoms will be neglected." << std::endl;
         }
 
-        memory->allocate(pair_tmp, order + 2);
+        allocate(pair_tmp, order + 2);
 
         for (i = 0; i < natmin; ++i) {
 
@@ -161,7 +161,7 @@ void Interaction::generate_pairs(std::set<IntList> *pair_out,
                 pair_out[order].insert(IntList(order + 2, pair_tmp));
             }
         }
-        memory->deallocate(pair_tmp);
+        deallocate(pair_tmp);
     }
 }
 
@@ -189,28 +189,28 @@ void Interaction::set_default_variables()
 void Interaction::deallocate_variables()
 {
     if (x_image) {
-        memory->deallocate(x_image);
+        deallocate(x_image);
     }
     if (exist_image) {
-        memory->deallocate(exist_image);
+        deallocate(exist_image);
     }
     if (str_order) {
-        memory->deallocate(str_order);
+        deallocate(str_order);
     }
     if (pairs) {
-        memory->deallocate(pairs);
+        deallocate(pairs);
     }
     if (mindist_pairs) {
-        memory->deallocate(mindist_pairs);
+        deallocate(mindist_pairs);
     }
     if (interaction_pair) {
-        memory->deallocate(interaction_pair);
+        deallocate(interaction_pair);
     }
     if (mindist_cluster) {
-        memory->deallocate(mindist_cluster);
+        deallocate(mindist_cluster);
     }
     if (distall) {
-        memory->deallocate(distall);
+        deallocate(distall);
     }
 }
 
@@ -356,7 +356,7 @@ void Interaction::print_neighborlist(std::vector<DistInfo> **mindist)
     double dist_tmp;
     std::vector<DistList> *neighborlist;
 
-    memory->allocate(neighborlist, symmetry->natmin);
+    allocate(neighborlist, symmetry->natmin);
 
     for (i = 0; i < symmetry->natmin; ++i) {
         neighborlist[i].clear();
@@ -454,7 +454,7 @@ void Interaction::print_neighborlist(std::vector<DistInfo> **mindist)
         std::cout << std::endl;
     }
     atomlist.clear();
-    memory->deallocate(neighborlist);
+    deallocate(neighborlist);
 }
 
 void Interaction::search_interactions(std::vector<int> **interaction_list_out,
@@ -474,7 +474,7 @@ void Interaction::search_interactions(std::vector<int> **interaction_list_out,
     std::set<IntList> *interacting_atom_pairs;
     std::vector<int> intlist;
 
-    memory->allocate(interacting_atom_pairs, maxorder);
+    allocate(interacting_atom_pairs, maxorder);
 
     for (order = 0; order < maxorder; ++order) {
         for (i = 0; i < natmin; ++i) {
@@ -554,7 +554,7 @@ void Interaction::search_interactions(std::vector<int> **interaction_list_out,
                 << interaction_list_out[order][i].size() << std::endl << std::endl;
 
             int *intarr;
-            memory->allocate(intarr, order + 2);
+            allocate(intarr, order + 2);
 
             if (intlist.size() > 0) {
                 if (order == 0) {
@@ -583,13 +583,13 @@ void Interaction::search_interactions(std::vector<int> **interaction_list_out,
                 }
             }
             intlist.clear();
-            memory->deallocate(intarr);
+            deallocate(intarr);
         }
     }
 
     std::cout << std::endl;
 
-    memory->deallocate(interacting_atom_pairs);
+    deallocate(interacting_atom_pairs);
 }
 
 bool Interaction::is_incutoff(const int n,
@@ -845,7 +845,7 @@ void Interaction::calc_mindist_clusters(std::vector<int> **interaction_pair_in,
                 // Anharmonic terms
 
                 data_vec.clear();
-                memory->allocate(list_now, order + 2);
+                allocate(list_now, order + 2);
 
                 // First, we generate all possible combinations of interaction clusters.
                 CombinationWithRepetition<int> g(intlist.begin(), intlist.end(), order + 1);
@@ -992,7 +992,7 @@ void Interaction::calc_mindist_clusters(std::vector<int> **interaction_pair_in,
 
                     }
                 }
-                memory->deallocate(list_now);
+                deallocate(list_now);
 
                 /*
                   std::sort(distance_list.begin(), distance_list.end(), MinDistList::compare_sum_distance);

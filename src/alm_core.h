@@ -11,8 +11,6 @@
 /* Declaration of pointers used in the whole program. */
 
 #pragma once
-#include <iostream>
-#include <fstream>
 #include <string>
 
 namespace ALM_NS
@@ -20,8 +18,9 @@ namespace ALM_NS
     class ALMCore
     {
     public:
+        // Declaration of pointers with incomplete class type (opaque pointer)
         class InputSetter *input;
-        class Memory *memory;
+  //      class Memory *memory;
         class System *system;
         class Interaction *interaction;
         class Fcs *fcs;
@@ -32,6 +31,7 @@ namespace ALM_NS
         class Displace *displace;
         class Error *error;
         class Timer *timer;
+     //   std::unique_ptr<class Timer> timer;
         ALMCore();
         ~ALMCore();
         void create();

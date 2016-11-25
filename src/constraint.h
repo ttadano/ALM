@@ -128,7 +128,7 @@ namespace ALM_NS
         void remove_redundant_rows(const int, std::vector<ConstraintClass> &,
                                    const double tolerance = eps12);
 
-        void rref(int, int, double **, int &, double tolerance = eps12);
+        void rref(const int, const int, double **, int &, const double tolerance = eps12);
     };
 
     extern "C"

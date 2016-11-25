@@ -14,7 +14,6 @@
 #include "symmetry.h"
 #include "system.h"
 #include "files.h"
-#include "memory.h"
 #include "fcs.h"
 #include "fitting.h"
 #include "constraint.h"
@@ -22,10 +21,6 @@
 #include "patterndisp.h"
 #include "error.h"
 
-#ifdef _OPENMP
-#include <iostream>
-#include <omp.h>
-#endif
 
 using namespace ALM_NS;
 
@@ -46,13 +41,13 @@ ALMCore::~ALMCore()
     delete fitting;
     delete constraint;
     delete displace;
-    delete memory;
     delete error;
 }
 
 void ALMCore::create()
 {
-    memory = new Memory(this);
+    timer = new Timer();
+  //  timer = std::unique_ptr<Timer>(new Timer());
     files = new Files(this);
     system = new System(this);
     interaction = new Interaction(this);
@@ -62,15 +57,10 @@ void ALMCore::create()
     constraint = new Constraint(this);
     displace = new Displace(this);
     error = new Error(this);
-    timer = new Timer(this);
 }
 
 void ALMCore::initialize()
 {
-#ifdef _OPENMP
-    std::cout << " Number of OpenMP threads = "
-        << omp_get_max_threads() << std::endl << std::endl;
-#endif
     system->init();
     files->init();
     symmetry->init();

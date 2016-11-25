@@ -116,7 +116,7 @@ void System::init()
     cout.unsetf(ios::scientific);
 
     // Generate Cartesian coordinate
-    memory->allocate(x_cartesian, nat, 3);
+    allocate(x_cartesian, nat, 3);
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
             x_cartesian[i][j] = xcoord[i][j];
@@ -148,7 +148,7 @@ void System::init()
         cout << endl << endl;
     }
 
-    timer->print_elapsed();
+    alm->timer->print_elapsed();
     cout << " -------------------------------------------------------------------" << endl;
     cout << endl;
 }
@@ -204,7 +204,7 @@ void System::frac2cart(double **xf)
     int i, j;
 
     double *x_tmp;
-    memory->allocate(x_tmp, 3);
+    allocate(x_tmp, 3);
 
     for (i = 0; i < nat; ++i) {
 
@@ -214,7 +214,7 @@ void System::frac2cart(double **xf)
             xf[i][j] = x_tmp[j];
         }
     }
-    memory->deallocate(x_tmp);
+    deallocate(x_tmp);
 }
 
 void System::load_reference_system_xml(std::string file_reference_fcs,
@@ -271,8 +271,8 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
                         "The number of cubic force constants is not the same.");
         }
     }
-    memory->allocate(fcs_ref, nfcs_ref);
-    memory->allocate(intpair_ref, nfcs_ref, 3);
+    allocate(fcs_ref, nfcs_ref);
+    allocate(intpair_ref, nfcs_ref, 3);
 
     int counter = 0;
 
@@ -309,7 +309,7 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
     std::set<FcProperty>::iterator iter_found;
     int *ind;
     int nterms = order_fcs + 2;
-    memory->allocate(ind, nterms);
+    allocate(ind, nterms);
 
     list_found.clear();
 
@@ -334,9 +334,9 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
         const_out[arrtmp.mother] = fcs_ref[i];
     }
 
-    memory->deallocate(intpair_ref);
-    memory->deallocate(fcs_ref);
-    memory->deallocate(ind);
+    deallocate(intpair_ref);
+    deallocate(fcs_ref);
+    deallocate(ind);
     list_found.clear();
 }
 
@@ -397,10 +397,10 @@ void System::load_reference_system()
                 std::cout << "Trying to map the related force constants (^o^)" << std::endl << std::endl;
             }
 
-            memory->allocate(xcoord_s, nat_s, 3);
-            memory->allocate(kd_s, nat_s);
-            memory->allocate(map_p2s_s, natmin_ref, ntran_ref);
-            memory->allocate(map_s2p_s, nat_s);
+            allocate(xcoord_s, nat_s, 3);
+            allocate(kd_s, nat_s);
+            allocate(map_p2s_s, natmin_ref, ntran_ref);
+            allocate(map_s2p_s, nat_s);
 
             unsigned int ikd, itran, icell;
             std::getline(ifs_fc2, str_tmp);
@@ -428,9 +428,9 @@ void System::load_reference_system()
     double *xdiff;
     int **intpair_tmp;
 
-    memory->allocate(xtmp, 3);
-    memory->allocate(xdiff, 3);
-    memory->allocate(map_ref, nat_s);
+    allocate(xtmp, 3);
+    allocate(xdiff, 3);
+    allocate(map_ref, nat_s);
 
     bool map_found;
     double dist;
@@ -463,10 +463,10 @@ void System::load_reference_system()
         }
     }
 
-    memory->deallocate(xtmp);
-    memory->deallocate(xdiff);
-    memory->deallocate(xcoord_s);
-    memory->deallocate(kd_s);
+    deallocate(xtmp);
+    deallocate(xdiff);
+    deallocate(xcoord_s);
+    deallocate(kd_s);
 
     ifs_fc2.clear();
     ifs_fc2.seekg(0, std::ios_base::beg);
@@ -489,8 +489,8 @@ void System::load_reference_system()
 
             is_found_fc2 = true;
 
-            memory->allocate(fc2_ref, nparam_harmonic);
-            memory->allocate(intpair_tmp, nparam_harmonic, 2);
+            allocate(fc2_ref, nparam_harmonic);
+            allocate(intpair_tmp, nparam_harmonic, 2);
 
             for (i = 0; i < nparam_harmonic; ++i) {
                 ifs_fc2 >> fc2_ref[i] >> intpair_tmp[i][0] >> intpair_tmp[i][1];
@@ -499,7 +499,7 @@ void System::load_reference_system()
             std::set<FcProperty> list_found;
             std::set<FcProperty>::iterator iter_found;
             int *ind;
-            memory->allocate(ind, 2);
+            allocate(ind, 2);
 
             list_found.clear();
             for (std::vector<FcProperty>::iterator p = fcs->fc_table[0].begin();
@@ -523,9 +523,9 @@ void System::load_reference_system()
                 constraint->const_rhs[(*iter_found).mother] = fc2_ref[i];
             }
 
-            memory->deallocate(intpair_tmp);
-            memory->deallocate(ind);
-            memory->deallocate(fc2_ref);
+            deallocate(intpair_tmp);
+            deallocate(ind);
+            deallocate(fc2_ref);
             list_found.clear();
         }
     }
@@ -579,22 +579,22 @@ void System::set_default_variables()
 void System::deallocate_variables()
 {
     if (kd) {
-        memory->deallocate(kd);
+        deallocate(kd);
     }
     if (kdname) {
-        memory->deallocate(kdname);
+        deallocate(kdname);
     }
     if (x_cartesian) {
-        memory->deallocate(x_cartesian);
+        deallocate(x_cartesian);
     }
     if (xcoord) {
-        memory->deallocate(xcoord);
+        deallocate(xcoord);
     }
     if (atomlist_class) {
-        memory->deallocate(atomlist_class);
+        deallocate(atomlist_class);
     }
     if (magmom) {
-        memory->deallocate(magmom);
+        deallocate(magmom);
     }
 }
 
@@ -625,7 +625,7 @@ void System::setup_atomic_class(int *kd)
 
     nclassatom = set_type.size();
 
-    memory->allocate(atomlist_class, nclassatom);
+    allocate(atomlist_class, nclassatom);
 
     for (i = 0; i < nat; ++i) {
         int count = 0;

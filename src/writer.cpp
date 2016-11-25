@@ -8,6 +8,7 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include <iostream>
 #include <fstream>
 #include <boost/lexical_cast.hpp>
 #include "writer.h"
@@ -139,7 +140,7 @@ void Writer::write_force_constants(ALM *alm)
     ofs_fcs << " (Global, Local)              (Multiplicity)                           " << std::endl;
     ofs_fcs << " ----------------------------------------------------------------------" << std::endl;
 
-    alm_core->memory->allocate(str_fcs, maxorder);
+    allocate(str_fcs, maxorder);
 
     for (order = 0; order < maxorder; ++order) {
         str_fcs[order] = "*FC" + boost::lexical_cast<std::string>(order + 2);
@@ -271,7 +272,7 @@ void Writer::write_force_constants(ALM *alm)
             }
         }
     }
-    alm_core->memory->deallocate(str_fcs);
+    deallocate(str_fcs);
     ofs_fcs.close();
 
     std::cout << " Force constants in a human-readable format : "
@@ -437,7 +438,7 @@ void Writer::write_misc_xml(ALM *alm)
     int nelem = alm_core->interaction->maxorder + 1;
     int *pair_tmp;
 
-    alm_core->memory->allocate(pair_tmp, nelem);
+    allocate(pair_tmp, nelem);
 
     for (unsigned int ui = 0; ui < alm_core->fcs->ndup[0].size(); ++ui) {
 
@@ -605,7 +606,7 @@ void Writer::write_misc_xml(ALM *alm)
               xml_writer_make_settings(' ', indent, widen<char>("utf-8")));
 #endif
 
-    alm_core->memory->deallocate(pair_tmp);
+    deallocate(pair_tmp);
 
     std::cout << " Input data for the phonon code ANPHON      : " << file_xml << std::endl;
 }
@@ -621,7 +622,7 @@ void Writer::write_hessian(ALM *alm)
     ALMCore *alm_core = alm->get_alm_core();
     int nat3 = 3 * alm_core->system->nat;
 
-    alm_core->memory->allocate(hessian, nat3, nat3);
+    allocate(hessian, nat3, nat3);
 
     for (i = 0; i < nat3; ++i) {
         for (j = 0; j < nat3; ++j) {
@@ -660,7 +661,7 @@ void Writer::write_hessian(ALM *alm)
         }
     }
     ofs_hes.close();
-    alm_core->memory->deallocate(hessian);
+    deallocate(hessian);
 
     std::cout << " Complete Hessian matrix                    : " << alm_core->files->file_hes << std::endl;
 }

@@ -49,14 +49,14 @@ void Symmetry::init()
                              system->xcoord, system->kd);
 
     if (tnons) {
-        memory->deallocate(tnons);
+        deallocate(tnons);
     }
-    memory->allocate(tnons, nsym, 3);
+    allocate(tnons, nsym, 3);
 
     if (symrel_int) {
-        memory->deallocate(symrel_int);
+        deallocate(symrel_int);
     }
-    memory->allocate(symrel_int, nsym, 3, 3);
+    allocate(symrel_int, nsym, 3, 3);
 
     int isym = 0;
     for (auto iter = SymmList.begin(); iter != SymmList.end(); ++iter) {
@@ -74,16 +74,16 @@ void Symmetry::init()
     std::cout << "  Number of symmetry operations = " << nsym << std::endl;
 
     if (symrel) {
-        memory->deallocate(symrel);
+        deallocate(symrel);
     }
-    memory->allocate(symrel, nsym, 3, 3);
+    allocate(symrel, nsym, 3, 3);
 
     symop_in_cart(system->lavec, system->rlavec);
 
     if (sym_available) {
-        memory->deallocate(sym_available);
+        deallocate(sym_available);
     }
-    memory->allocate(sym_available, nsym);
+    allocate(sym_available, nsym);
 
     int nsym_fc;
     symop_availability_check(symrel, sym_available, nsym, nsym_fc);
@@ -102,19 +102,19 @@ void Symmetry::init()
     pure_translations();
 
     if (map_sym) {
-        memory->deallocate(map_sym);
+        deallocate(map_sym);
     }
-    memory->allocate(map_sym, nat, nsym);
+    allocate(map_sym, nat, nsym);
 
     if (map_p2s) {
-        memory->deallocate(map_p2s);
+        deallocate(map_p2s);
     }
-    memory->allocate(map_p2s, natmin, ntran);
+    allocate(map_p2s, natmin, ntran);
 
     if (map_s2p) {
-        memory->deallocate(map_s2p);
+        deallocate(map_s2p);
     }
-    memory->allocate(map_s2p, nat);
+    allocate(map_s2p, nat);
 
     genmaps(nat, system->xcoord, map_sym, map_p2s, map_s2p);
 
@@ -134,7 +134,7 @@ void Symmetry::init()
     }
     std::cout << std::endl;
 
-    timer->print_elapsed();
+    alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
 }
@@ -164,28 +164,28 @@ void Symmetry::set_default_variables()
 void Symmetry::deallocate_variables()
 {
     if (symrel) {
-        memory->deallocate(symrel);
+        deallocate(symrel);
     }
     if (symrel_int) {
-        memory->deallocate(symrel_int);
+        deallocate(symrel_int);
     }
     if (tnons) {
-        memory->deallocate(tnons);
+        deallocate(tnons);
     }
     if (map_sym) {
-        memory->deallocate(map_sym);
+        deallocate(map_sym);
     }
     if (map_p2s) {
-        memory->deallocate(map_p2s);
+        deallocate(map_p2s);
     }
     if (map_s2p) {
-        memory->deallocate(map_s2p);
+        deallocate(map_s2p);
     }
     if (symnum_tran) {
-        memory->deallocate(symnum_tran);
+        deallocate(symnum_tran);
     }
     if (sym_available) {
-        memory->deallocate(sym_available);
+        deallocate(sym_available);
     }
 }
 
@@ -664,9 +664,9 @@ void Symmetry::pure_translations()
     }
 
     if (symnum_tran) {
-        memory->deallocate(symnum_tran);
+        deallocate(symnum_tran);
     }
-    memory->allocate(symnum_tran, ntran);
+    allocate(symnum_tran, ntran);
 
     int isym = 0;
 
@@ -740,7 +740,7 @@ void Symmetry::genmaps(int nat,
     }
 
     bool *is_checked;
-    memory->allocate(is_checked, nat);
+    allocate(is_checked, nat);
 
     for (i = 0; i < nat; ++i) is_checked[i] = false;
 
@@ -757,7 +757,7 @@ void Symmetry::genmaps(int nat,
         ++jat;
     }
 
-    memory->deallocate(is_checked);
+    deallocate(is_checked);
 
     for (iat = 0; iat < natmin; ++iat) {
         for (i = 0; i < ntran; ++i) {
@@ -820,8 +820,8 @@ void Symmetry::print_symmetrized_coordinate(double **x)
     double rot[3][3];
     double wsi[3], usi[3], vsi[3], tmp[3];
 
-    memory->allocate(x_symm, nat, 3);
-    memory->allocate(x_avg, nat, 3);
+    allocate(x_symm, nat, 3);
+    allocate(x_avg, nat, 3);
 
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
@@ -928,8 +928,8 @@ void Symmetry::print_symmetrized_coordinate(double **x)
 
     std::cout.setf(std::ios::floatfield);
 
-    memory->deallocate(x_symm);
-    memory->deallocate(x_avg);
+    deallocate(x_symm);
+    deallocate(x_avg);
 }
 
 bool Symmetry::is_proper(double rot[3][3])

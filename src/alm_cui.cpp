@@ -16,6 +16,11 @@
 #include "input_parser.h"
 #include "writer.h"
 #include "version.h"
+#include "timer.h"
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 using namespace ALM_NS;
 
@@ -32,6 +37,11 @@ void ALMCUI::run(int narg, char **arg)
     std::cout << std::endl;
 
     ALM *alm = new ALM();
+
+#ifdef _OPENMP
+    std::cout << " Number of OpenMP threads = "
+        << omp_get_max_threads() << std::endl << std::endl;
+#endif
 
     ALMCore *alm_core = alm->get_alm_core();
     // alm_core->mode is set herein.

@@ -38,27 +38,27 @@ ALM::ALM()
 ALM::~ALM()
 {
     if (alm_core->system->kdname) {
-        alm_core->memory->deallocate(alm_core->system->kdname);
+        deallocate(alm_core->system->kdname);
     }
     alm_core->system->kdname = nullptr;
     if (alm_core->system->xcoord) {
-        alm_core->memory->deallocate(alm_core->system->xcoord);
+        deallocate(alm_core->system->xcoord);
     }
     alm_core->system->xcoord = nullptr;
     if (alm_core->system->kd) {
-        alm_core->memory->deallocate(alm_core->system->kd);
+        deallocate(alm_core->system->kd);
     }
     alm_core->system->kd = nullptr;
     if (alm_core->system->magmom) {
-        alm_core->memory->deallocate(alm_core->system->magmom);
+        deallocate(alm_core->system->magmom);
     }
     alm_core->system->magmom = nullptr;
     if (alm_core->interaction->nbody_include) {
-        alm_core->memory->deallocate(alm_core->interaction->nbody_include);
+        deallocate(alm_core->interaction->nbody_include);
     }
     alm_core->interaction->nbody_include = nullptr;
     if (alm_core->interaction->rcs) {
-        alm_core->memory->deallocate(alm_core->interaction->rcs);
+        deallocate(alm_core->interaction->rcs);
     }
     alm_core->interaction->rcs = nullptr;
 
@@ -148,24 +148,24 @@ const void ALM::set_cell(const int nat,
     alm_core->system->nat = nat;
 
     if (alm_core->system->xcoord) {
-        alm_core->memory->deallocate(alm_core->system->xcoord);
+        deallocate(alm_core->system->xcoord);
     }
-    alm_core->memory->allocate(alm_core->system->xcoord, nat, 3);
+    allocate(alm_core->system->xcoord, nat, 3);
 
     if (alm_core->system->kd) {
-        alm_core->memory->deallocate(alm_core->system->kd);
+        deallocate(alm_core->system->kd);
     }
-    alm_core->memory->allocate(alm_core->system->kd, nat);
+    allocate(alm_core->system->kd, nat);
 
     if (alm_core->system->kdname) {
-        alm_core->memory->deallocate(alm_core->system->kdname);
+        deallocate(alm_core->system->kdname);
     }
-    alm_core->memory->allocate(alm_core->system->kdname, nkd);
+    allocate(alm_core->system->kdname, nkd);
 
     if (alm_core->system->magmom) {
-        alm_core->memory->deallocate(alm_core->system->magmom);
+        deallocate(alm_core->system->magmom);
     }
-    alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
+    allocate(alm_core->system->magmom, nat, 3);
 
     for (i = 0; i < nkd; ++i) {
         alm_core->system->kdname[i] = kdname[i];
@@ -203,9 +203,9 @@ const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
     alm_core->symmetry->trev_sym_mag = trev_sym_mag;
 
     if (alm_core->system->magmom) {
-        alm_core->memory->deallocate(alm_core->system->magmom);
+        deallocate(alm_core->system->magmom);
     }
-    alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
+    allocate(alm_core->system->magmom, nat, 3);
 
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
@@ -226,8 +226,8 @@ const void ALM::set_displacement_and_force(const double *u_in,
     alm_core->system->nstart = 1;
     alm_core->system->nend = ndata_used;
 
-    alm_core->memory->allocate(u, ndata_used, 3 * nat);
-    alm_core->memory->allocate(f, ndata_used, 3 * nat);
+    allocate(u, ndata_used, 3 * nat);
+    allocate(f, ndata_used, 3 * nat);
 
     for (int i = 0; i < ndata_used; i++) {
         for (int j = 0; j < 3 * nat; j++) {
@@ -237,8 +237,8 @@ const void ALM::set_displacement_and_force(const double *u_in,
     }
     alm_core->fitting->set_displacement_and_force(u, f, nat, ndata_used);
 
-    alm_core->memory->deallocate(u);
-    alm_core->memory->deallocate(f);
+    deallocate(u);
+    deallocate(f);
 }
 
 const void ALM::set_fitting_constraint_type(const int constraint_flag) // ICONST
@@ -270,9 +270,9 @@ const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
 
     alm_core->interaction->maxorder = maxorder;
     if (alm_core->interaction->nbody_include) {
-        alm_core->memory->deallocate(alm_core->interaction->nbody_include);
+        deallocate(alm_core->interaction->nbody_include);
     }
-    alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
+    allocate(alm_core->interaction->nbody_include, maxorder);
 
     for (i = 0; i < maxorder; ++i) {
         alm_core->interaction->nbody_include[i] = i + 2;
@@ -280,9 +280,9 @@ const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
 
     nkd = alm_core->system->nkd;
     if (alm_core->interaction->rcs) {
-        alm_core->memory->deallocate(alm_core->interaction->rcs);
+        deallocate(alm_core->interaction->rcs);
     }
-    alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+    allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
 
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
@@ -298,9 +298,9 @@ const void ALM::set_interaction_range(const int *nbody_include) // NBODY
     int maxorder = alm_core->interaction->maxorder;
     if (maxorder > 0) {
         if (alm_core->interaction->nbody_include) {
-            alm_core->memory->deallocate(alm_core->interaction->nbody_include);
+            deallocate(alm_core->interaction->nbody_include);
         }
-        alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
+        allocate(alm_core->interaction->nbody_include, maxorder);
         for (int i = 0; i < maxorder; ++i) {
             alm_core->interaction->nbody_include[i] = nbody_include[i];
         }
@@ -315,9 +315,9 @@ const void ALM::set_cutoff_radii(const double *rcs)
     maxorder = alm_core->interaction->maxorder;
     if (maxorder > 0) {
         if (alm_core->interaction->rcs) {
-            alm_core->memory->deallocate(alm_core->interaction->rcs);
+            deallocate(alm_core->interaction->rcs);
         }
-        alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+        allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
     }
 
     count = 0;
@@ -462,18 +462,12 @@ const void ALM::run()
         std::cout.rdbuf(ofs_alm->rdbuf());
     }
 
-    std::cout << " Job started at " << alm_core->timer->DateAndTime() << std::endl;
-
     alm_core->initialize();
     if (alm_core->mode == "fitting") {
         run_fitting();
     } else if (alm_core->mode == "suggest") {
         run_suggest();
     }
-
-
-    std::cout << std::endl << " Job finished at "
-        << alm_core->timer->DateAndTime() << std::endl;
 
     if (!verbose) {
         ofs_alm->close();

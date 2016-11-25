@@ -50,10 +50,10 @@ void Displace::gen_displacement_pattern()
     std::vector<ConstraintTypeRelate> *const_relate_tmp;
     boost::bimap<int, int> *index_bimap_tmp;
 
-    memory->allocate(constsym, maxorder);
-    memory->allocate(const_fix_tmp, maxorder);
-    memory->allocate(const_relate_tmp, maxorder);
-    memory->allocate(index_bimap_tmp, maxorder);
+    allocate(constsym, maxorder);
+    allocate(const_fix_tmp, maxorder);
+    allocate(const_relate_tmp, maxorder);
+    allocate(index_bimap_tmp, maxorder);
 
     constraint->constraint_from_symmetry(constsym);
     constraint->get_mapping_constraint(maxorder, constsym, const_fix_tmp,
@@ -66,11 +66,11 @@ void Displace::gen_displacement_pattern()
     }
     std::cout << std::endl;
 
-    memory->deallocate(constsym);
-    memory->deallocate(const_fix_tmp);
-    memory->deallocate(const_relate_tmp);
+    deallocate(constsym);
+    deallocate(const_fix_tmp);
+    deallocate(const_relate_tmp);
 
-    memory->allocate(include_set, maxorder);
+    allocate(include_set, maxorder);
 
     for (order = 0; order < maxorder; ++order) {
         include_set[order].clear();
@@ -81,7 +81,7 @@ void Displace::gen_displacement_pattern()
         }
     }
 
-    memory->deallocate(index_bimap_tmp);
+    deallocate(index_bimap_tmp);
 
 
     std::cout << " Generating displacement patterns in ";
@@ -91,7 +91,7 @@ void Displace::gen_displacement_pattern()
         std::cout << "fractional coordinate...";
     }
 
-    memory->allocate(dispset, maxorder);
+    allocate(dispset, maxorder);
 
     for (order = 0; order < maxorder; ++order) {
 
@@ -120,12 +120,12 @@ void Displace::gen_displacement_pattern()
             m += fcs->ndup[order][i];
         }
     }
-    memory->deallocate(include_set);
+    deallocate(include_set);
 
-    memory->allocate(pattern_all, maxorder);
+    allocate(pattern_all, maxorder);
     generate_pattern_all(maxorder, pattern_all, dispset);
 
-    memory->deallocate(dispset);
+    deallocate(dispset);
 
 
     std::cout << " done!" << std::endl;
@@ -140,7 +140,7 @@ void Displace::set_default_variables()
 
 void Displace::deallocate_variables()
 {
-    memory->deallocate(pattern_all);
+    deallocate(pattern_all);
 }
 
 void Displace::generate_pattern_all(const int N,
@@ -158,7 +158,7 @@ void Displace::generate_pattern_all(const int N,
     std::vector<std::vector<int>> *sign_prod, sign_reduced;
 
 
-    memory->allocate(sign_prod, N);
+    allocate(sign_prod, N);
 
     for (order = 0; order < N; ++order) {
         vec_tmp.clear();
@@ -232,7 +232,7 @@ void Displace::generate_pattern_all(const int N,
         }
     }
 
-    memory->deallocate(sign_prod);
+    deallocate(sign_prod);
 }
 
 void Displace::generate_signvecs(const int N,
@@ -283,8 +283,8 @@ void Displace::find_unique_sign_pairs(const int N,
     std::vector<int> list_disp_atom;
     std::vector<IndexWithSign> index_for_sort;
 
-    memory->allocate(disp, nat, 3);
-    memory->allocate(disp_sym, nat, 3);
+    allocate(disp, nat, 3);
+    allocate(disp_sym, nat, 3);
 
     sign_out.clear();
     symnum_vec.clear();
@@ -429,6 +429,6 @@ void Displace::find_unique_sign_pairs(const int N,
         }
     }
 
-    memory->deallocate(disp);
-    memory->deallocate(disp_sym);
+    deallocate(disp);
+    deallocate(disp_sym);
 }

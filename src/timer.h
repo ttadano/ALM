@@ -11,7 +11,6 @@
 #pragma once
 
 #include <string>
-#include "pointers.h"
 
 #if defined(WIN32) || defined(_WIN32)
 #include <Windows.h>
@@ -22,18 +21,19 @@
 
 namespace ALM_NS
 {
-    class Timer : protected Pointers
+    class Timer
     {
     public:
-        Timer(class ALMCore *);
+        Timer();
         ~Timer();
 
         void reset();
-        double elapsed();
         void print_elapsed();
-        std::string DateAndTime();
+        static std::string DateAndTime();
 
     private:
+        double elapsed();
+
 #if defined(WIN32) || defined(_WIN32)
         LARGE_INTEGER time_ref;
         LARGE_INTEGER frequency;
@@ -42,4 +42,3 @@ namespace ALM_NS
 #endif
     };
 }
-

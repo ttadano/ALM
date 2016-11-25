@@ -22,12 +22,8 @@
 #include "error.h"
 #include <boost/bimap.hpp>
 #include <algorithm>
-#include <unordered_set>
 #include "mathfunctions.h"
-
-#ifdef _USE_EIGEN
-#include <Eigen/Dense>
-#endif
+#include "alm_core.h"
 
 using namespace ALM_NS;
 
@@ -100,9 +96,9 @@ void Constraint::setup()
     extra_constraint_from_symmetry = false;
 
     if (const_symmetry) {
-        memory->deallocate(const_symmetry);
+        deallocate(const_symmetry);
     }
-    memory->allocate(const_symmetry, interaction->maxorder);
+    allocate(const_symmetry, interaction->maxorder);
 
     constraint_from_symmetry(const_symmetry);
     for (int order = 0; order < interaction->maxorder; ++order) {
@@ -126,9 +122,9 @@ void Constraint::setup()
             N += fcs->ndup[i].size();
         }
 
-        memory->allocate(const_translation, maxorder);
-        memory->allocate(const_rotation_self, maxorder);
-        memory->allocate(const_rotation_cross, maxorder);
+        allocate(const_translation, maxorder);
+        allocate(const_rotation_self, maxorder);
+        allocate(const_rotation_cross, maxorder);
 
         for (order = 0; order < maxorder; ++order) {
             const_translation[order].clear();
@@ -166,7 +162,7 @@ void Constraint::setup()
             std::cout << std::endl;
         }
 
-        memory->allocate(const_self, maxorder);
+        allocate(const_self, maxorder);
         for (order = 0; order < maxorder; ++order) const_self[order].clear();
 
         int nparam;
@@ -179,7 +175,7 @@ void Constraint::setup()
         for (order = 0; order < maxorder; ++order) {
 
             nparam = fcs->ndup[order].size();
-            memory->allocate(arr_tmp, nparam);
+            allocate(arr_tmp, nparam);
 
             for (it_const = const_translation[order].begin();
                  it_const != const_translation[order].end(); ++it_const) {
@@ -205,7 +201,7 @@ void Constraint::setup()
                 remove_redundant_rows(nparam, const_self[order], eps8);
             }
 
-            memory->deallocate(arr_tmp);
+            deallocate(arr_tmp);
             const_translation[order].clear();
             const_rotation_self[order].clear();
         }
@@ -237,19 +233,19 @@ void Constraint::setup()
             }
 
             if (const_fix) {
-                memory->deallocate(const_fix);
+                deallocate(const_fix);
             }
-            memory->allocate(const_fix, maxorder);
+            allocate(const_fix, maxorder);
 
             if (const_relate) {
-                memory->deallocate(const_relate);
+                deallocate(const_relate);
             }
-            memory->allocate(const_relate, maxorder);
+            allocate(const_relate, maxorder);
 
             if (index_bimap) {
-                memory->deallocate(index_bimap);
+                deallocate(index_bimap);
             }
-            memory->allocate(index_bimap, maxorder);
+            allocate(index_bimap, maxorder);
 
             get_mapping_constraint(maxorder, const_self, const_fix,
                                    const_relate, index_bimap, false);
@@ -276,30 +272,30 @@ void Constraint::setup()
             }
 
             if (const_mat) {
-                memory->deallocate(const_mat);
+                deallocate(const_mat);
             }
-            memory->allocate(const_mat, Pmax, N);
+            allocate(const_mat, Pmax, N);
 
             if (const_rhs) {
-                memory->deallocate(const_rhs);
+                deallocate(const_rhs);
             }
-            memory->allocate(const_rhs, Pmax);
+            allocate(const_rhs, Pmax);
 
             calc_constraint_matrix(N, P);
             std::cout << "  Total number of constraints = " << P << std::endl << std::endl;
 
         }
 
-        memory->deallocate(const_translation);
+        deallocate(const_translation);
         const_translation = nullptr;
-        memory->deallocate(const_rotation_self);
+        deallocate(const_rotation_self);
         const_rotation_self = nullptr;
-        memory->deallocate(const_rotation_cross);
+        deallocate(const_rotation_cross);
         const_rotation_cross = nullptr;
-        memory->deallocate(const_self);
+        deallocate(const_self);
         const_self = nullptr;
 
-        timer->print_elapsed();
+        alm->timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
@@ -316,7 +312,7 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
     std::vector<ConstraintClass> const_total;
 
     const_total.clear();
-    memory->allocate(arr_tmp, N);
+    allocate(arr_tmp, N);
 
     int nshift = 0;
 
@@ -354,7 +350,7 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
             nshift2 += fcs->ndup[order - 1].size();
         }
     }
-    memory->deallocate(arr_tmp);
+    deallocate(arr_tmp);
 
     if (nconst1 != const_total.size())
         remove_redundant_rows(N, const_total, eps8);
@@ -390,7 +386,7 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
     if (fix_harmonic) {
         double *const_rhs_tmp;
         int nfcs_tmp = fcs->ndup[0].size();
-        memory->allocate(const_rhs_tmp, nfcs_tmp);
+        allocate(const_rhs_tmp, nfcs_tmp);
         system->load_reference_system_xml(fc2_file, 0, const_rhs_tmp);
 
         for (i = 0; i < nfcs_tmp; ++i) {
@@ -400,14 +396,14 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
 
         irow += nfcs_tmp;
         icol += nfcs_tmp;
-        memory->deallocate(const_rhs_tmp);
+        deallocate(const_rhs_tmp);
     }
 
     if (fix_cubic) {
         int ishift = fcs->ndup[0].size();
         double *const_rhs_tmp;
         int nfcs_tmp = fcs->ndup[1].size();
-        memory->allocate(const_rhs_tmp, nfcs_tmp);
+        allocate(const_rhs_tmp, nfcs_tmp);
         system->load_reference_system_xml(fc3_file, 1, const_rhs_tmp);
 
         for (i = 0; i < nfcs_tmp; ++i) {
@@ -417,7 +413,7 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
 
         irow += nfcs_tmp;
         icol += nfcs_tmp;
-        memory->deallocate(const_rhs_tmp);
+        deallocate(const_rhs_tmp);
     }
 
     for (auto p = const_total.begin(); p != const_total.end(); ++p) {
@@ -444,8 +440,8 @@ void Constraint::get_mapping_constraint(const int nmax,
     bool *fix_forceconstant;
     std::string *file_forceconstant;
 
-    memory->allocate(fix_forceconstant, nmax);
-    memory->allocate(file_forceconstant, nmax);
+    allocate(fix_forceconstant, nmax);
+    allocate(file_forceconstant, nmax);
 
     for (i = 0; i < nmax; ++i) {
         fix_forceconstant[i] = false;
@@ -467,14 +463,14 @@ void Constraint::get_mapping_constraint(const int nmax,
         if (fix_forceconstant[order]) {
 
             double *const_rhs_tmp;
-            memory->allocate(const_rhs_tmp, nparam);
+            allocate(const_rhs_tmp, nparam);
             system->load_reference_system_xml(file_forceconstant[order],
                                               order, const_rhs_tmp);
 
             for (i = 0; i < nparam; ++i) {
                 const_fix_out[order].push_back(ConstraintTypeFix(i, const_rhs_tmp[i]));
             }
-            memory->deallocate(const_rhs_tmp);
+            deallocate(const_rhs_tmp);
 
         } else {
 
@@ -520,7 +516,7 @@ void Constraint::get_mapping_constraint(const int nmax,
 
 
     std::vector<int> *has_constraint;
-    memory->allocate(has_constraint, nmax);
+    allocate(has_constraint, nmax);
 
     for (order = 0; order < nmax; ++order) {
 
@@ -555,7 +551,7 @@ void Constraint::get_mapping_constraint(const int nmax,
         }
     }
 
-    memory->deallocate(has_constraint);
+    deallocate(has_constraint);
 }
 
 
@@ -575,9 +571,7 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
 
     bool has_constraint_from_symm = false;
 
-    std::set<FcProperty> list_found;
-
-    timer->print_elapsed();
+    std::set<FcProperty> fc_set;
 
     for (isym = 0; isym < symmetry->nsym; ++isym) {
         if (symmetry->sym_available[isym]) continue;
@@ -592,7 +586,7 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
         std::cout << "  Generating constraints from crystal symmetry ..." << std::endl;
     }
 
-    memory->allocate(index_tmp, maxorder + 1);
+    allocate(index_tmp, maxorder + 1);
 
     for (order = 0; order < maxorder; ++order) {
 
@@ -606,17 +600,17 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
             }
         }
 
-        // Generate temporary list of parameter
+        // Copy force constant table as a 'set' for fast search of object
 
-        list_found.clear();
+        fc_set.clear();
         for (auto p = fcs->fc_table[order].begin(); p != fcs->fc_table[order].end(); ++p) {
             for (i = 0; i < order + 2; ++i) index_tmp[i] = (*p).elems[i];
-            list_found.insert(FcProperty(order + 2, (*p).coef,
-                                         index_tmp, (*p).mother));
+            fc_set.insert(FcProperty(order + 2, (*p).coef,
+                                     index_tmp, (*p).mother));
         }
 
         nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 2));
-        memory->allocate(xyzcomponent, nxyz, order + 2);
+        allocate(xyzcomponent, nxyz, order + 2);
         fcs->get_xyzcomponent(order + 2, xyzcomponent);
 
         int nfcs = fcs->fc_table[order].size();
@@ -624,20 +618,19 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
 #pragma omp parallel 
         {
             int i_prim;
-
             int *ind;
             int *atm_index, *atm_index_symm;
             int *xyz_index;
             double c_tmp;
 
-            std::set<FcProperty>::iterator iter_found;
+            std::set<FcProperty>::iterator it_fcset;
             std::vector<std::vector<double>> const_omp;
             std::vector<double> const_omp_now;
 
-            memory->allocate(ind, order + 2);
-            memory->allocate(atm_index, order + 2);
-            memory->allocate(atm_index_symm, order + 2);
-            memory->allocate(xyz_index, order + 2);
+            allocate(ind, order + 2);
+            allocate(atm_index, order + 2);
+            allocate(atm_index_symm, order + 2);
+            allocate(xyz_index, order + 2);
 
             const_omp.clear();
             const_omp_now.resize(nparams);
@@ -645,8 +638,6 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
 #pragma omp for private(i, isym, ixyz) 
             for (int ii = 0; ii < nfcs; ++ii) {
 
-
-           //     std::cout << "ii = " << std::setw(5) << ii;
                 FcProperty list_tmp = fcs->fc_table[order][ii];
 
                 for (i = 0; i < order + 2; ++i) {
@@ -674,10 +665,10 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
                         std::swap(ind[0], ind[i_prim]);
                         fcs->sort_tail(order + 2, ind);
 
-                        iter_found = list_found.find(FcProperty(order + 2, 1.0, ind, 1));
-                        if (iter_found != list_found.end()) {
+                        it_fcset = fc_set.find(FcProperty(order + 2, 1.0, ind, 1));
+                        if (it_fcset != fc_set.end()) {
                             c_tmp = fcs->coef_sym(order + 2, isym, xyz_index, xyzcomponent[ixyz]);
-                            const_omp_now[(*iter_found).mother] += (*iter_found).coef * c_tmp;
+                            const_omp_now[(*it_fcset).mother] += (*it_fcset).coef * c_tmp;
                         }
                     }
 
@@ -685,16 +676,16 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
                 }
 
                 // sort--> uniq the array to reduce memory consumption in every 1000 steps
-                if (!(ii%1000)) {
+                // The number 1000 doesn't have special meaning. 
+                // If you have enough memory, you can increase the performance by increasing the value.
+                if (!(ii % 1000)) {
                     std::sort(const_omp.begin(), const_omp.end());
                     const_omp.erase(std::unique(const_omp.begin(), const_omp.end()),
-                        const_omp.end());
+                                    const_omp.end());
                 }
-              
-          //      std::cout << " size = " << const_omp.size() << std::endl;
+
             }
-            // sort-->uniq the array
-            // Not clear if this section should be moved inside one more inner loop for better performance
+            // sort-->uniq the array before appending the array to const_out
             std::sort(const_omp.begin(), const_omp.end());
             const_omp.erase(std::unique(const_omp.begin(), const_omp.end()),
                             const_omp.end());
@@ -707,15 +698,13 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
             }
             const_omp.clear();
 
-            memory->deallocate(ind);
-            memory->deallocate(atm_index);
-            memory->deallocate(atm_index_symm);
-            memory->deallocate(xyz_index);
+            deallocate(ind);
+            deallocate(atm_index);
+            deallocate(atm_index_symm);
+            deallocate(xyz_index);
         }
 
-        memory->deallocate(xyzcomponent);
-
-   //     std::cout << " HERE" << std::endl;
+        deallocate(xyzcomponent);
 
         remove_redundant_rows(nparams, const_out[order], eps8);
 
@@ -724,13 +713,11 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
         }
     }
 
-    memory->deallocate(index_tmp);
+    deallocate(index_tmp);
 
     if (has_constraint_from_symm) {
         std::cout << "  Finished !" << std::endl << std::endl;
     }
-
-    timer->print_elapsed();
 }
 
 void Constraint::translational_invariance()
@@ -767,7 +754,7 @@ void Constraint::translational_invariance()
 
     std::cout << "  Generating constraints for translational invariance ..." << std::endl;
 
-    memory->allocate(ind, maxorder + 1);
+    allocate(ind, maxorder + 1);
 
     for (order = 0; order < maxorder; ++order) {
 
@@ -801,12 +788,12 @@ void Constraint::translational_invariance()
         // Generate xyz component for each order
 
         nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 1));
-        memory->allocate(xyzcomponent, nxyz, order + 1);
+        allocate(xyzcomponent, nxyz, order + 1);
         fcs->get_xyzcomponent(order + 1, xyzcomponent);
 
-        memory->allocate(arr_constraint, nparams);
-        memory->allocate(intarr, order + 2);
-        memory->allocate(intarr_copy, order + 2);
+        allocate(arr_constraint, nparams);
+        allocate(intarr, order + 2);
+        allocate(intarr_copy, order + 2);
 
         const_now.resize(nparams);
 
@@ -891,8 +878,8 @@ void Constraint::translational_invariance()
                 {
                     int *intarr_omp, *intarr_copy_omp;
 
-                    memory->allocate(intarr_omp, order + 2);
-                    memory->allocate(intarr_copy_omp, order + 2);
+                    allocate(intarr_omp, order + 2);
+                    allocate(intarr_copy_omp, order + 2);
 
                     std::vector<std::vector<int>> const_omp;
                     std::vector<int> data_omp;
@@ -967,8 +954,8 @@ void Constraint::translational_invariance()
 
                     }// close idata (openmp main loop)
 
-                    memory->deallocate(intarr_omp);
-                    memory->deallocate(intarr_copy_omp);
+                    deallocate(intarr_omp);
+                    deallocate(intarr_copy_omp);
 
                 } // close openmp
 
@@ -982,9 +969,9 @@ void Constraint::translational_invariance()
             //            timer->print_elapsed();
         } // close loop i
 
-        memory->deallocate(xyzcomponent);
-        memory->deallocate(intarr);
-        memory->deallocate(intarr_copy);
+        deallocate(xyzcomponent);
+        deallocate(intarr);
+        deallocate(intarr_copy);
         // Copy to constraint class 
 
         const_translation[order].clear();
@@ -996,13 +983,13 @@ void Constraint::translational_invariance()
                                                                arr_constraint));
         }
         const_mat.clear();
-        memory->deallocate(arr_constraint);
+        deallocate(arr_constraint);
 
         remove_redundant_rows(nparams, const_translation[order], eps8);
 
         std::cout << " done." << std::endl;
     } // close loop order
-    memory->deallocate(ind);
+    deallocate(ind);
 
     std::cout << "  Finished !" << std::endl << std::endl;
 }
@@ -1056,8 +1043,8 @@ void Constraint::rotational_invariance()
 
     setup_rotation_axis(valid_rotation_axis);
 
-    memory->allocate(ind, maxorder + 1);
-    memory->allocate(nparams, maxorder);
+    allocate(ind, maxorder + 1);
+    allocate(nparams, maxorder);
 
     for (order = 0; order < maxorder; ++order) {
 
@@ -1075,16 +1062,16 @@ void Constraint::rotational_invariance()
             nparam_sub = nparams[order] + nparams[order - 1];
         }
 
-        memory->allocate(arr_constraint, nparam_sub);
-        memory->allocate(arr_constraint_self, nparams[order]);
-        memory->allocate(interaction_atom, order + 2);
-        memory->allocate(interaction_index, order + 2);
-        memory->allocate(interaction_tmp, order + 2);
+        allocate(arr_constraint, nparam_sub);
+        allocate(arr_constraint_self, nparams[order]);
+        allocate(interaction_atom, order + 2);
+        allocate(interaction_index, order + 2);
+        allocate(interaction_tmp, order + 2);
 
         if (order > 0) {
             list_found_last = list_found;
             nxyz = static_cast<int>(pow(static_cast<double>(3), order));
-            memory->allocate(xyzcomponent, nxyz, order);
+            allocate(xyzcomponent, nxyz, order);
             fcs->get_xyzcomponent(order, xyzcomponent);
         }
 
@@ -1390,7 +1377,7 @@ void Constraint::rotational_invariance()
             if (order == maxorder - 1 && !exclude_last_R) {
 
                 nxyz2 = static_cast<int>(pow(static_cast<double>(3), order + 1));
-                memory->allocate(xyzcomponent2, nxyz2, order + 1);
+                allocate(xyzcomponent2, nxyz2, order + 1);
                 fcs->get_xyzcomponent(order + 1, xyzcomponent2);
 
                 for (icrd = 0; icrd < 3; ++icrd) {
@@ -1463,20 +1450,20 @@ void Constraint::rotational_invariance()
 
                 } // icrd
 
-                memory->deallocate(xyzcomponent2);
+                deallocate(xyzcomponent2);
             }
         } // iat
 
         std::cout << " done." << std::endl;
 
         if (order > 0) {
-            memory->deallocate(xyzcomponent);
+            deallocate(xyzcomponent);
         }
-        memory->deallocate(arr_constraint);
-        memory->deallocate(arr_constraint_self);
-        memory->deallocate(interaction_tmp);
-        memory->deallocate(interaction_index);
-        memory->deallocate(interaction_atom);
+        deallocate(arr_constraint);
+        deallocate(arr_constraint_self);
+        deallocate(interaction_tmp);
+        deallocate(interaction_index);
+        deallocate(interaction_atom);
     } // order
 
     for (order = 0; order < maxorder; ++order) {
@@ -1486,80 +1473,14 @@ void Constraint::rotational_invariance()
 
     std::cout << "  Finished !" << std::endl << std::endl;
 
-    memory->deallocate(ind);
-    memory->deallocate(nparams);
+    deallocate(ind);
+    deallocate(nparams);
 }
 
 void Constraint::remove_redundant_rows(const int n,
                                        std::vector<ConstraintClass> &Constraint_vec,
                                        const double tolerance)
 {
-#ifdef _USE_EIGEN_DISABLED
-
-    // This function doesn't make the reduced row echelon form of the constraint matrix.
-    // It just returns the image of the matrix, though they are similar.
-
-    using namespace Eigen;
-    int i;
-    int nrow = n;
-    int ncol = Constraint_vec.size();
-    double *arr_tmp;
-    double **mat;
-
-    if (ncol > 0) {
-        memory->allocate(arr_tmp, nrow);
-        MatrixXd mat_tmp(nrow, ncol);
-
-        int icol = 0;
-
-        for (std::vector<ConstraintClass>::iterator p = Constraint_vec.begin(); p != Constraint_vec.end(); ++p) {
-            ConstraintClass const_now = *p;
-            for (i = 0; i < nrow; ++i) {
-                mat_tmp(i, icol) = const_now.w_const[i];
-            }
-            ++icol;
-        }
-
-        FullPivLU<MatrixXd> lu_decomp(mat_tmp);
-        lu_decomp.setThreshold(tolerance);
-        int nrank = lu_decomp.rank();
-        MatrixXd c_reduced = lu_decomp.image(mat_tmp);
-
-        memory->allocate(mat, nrank, nrow);
-
-        i = 0;
-        for (icol = 0; icol < nrank; ++icol) {
-            for (int irow = 0; irow < nrow; ++irow) {
-                mat[icol][irow] = c_reduced(irow, icol);
-            }
-        }
-    //      std::cout << "nrank = " << nrank << std::flush << std::endl;
-        rref(nrank, nrow, mat, nrank, tolerance);
-
-        Constraint_vec.clear();
-
-        for (i = 0; i < nrank; ++i) {
-            for (int j = 0; j < i; ++j) arr_tmp[j] = 0.0;
-
-            for (int j = i; j < nrow; ++j) {
-                arr_tmp[j] = mat[i][j];
-            }
-            Constraint_vec.push_back(ConstraintClass(nrow, arr_tmp));
-        }
-
-        memory->deallocate(mat);
-
-    // for (icol = 0; icol < nrank; ++icol) {
-    //     for (int irow = 0; irow < nrow; ++irow) {
-    //         arr_tmp[irow] = c_reduced(irow, icol);
-    //     }
-
-    //     Constraint_Set.insert(ConstraintClass(nrow, arr_tmp));
-    // }
-
-        memory->deallocate(arr_tmp);
-    }
-#else 
     int i, j;
 
     int nparam = n;
@@ -1571,55 +1492,21 @@ void Constraint::remove_redundant_rows(const int n,
 
     if (nconst > 0) {
 
-        memory->allocate(mat_tmp, nconst, nparam);
+        allocate(mat_tmp, nconst, nparam);
 
         i = 0;
 
-        for (std::vector<ConstraintClass>::iterator p = Constraint_vec.begin();
-             p != Constraint_vec.end(); ++p) {
+        for (auto p = Constraint_vec.begin(); p != Constraint_vec.end(); ++p) {
             for (j = 0; j < nparam; ++j) {
                 mat_tmp[i][j] = (*p).w_const[j];
             }
             ++i;
         }
+        Constraint_vec.clear();
 
         rref(nconst, nparam, mat_tmp, nrank, tolerance);
 
-        /*
-        // 		// Transpose matrix A 
-
-        memory->allocate(arr_tmp, nconst * nparam);
-
-        k = 0;
-
-        for (j = 0; j < nparam; ++j) {
-        for (i = 0; i < nconst; ++i) {
-        arr_tmp[k++] = mat_tmp[i][j];
-        }
-        }
-
-        // Perform LU decomposition
-
-        int nmin = std::min<int>(nconst, nparam);
-        memory->allocate(ipiv, nmin);
-
-        dgetrf_(&nconst, &nparam, arr_tmp, &nconst, ipiv, &INFO);
-
-        k = 0;
-
-        for (j = 0; j < nparam; ++j) {
-        for (i = 0; i < nconst; ++i) {
-        mat_tmp[i][j] = arr_tmp[k++];
-        }
-        }
-
-        memory->deallocate(arr_tmp);
-        memory->deallocate(ipiv);
-        */
-
-        memory->allocate(arr_tmp, nparam);
-
-        Constraint_vec.clear();
+        allocate(arr_tmp, nparam);
 
         for (i = 0; i < nrank; ++i) {
             for (j = 0; j < i; ++j) arr_tmp[j] = 0.0;
@@ -1630,11 +1517,9 @@ void Constraint::remove_redundant_rows(const int n,
             Constraint_vec.push_back(ConstraintClass(nparam, arr_tmp));
         }
 
-        memory->deallocate(mat_tmp);
-        memory->deallocate(arr_tmp);
+        deallocate(mat_tmp);
+        deallocate(arr_tmp);
     }
-
-#endif
 }
 
 void Constraint::set_default_variables()
@@ -1660,22 +1545,22 @@ void Constraint::set_default_variables()
 void Constraint::deallocate_variables()
 {
     if (const_symmetry) {
-        memory->deallocate(const_symmetry);
+        deallocate(const_symmetry);
     }
     if (const_fix) {
-        memory->deallocate(const_fix);
+        deallocate(const_fix);
     }
     if (const_relate) {
-        memory->deallocate(const_relate);
+        deallocate(const_relate);
     }
     if (index_bimap) {
-        memory->deallocate(index_bimap);
+        deallocate(index_bimap);
     }
     if (const_mat) {
-        memory->deallocate(const_mat);
+        deallocate(const_mat);
     }
     if (const_rhs) {
-        memory->deallocate(const_rhs);
+        deallocate(const_rhs);
     }
 }
 
@@ -1699,9 +1584,7 @@ bool Constraint::is_allzero(const std::vector<double> vec)
 {
     int n = vec.size();
     for (int i = 0; i < n; ++i) {
-        if (std::abs(vec[i]) > eps10) {
-            return false;
-        }
+        if (std::abs(vec[i]) > eps10) return false;
     }
     return true;
 }
@@ -1766,11 +1649,11 @@ void Constraint::setup_rotation_axis(bool flag[3][3])
 }
 
 
-void Constraint::rref(int nrows,
-                      int ncols,
+void Constraint::rref(const int nrows,
+                      const int ncols,
                       double **mat,
                       int &nrank,
-                      double tolerance)
+                      const double tolerance)
 {
     // Return the reduced row echelon form (rref) of matrix mat.
     // In addition, rank of the matrix is estimated.
@@ -1779,7 +1662,7 @@ void Constraint::rref(int nrows,
     int pivot;
     double tmp, *arr;
 
-    memory->allocate(arr, ncols);
+    allocate(arr, ncols);
 
     nrank = 0;
 
@@ -1831,5 +1714,5 @@ void Constraint::rref(int nrows,
         }
     }
 
-    memory->deallocate(arr);
+    deallocate(arr);
 }

@@ -19,7 +19,6 @@ namespace ALM_NS
     public:
         Pointers(ALMCore *ptr) :
             alm(ptr),
-            memory(ptr->memory),
             system(ptr->system),
             interaction(ptr->interaction),
             fcs(ptr->fcs),
@@ -28,14 +27,12 @@ namespace ALM_NS
             constraint(ptr->constraint),
             files(ptr->files),
             displace(ptr->displace),
-            error(ptr->error),
-            timer(ptr->timer) {}
+            error(ptr->error) {}
 
         virtual ~Pointers() {}
 
     protected:
         ALMCore *alm;
-        Memory *&memory;
         System *&system;
         Interaction *&interaction;
         Fcs *&fcs;
@@ -45,7 +42,6 @@ namespace ALM_NS
         Files *&files;
         Displace *&displace;
         Error *&error;
-        Timer *&timer;
     };
 }
 

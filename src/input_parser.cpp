@@ -68,13 +68,13 @@ void InputParser::parse_displacement_and_force(ALMCore *alm)
     std::string file_disp = alm->files->file_disp;
     std::string file_force = alm->files->file_force;
 
-    alm->memory->allocate(u, ndata_used, 3 * nat);
-    alm->memory->allocate(f, ndata_used, 3 * nat);
+    allocate(u, ndata_used, 3 * nat);
+    allocate(f, ndata_used, 3 * nat);
     parse_displacement_and_force_files(alm->error, u, f, nat, ndata, nstart, nend,
                                        file_disp, file_force);
     alm->fitting->set_displacement_and_force(u, f, nat, ndata_used);
-    alm->memory->deallocate(u);
-    alm->memory->deallocate(f);
+    deallocate(u);
+    deallocate(f);
 }
 
 void InputParser::parse_displacement_and_force_files(Error *error,
@@ -199,7 +199,7 @@ void InputParser::parse_input(ALMCore *alm)
         parse_fitting_vars(alm);
     }
 
-    alm->memory->deallocate(kdname);
+    deallocate(kdname);
 }
 
 void InputParser::parse_general_vars(ALMCore *alm)
@@ -271,7 +271,7 @@ void InputParser::parse_general_vars(ALMCore *alm)
         alm->error->exit("parse_general_vars",
                          "The number of entries for KD is inconsistent with NKD");
     } else {
-        alm->memory->allocate(kdname, nkd);
+        allocate(kdname, nkd);
         for (i = 0; i < nkd; ++i) {
             kdname[i] = kdname_v[i];
         }
@@ -306,7 +306,7 @@ void InputParser::parse_general_vars(ALMCore *alm)
     }
 
     // Convert MAGMOM input to array
-    alm->memory->allocate(magmom, nat, 3);
+    allocate(magmom, nat, 3);
     lspin = false;
 
     for (i = 0; i < nat; ++i) {
@@ -444,7 +444,7 @@ void InputParser::parse_general_vars(ALMCore *alm)
                                    tolerance);
     delete input_setter;
 
-    alm->memory->allocate(magmom, nat, 3);
+    allocate(magmom, nat, 3);
 
     kdname_v.clear();
     periodic_v.clear();
@@ -581,7 +581,7 @@ void InputParser::parse_interaction_vars(ALMCore *alm)
         alm->error->exit("parse_interaction_vars",
                          "maxorder has to be a positive integer");
 
-    alm->memory->allocate(nbody_include, maxorder);
+    allocate(nbody_include, maxorder);
 
     boost::split(nbody_v, interaction_var_dict["NBODY"], boost::is_space());
 
@@ -615,7 +615,7 @@ void InputParser::parse_interaction_vars(ALMCore *alm)
     input_setter->set_interaction_vars(alm, maxorder, nbody_include);
     delete input_setter;
 
-    alm->memory->deallocate(nbody_include);
+    deallocate(nbody_include);
 
     nbody_v.clear();
     no_defaults.clear();
@@ -798,8 +798,8 @@ void InputParser::parse_atomic_positions(ALMCore *alm)
                          "The number of entries for atomic positions should be NAT");
     }
 
-    alm->memory->allocate(xeq, nat, 3);
-    alm->memory->allocate(kd, nat);
+    allocate(xeq, nat, 3);
+    allocate(kd, nat);
 
 
     for (i = 0; i < nat; ++i) {
@@ -832,8 +832,8 @@ void InputParser::parse_atomic_positions(ALMCore *alm)
     input_setter->set_atomic_positions(alm, nat, kd, xeq);
     delete input_setter;
     
-    alm->memory->deallocate(xeq);
-    alm->memory->deallocate(kd);
+    deallocate(xeq);
+    deallocate(kd);
     pos_line.clear();
     str_v.clear();
 }
@@ -903,7 +903,7 @@ void InputParser::parse_cutoff_radii(ALMCore *alm)
     double ***rcs;
     bool ***undefined_cutoff;
 
-    alm->memory->allocate(undefined_cutoff, maxorder, nkd, nkd);
+    allocate(undefined_cutoff, maxorder, nkd, nkd);
 
     for (order = 0; order < maxorder; ++order) {
         for (i = 0; i < nkd; ++i) {
@@ -913,7 +913,7 @@ void InputParser::parse_cutoff_radii(ALMCore *alm)
         }
     }
 
-    alm->memory->allocate(rcs, maxorder, nkd, nkd);
+    allocate(rcs, maxorder, nkd, nkd);
 
     element_allowed.clear();
 
@@ -1007,13 +1007,13 @@ void InputParser::parse_cutoff_radii(ALMCore *alm)
             }
         }
     }
-    alm->memory->deallocate(undefined_cutoff);
+    deallocate(undefined_cutoff);
 
     InputSetter *input_setter = new InputSetter();
     input_setter->set_cutoff_radii(alm, maxorder, nkd, rcs);
     delete input_setter;
 
-    alm->memory->deallocate(rcs);
+    deallocate(rcs);
 }
 
 void InputParser::get_var_dict(const std::string keywords,

@@ -45,18 +45,18 @@ void Fcs::init()
     std::cout << " FORCE CONSTANT" << std::endl;
     std::cout << " ==============" << std::endl << std::endl;
 
-    memory->allocate(nints, maxorder);
-    memory->allocate(nzero, maxorder);
+    allocate(nints, maxorder);
+    allocate(nzero, maxorder);
 
     if (fc_table) {
-        memory->deallocate(fc_table);
+        deallocate(fc_table);
     }
-    memory->allocate(fc_table, maxorder);
+    allocate(fc_table, maxorder);
 
     if (ndup) {
-        memory->deallocate(ndup);
+        deallocate(ndup);
     }
-    memory->allocate(ndup, maxorder);
+    allocate(ndup, maxorder);
 
     for (i = 0; i < maxorder; ++i) nzero[i] = 0;
     generate_fclists(maxorder, nzero);
@@ -87,11 +87,11 @@ void Fcs::init()
         }
     }
 
-    memory->deallocate(nints);
+    deallocate(nints);
     nints = nullptr;
-    memory->deallocate(nzero);
+    deallocate(nzero);
     nzero = nullptr;
-    timer->print_elapsed();
+    alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
 }
@@ -105,10 +105,10 @@ void Fcs::set_default_variables()
 void Fcs::deallocate_variables()
 {
     if (ndup) {
-        memory->deallocate(ndup);
+        deallocate(ndup);
     }
     if (fc_table) {
-        memory->deallocate(fc_table);
+        deallocate(fc_table);
     }
 }
 
@@ -136,13 +136,13 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
 
     std::cout << "  Finding symmetrically-independent force constants ..." << std::endl;
 
-    memory->allocate(atmn, maxorder + 1);
-    memory->allocate(atmn_mapped, maxorder + 1);
-    memory->allocate(ind, maxorder + 1);
-    memory->allocate(ind_mapped, maxorder + 1);
-    memory->allocate(ind_tmp, maxorder - 1);
-    memory->allocate(ind_mapped_tmp, maxorder + 1);
-    memory->allocate(is_searched, 3 * nat);
+    allocate(atmn, maxorder + 1);
+    allocate(atmn_mapped, maxorder + 1);
+    allocate(ind, maxorder + 1);
+    allocate(ind_mapped, maxorder + 1);
+    allocate(ind_tmp, maxorder - 1);
+    allocate(ind_mapped_tmp, maxorder + 1);
+    allocate(is_searched, 3 * nat);
 
     for (order = 0; order < maxorder; ++order) {
 
@@ -154,7 +154,7 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
 
         nxyz = static_cast<int>(std::pow(3.0, order + 2));
 
-        memory->allocate(xyzcomponent, nxyz, order + 2);
+        allocate(xyzcomponent, nxyz, order + 2);
         get_xyzcomponent(order + 2, xyzcomponent);
 
         std::set<IntList> list_found;
@@ -257,18 +257,18 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
             } // close xyz component loop
         } // close atom number loop (iterator)
 
-        memory->deallocate(xyzcomponent);
+        deallocate(xyzcomponent);
         list_found.clear();
         std::cout << " done. " << std::endl;
     } //close order loop
 
-    memory->deallocate(atmn);
-    memory->deallocate(atmn_mapped);
-    memory->deallocate(ind);
-    memory->deallocate(ind_mapped);
-    memory->deallocate(ind_tmp);
-    memory->deallocate(ind_mapped_tmp);
-    memory->deallocate(is_searched);
+    deallocate(atmn);
+    deallocate(atmn_mapped);
+    deallocate(ind);
+    deallocate(ind_mapped);
+    deallocate(ind_tmp);
+    deallocate(ind_mapped_tmp);
+    deallocate(is_searched);
 
     std::cout << "  Finished!" << std::endl;
 }
@@ -303,7 +303,7 @@ int Fcs::min_inprim(const int n, const int *arr)
     int minloc;
     int *ind;
 
-    memory->allocate(ind, n);
+    allocate(ind, n);
 
     for (i = 0; i < n; ++i) {
 
@@ -328,7 +328,7 @@ int Fcs::min_inprim(const int n, const int *arr)
         }
     }
 
-    memory->deallocate(ind);
+    deallocate(ind);
     return minloc;
 }
 
@@ -390,7 +390,7 @@ void Fcs::sort_tail(const int n, int *arr)
     m = n - 1;
     int *ind_tmp;
 
-    memory->allocate(ind_tmp, m);
+    allocate(ind_tmp, m);
 
     for (i = 0; i < m; ++i) {
         ind_tmp[i] = arr[i + 1];
@@ -402,7 +402,7 @@ void Fcs::sort_tail(const int n, int *arr)
         arr[i + 1] = ind_tmp[i];
     }
 
-    memory->deallocate(ind_tmp);
+    deallocate(ind_tmp);
 }
 
 std::string Fcs::easyvizint(const int n)

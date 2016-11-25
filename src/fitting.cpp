@@ -90,8 +90,8 @@ void Fitting::fitmain()
 
 
     if (nmulti > 0) {
-        memory->allocate(u, ndata_used * nmulti, 3 * nat);
-        memory->allocate(f, ndata_used * nmulti, 3 * nat);
+        allocate(u, ndata_used * nmulti, 3 * nat);
+        allocate(f, ndata_used * nmulti, 3 * nat);
     } else {
         error->exit("fitmain", "nmulti has to be larger than 0.");
     }
@@ -116,27 +116,27 @@ void Fitting::fitmain()
         std::cout << "  Total Number of Free Parameters : "
             << N_new << std::endl << std::endl;
 
-        memory->allocate(amat, M, N_new);
-        memory->allocate(fsum, M);
-        memory->allocate(fsum_orig, M);
+        allocate(amat, M, N_new);
+        allocate(fsum, M);
+        allocate(fsum_orig, M);
 
         calc_matrix_elements_algebraic_constraint(M, N, N_new, nat, natmin, ndata_used,
                                                   nmulti, maxorder, u, f, amat, fsum,
                                                   fsum_orig);
     } else {
-        memory->allocate(amat, M, N);
-        memory->allocate(fsum, M);
+        allocate(amat, M, N);
+        allocate(fsum, M);
 
         calc_matrix_elements(M, N, nat, natmin, ndata_used,
                              nmulti, maxorder, u, f, amat, fsum);
     }
 
-    memory->deallocate(u);
-    memory->deallocate(f);
+    deallocate(u);
+    deallocate(f);
 
     // Execute fitting
 
-    memory->allocate(param_tmp, N);
+    allocate(param_tmp, N);
 
 
     // Fitting with singular value decomposition or QR-Decomposition
@@ -156,16 +156,16 @@ void Fitting::fitmain()
 
     // Copy force constants to public variable "params"
     if (params) {
-        memory->deallocate(params);
+        deallocate(params);
     }
-    memory->allocate(params, N);
+    allocate(params, N);
 
     if (constraint->constraint_algebraic) {
 
         for (i = 0; i < N; ++i) {
             params[i] = param_tmp[i];
         }
-        memory->deallocate(fsum_orig);
+        deallocate(fsum_orig);
 
     } else {
 
@@ -173,12 +173,12 @@ void Fitting::fitmain()
 
     }
 
-    memory->deallocate(amat);
-    memory->deallocate(fsum);
-    memory->deallocate(param_tmp);
+    deallocate(amat);
+    deallocate(fsum);
+    deallocate(param_tmp);
 
     std::cout << std::endl;
-    timer->print_elapsed();
+    alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
 }
@@ -189,14 +189,14 @@ void Fitting::set_displacement_and_force(const double * const *disp_in,
                                          const int ndata_used)
 {
     if (u_in) {
-        memory->deallocate(u_in);
+        deallocate(u_in);
     }
-    memory->allocate(u_in, ndata_used, 3 * nat);
+    allocate(u_in, ndata_used, 3 * nat);
 
     if (f_in) {
-        memory->deallocate(f_in);
+        deallocate(f_in);
     }
-    memory->allocate(f_in, ndata_used, 3 * nat);
+    allocate(f_in, ndata_used, 3 * nat);
 
     for (int i = 0; i < ndata_used; i++) {
         for (int j = 0; j < 3 * nat; j++) {
@@ -228,12 +228,12 @@ void Fitting::fit_without_constraints(int N,
     LWORK = 3 * LMIN + std::max<int>(2 * LMIN, LMAX);
     LWORK = 2 * LWORK;
 
-    memory->allocate(WORK, LWORK);
-    memory->allocate(S, LMIN);
+    allocate(WORK, LWORK);
+    allocate(S, LMIN);
 
     // transpose matrix A
-    memory->allocate(amat_mod, M * N);
-    memory->allocate(fsum2, LMAX);
+    allocate(amat_mod, M * N);
+    allocate(fsum2, LMAX);
 
     k = 0;
     for (j = 0; j < N; ++j) {
@@ -275,10 +275,10 @@ void Fitting::fit_without_constraints(int N,
         param_out[i] = fsum2[i];
     }
 
-    memory->deallocate(WORK);
-    memory->deallocate(S);
-    memory->deallocate(fsum2);
-    memory->deallocate(amat_mod);
+    deallocate(WORK);
+    deallocate(S);
+    deallocate(fsum2);
+    deallocate(amat_mod);
 }
 
 void Fitting::fit_with_constraints(int N,
@@ -299,8 +299,8 @@ void Fitting::fit_with_constraints(int N,
 
     std::cout << "  Entering fitting routine: QRD with constraints" << std::endl;
 
-    memory->allocate(fsum2, M);
-    memory->allocate(mat_tmp, (M + P) * N);
+    allocate(fsum2, M);
+    allocate(mat_tmp, (M + P) * N);
 
     k = 0;
 
@@ -314,7 +314,7 @@ void Fitting::fit_with_constraints(int N,
     }
 
     nrank = rankQRD((M + P), N, mat_tmp, eps12);
-    memory->deallocate(mat_tmp);
+    deallocate(mat_tmp);
 
     if (nrank != N) {
         std::cout << std::endl;
@@ -341,8 +341,8 @@ void Fitting::fit_with_constraints(int N,
     std::cout << "  QR-Decomposition has started ...";
 
     double *amat_mod, *cmat_mod;
-    memory->allocate(amat_mod, M * N);
-    memory->allocate(cmat_mod, P * N);
+    allocate(amat_mod, M * N);
+    allocate(cmat_mod, P * N);
 
     // transpose matrix A and C
     k = 0;
@@ -363,8 +363,8 @@ void Fitting::fit_with_constraints(int N,
     int LWORK = P + std::min<int>(M, N) + 10 * std::max<int>(M, N);
     int INFO;
     double *WORK, *x;
-    memory->allocate(WORK, LWORK);
-    memory->allocate(x, N);
+    allocate(WORK, LWORK);
+    allocate(x, N);
 
     dgglse_(&M, &N, &P, amat_mod, &M, cmat_mod, &P,
             fsum2, dvec, x, WORK, &LWORK, &INFO);
@@ -386,11 +386,11 @@ void Fitting::fit_with_constraints(int N,
         param_out[i] = x[i];
     }
 
-    memory->deallocate(amat_mod);
-    memory->deallocate(cmat_mod);
-    memory->deallocate(WORK);
-    memory->deallocate(x);
-    memory->deallocate(fsum2);
+    deallocate(amat_mod);
+    deallocate(cmat_mod);
+    deallocate(WORK);
+    deallocate(x);
+    deallocate(fsum2);
 }
 
 void Fitting::fit_algebraic_constraints(int N,
@@ -417,12 +417,12 @@ void Fitting::fit_algebraic_constraints(int N,
     LWORK = 3 * LMIN + std::max<int>(2 * LMIN, LMAX);
     LWORK = 2 * LWORK;
 
-    memory->allocate(WORK, LWORK);
-    memory->allocate(S, LMIN);
+    allocate(WORK, LWORK);
+    allocate(S, LMIN);
 
     // transpose matrix A
-    memory->allocate(amat_mod, M * N);
-    memory->allocate(fsum2, LMAX);
+    allocate(amat_mod, M * N);
+    allocate(fsum2, LMAX);
 
     k = 0;
     for (j = 0; j < N; ++j) {
@@ -494,10 +494,10 @@ void Fitting::fit_algebraic_constraints(int N,
         iparam += constraint->index_bimap[i].size();
     }
 
-    memory->deallocate(WORK);
-    memory->deallocate(S);
-    memory->deallocate(fsum2);
-    memory->deallocate(amat_mod);
+    deallocate(WORK);
+    deallocate(S);
+    deallocate(fsum2);
+    deallocate(amat_mod);
 }
 
 
@@ -536,7 +536,7 @@ void Fitting::calc_matrix_elements(const int M,
         int im, idata, iparam;
         double amat_tmp;
 
-        memory->allocate(ind, maxorder + 1);
+        allocate(ind, maxorder + 1);
 
 #ifdef _OPENMP
 #pragma omp for schedule(guided)
@@ -579,7 +579,7 @@ void Fitting::calc_matrix_elements(const int M,
             }
         }
 
-        memory->deallocate(ind);
+        deallocate(ind);
 
     }
 
@@ -634,9 +634,9 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
         double **amat_orig;
         double **amat_mod;
 
-        memory->allocate(ind, maxorder + 1);
-        memory->allocate(amat_orig, 3 * natmin, N);
-        memory->allocate(amat_mod, 3 * natmin, N_new);
+        allocate(ind, maxorder + 1);
+        allocate(amat_orig, 3 * natmin, N);
+        allocate(amat_mod, 3 * natmin, N_new);
 
 #ifdef _OPENMP
 #pragma omp for schedule(guided)
@@ -739,9 +739,9 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
 
         }
 
-        memory->deallocate(ind);
-        memory->deallocate(amat_orig);
-        memory->deallocate(amat_mod);
+        deallocate(ind);
+        deallocate(amat_orig);
+        deallocate(amat_mod);
     }
 
     std::cout << "done!" << std::endl << std::endl;
@@ -765,13 +765,13 @@ void Fitting::set_default_variables()
 void Fitting::deallocate_variables()
 {
     if (params) {
-        memory->deallocate(params);
+        deallocate(params);
     }
     if (u_in) {
-        memory->deallocate(u_in);
+        deallocate(u_in);
     }
     if (f_in) {
-        memory->deallocate(f_in);
+        deallocate(f_in);
     }
 }
 
@@ -878,8 +878,8 @@ double Fitting::gamma(const int n, const int *arr)
     int i;
     int ind_front, nsame_to_front;
 
-    memory->allocate(arr_tmp, n);
-    memory->allocate(nsame, n);
+    allocate(arr_tmp, n);
+    allocate(nsame, n);
 
     for (i = 0; i < n; ++i) {
         arr_tmp[i] = arr[i];
@@ -913,8 +913,8 @@ double Fitting::gamma(const int n, const int *arr)
         denom *= factorial(nsame[i]);
     }
 
-    memory->deallocate(arr_tmp);
-    memory->deallocate(nsame);
+    deallocate(arr_tmp);
+    deallocate(nsame);
 
     return static_cast<double>(nsame_to_front) / static_cast<double>(denom);
 }
@@ -967,22 +967,22 @@ int Fitting::rankQRD(const int m,
 
     int nmin = std::min<int>(m_, n_);
 
-    memory->allocate(JPVT, n_);
-    memory->allocate(WORK, LWORK);
-    memory->allocate(TAU, nmin);
+    allocate(JPVT, n_);
+    allocate(WORK, LWORK);
+    allocate(TAU, nmin);
 
     for (int i = 0; i < n_; ++i) JPVT[i] = 0;
 
     dgeqp3_(&m_, &n_, mat, &LDA, JPVT, TAU, WORK, &LWORK, &INFO);
 
-    memory->deallocate(JPVT);
-    memory->deallocate(WORK);
-    memory->deallocate(TAU);
+    deallocate(JPVT);
+    deallocate(WORK);
+    deallocate(TAU);
 
     if (std::abs(mat[0]) < eps) return 0;
 
     double **mat_tmp;
-    memory->allocate(mat_tmp, m_, n_);
+    allocate(mat_tmp, m_, n_);
 
     unsigned long k = 0;
 
@@ -997,7 +997,7 @@ int Fitting::rankQRD(const int m,
         if (std::abs(mat_tmp[i][i]) > tolerance * std::abs(mat[0])) ++nrank;
     }
 
-    memory->deallocate(mat_tmp);
+    deallocate(mat_tmp);
 
     return nrank;
 }
@@ -1020,9 +1020,9 @@ int Fitting::rankSVD(const int m,
 
     int nmin = std::min<int>(m, n);
 
-    memory->allocate(IWORK, 8 * nmin);
-    memory->allocate(WORK, LWORK);
-    memory->allocate(s, nmin);
+    allocate(IWORK, 8 * nmin);
+    allocate(WORK, LWORK);
+    allocate(s, nmin);
 
     char mode[] = "N";
 
@@ -1034,9 +1034,9 @@ int Fitting::rankSVD(const int m,
         if (s[i] > s[0] * tolerance) ++rank;
     }
 
-    memory->deallocate(WORK);
-    memory->deallocate(IWORK);
-    memory->deallocate(s);
+    deallocate(WORK);
+    deallocate(IWORK);
+    deallocate(s);
 
     return rank;
 }
@@ -1054,7 +1054,7 @@ int Fitting::rankSVD2(const int m_in,
     int m = m_in;
     int n = n_in;
 
-    memory->allocate(arr, m * n);
+    allocate(arr, m * n);
 
     k = 0;
 
@@ -1073,9 +1073,9 @@ int Fitting::rankSVD2(const int m_in,
 
     int nmin = std::min<int>(m, n);
 
-    memory->allocate(IWORK, 8 * nmin);
-    memory->allocate(WORK, LWORK);
-    memory->allocate(s, nmin);
+    allocate(IWORK, 8 * nmin);
+    allocate(WORK, LWORK);
+    allocate(s, nmin);
 
     char mode[] = "N";
 
@@ -1087,10 +1087,10 @@ int Fitting::rankSVD2(const int m_in,
         if (s[i] > s[0] * tolerance) ++rank;
     }
 
-    memory->deallocate(IWORK);
-    memory->deallocate(WORK);
-    memory->deallocate(s);
-    memory->deallocate(arr);
+    deallocate(IWORK);
+    deallocate(WORK);
+    deallocate(s);
+    deallocate(arr);
 
     return rank;
 }

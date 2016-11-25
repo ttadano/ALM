@@ -30,30 +30,30 @@ InputSetter::~InputSetter()
 {
 }
 
-void InputSetter::deallocate(ALMCore *alm_core)
+void InputSetter::deallocator(ALMCore *alm_core)
 {
     if (alm_core->system->kdname) {
-        alm_core->memory->deallocate(alm_core->system->kdname);
+        deallocate(alm_core->system->kdname);
     }
     alm_core->system->kdname = nullptr;
     if (alm_core->system->xcoord) {
-        alm_core->memory->deallocate(alm_core->system->xcoord);
+        deallocate(alm_core->system->xcoord);
     }
     alm_core->system->xcoord = nullptr;
     if (alm_core->system->kd) {
-        alm_core->memory->deallocate(alm_core->system->kd);
+        deallocate(alm_core->system->kd);
     }
     alm_core->system->kd = nullptr;
     if (alm_core->system->magmom) {
-        alm_core->memory->deallocate(alm_core->system->magmom);
+        deallocate(alm_core->system->magmom);
     }
     alm_core->system->magmom = nullptr;
     if (alm_core->interaction->nbody_include) {
-        alm_core->memory->deallocate(alm_core->interaction->nbody_include);
+        deallocate(alm_core->interaction->nbody_include);
     }
     alm_core->interaction->nbody_include = nullptr;
     if (alm_core->interaction->rcs) {
-        alm_core->memory->deallocate(alm_core->interaction->rcs);
+        deallocate(alm_core->interaction->rcs);
     }
     alm_core->interaction->rcs = nullptr;
 }
@@ -87,8 +87,8 @@ void InputSetter::set_general_vars(ALMCore *alm_core,
     alm_core->symmetry->nsym = nsym;
     alm_core->symmetry->printsymmetry = printsymmetry;
     alm_core->symmetry->tolerance = tolerance;
-    alm_core->memory->allocate(alm_core->system->kdname, nkd);
-    alm_core->memory->allocate(alm_core->system->magmom, nat, 3);
+    allocate(alm_core->system->kdname, nkd);
+    allocate(alm_core->system->magmom, nat, 3);
 
     for (i = 0; i < nkd; ++i) {
         alm_core->system->kdname[i] = kdname[i];
@@ -132,7 +132,7 @@ void InputSetter::set_interaction_vars(ALMCore *alm_core,
     int i;
 
     alm_core->interaction->maxorder = maxorder;
-    alm_core->memory->allocate(alm_core->interaction->nbody_include, maxorder);
+    allocate(alm_core->interaction->nbody_include, maxorder);
 
     for (i = 0; i < maxorder; ++i) {
         alm_core->interaction->nbody_include[i] = nbody_include[i];
@@ -146,7 +146,7 @@ void InputSetter::set_cutoff_radii(ALMCore *alm_core,
 {
     int i, j, k;
 
-    alm_core->memory->allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+    allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
 
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
@@ -193,8 +193,8 @@ void InputSetter::set_atomic_positions(ALMCore *alm_core,
 {
     int i, j;
 
-    alm_core->memory->allocate(alm_core->system->xcoord, nat, 3);
-    alm_core->memory->allocate(alm_core->system->kd, nat);
+    allocate(alm_core->system->xcoord, nat, 3);
+    allocate(alm_core->system->kd, nat);
 
     for (i = 0; i < nat; ++i) {
 

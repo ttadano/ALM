@@ -16,7 +16,7 @@
 
 using namespace ALM_NS;
 
-Timer::Timer(ALMCore *alm): Pointers(alm)
+Timer::Timer()
 {
 #if defined(WIN32) || defined(_WIN32)
     QueryPerformanceCounter(&time_ref);
@@ -24,10 +24,13 @@ Timer::Timer(ALMCore *alm): Pointers(alm)
 #else
     gettimeofday(&time_ref, nullptr);
 #endif
+    std::cout << " Job started at " << this->DateAndTime() << std::endl;
 }
 
 Timer::~Timer()
 {
+    std::cout << std::endl << " Job finished at "
+        << this->DateAndTime() << std::endl;
 }
 
 void Timer::reset()
@@ -81,4 +84,3 @@ std::string Timer::DateAndTime()
     return asctime(local);
 #endif
 }
-
