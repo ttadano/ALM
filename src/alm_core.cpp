@@ -32,7 +32,6 @@ ALMCore::ALMCore()
 
 ALMCore::~ALMCore()
 {
-    delete timer;
     delete files;
     delete interaction;
     delete fcs;
@@ -42,12 +41,11 @@ ALMCore::~ALMCore()
     delete constraint;
     delete displace;
     delete error;
+    delete timer;
 }
 
 void ALMCore::create()
 {
-    timer = new Timer();
-  //  timer = std::unique_ptr<Timer>(new Timer());
     files = new Files(this);
     system = new System(this);
     interaction = new Interaction(this);
@@ -57,6 +55,7 @@ void ALMCore::create()
     constraint = new Constraint(this);
     displace = new Displace(this);
     error = new Error(this);
+    timer = new Timer();
 }
 
 void ALMCore::initialize()
