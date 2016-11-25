@@ -25,7 +25,7 @@ LIBS = ${LAPACK}
 PROG = alm
 
 CXXSRC= alamode.cpp constraint.cpp error.cpp fcs.cpp files.cpp \
-	fitting.cpp input.cpp interaction.cpp main.cpp memory.cpp \
+	fitting.cpp input.cpp interaction.cpp main.cpp \
 	patterndisp.cpp symmetry.cpp system.cpp timer.cpp writes.cpp 
 
 OBJS= ${CXXSRC:.cpp=.o}
