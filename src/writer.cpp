@@ -25,6 +25,7 @@
 #include "constraint.h"
 #include "patterndisp.h"
 #include "version.h"
+#include "timer.h"
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/version.hpp>
@@ -44,6 +45,8 @@ void Writer::write_input_vars(ALM *alm)
     unsigned int i;
 
     ALMCore *alm_core = alm->get_alm_core();
+
+    alm_core->timer->start_clock("writer");
 
     std::cout << std::endl;
     std::cout << " Input variables:" << std::endl;
@@ -93,11 +96,14 @@ void Writer::write_input_vars(ALM *alm)
     }
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
+    alm_core->timer->stop_clock("writer");
 }
 
 void Writer::writeall(ALM *alm)
 {
     ALMCore *alm_core = alm->get_alm_core();
+
+ //   alm_core->timer->start_clock("writer");
 
     std::cout << " The following files are created:" << std::endl << std::endl;
     write_force_constants(alm);
@@ -105,6 +111,8 @@ void Writer::writeall(ALM *alm)
     write_misc_xml(alm);
     if (alm_core->files->print_hessian) write_hessian(alm);
     std::cout << std::endl;
+
+ //   alm_core->timer->stop_clock("writer");
 }
 
 void Writer::write_force_constants(ALM *alm)

@@ -39,6 +39,7 @@ Constraint::~Constraint()
 
 void Constraint::setup()
 {
+    alm->timer->start_clock("constraint");
     std::cout << " CONSTRAINT" << std::endl;
     std::cout << " ==========" << std::endl << std::endl;
 
@@ -299,6 +300,7 @@ void Constraint::setup()
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
+    alm->timer->stop_clock("constraint");
 }
 
 void Constraint::calc_constraint_matrix(const int N, int &P)

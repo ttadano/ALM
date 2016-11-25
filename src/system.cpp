@@ -45,6 +45,7 @@ void System::init()
     using namespace std;
 
     int i, j;
+    alm->timer->start_clock("system");
 
     cout << " SYSTEM" << endl;
     cout << " ======" << endl << endl;
@@ -151,6 +152,7 @@ void System::init()
     alm->timer->print_elapsed();
     cout << " -------------------------------------------------------------------" << endl;
     cout << endl;
+    alm->timer->stop_clock("system");
 }
 
 void System::recips(double aa[3][3], double bb[3][3])

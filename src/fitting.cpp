@@ -76,6 +76,8 @@ void Fitting::fitmain()
     double **u;
     double **f;
 
+    alm->timer->start_clock("fitting");
+
     std::cout << " FITTING" << std::endl;
     std::cout << " =======" << std::endl << std::endl;
 
@@ -181,6 +183,8 @@ void Fitting::fitmain()
     alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
+
+    alm->timer->stop_clock("fitting");
 }
 
 void Fitting::set_displacement_and_force(const double * const *disp_in,

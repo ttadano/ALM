@@ -42,6 +42,8 @@ void Symmetry::init()
     int i, j;
     int nat = system->nat;
 
+    alm->timer->start_clock("symmetry");
+
     std::cout << " SYMMETRY" << std::endl;
     std::cout << " ========" << std::endl << std::endl;
 
@@ -137,6 +139,8 @@ void Symmetry::init()
     alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
+
+    alm->timer->stop_clock("symmetry");
 }
 
 void Symmetry::set_default_variables()

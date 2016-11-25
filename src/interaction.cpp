@@ -44,6 +44,8 @@ void Interaction::init()
     int nat = system->nat;
     int nkd = system->nkd;
 
+    alm->timer->start_clock("interaction");
+
     std::cout << " INTERACTION" << std::endl;
     std::cout << " ===========" << std::endl << std::endl;
 
@@ -117,6 +119,7 @@ void Interaction::init()
     alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
+     alm->timer->stop_clock("interaction");
 }
 
 void Interaction::generate_pairs(std::set<IntList> *pair_out,

@@ -42,6 +42,8 @@ void Fcs::init()
     int *nzero;
     int maxorder = interaction->maxorder;
 
+    alm->timer->start_clock("fcs");
+
     std::cout << " FORCE CONSTANT" << std::endl;
     std::cout << " ==============" << std::endl << std::endl;
 
@@ -94,6 +96,7 @@ void Fcs::init()
     alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
+    alm->timer->stop_clock("fcs");
 }
 
 void Fcs::set_default_variables()
