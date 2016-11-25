@@ -47,7 +47,6 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
             ${PROJECT_SOURCE_DIR}/src/fitting.cpp
             ${PROJECT_SOURCE_DIR}/src/interaction.cpp
-            ${PROJECT_SOURCE_DIR}/src/memory.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
             ${PROJECT_SOURCE_DIR}/src/symmetry.cpp
             ${PROJECT_SOURCE_DIR}/src/system.cpp
