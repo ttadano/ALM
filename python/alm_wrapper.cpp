@@ -148,10 +148,10 @@ extern "C" {
         alm[id]->set_norder(maxorder);
     }
 
-    void alm_set_interaction_range(const int id,
-                                   const int *nbody_include)
+    void alm_set_nbody_include(const int id,
+                               const int *nbody_include)
     {
-        alm[id]->set_interaction_range(nbody_include);
+        alm[id]->set_nbody_include(nbody_include);
     }
 
     void alm_set_cutoff_radii(const int id,

@@ -53,7 +53,7 @@ namespace ALM_NS
         const void set_fitting_filenames(const std::string dfile,
                      const std::string ffile);
         const void set_norder(const int maxorder);
-        const void set_interaction_range(const int *nbody_include);
+        const void set_nbody_include(const int *nbody_include);
         const void set_cutoff_radii(const double * rcs);
         ALMCore* get_alm_core();
         const int get_atom_mapping_by_pure_translations(int *map_p2s);
