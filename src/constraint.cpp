@@ -671,6 +671,24 @@ void Constraint::constraint_from_symmetry(std::vector<ConstraintClass> *const_ou
                         if (it_fcset != fc_set.end()) {
                             c_tmp = fcs->coef_sym(order + 2, isym, xyz_index, xyzcomponent[ixyz]);
                             const_omp_now[(*it_fcset).mother] += (*it_fcset).coef * c_tmp;
+#ifdef _DEBUG
+                            std::cout << " atom_index_orig = ";
+                            for (i = 0; i < order + 2; ++i) {
+                                std::cout << std::setw(5) << atm_index[i] + 1;
+                            }
+                            std::cout << " ; isym = " << std::setw(5) << isym + 1;
+                            std::cout << " ; atom_index_sym = ";
+                            for (i = 0; i < order + 2; ++i) {
+                                std::cout << std::setw(5) << atm_index_symm[i] + 1;
+                            }
+                            std::cout << " ; xyz = ";
+                            for (i = 0; i < order + 2; ++i) {
+                                std::cout << std::setw(5) << xyz_index[i] + 1;
+                            }
+                            std::cout << " ; mother1 = " << std::setw(5) << (list_tmp).mother + 1;
+                            std::cout << " mother2 = " << std::setw(5) << (*it_fcset).mother + 1;
+                            std::cout << " ; coef = " << std::setw(20) << std::setprecision(15) << c_tmp << std::endl;
+#endif
                         }
                     }
 
@@ -1586,7 +1604,7 @@ bool Constraint::is_allzero(const std::vector<double> vec)
 {
     int n = vec.size();
     for (int i = 0; i < n; ++i) {
-        if (std::abs(vec[i]) > eps10) return false;
+        if (std::abs(vec[i]) > eps15) return false;
     }
     return true;
 }
