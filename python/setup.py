@@ -7,10 +7,10 @@ include_dirs_numpy = [numpy.get_include()]
 extension = Extension('alm._alm',
                       include_dirs=include_dirs_numpy,
                       library_dirs=["../lib"],
-                      extra_compile_args = ['-fopenmp'],
+                    #  extra_compile_args = ['-fopenmp'],
                       extra_link_args=['-lstdc++',
                                        '../lib/libalmcxx.a',
-                                       '-lgomp',
+                    #                    '-lgomp',
                                        '-llapack'],
                       sources=['_alm.c', 'alm_wrapper.cpp'])
 
