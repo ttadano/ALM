@@ -47,13 +47,17 @@ namespace ALM_NS
         void load_reference_system_xml(std::string, const int, double *);
 
         int nat, nkd;
+//        int nat_prim;
         int ndata, nstart, nend, nskip;
         int *kd;
+//        int *kd_prim;
         double lavec[3][3], rlavec[3][3];
         double **xcoord; // fractional coordinate
         double **x_cartesian;
+//        double lavec_prim[3][3], rlavec_prim[3][3];
+//        double **xcoord_prim;
         double **magmom;
-    std::string str_magmom;
+        std::string str_magmom;
         int noncollinear;
         std::string *kdname;
 
