@@ -293,7 +293,7 @@ const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
     }
 }
 
-const void ALM::set_interaction_range(const int *nbody_include) // NBODY
+const void ALM::set_nbody_include(const int *nbody_include) // NBODY
 {
     int maxorder = alm_core->interaction->maxorder;
     if (maxorder > 0) {

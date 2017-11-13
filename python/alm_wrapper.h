@@ -39,8 +39,8 @@ extern "C" {
     //   			 const std::string ffile);
     void alm_set_norder(const int id,
                         const int maxorder);
-    void alm_set_interaction_range(const int id,
-                                   const int *nbody_include);
+    void alm_set_nbody_include(const int id,
+			       const int *nbody_include);
     void alm_set_cutoff_radii(const int id,
                               const double * rcs);
     int alm_get_atom_mapping_by_pure_translations(const int id,
