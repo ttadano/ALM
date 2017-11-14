@@ -97,7 +97,7 @@ namespace ALM_NS
 
         void init();
 
-        unsigned int nsym, ntran, natmin;
+        unsigned int nsym, ntran, nat_prim;
         int is_printsymmetry;
         int multiply_data;
         int *symnum_tran;
@@ -112,7 +112,6 @@ namespace ALM_NS
         double lavec_prim[3][3], rlavec_prim[3][3];
         double **xcoord_prim;
         int *kd_prim;
-        int nat_prim;
         SpglibDataset *SymmData;
 
         class Maps
@@ -159,7 +158,7 @@ namespace ALM_NS
 
         void set_primitive_lattice(const double [3][3], const int, 
                                    int *, double **,
-                                   double [3][3], int &,
+                                   double [3][3], unsigned int &,
                                    int *, double **,
                                    const double);
 

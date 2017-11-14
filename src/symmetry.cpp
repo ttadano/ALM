@@ -106,7 +106,7 @@ void Symmetry::init()
     pure_translations();
 
     std::cout.setf(std::ios::scientific);
-    std::cout << "  Primitive cell contains " << natmin << " atoms" << std::endl;
+    std::cout << "  Primitive cell contains " << nat_prim << " atoms" << std::endl;
     std::cout << std::endl;
     std::cout << "  Primitive Lattice Vector:" << std::endl;
     std::cout << std::setw(16) << lavec_prim[0][0];
@@ -136,7 +136,7 @@ void Symmetry::init()
 
 
     memory->allocate(map_sym, nat, nsym);
-    memory->allocate(map_p2s, natmin, ntran);
+    memory->allocate(map_p2s, nat_prim, ntran);
     memory->allocate(map_s2p, nat);
 
     genmaps(nat, system->xcoord, map_sym, map_p2s, map_s2p);
@@ -147,7 +147,7 @@ void Symmetry::init()
 
     for (int i = 0; i < ntran; ++i) {
         std::cout << std::setw(6) << i + 1 << " | ";
-        for (int j = 0; j < natmin; ++j) {
+        for (int j = 0; j < nat_prim; ++j) {
             std::cout << std::setw(5) << map_p2s[j][i] + 1;
             if ((j + 1) % 5 == 0) {
                 std::cout << std::endl << "       | ";
@@ -589,7 +589,6 @@ void Symmetry::findsym_spglib(const int nat,
     char symbol[11];
     double aa_tmp[3][3];
     int *types_tmp;
-    int natmin;
 
     memory->allocate(position, nat);
     memory->allocate(types_tmp, nat);
@@ -728,7 +727,7 @@ void Symmetry::pure_translations()
         if (is_translation(symrel_int[i])) ++ntran;
     }
 
-    natmin = system->nat / ntran;
+    // nat_prim = system->nat / ntran;
 
     if (ntran > 1) {
         std::cout << "  Given system is not a primitive cell." << std::endl;
@@ -740,7 +739,7 @@ void Symmetry::pure_translations()
 
     if (system->nat % ntran) {
         error->exit("pure_translations",
-                    "nat != natmin * ntran. Something is wrong in the structure.");
+                    "nat != nat_prim * ntran. Something is wrong in the structure.");
     }
 
     memory->allocate(symnum_tran, ntran);
@@ -920,7 +919,7 @@ void Symmetry::genmaps(int nat,
 
     memory->deallocate(is_checked);
 
-    for (iat = 0; iat < natmin; ++iat) {
+    for (iat = 0; iat < nat_prim; ++iat) {
         for (i = 0; i < ntran; ++i) {
             atomnum_translated = map_p2s[iat][i];
             map_s2p[atomnum_translated].atom_num = iat;
@@ -1167,7 +1166,7 @@ void Symmetry::set_primitive_lattice(const double aa[3][3],
                                      int *kd,
                                      double **x,
                                      double aa_prim[3][3],
-                                     int &nat_prim,
+                                     unsigned int &nat_prim,
                                      int *kd_prim,
                                      double **x_prim,
                                      const double symprec)

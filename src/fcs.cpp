@@ -267,7 +267,7 @@ bool Fcs::is_ascending(const int n, const int *arr)
 int Fcs::min_inprim(const int n, const int *arr)
 {
     int i, j, atmnum;
-    int natmin = symmetry->natmin;
+    int natmin = symmetry->nat_prim;
     int minloc;
     int *ind;
 
@@ -303,7 +303,7 @@ int Fcs::min_inprim(const int n, const int *arr)
 bool Fcs::is_inprim(const int n, const int *arr)
 {
     int i, j;
-    int natmin = symmetry->natmin;
+    int natmin = symmetry->nat_prim;
 
     for (i = 0; i < n; ++i) {
         for (j = 0; j < natmin; ++j) {
@@ -316,7 +316,7 @@ bool Fcs::is_inprim(const int n, const int *arr)
 bool Fcs::is_inprim(const int n)
 {
     int i, atmn;
-    int natmin = symmetry->natmin;
+    int natmin = symmetry->nat_prim;
 
     atmn = n / 3;
 

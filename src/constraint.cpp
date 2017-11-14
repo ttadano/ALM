@@ -702,7 +702,7 @@ void Constraint::translational_invariance()
     int **xyzcomponent;
 
     int ixyz, nxyz;
-    int natmin = symmetry->natmin;
+    int natmin = symmetry->nat_prim;
     int nat = system->nat;
     int nparams;
 
@@ -979,7 +979,7 @@ void Constraint::rotational_invariance()
     int icrd, jcrd;
     int order;
     int maxorder = interaction->maxorder;
-    int natmin = symmetry->natmin;
+    int natmin = symmetry->nat_prim;
     int mu, nu;
     int ixyz, nxyz, nxyz2;
     int mu_lambda, lambda;

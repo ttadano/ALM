@@ -327,7 +327,7 @@ void Writer::write_misc_xml(ALMCore *alm)
     }
 
     system_structure.nat = alm->system->nat;
-    system_structure.natmin = alm->symmetry->natmin;
+    system_structure.natmin = alm->symmetry->nat_prim;
     system_structure.ntran = alm->symmetry->ntran;
     system_structure.nspecies = alm->system->nkd;
 
