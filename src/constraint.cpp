@@ -1615,7 +1615,6 @@ bool Constraint::is_allzero(const std::vector<int> vec, int &loc)
 {
     loc = -1;
     for (int i = 0; i < vec.size(); ++i) {
-        //    for(std::vector<int>::const_iterator it = vec.begin(); it != vec.end(); ++it){
         if (std::abs(vec[i]) > 0) {
             loc = i;
             return false;

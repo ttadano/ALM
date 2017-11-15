@@ -180,12 +180,13 @@ void Symmetry::setup_symmetry_operation(int nat,
         std::cout << "  NSYM = 0 : Automatic detection of the space group." << std::endl;
         std::cout << "             This can take a while for a large supercell." << std::endl << std::endl;
 
-        // findsym(nat, aa, x, SymmList);
+       // findsym(nat, aa, x, SymmList);
         findsym_spglib(nat, aa, x, system->kd, SymmList, tolerance);
         // The order in SymmList changes for each run because it was generated
         // with OpenMP. Therefore, we sort the list here to have the same result. 
         std::sort(SymmList.begin() + 1, SymmList.end());
         nsym = SymmList.size();
+
 
         if (is_printsymmetry) {
             std::ofstream ofs_sym;
@@ -809,7 +810,7 @@ void Symmetry::genmaps(int nat,
 
     double shift[3];
     double pos[3], pos_std[3];
-
+#ifdef _DEBUG
     std::cout << "Origin shift = ";
     for (i = 0; i < 3; ++i) {
         shift[i] = SymmData->origin_shift[i];
@@ -827,6 +828,19 @@ void Symmetry::genmaps(int nat,
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
             std::cout << std::setw(15) << SymmData->transformation_matrix[i][j];
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    double inv_transformation_matrix[3][3];
+    double lavec_tmp[3][3];
+    invmat3(inv_transformation_matrix, SymmData->transformation_matrix);
+    matmul3(lavec_tmp, inv_transformation_matrix, system->lavec);
+    std::cout << "Lavec tmp (should be standardized cell):" << std::endl;
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            std::cout << std::setw(15) << lavec_tmp[i][j];
         }
         std::cout << std::endl;
     }
@@ -946,13 +960,13 @@ void Symmetry::genmaps(int nat,
             }
         }
         if (loc == -1) {
-            error->exit("genmaps",
+            error->warn("genmaps",
                         "Could not identify the atoms in the primitive cell");
         }
         std::cout << " iat = " << std::setw(4) << iat + 1;
         std::cout << " iat_super = " << std::setw(4) << loc + 1 << std::endl;
     }
-
+#endif
     bool *is_checked;
     memory->allocate(is_checked, nat);
 
@@ -1249,7 +1263,7 @@ void Symmetry::set_primitive_lattice(const double aa[3][3],
     nat_prim = spg_standardize_cell(aa_prim,
                                     position,
                                     types_tmp,
-                                    nat, 1, 1,
+                                    nat, 1, 0,
                                     symprec);
 
     for (i = 0; i < nat_prim; ++i) {

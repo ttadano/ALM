@@ -165,5 +165,6 @@ namespace ALM_NS
         std::string file_sym;
         int ***symrel_int;
         std::vector<SymmetryOperation> SymmList;
+
     };
 }
