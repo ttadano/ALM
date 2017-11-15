@@ -810,7 +810,7 @@ void Symmetry::genmaps(int nat,
 
     double shift[3];
     double pos[3], pos_std[3];
-
+#ifdef _DEBUG
     std::cout << "Origin shift = ";
     for (i = 0; i < 3; ++i) {
         shift[i] = SymmData->origin_shift[i];
@@ -966,7 +966,7 @@ void Symmetry::genmaps(int nat,
         std::cout << " iat = " << std::setw(4) << iat + 1;
         std::cout << " iat_super = " << std::setw(4) << loc + 1 << std::endl;
     }
-
+#endif
     bool *is_checked;
     memory->allocate(is_checked, nat);
 
@@ -1263,7 +1263,7 @@ void Symmetry::set_primitive_lattice(const double aa[3][3],
     nat_prim = spg_standardize_cell(aa_prim,
                                     position,
                                     types_tmp,
-                                    nat, 0, 0,
+                                    nat, 1, 0,
                                     symprec);
 
     for (i = 0; i < nat_prim; ++i) {

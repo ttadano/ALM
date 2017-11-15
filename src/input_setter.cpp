@@ -22,9 +22,13 @@
 
 using namespace ALM_NS;
 
-InputSetter::InputSetter() {}
+InputSetter::InputSetter()
+{
+}
 
-InputSetter::~InputSetter() {}
+InputSetter::~InputSetter()
+{
+}
 
 void InputSetter::set_general_vars(
     ALMCore *alm,
@@ -111,7 +115,7 @@ void InputSetter::set_interaction_vars(ALMCore *alm,
 void InputSetter::set_cutoff_radii(ALMCore *alm,
                                    const int maxorder,
                                    const int nkd,
-                                   const double * const * const * rcs)
+                                   const double * const * const *rcs)
 {
     int i, j, k;
 

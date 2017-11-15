@@ -30,9 +30,13 @@
 
 using namespace ALM_NS;
 
-Writer::Writer() {}
+Writer::Writer()
+{
+}
 
-Writer::~Writer() {}
+Writer::~Writer()
+{
+}
 
 void Writer::write_input_vars(ALMCore *alm)
 {
@@ -95,6 +99,7 @@ void Writer::writeall(ALMCore *alm)
     write_force_constants(alm);
     write_misc_xml(alm);
     if (alm->print_hessian) write_hessian(alm);
+ //   write_in_QEformat(alm);
     std::cout << std::endl;
 }
 
@@ -109,7 +114,7 @@ void Writer::write_force_constants(ALMCore *alm)
     std::string str_tmp;
     std::ofstream ofs_fcs;
     std::vector<int> atom_tmp;
-    std::vector<std::vector<int> > cell_dummy;
+    std::vector<std::vector<int>> cell_dummy;
     std::set<MinimumDistanceCluster>::iterator iter_cluster;
 
     ofs_fcs.open(alm->files->file_fcs.c_str(), std::ios::out);
@@ -171,7 +176,7 @@ void Writer::write_force_constants(ALMCore *alm)
                     }
                     std::cout << std::endl;
                     alm->error->exit("write_force_constants",
-                                "This cannot happen.");
+                                     "This cannot happen.");
                 }
                 ofs_fcs << std::setw(4) << multiplicity;
 
@@ -283,7 +288,7 @@ void Writer::write_displacement_pattern(ALMCore *alm)
         ofs_pattern.open(alm->files->file_disp_pattern[order].c_str(), std::ios::out);
         if (!ofs_pattern)
             alm->error->exit("write_displacement_pattern",
-                        "Cannot open file_disp_pattern");
+                             "Cannot open file_disp_pattern");
 
         counter = 0;
 
@@ -445,7 +450,7 @@ void Writer::write_misc_xml(ALMCore *alm)
     ihead = 0;
 
     std::vector<int> atom_tmp;
-    std::vector<std::vector<int> > cell_dummy;
+    std::vector<std::vector<int>> cell_dummy;
     std::set<MinimumDistanceCluster>::iterator iter_cluster;
     int multiplicity;
 
@@ -469,7 +474,7 @@ void Writer::write_misc_xml(ALMCore *alm)
                 MinimumDistanceCluster(atom_tmp, cell_dummy));
             if (iter_cluster == alm->interaction->mindist_cluster[1][j].end()) {
                 alm->error->exit("load_reference_system_xml",
-                            "Cubic force constant is not found.");
+                                 "Cubic force constant is not found.");
             } else {
                 multiplicity = (*iter_cluster).cell.size();
             }
@@ -490,8 +495,8 @@ void Writer::write_misc_xml(ALMCore *alm)
 
     std::sort(alm->fcs->fc_set[0].begin(), alm->fcs->fc_set[0].end());
 
-    for (std::vector<FcProperty>::iterator it = alm->fcs->fc_set[0].begin(); 
-        it != alm->fcs->fc_set[0].end(); ++it) {
+    for (std::vector<FcProperty>::iterator it = alm->fcs->fc_set[0].begin();
+         it != alm->fcs->fc_set[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
@@ -525,8 +530,8 @@ void Writer::write_misc_xml(ALMCore *alm)
 
         std::sort(alm->fcs->fc_set[order].begin(), alm->fcs->fc_set[order].end());
 
-        for (std::vector<FcProperty>::iterator it = alm->fcs->fc_set[order].begin(); 
-            it != alm->fcs->fc_set[order].end(); ++it) {
+        for (std::vector<FcProperty>::iterator it = alm->fcs->fc_set[order].begin();
+             it != alm->fcs->fc_set[order].end(); ++it) {
             FcProperty fctmp = *it;
             ip = fctmp.mother + ishift;
 
@@ -613,8 +618,7 @@ void Writer::write_hessian(ALMCore *alm)
         }
     }
 
-    for (std::vector<FcProperty>::iterator it = alm->fcs->fc_set[0].begin();
-         it != alm->fcs->fc_set[0].end(); ++it) {
+    for (auto it = alm->fcs->fc_set[0].begin(); it != alm->fcs->fc_set[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
@@ -657,4 +661,60 @@ std::string Writer::double2string(const double d, const int nprec)
     ss << std::scientific << std::setprecision(nprec) << d;
     ss >> rt;
     return rt;
+}
+
+void Writer::write_in_QEformat(ALMCore *alm)
+{
+    int i, j, itran, ip;
+    int pair_tmp[2];
+    int pair_tran[2];
+    std::ofstream ofs_hes;
+    double **hessian;
+    int nat3 = 3 * alm->system->nat;
+
+    alm->memory->allocate(hessian, nat3, nat3);
+
+    for (i = 0; i < nat3; ++i) {
+        for (j = 0; j < nat3; ++j) {
+            hessian[i][j] = 0.0;
+        }
+    }
+
+    for (auto it = alm->fcs->fc_set[0].begin(); it != alm->fcs->fc_set[0].end(); ++it) {
+        FcProperty fctmp = *it;
+        ip = fctmp.mother;
+
+        for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
+        for (itran = 0; itran < alm->symmetry->ntran; ++itran) {
+            for (i = 0; i < 2; ++i) {
+                pair_tran[i] = alm->symmetry->map_sym[pair_tmp[i]][alm->symmetry->symnum_tran[itran]];
+            }
+            hessian[3 * pair_tran[0] + fctmp.elems[0] % 3][3 * pair_tran[1] + fctmp.elems[1] % 3]
+                = alm->fitting->params[ip] * fctmp.coef;
+        }
+    }
+
+    std::string file_fc = alm->files->job_title + ".fc";
+
+    ofs_hes.open(file_fc.c_str(), std::ios::out);
+    if (!ofs_hes) alm->error->exit("write_hessian", "cannot create hessian file");
+
+    ofs_hes << "  1  1  1" << std::endl;
+    for (int icrd = 0; icrd < 3; ++icrd) {
+        for (int jcrd = 0; jcrd < 3; ++jcrd) {
+            for (i = 0; i < alm->system->nat; ++i) {
+                for (j = 0; j < alm->system->nat; ++j) {
+                    ofs_hes << std::setw(3) << icrd + 1;
+                    ofs_hes << std::setw(3) << jcrd + 1;
+                    ofs_hes << std::setw(3) << i + 1;
+                    ofs_hes << std::setw(3) << j + 1;
+                    ofs_hes << std::endl;
+                    ofs_hes << "  1  1  1 " << std::setw(20) << std::setprecision(13) <<  std::scientific << hessian[3 * j + jcrd][3 * i + icrd];
+                    ofs_hes << std::endl;
+                }
+            }
+        }
+    }
+    ofs_hes.close();
+    alm->memory->deallocate(hessian);
 }
