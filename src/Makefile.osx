@@ -9,10 +9,10 @@
 # OpenMP-enabled gcc can be installed via homebrew
 CXX = g++-7
 CXXFLAGS = -O2 -fopenmp 
-INCLUDE = -I../include -I$(HOME)/etc/spglib/include/spglib
+INCLUDE = -I../include -I$(HOME)/src/spglib/include
 
 CXXL = ${CXX}
-LDFLAGS = -lgomp -L$(HOME)/etc/spglib/lib -lsymspg
+LDFLAGS = -lgomp -L$(HOME)/src/spglib/lib -lsymspg
 
 LAPACK = -llapack
 LIBS = ${LAPACK}
