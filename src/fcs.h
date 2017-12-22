@@ -24,19 +24,19 @@ namespace ALM_NS
     {
     public:
         std::vector<int> elems; // flattened index of (iatom, icoordinate) in the supercell
-        double coef; // factor (+1 or -1) to convert the mother FC to the child
+        double sign; // factor (+1 or -1) to convert the mother FC to the child
         int mother; // index of the reducible force constants
 
         FcProperty();
 
         FcProperty(const FcProperty &obj) :
-            coef(obj.coef), mother(obj.mother), elems(obj.elems)
+            sign(obj.sign), mother(obj.mother), elems(obj.elems)
         {
         }
 
         FcProperty(const int n, const double c, const int *arr, const int m)
         {
-            coef = c;
+            sign = c;
             mother = m;
             for (int i = 0; i < n; ++i) {
                 elems.push_back(arr[i]);
@@ -67,7 +67,7 @@ namespace ALM_NS
 
         void init();
 
-        std::vector<int> *ndup; // stores duplicate number of irreducible force constants
+        std::vector<int> *nequiv; // stores duplicate number of irreducible force constants
         std::vector<FcProperty> *fc_table; // all force constants
         std::vector<FcProperty> *fc_zeros;
 
@@ -93,7 +93,6 @@ namespace ALM_NS
     private:
         void set_default_variables();
         void deallocate_variables();
-//        void generate_fclists(int maxorder, int *nzero);
         bool is_ascending(const int, const int *);
     };
 }

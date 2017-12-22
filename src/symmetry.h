@@ -117,8 +117,6 @@ namespace ALM_NS
         int *symnum_tran;
 
         double tolerance;
-        // double ***symrel;
-        // double **tnons;
 
         int **map_sym;
         int **map_p2s;
@@ -184,7 +182,5 @@ namespace ALM_NS
                                    const double);
 
         std::string file_sym;
-        //int ***symrel_int;
-        //std::vector<SymmetryOperation> SymmList;
     };
 }

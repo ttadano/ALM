@@ -407,10 +407,10 @@ const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
     fcs = alm_core->fcs;
     id = 0;
     order = fc_order - 1;
-    if (fcs->ndup[order].size() < 1) { return 0; }
-    num_unique_elems = fcs->ndup[order].size();
+    if (fcs->nequiv[order].size() < 1) { return 0; }
+    num_unique_elems = fcs->nequiv[order].size();
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
-        num_equiv_elems = fcs->ndup[order][iuniq];
+        num_equiv_elems = fcs->nequiv[order][iuniq];
         id += num_equiv_elems;
     }
     return id;
@@ -431,16 +431,16 @@ const void ALM::get_fc(double *fc_values,
     maxorder = alm_core->interaction->maxorder;
     ip = 0;
     for (order = 0; order < fc_order; ++order) {
-        if (fcs->ndup[order].size() < 1) { continue; }
+        if (fcs->nequiv[order].size() < 1) { continue; }
         id = 0;
-        num_unique_elems = fcs->ndup[order].size();
+        num_unique_elems = fcs->nequiv[order].size();
         for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
             if (order == fc_order - 1) {
                 fc_elem = fitting->params[ip];
-                num_equiv_elems = fcs->ndup[order][iuniq];
+                num_equiv_elems = fcs->nequiv[order][iuniq];
                 for (j = 0; j < num_equiv_elems; ++j) {
-                    // coef is normally 1 or -1.
-                    coef = fcs->fc_table[order][id].coef;
+                    // sign is normally 1 or -1.
+                    coef = fcs->fc_table[order][id].sign;
                     fc_values[id] = fc_elem * coef;
                     for (k = 0; k < fc_order + 1; ++k) {
                         elem_indices[id * (fc_order + 1) + k] =
