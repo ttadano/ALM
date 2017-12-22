@@ -20,6 +20,7 @@ endif()
 
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
+include_directories("/Users/tadano/src/spglib/include")
 
 if (UNIX)
     #set( ENV{BLA_VENDOR} "Intel10_64lp")
@@ -36,6 +37,7 @@ set(alm_version ${CMAKE_MATCH_1})
 MESSAGE("ALM version: ${CMAKE_MATCH_1}")
 set(serial "${alm_version}")
 set(soserial "1")
+set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
 
 # Source code
 include_directories("${PROJECT_SOURCE_DIR}/src")
@@ -63,7 +65,7 @@ add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
 		   ${PROJECT_SOURCE_DIR}/src/input_parser.cpp
 		   ${PROJECT_SOURCE_DIR}/src/input_setter.cpp
 		   ${SOURCES})
-target_link_libraries(alm ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
+target_link_libraries(alm ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib})
 set_property(TARGET alm PROPERTY CXX_STANDARD 11)
 set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
 
@@ -72,7 +74,7 @@ set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # Shared library
 add_library(almcxx SHARED ${SOURCES})
-target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
+target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib})
 set_property(TARGET almcxx PROPERTY VERSION ${serial})
 set_property(TARGET almcxx PROPERTY SOVERSION ${soserial})
 set_property(TARGET almcxx PROPERTY CXX_STANDARD 11)
