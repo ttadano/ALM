@@ -14,6 +14,9 @@
 #include <string>
 #include <fstream>
 #include <vector>
+extern "C" {
+#include "spglib.h"
+}
 
 #ifdef _USE_EIGEN
 #include <Eigen/Core>
@@ -94,7 +97,7 @@ namespace ALM_NS
 
         void init();
 
-        unsigned int nsym, ntran, natmin;
+        unsigned int nsym, ntran, nat_prim;
         int printsymmetry;
         int multiply_data;
         int *symnum_tran;
@@ -105,6 +108,11 @@ namespace ALM_NS
 
         int **map_sym;
         int **map_p2s;
+
+        double lavec_prim[3][3], rlavec_prim[3][3];
+        double **xcoord_prim;
+        int *kd_prim;
+        SpglibDataset *SymmData;
 
         class Maps
         {
@@ -131,6 +139,9 @@ namespace ALM_NS
         void findsym(int, double [3][3], double **,
                      std::vector<SymmetryOperation> &);
 
+        void findsym_spglib(const int, double[3][3], double **,
+             const int *, std::vector<SymmetryOperation> &, const double);
+
         bool is_translation(int **);
         bool is_proper(double [3][3]);
 
@@ -142,13 +153,19 @@ namespace ALM_NS
         void find_lattice_symmetry(double [3][3], std::vector<RotationMatrix> &);
 
         void find_crystal_symmetry(int, int,
-                                   std::vector<unsigned int> *, double **x,
+                                   std::vector<unsigned int> *, double **,
                                    std::vector<RotationMatrix>,
                                    std::vector<SymmetryOperation> &);
+
+        void set_primitive_lattice(const double [3][3], const int, 
+                                   int *, double **,
+                                   double [3][3], unsigned int &,
+                                   int *, double **,
+                                   const double);
 
         std::string file_sym;
         int ***symrel_int;
         std::vector<SymmetryOperation> SymmList;
+
     };
 }
-

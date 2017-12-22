@@ -75,6 +75,7 @@ namespace ALM_NS
         void write_force_constants(ALM*);
         void write_misc_xml(ALM*);
         void write_hessian(ALM*);
+        void write_in_QEformat(ALMCore *);
 
         std::string double2string(const double, const int nprec = 15);
     };

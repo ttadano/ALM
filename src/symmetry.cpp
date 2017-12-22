@@ -61,14 +61,14 @@ void Symmetry::init()
     allocate(symrel_int, nsym, 3, 3);
 
     int isym = 0;
-    for (auto iter = SymmList.begin(); iter != SymmList.end(); ++iter) {
+    for (auto it = SymmList.begin(); it != SymmList.end(); ++it) {
         for (i = 0; i < 3; ++i) {
             for (j = 0; j < 3; ++j) {
-                symrel_int[isym][i][j] = (*iter).rot[i][j];
+                symrel_int[isym][i][j] = (*it).rot[i][j];
             }
         }
         for (i = 0; i < 3; ++i) {
-            tnons[isym][i] = (*iter).tran[i];
+            tnons[isym][i] = (*it).tran[i];
         }
         ++isym;
     }
@@ -101,7 +101,44 @@ void Symmetry::init()
     }
     std::cout << std::endl;
 
+    memory->allocate(kd_prim, nat);
+    memory->allocate(xcoord_prim, nat, 3);
+
+    set_primitive_lattice(system->lavec, system->nat,
+                          system->kd, system->xcoord,
+                          lavec_prim, nat_prim,
+                          kd_prim, xcoord_prim,
+                          tolerance);
     pure_translations();
+
+    std::cout.setf(std::ios::scientific);
+    std::cout << "  Primitive cell contains " << nat_prim << " atoms" << std::endl;
+    std::cout << std::endl;
+    std::cout << "  Primitive Lattice Vector:" << std::endl;
+    std::cout << std::setw(16) << lavec_prim[0][0];
+    std::cout << std::setw(15) << lavec_prim[1][0];
+    std::cout << std::setw(15) << lavec_prim[2][0];
+    std::cout << " : a1 primitive" << std::endl;
+    std::cout << std::setw(16) << lavec_prim[0][1];
+    std::cout << std::setw(15) << lavec_prim[1][1];
+    std::cout << std::setw(15) << lavec_prim[2][1];
+    std::cout << " : a2 primitive" << std::endl;
+    std::cout << std::setw(16) << lavec_prim[0][2];
+    std::cout << std::setw(15) << lavec_prim[1][2];
+    std::cout << std::setw(15) << lavec_prim[2][2];
+    std::cout << " : a3 primitive" << std::endl;
+
+    std::cout << "  " << std::endl;
+    std::cout << "  Fractional coordinates of atoms in the primitive lattice:" << std::endl;
+    for (i = 0; i < nat_prim; ++i) {
+        std::cout << std::setw(6) << i + 1;
+        std::cout << std::setw(15) << xcoord_prim[i][0];
+        std::cout << std::setw(15) << xcoord_prim[i][1];
+        std::cout << std::setw(15) << xcoord_prim[i][2];
+        std::cout << std::setw(5) << kd_prim[i] << std::endl;
+    }
+    std::cout << std::endl << std::endl;
+    std::cout.unsetf(std::ios::scientific);
 
     if (map_sym) {
         deallocate(map_sym);
@@ -126,7 +163,7 @@ void Symmetry::init()
 
     for (int i = 0; i < ntran; ++i) {
         std::cout << std::setw(6) << i + 1 << " | ";
-        for (int j = 0; j < natmin; ++j) {
+        for (int j = 0; j < nat_prim; ++j) {
             std::cout << std::setw(5) << map_p2s[j][i] + 1;
             if ((j + 1) % 5 == 0) {
                 std::cout << std::endl << "       | ";
@@ -208,11 +245,11 @@ void Symmetry::setup_symmetry_operation(int nat,
 
         // Automatically find symmetries.
 
-        std::cout << "  NSYM = 0 : Trying to find symmetry operations." << std::endl;
-        std::cout << "             Please be patient. " << std::endl;
+        std::cout << "  NSYM = 0 : Automatic detection of the space group." << std::endl;
         std::cout << "             This can take a while for a large supercell." << std::endl << std::endl;
 
-        findsym(nat, aa, x, SymmList);
+       // findsym(nat, aa, x, SymmList);
+        findsym_spglib(nat, aa, x, system->kd, SymmList, tolerance);
         // The order in SymmList changes for each run because it was generated
         // with OpenMP. Therefore, we sort the list here to have the same result. 
         std::sort(SymmList.begin() + 1, SymmList.end());
@@ -233,7 +270,7 @@ void Symmetry::setup_symmetry_operation(int nat,
                 }
                 ofs_sym << "  ";
                 for (i = 0; i < 3; ++i) {
-                    ofs_sym << std::setprecision(15) << std::setw(20) << (*p).tran[i];
+                    ofs_sym << std::setprecision(15) << std::setw(24) << (*p).tran[i];
                 }
                 ofs_sym << std::endl;
             }
@@ -599,7 +636,79 @@ void Symmetry::find_crystal_symmetry(int nat,
             }
         }
 
+            }
+        }
+
+void Symmetry::findsym_spglib(const int nat,
+                              double aa[3][3],
+                              double **x, const int *types,
+                              std::vector<SymmetryOperation> &symop_all,
+                              const double symprec)
+{
+    int i, j;
+    int nsym;
+    double (*position)[3];
+    double (*translation)[3];
+    int (*rotation)[3][3];
+    int spgnum;
+    char symbol[11];
+    double aa_tmp[3][3];
+    int *types_tmp;
+
+    memory->allocate(position, nat);
+    memory->allocate(types_tmp, nat);
+
+
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            aa_tmp[i][j] = aa[i][j];
     }
+}
+    for (i = 0; i < nat; ++i) {
+        types_tmp[i] = types[i];
+        for (j = 0; j < 3; ++j) {
+            position[i][j] = x[i][j];
+        }
+    }
+    // First find the number of symmetry operations
+    nsym = spg_get_multiplicity(aa_tmp, position, types_tmp, nat, symprec);
+
+    if (nsym == 0) error->exit("findsym_spglib", "Error occured in spg_get_multiplicity");
+
+    memory->allocate(translation, nsym);
+    memory->allocate(rotation, nsym);
+
+    // Store symmetry operations
+    nsym = spg_get_symmetry(rotation, translation, nsym,
+                            aa_tmp, position, types_tmp, nat, symprec);
+
+    spgnum = spg_get_international(symbol, aa_tmp, position, types_tmp, nat, symprec);
+
+    symop_all.clear();
+    for (i = 0; i < nsym; ++i) symop_all.push_back(SymmetryOperation(rotation[i], translation[i]));
+
+    std::cout << "  Space group: " << symbol << " (" << std::setw(3) << spgnum << ")" << std::endl;
+
+    memory->deallocate(rotation);
+    memory->deallocate(translation);
+
+
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            aa_tmp[i][j] = aa[i][j];
+        }
+    }
+    for (i = 0; i < nat; ++i) {
+        types_tmp[i] = types[i];
+        for (j = 0; j < 3; ++j) {
+            position[i][j] = x[i][j];
+        }
+    }
+
+    SymmData = spg_get_dataset(aa_tmp, position, types_tmp, nat, symprec);
+
+    memory->deallocate(types_tmp);
+    memory->deallocate(position);
 }
 
 
@@ -651,20 +760,19 @@ void Symmetry::pure_translations()
         if (is_translation(symrel_int[i])) ++ntran;
     }
 
-    natmin = system->nat / ntran;
+    // nat_prim = system->nat / ntran;
 
     if (ntran > 1) {
-        std::cout << "  Given system is not primitive cell." << std::endl;
+        std::cout << "  Given system is not a primitive cell." << std::endl;
         std::cout << "  There are " << std::setw(5)
             << ntran << " translation operations." << std::endl;
     } else {
         std::cout << "  Given system is a primitive cell." << std::endl;
     }
-    std::cout << "  Primitive cell contains " << natmin << " atoms" << std::endl;
 
     if (system->nat % ntran) {
         error->exit("pure_translations",
-                    "nat != natmin * ntran. Something is wrong in the structure.");
+                    "nat != nat_prim * ntran. Something is wrong in the structure.");
     }
 
     if (symnum_tran) {
@@ -743,6 +851,165 @@ void Symmetry::genmaps(int nat,
         }
     }
 
+    double shift[3];
+    double pos[3], pos_std[3];
+#ifdef _DEBUG
+    std::cout << "Origin shift = ";
+    for (i = 0; i < 3; ++i) {
+        shift[i] = SymmData->origin_shift[i];
+        std::cout << shift[i] << " ";
+        if (std::abs(shift[i] - 1.0) < eps6) shift[i] -= 1.0;
+    }
+    std::cout << std::endl;
+
+    double transform_p2s[3][3];
+    double inv_lavec_prim[3][3];
+    invmat3(inv_lavec_prim, lavec_prim);
+    matmul3(transform_p2s, inv_lavec_prim, system->lavec);
+
+    std::cout << "Transformation matrix of spglib:" << std::endl;
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            std::cout << std::setw(15) << SymmData->transformation_matrix[i][j];
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    double inv_transformation_matrix[3][3];
+    double lavec_tmp[3][3];
+    invmat3(inv_transformation_matrix, SymmData->transformation_matrix);
+    matmul3(lavec_tmp, inv_transformation_matrix, system->lavec);
+    std::cout << "Lavec tmp (should be standardized cell):" << std::endl;
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            std::cout << std::setw(15) << lavec_tmp[i][j];
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    double transform_s2std[3][3];
+    double lavec_std[3][3], inv_lavec_std[3][3];
+
+    double transform_p2std[3][3];
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            lavec_std[i][j] = SymmData->std_lattice[i][j];
+        }
+    }
+    invmat3(inv_lavec_std, lavec_std);
+    matmul3(transform_s2std, inv_lavec_std, system->lavec);
+
+    std::cout << "  Standardized cell:" << std::endl;
+    std::cout << std::setw(16) << lavec_std[0][0];
+    std::cout << std::setw(15) << lavec_std[1][0];
+    std::cout << std::setw(15) << lavec_std[2][0];
+    std::cout << " : a1 primitive" << std::endl;
+    std::cout << std::setw(16) << lavec_std[0][1];
+    std::cout << std::setw(15) << lavec_std[1][1];
+    std::cout << std::setw(15) << lavec_std[2][1];
+    std::cout << " : a2 primitive" << std::endl;
+    std::cout << std::setw(16) << lavec_std[0][2];
+    std::cout << std::setw(15) << lavec_std[1][2];
+    std::cout << std::setw(15) << lavec_std[2][2];
+    std::cout << " : a3 primitive" << std::endl;
+
+    std::cout << "Transformation matrix of myself:" << std::endl;
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            std::cout << std::setw(15) << transform_s2std[i][j];
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    double lavec_super[3][3];
+    matmul3(lavec_super, lavec_std, SymmData->transformation_matrix);
+
+    std::cout << "  New supercell:" << std::endl;
+    std::cout << std::setw(16) << lavec_super[0][0];
+    std::cout << std::setw(15) << lavec_super[1][0];
+    std::cout << std::setw(15) << lavec_super[2][0];
+    std::cout << " : a1 primitive" << std::endl;
+    std::cout << std::setw(16) << lavec_super[0][1];
+    std::cout << std::setw(15) << lavec_super[1][1];
+    std::cout << std::setw(15) << lavec_super[2][1];
+    std::cout << " : a2 primitive" << std::endl;
+    std::cout << std::setw(16) << lavec_super[0][2];
+    std::cout << std::setw(15) << lavec_super[1][2];
+    std::cout << std::setw(15) << lavec_super[2][2];
+    std::cout << " : a3 primitive" << std::endl;
+
+    double inv_lavec_super[3][3];
+    double transform_s2s[3][3];
+
+    invmat3(inv_lavec_super, lavec_super);
+    matmul3(transform_s2s, inv_lavec_super, system->lavec);
+    std::cout << "Transformation matrix from super to super cell:" << std::endl;
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            std::cout << std::setw(15) << transform_s2s[i][j];
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "Transformation matrix from primitive to super cell:" << std::endl;
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            std::cout << std::setw(15) << transform_p2s[i][j];
+        }
+        std::cout << std::endl;
+    }
+
+
+    matmul3(transform_p2std, inv_lavec_prim, lavec_std);
+    rotvec(shift, shift, transform_p2std);
+    std::cout << "Transformation matrix from primitive cell to standardized cell:" << std::endl;
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            std::cout << std::setw(15) << transform_p2std[i][j];
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "Origin shift (in fractional coordinate of the primitive lattice) = ";
+    for (i = 0; i < 3; ++i) std::cout << shift[i] << " ";
+    std::cout << std::endl;
+
+
+    for (iat = 0; iat < nat; ++iat) {
+        rotvec(pos_std, x[iat], transform_p2s);
+        std::cout << std::setw(4) << iat + 1;
+        for (i = 0; i < 3; ++i) std::cout << std::setw(15) << pos_std[i] + shift[i];
+        std::cout << std::endl;
+    }
+
+
+    // Find the atoms in the primitive lattice
+
+    double xdiff[3];
+    double res;
+
+    for (iat = 0; iat < nat_prim; ++iat) {
+        int loc = -1;
+
+        for (jat = 0; jat < nat; ++jat) {
+            rotvec(pos_std, x[jat], transform_p2s);
+            for (i = 0; i < 3; ++i) xdiff[i] = pos_std[i] + shift[i] - xcoord_prim[iat][i];
+            res = std::sqrt(xdiff[0] * xdiff[0] + xdiff[1] * xdiff[1] + xdiff[2] * xdiff[2]);
+            if (res < tolerance) {
+                loc = jat;
+                break;
+            }
+        }
+        if (loc == -1) {
+            error->warn("genmaps",
+                        "Could not identify the atoms in the primitive cell");
+        }
+        std::cout << " iat = " << std::setw(4) << iat + 1;
+        std::cout << " iat_super = " << std::setw(4) << loc + 1 << std::endl;
+    }
+#endif
     bool *is_checked;
     allocate(is_checked, nat);
 
@@ -763,7 +1030,7 @@ void Symmetry::genmaps(int nat,
 
     deallocate(is_checked);
 
-    for (iat = 0; iat < natmin; ++iat) {
+    for (iat = 0; iat < nat_prim; ++iat) {
         for (i = 0; i < ntran; ++i) {
             atomnum_translated = map_p2s[iat][i];
             map_s2p[atomnum_translated].atom_num = iat;
@@ -799,7 +1066,7 @@ void Symmetry::symop_availability_check(double ***rot,
         nfinite = 0;
         for (j = 0; j < 3; ++j) {
             for (k = 0; k < 3; ++k) {
-                if (std::abs(rot[i][j][k]) > eps) ++nfinite;
+                if (std::abs(rot[i][j][k]) > 1.0e-5) ++nfinite;
             }
         }
 
@@ -954,4 +1221,52 @@ bool Symmetry::is_proper(double rot[3][3])
     }
 
     return ret;
+}
+
+void Symmetry::set_primitive_lattice(const double aa[3][3],
+                                     const int nat,
+                                     int *kd,
+                                     double **x,
+                                     double aa_prim[3][3],
+                                     unsigned int &nat_prim,
+                                     int *kd_prim,
+                                     double **x_prim,
+                                     const double symprec)
+{
+    int i, j;
+    int *types_tmp;
+    double (*position)[3];
+
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            aa_prim[i][j] = aa[i][j];
+        }
+    }
+
+    memory->allocate(position, nat);
+    memory->allocate(types_tmp, nat);
+
+    for (i = 0; i < nat; ++i) {
+        for (j = 0; j < 3; ++j) {
+            position[i][j] = x[i][j];
+        }
+        types_tmp[i] = kd[i];
+    }
+
+    //    nat_prim = spg_find_primitive(aa_prim, position, types_tmp, nat, symprec);
+    nat_prim = spg_standardize_cell(aa_prim,
+                                    position,
+                                    types_tmp,
+                                    nat, 1, 0,
+                                    symprec);
+
+    for (i = 0; i < nat_prim; ++i) {
+        for (j = 0; j < 3; ++j) {
+            x_prim[i][j] = position[i][j];
+        }
+        kd_prim[i] = types_tmp[i];
+    }
+
+    memory->deallocate(position);
+    memory->deallocate(types_tmp);
 }
