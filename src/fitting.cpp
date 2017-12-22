@@ -774,6 +774,8 @@ void Fitting::set_default_variables()
 #endif
 
     params = nullptr;
+    u_in = nullptr;
+    f_in = nullptr;
 }
 
 void Fitting::deallocate_variables()
