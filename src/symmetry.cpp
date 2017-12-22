@@ -248,7 +248,7 @@ void Symmetry::setup_symmetry_operation(int nat,
         std::cout << "  NSYM = 0 : Automatic detection of the space group." << std::endl;
         std::cout << "             This can take a while for a large supercell." << std::endl << std::endl;
 
-       // findsym(nat, aa, x, SymmList);
+        // findsym(nat, aa, x, SymmList);
         findsym_spglib(nat, aa, x, system->kd, SymmList, tolerance);
         // The order in SymmList changes for each run because it was generated
         // with OpenMP. Therefore, we sort the list here to have the same result. 
@@ -636,8 +636,8 @@ void Symmetry::find_crystal_symmetry(int nat,
             }
         }
 
-            }
-        }
+    }
+}
 
 void Symmetry::findsym_spglib(const int nat,
                               double aa[3][3],
@@ -662,8 +662,8 @@ void Symmetry::findsym_spglib(const int nat,
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
             aa_tmp[i][j] = aa[i][j];
+        }
     }
-}
     for (i = 0; i < nat; ++i) {
         types_tmp[i] = types[i];
         for (j = 0; j < 3; ++j) {

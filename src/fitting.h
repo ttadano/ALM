@@ -34,8 +34,8 @@ namespace ALM_NS
         double **u_in;
         double **f_in;
 
-        void set_displacement_and_force(const double * const * u_in,
-                                        const double * const * f_in,
+        void set_displacement_and_force(const double * const *u_in,
+                                        const double * const *f_in,
                                         const int nat,
                                         const int ndata_used);
         void calc_matrix_elements_algebraic_constraint(const int, const int, const int, const int,
@@ -101,4 +101,3 @@ namespace ALM_NS
                      double *tau, double *work, int *lwork, int *info);
     }
 }
-

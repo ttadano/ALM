@@ -28,13 +28,13 @@ namespace ALM_NS
         {
         };
 
-        AtomProperty(const AtomProperty& other)
+        AtomProperty(const AtomProperty &other)
             : x(other.x), y(other.y), z(other.z),
               kind(other.kind), atom(other.atom), tran(other.tran)
         {
         };
 
-        AtomProperty(const double* pos,
+        AtomProperty(const double *pos,
                      const int kind_in,
                      const int atom_in,
                      const int tran_in)
@@ -67,14 +67,14 @@ namespace ALM_NS
         Writer();
         ~Writer();
 
-        void writeall(ALM*);
-        void write_input_vars(ALM*);
-        void write_displacement_pattern(ALM*);
+        void writeall(ALM *);
+        void write_input_vars(ALM *);
+        void write_displacement_pattern(ALM *);
 
     private:
-        void write_force_constants(ALM*);
-        void write_misc_xml(ALM*);
-        void write_hessian(ALM*);
+        void write_force_constants(ALM *);
+        void write_misc_xml(ALM *);
+        void write_hessian(ALM *);
         void write_in_QEformat(ALMCore *);
 
         std::string double2string(const double, const int nprec = 15);

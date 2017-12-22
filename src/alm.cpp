@@ -488,5 +488,3 @@ const void ALM::run_suggest()
 {
     alm_core->displace->gen_displacement_pattern();
 }
-
-

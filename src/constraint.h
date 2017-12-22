@@ -26,9 +26,13 @@ namespace ALM_NS
 
         ConstraintClass();
 
-        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const) {}
+        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const)
+        {
+        }
 
-        ConstraintClass(const std::vector<double> &vec) : w_const(vec) {}
+        ConstraintClass(const std::vector<double> &vec) : w_const(vec)
+        {
+        }
 
         ConstraintClass(const int n, const double *arr, const int nshift = 0)
         {
@@ -51,7 +55,9 @@ namespace ALM_NS
         double val_to_fix;
 
         ConstraintTypeFix(const unsigned int index_in, const double val_in) :
-            p_index_target(index_in), val_to_fix(val_in) {}
+            p_index_target(index_in), val_to_fix(val_in)
+        {
+        }
     };
 
     class ConstraintTypeRelate
@@ -64,7 +70,9 @@ namespace ALM_NS
         ConstraintTypeRelate(const unsigned int index_in,
                              const std::vector<double> alpha_in,
                              const std::vector<unsigned int> p_index_in) :
-            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in) {}
+            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in)
+        {
+        }
     };
 
     class Constraint: protected Pointers
@@ -136,4 +144,3 @@ namespace ALM_NS
         void dgetrf_(int *m, int *n, double *a, int *lda, int *ipiv, int *info);
     }
 }
-

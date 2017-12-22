@@ -103,17 +103,17 @@ void Writer::writeall(ALM *alm)
 {
     ALMCore *alm_core = alm->get_alm_core();
 
- //   alm_core->timer->start_clock("writer");
+    //   alm_core->timer->start_clock("writer");
 
     std::cout << " The following files are created:" << std::endl << std::endl;
     write_force_constants(alm);
     // write_misc_xml breaks data in fcs.
     write_misc_xml(alm);
     if (alm_core->files->print_hessian) write_hessian(alm);
- //   write_in_QEformat(alm);
+    //   write_in_QEformat(alm);
     std::cout << std::endl;
 
- //   alm_core->timer->stop_clock("writer");
+    //   alm_core->timer->stop_clock("writer");
 }
 
 void Writer::write_force_constants(ALM *alm)
@@ -731,7 +731,7 @@ void Writer::write_in_QEformat(ALMCore *alm)
                     ofs_hes << std::setw(3) << i + 1;
                     ofs_hes << std::setw(3) << j + 1;
                     ofs_hes << std::endl;
-                    ofs_hes << "  1  1  1 " << std::setw(20) << std::setprecision(13) <<  std::scientific << hessian[3 * j + jcrd][3 * i + icrd];
+                    ofs_hes << "  1  1  1 " << std::setw(20) << std::setprecision(13) << std::scientific << hessian[3 * j + jcrd][3 * i + icrd];
                     ofs_hes << std::endl;
                 }
             }
