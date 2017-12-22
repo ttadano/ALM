@@ -4,7 +4,7 @@ from setuptools import setup, Extension
 import numpy
 include_dirs_numpy = [numpy.get_include()]
 
-compile_with_sources = True
+compile_with_sources = False
 
 extra_link_args = ['-lstdc++', '-lgomp', '-llapack']
 library_dirs = []
