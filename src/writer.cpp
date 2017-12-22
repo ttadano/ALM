@@ -351,7 +351,7 @@ void Writer::write_misc_xml(ALM *alm)
     }
 
     system_structure.nat = alm_core->system->nat;
-    system_structure.natmin = alm_core->symmetry->natmin;
+    system_structure.natmin = alm_core->symmetry->nat_prim;
     system_structure.ntran = alm_core->symmetry->ntran;
     system_structure.nspecies = alm_core->system->nkd;
 
@@ -694,7 +694,7 @@ void Writer::write_in_QEformat(ALMCore *alm)
     double **hessian;
     int nat3 = 3 * alm->system->nat;
 
-    alm->memory->allocate(hessian, nat3, nat3);
+    allocate(hessian, nat3, nat3);
 
     for (i = 0; i < nat3; ++i) {
         for (j = 0; j < nat3; ++j) {
@@ -702,7 +702,7 @@ void Writer::write_in_QEformat(ALMCore *alm)
         }
     }
 
-    for (auto it = alm->fcs->fc_set[0].begin(); it != alm->fcs->fc_set[0].end(); ++it) {
+    for (auto it = alm->fcs->fc_table[0].begin(); it != alm->fcs->fc_table[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
@@ -738,5 +738,5 @@ void Writer::write_in_QEformat(ALMCore *alm)
         }
     }
     ofs_hes.close();
-    alm->memory->deallocate(hessian);
+    deallocate(hessian);
 }

@@ -101,8 +101,8 @@ void Symmetry::init()
     }
     std::cout << std::endl;
 
-    memory->allocate(kd_prim, nat);
-    memory->allocate(xcoord_prim, nat, 3);
+    allocate(kd_prim, nat);
+    allocate(xcoord_prim, nat, 3);
 
     set_primitive_lattice(system->lavec, system->nat,
                           system->kd, system->xcoord,
@@ -148,7 +148,7 @@ void Symmetry::init()
     if (map_p2s) {
         deallocate(map_p2s);
     }
-    allocate(map_p2s, natmin, ntran);
+    allocate(map_p2s, nat_prim, ntran);
 
     if (map_s2p) {
         deallocate(map_s2p);
@@ -196,7 +196,7 @@ void Symmetry::set_default_variables()
     map_s2p = nullptr;
     sym_available = nullptr;
     ntran = 0;
-    natmin = 0;
+    nat_prim = 0;
     multiply_data = 1;
     tolerance = 1e-6;
     symrel_int = nullptr;
@@ -655,8 +655,8 @@ void Symmetry::findsym_spglib(const int nat,
     double aa_tmp[3][3];
     int *types_tmp;
 
-    memory->allocate(position, nat);
-    memory->allocate(types_tmp, nat);
+    allocate(position, nat);
+    allocate(types_tmp, nat);
 
 
     for (i = 0; i < 3; ++i) {
@@ -675,8 +675,8 @@ void Symmetry::findsym_spglib(const int nat,
 
     if (nsym == 0) error->exit("findsym_spglib", "Error occured in spg_get_multiplicity");
 
-    memory->allocate(translation, nsym);
-    memory->allocate(rotation, nsym);
+    allocate(translation, nsym);
+    allocate(rotation, nsym);
 
     // Store symmetry operations
     nsym = spg_get_symmetry(rotation, translation, nsym,
@@ -689,8 +689,8 @@ void Symmetry::findsym_spglib(const int nat,
 
     std::cout << "  Space group: " << symbol << " (" << std::setw(3) << spgnum << ")" << std::endl;
 
-    memory->deallocate(rotation);
-    memory->deallocate(translation);
+    deallocate(rotation);
+    deallocate(translation);
 
 
     for (i = 0; i < 3; ++i) {
@@ -707,8 +707,8 @@ void Symmetry::findsym_spglib(const int nat,
 
     SymmData = spg_get_dataset(aa_tmp, position, types_tmp, nat, symprec);
 
-    memory->deallocate(types_tmp);
-    memory->deallocate(position);
+    deallocate(types_tmp);
+    deallocate(position);
 }
 
 
@@ -1243,8 +1243,8 @@ void Symmetry::set_primitive_lattice(const double aa[3][3],
         }
     }
 
-    memory->allocate(position, nat);
-    memory->allocate(types_tmp, nat);
+    allocate(position, nat);
+    allocate(types_tmp, nat);
 
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
@@ -1267,6 +1267,6 @@ void Symmetry::set_primitive_lattice(const double aa[3][3],
         kd_prim[i] = types_tmp[i];
     }
 
-    memory->deallocate(position);
-    memory->deallocate(types_tmp);
+    deallocate(position);
+    deallocate(types_tmp);
 }

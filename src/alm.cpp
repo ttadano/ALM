@@ -339,7 +339,7 @@ ALMCore* ALM::get_alm_core()
 const int ALM::get_atom_mapping_by_pure_translations(int *map_p2s)
 {
     const int ntran = alm_core->symmetry->ntran;
-    const int natmin = alm_core->symmetry->natmin;
+    const int natmin = alm_core->symmetry->nat_prim;
 
     for (int i = 0; i < ntran; ++i) {
         for (int j = 0; j < natmin; ++j) {

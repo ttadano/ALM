@@ -93,12 +93,12 @@ void Interaction::init()
     if (interaction_pair) {
         deallocate(interaction_pair);
     }
-    allocate(interaction_pair, maxorder, symmetry->natmin);
+    allocate(interaction_pair, maxorder, symmetry->nat_prim);
 
     if (mindist_cluster) {
         deallocate(mindist_cluster);
     }
-    allocate(mindist_cluster, maxorder, symmetry->natmin);
+    allocate(mindist_cluster, maxorder, symmetry->nat_prim);
 
     if (pairs) {
         deallocate(pairs);
@@ -362,7 +362,7 @@ void Interaction::print_neighborlist(std::vector<DistInfo> **mindist)
     double dist_tmp;
     std::vector<DistList> *neighborlist;
 
-    memory->allocate(neighborlist, symmetry->nat_prim);
+    allocate(neighborlist, symmetry->nat_prim);
 
     for (i = 0; i < symmetry->nat_prim; ++i) {
         neighborlist[i].clear();
