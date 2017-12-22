@@ -4,9 +4,14 @@ from setuptools import setup, Extension
 import numpy
 include_dirs_numpy = [numpy.get_include()]
 
-compile_with_sources = False
+compile_with_sources = True
+extra_link_args = ['-lstdc++', 
+                   '-llapack', 
+                   '-L/Users/tadano/src/spglib/lib', '-lsymspg',
+                   '-fopenmp', '-Wl,-rpath,/usr/local/opt/gcc/lib/gcc/7,-rpath,/Users/tadano/src/spglib/lib']
 
-extra_link_args = ['-lstdc++', '-lgomp', '-llapack']
+include_dir_spglib=['/Users/tadano/src/spglib/include']
+
 library_dirs = []
 if compile_with_sources:
     sources = ['alm.cpp',
@@ -45,14 +50,14 @@ else: # compile with library
     # library_dirs = ['../lib']
 
 extension = Extension('alm._alm',
-                      include_dirs=include_dirs_numpy,
+                      include_dirs=include_dirs_numpy + include_dir_spglib,
                       library_dirs=library_dirs,
                       extra_compile_args = ['-fopenmp', '-std=c++11'],
                       extra_link_args=extra_link_args,
                       sources=sources)
 
 setup(name='alm',
-      version='0.9.8',
+      version='1.0.1',
       description='Force constants generator',
       setup_requires=['numpy', 'setuptools>=18.0'],
       author='Terumasa Tadano',
