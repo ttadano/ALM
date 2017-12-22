@@ -119,7 +119,7 @@ void Interaction::init()
     alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
-     alm->timer->stop_clock("interaction");
+    alm->timer->stop_clock("interaction");
 }
 
 void Interaction::generate_pairs(std::set<IntList> *pair_out,

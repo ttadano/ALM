@@ -219,7 +219,7 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
                                 list_found.insert(IntList(order + 2, ind_mapped));
 
                                 fc_table[order].push_back(FcProperty(order + 2, c_tmp,
-                                                                   ind_mapped, nmother));
+                                                                     ind_mapped, nmother));
                                 ++ndeps;
 
                                 // Add equivalent interaction list (permutation) if there are two or more indices
@@ -235,7 +235,7 @@ void Fcs::generate_fclists(int maxorder, int *nzero)
                                         std::swap(ind_mapped_tmp[0], ind_mapped_tmp[i]);
                                         sort_tail(order + 2, ind_mapped_tmp);
                                         fc_table[order].push_back(FcProperty(order + 2, c_tmp,
-                                                                           ind_mapped_tmp, nmother));
+                                                                             ind_mapped_tmp, nmother));
 
                                         ++ndeps;
 

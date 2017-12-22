@@ -132,19 +132,19 @@ namespace ALM_NS
 
     private:
         std::vector<DispDirectionHarmonic> disp_harm, disp_harm_best;
-	void set_default_variables();
-	void deallocate_variables();
+        void set_default_variables();
+        void deallocate_variables();
         void generate_pattern_all(const int,
                                   std::vector<AtomWithDirection> *,
                                   std::set<DispAtomSet> *);
 
         void generate_signvecs(const int,
-                               std::vector<std::vector<int> > &,
+                               std::vector<std::vector<int>> &,
                                std::vector<int>);
 
         void find_unique_sign_pairs(const int,
-                                    std::vector<std::vector<int> >,
+                                    std::vector<std::vector<int>>,
                                     std::vector<int>,
-                                    std::vector<std::vector<int> > &);
+                                    std::vector<std::vector<int>> &);
     };
 }

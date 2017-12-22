@@ -14,7 +14,9 @@
 #include <string>
 #include <fstream>
 #include <vector>
-extern "C" {
+
+extern "C"
+{
 #include "spglib.h"
 }
 
@@ -139,8 +141,8 @@ namespace ALM_NS
         void findsym(int, double [3][3], double **,
                      std::vector<SymmetryOperation> &);
 
-        void findsym_spglib(const int, double[3][3], double **,
-             const int *, std::vector<SymmetryOperation> &, const double);
+        void findsym_spglib(const int, double [3][3], double **,
+                            const int *, std::vector<SymmetryOperation> &, const double);
 
         bool is_translation(int **);
         bool is_proper(double [3][3]);
@@ -157,7 +159,7 @@ namespace ALM_NS
                                    std::vector<RotationMatrix>,
                                    std::vector<SymmetryOperation> &);
 
-        void set_primitive_lattice(const double [3][3], const int, 
+        void set_primitive_lattice(const double [3][3], const int,
                                    int *, double **,
                                    double [3][3], unsigned int &,
                                    int *, double **,
@@ -166,6 +168,5 @@ namespace ALM_NS
         std::string file_sym;
         int ***symrel_int;
         std::vector<SymmetryOperation> SymmList;
-
     };
 }

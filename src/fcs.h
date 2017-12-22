@@ -27,8 +27,10 @@ namespace ALM_NS
 
         FcProperty();
 
-        FcProperty(const FcProperty &obj) : 
-            coef(obj.coef), mother(obj.mother), elems(obj.elems) {}
+        FcProperty(const FcProperty &obj) :
+            coef(obj.coef), mother(obj.mother), elems(obj.elems)
+        {
+        }
 
         FcProperty(const int n, const double c, const int *arr, const int m)
         {
@@ -73,4 +75,3 @@ namespace ALM_NS
         bool is_ascending(const int, const int *);
     };
 }
-

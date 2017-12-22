@@ -22,18 +22,13 @@ namespace ALM_NS
         int element;
         double magmom;
 
-        bool operator<(const AtomType& a) const
+        bool operator<(const AtomType &a) const
         {
-            if (this->element < a.element)
-            {
+            if (this->element < a.element) {
                 return true;
-            }
-            else if (this->element == a.element)
-            {
+            } else if (this->element == a.element) {
                 return this->magmom < a.magmom;
-            }
-            else
-            {
+            } else {
                 return false;
             }
         }
@@ -43,31 +38,31 @@ namespace ALM_NS
     class System: protected Pointers
     {
     public:
-        System(class ALMCore*);
+        System(class ALMCore *);
         ~System();
         void init();
         void recips(double [3][3], double [3][3]);
-        void frac2cart(double**);
+        void frac2cart(double **);
         void load_reference_system();
-        void load_reference_system_xml(std::string, const int, double*);
+        void load_reference_system_xml(std::string, const int, double *);
 
         int nat, nkd;
-//        int nat_prim;
+        //        int nat_prim;
         int ndata, nstart, nend;
-        int* kd;
-//        int *kd_prim;
+        int *kd;
+        //        int *kd_prim;
         double lavec[3][3], rlavec[3][3];
-        double** xcoord; // fractional coordinate
-        double** x_cartesian;
-//        double lavec_prim[3][3], rlavec_prim[3][3];
-        double** magmom;
+        double **xcoord; // fractional coordinate
+        double **x_cartesian;
+        //        double lavec_prim[3][3], rlavec_prim[3][3];
+        double **magmom;
         std::string str_magmom;
         int noncollinear;
-        std::string* kdname;
+        std::string *kdname;
 
         unsigned int nclassatom;
 
-        std::vector<unsigned int>* atomlist_class;
+        std::vector<unsigned int> *atomlist_class;
         bool lspin;
         double cell_volume;
 
@@ -76,6 +71,6 @@ namespace ALM_NS
         void set_default_variables();
         void deallocate_variables();
         double volume(double [3], double [3], double [3]);
-        void setup_atomic_class(int*);
+        void setup_atomic_class(int *);
     };
 }

@@ -47,6 +47,8 @@ namespace ALM_NS
 #if defined(WIN32) || defined(_WIN32)
         LARGE_INTEGER walltime_ref;
         LARGE_INTEGER frequency;
+        double get_cputime();
+        double cputime_ref;
 #else
         timeval walltime_ref;
         double cputime_ref;

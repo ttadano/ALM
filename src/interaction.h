@@ -177,13 +177,13 @@ namespace ALM_NS
     {
     public:
         std::vector<int> atom;
-        std::vector<std::vector<int> > cell;
+        std::vector<std::vector<int>> cell;
         double distmax;
 
         MinimumDistanceCluster();
 
         MinimumDistanceCluster(const std::vector<int> atom_in,
-                               const std::vector<std::vector<int> > cell_in,
+                               const std::vector<std::vector<int>> cell_in,
                                const double dist_in)
         {
             for (int i = 0; i < atom_in.size(); ++i) {
@@ -196,7 +196,7 @@ namespace ALM_NS
         }
 
         MinimumDistanceCluster(const std::vector<int> atom_in,
-                               const std::vector<std::vector<int> > cell_in)
+                               const std::vector<std::vector<int>> cell_in)
         {
             for (int i = 0; i < atom_in.size(); ++i) {
                 atom.push_back(atom_in[i]);
@@ -258,8 +258,8 @@ namespace ALM_NS
         }
 
     private:
-	void set_default_variables();
-	void deallocate_variables();
+        void set_default_variables();
+        void deallocate_variables();
         void generate_coordinate_of_periodic_images(const unsigned int, double **,
                                                     const int [3], double ***, int *);
 
@@ -281,11 +281,10 @@ namespace ALM_NS
                                     std::vector<DistInfo> **,
                                     int *, std::set<MinimumDistanceCluster> **);
 
-        void cell_combination(std::vector<std::vector<int> >,
+        void cell_combination(std::vector<std::vector<int>>,
                               int, std::vector<int>,
-                              std::vector<std::vector<int> > &);
+                              std::vector<std::vector<int>> &);
 
         void generate_pairs(std::set<IntList> *, std::set<MinimumDistanceCluster> **);
     };
 }
-
