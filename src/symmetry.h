@@ -29,32 +29,44 @@ namespace ALM_NS
     class SymmetryOperation
     {
     public:
-        int rot[3][3];
-        double tran[3];
+        int rotation[3][3]; // in lattice basis
+        double tran[3]; // in Cartesian basis
+        double rotation_cart[3][3]; // in Cartesian basis
+        bool compatible_with_lattice;
+        bool compatible_with_cartesian;
+        bool is_translation;
 
         SymmetryOperation();
 
-        // Declaration construction
-
-        SymmetryOperation(const int rot_in[3][3], const double tran_in[3])
+        SymmetryOperation(const int rot_in[3][3],
+                          const double tran_in[3],
+                          const double rot_cart_in[3][3],
+                          const bool compatibility_lat,
+                          const bool compatibility_cart,
+                          const bool is_trans_in)
         {
             for (int i = 0; i < 3; ++i) {
                 for (int j = 0; j < 3; ++j) {
-                    rot[i][j] = rot_in[i][j];
+                    rotation[i][j] = rot_in[i][j];
+                    rotation_cart[i][j] = rot_cart_in[i][j];
                 }
             }
             for (int i = 0; i < 3; ++i) {
                 tran[i] = tran_in[i];
             }
+            compatible_with_lattice = compatibility_lat;
+            compatible_with_cartesian = compatibility_cart;
+            is_translation = is_trans_in;
         }
 
+        // Operator definition to sort
         bool operator<(const SymmetryOperation &a) const
         {
             std::vector<double> v1, v2;
             for (int i = 0; i < 3; ++i) {
                 for (int j = 0; j < 3; ++j) {
-                    v1.push_back(static_cast<double>(rot[i][j]));
-                    v2.push_back(static_cast<double>(a.rot[i][j]));
+                    v1.push_back(static_cast<double>(rotation[i][j]));
+                    v2.push_back(static_cast<double>(a.rotation[i][j]));
                 }
             }
             for (int i = 0; i < 3; ++i) {
@@ -105,8 +117,8 @@ namespace ALM_NS
         int *symnum_tran;
 
         double tolerance;
-        double ***symrel;
-        double **tnons;
+        // double ***symrel;
+        // double **tnons;
 
         int **map_sym;
         int **map_p2s;
@@ -114,7 +126,7 @@ namespace ALM_NS
         double lavec_prim[3][3], rlavec_prim[3][3];
         double **xcoord_prim;
         int *kd_prim;
-        SpglibDataset *SymmData;
+        SpglibDataset *SymmData_spg;
 
         class Maps
         {
@@ -126,7 +138,8 @@ namespace ALM_NS
         Maps *map_s2p;
 
         int trev_sym_mag;
-        bool *sym_available;
+
+        std::vector<SymmetryOperation> SymmData;
 
     private:
         void set_default_variables();
@@ -144,12 +157,17 @@ namespace ALM_NS
         void findsym_spglib(const int, double [3][3], double **,
                             const int *, std::vector<SymmetryOperation> &, const double);
 
-        bool is_translation(int **);
-        bool is_proper(double [3][3]);
+        bool is_translation(const int [3][3]);
+        bool is_proper(const double [3][3]);
 
-        void symop_in_cart(double [3][3], double [3][3]);
+        void symop_in_cart(double [3][3], const int [3][3],
+                           const double [3][3], const double [3][3]);
         void pure_translations();
         void print_symmetrized_coordinate(double **);
+
+        template <typename T>
+        bool is_compatible(const T [3][3], const double tolerance_zero = 1.0e-5);
+
         void symop_availability_check(double ***, bool *, const int, int &);
 
         void find_lattice_symmetry(double [3][3], std::vector<RotationMatrix> &);
@@ -166,7 +184,7 @@ namespace ALM_NS
                                    const double);
 
         std::string file_sym;
-        int ***symrel_int;
-        std::vector<SymmetryOperation> SymmList;
+        //int ***symrel_int;
+        //std::vector<SymmetryOperation> SymmList;
     };
 }

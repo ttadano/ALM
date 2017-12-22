@@ -66,15 +66,20 @@ void Fitting::fitmain()
     int P = constraint->P;
     int ndata_used = nend - nstart + 1;
 
-    double **amat, *fsum;
+    double **u, **f;
+    double **amat, *amat_1D, *fsum;
     double *fsum_orig;
     double *param_tmp;
 
     int multiply_data = symmetry->multiply_data;
     int nmulti = get_number_for_multiplier(multiply_data);
 
-    double **u;
-    double **f;
+
+    amat = nullptr;
+    amat_1D = nullptr;
+    fsum = nullptr;
+    fsum_orig = nullptr;
+    param_tmp = nullptr;
 
     alm->timer->start_clock("fitting");
 
@@ -762,20 +767,12 @@ void Fitting::set_default_variables()
 #endif
 
     params = nullptr;
-    u_in = nullptr;
-    f_in = nullptr;
 }
 
 void Fitting::deallocate_variables()
 {
     if (params) {
         deallocate(params);
-    }
-    if (u_in) {
-        deallocate(u_in);
-    }
-    if (f_in) {
-        deallocate(f_in);
     }
 }
 
@@ -833,8 +830,8 @@ void Fitting::data_multiplier(double **u,
                         u_rot[k] = u_in[i][3 * j + k];
                         f_rot[k] = f_in[i][3 * j + k];
                     }
-                    rotvec(u_rot, u_rot, symmetry->symrel[isym]);
-                    rotvec(f_rot, f_rot, symmetry->symrel[isym]);
+                    rotvec(u_rot, u_rot, symmetry->SymmData[isym].rotation_cart);
+                    rotvec(f_rot, f_rot, symmetry->SymmData[isym].rotation_cart);
                     for (k = 0; k < 3; ++k) {
                         u[nmulti * idata + isym][3 * n_mapped + k] = u_rot[k];
                         f[nmulti * idata + isym][3 * n_mapped + k] = f_rot[k];

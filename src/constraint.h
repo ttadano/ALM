@@ -15,6 +15,9 @@
 #include <string>
 #include "pointers.h"
 #include "constants.h"
+#include "interaction.h"
+#include "symmetry.h"
+#include "fcs.h"
 #include <boost/bimap.hpp>
 
 namespace ALM_NS
@@ -75,6 +78,19 @@ namespace ALM_NS
         }
     };
 
+    inline bool equal_within_eps12(const std::vector<double> &a, const std::vector<double> &b)
+    {
+        int n = a.size();
+        int m = b.size();
+        if (n != m) return false;
+        double res = 0.0;
+        for (int i = 0; i < n; ++i) {
+            if (std::abs(a[i] - b[i]) > eps12) return false;
+        }
+        //        if (std::sqrt(res)>eps12) return false;
+        return true;
+    }
+
     class Constraint: protected Pointers
     {
     public:
@@ -91,6 +107,7 @@ namespace ALM_NS
 
         double **const_mat;
         double *const_rhs;
+        double tolerance_constraint;
 
         bool exist_constraint;
         bool extra_constraint_from_symmetry;
@@ -101,9 +118,16 @@ namespace ALM_NS
         std::vector<ConstraintTypeRelate> *const_relate;
         boost::bimap<int, int> *index_bimap;
 
-        void constraint_from_symmetry(std::vector<ConstraintClass> *);
+        //void constraint_from_symmetry(std::vector<ConstraintClass> *);
+        void get_symmetry_constraint(const int, const std::set<IntList>,
+                                     const std::vector<SymmetryOperation>,
+                                     const std::string,
+                                     const std::vector<FcProperty>,
+                                     const std::vector<int>,
+                                     std::vector<ConstraintClass> &);
 
-        void get_mapping_constraint(const int, std::vector<ConstraintClass> *,
+        void get_mapping_constraint(const int, std::vector<int> *,
+                                    std::vector<ConstraintClass> *,
                                     std::vector<ConstraintTypeFix> *,
                                     std::vector<ConstraintTypeRelate> *,
                                     boost::bimap<int, int> *, const bool);
@@ -129,14 +153,16 @@ namespace ALM_NS
 
         void setup_rotation_axis(bool [3][3]);
         bool is_allzero(const int, const double *, const int nshift = 0);
-        bool is_allzero(const std::vector<double>);
-
         bool is_allzero(const std::vector<int>, int &);
+        bool is_allzero(const std::vector<double>, const double, int &);
 
         void remove_redundant_rows(const int, std::vector<ConstraintClass> &,
                                    const double tolerance = eps12);
 
-        void rref(const int, const int, double **, int &, const double tolerance = eps12);
+        void rref(int, int, double **, int &, double tolerance = eps12);
+        void rref(std::vector<std::vector<double>> &, const double tolerance = eps12);
+
+        void generate_symmetry_constraint_in_cartesian(std::vector<ConstraintClass> *);
     };
 
     extern "C"

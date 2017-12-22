@@ -1,7 +1,8 @@
 /*
  fcs.h
 
- Copyright (c) 2014, 2015, 2016 Terumasa Tadano
+ Copyright (c) 2014--2017 Terumasa Tadano
+
 
  This file is distributed under the terms of the MIT license.
  Please see the file 'LICENCE.txt' in the root directory 
@@ -14,15 +15,16 @@
 #include <vector>
 #include <set>
 #include <algorithm>
-#include <iterator>
+#include "symmetry.h"
+#include "interaction.h"
 
 namespace ALM_NS
 {
     class FcProperty
     {
     public:
-        std::vector<int> elems;
-        double coef; // factor (usually +1 or -1)
+        std::vector<int> elems; // flattened index of (iatom, icoordinate) in the supercell
+        double coef; // factor (+1 or -1) to convert the mother FC to the child
         int mother; // index of the reducible force constants
 
         FcProperty();
@@ -48,6 +50,15 @@ namespace ALM_NS
         }
     };
 
+    class ForceConstantTable
+    {
+    public:
+        double fc_value;
+        int multiplicity;
+        std::vector<FcProperty> fclist;
+        ForceConstantTable();
+    };
+
     class Fcs: protected Pointers
     {
     public:
@@ -58,6 +69,7 @@ namespace ALM_NS
 
         std::vector<int> *ndup; // stores duplicate number of irreducible force constants
         std::vector<FcProperty> *fc_table; // all force constants
+        std::vector<FcProperty> *fc_zeros;
 
         std::string easyvizint(const int);
         void get_xyzcomponent(int, int **);
@@ -67,11 +79,21 @@ namespace ALM_NS
         bool is_inprim(const int);
         int min_inprim(const int, const int *);
         double coef_sym(const int, const int, const int *, const int *);
+        double coef_sym(const int, double **, const int *, const int *);
+
+        void generate_force_constant_table(const int,
+                                           const std::set<IntList>,
+                                           const std::vector<SymmetryOperation>,
+                                           std::string,
+                                           std::vector<FcProperty> &,
+                                           std::vector<int> &,
+                                           std::vector<FcProperty> &,
+                                           const bool);
 
     private:
         void set_default_variables();
         void deallocate_variables();
-        void generate_fclists(int maxorder, int *nzero);
+//        void generate_fclists(int maxorder, int *nzero);
         bool is_ascending(const int, const int *);
     };
 }
