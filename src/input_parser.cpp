@@ -380,7 +380,7 @@ void InputParser::parse_cell_parameter(ALMCore *alm)
                 line_wo_comment = line.substr(0, pos_first_comment_tag);
             }
 
-            boost::trim_if(line_wo_comment, boost::is_any_of("\t "));
+            boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
 
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
@@ -400,7 +400,7 @@ void InputParser::parse_cell_parameter(ALMCore *alm)
                 line_wo_comment = line.substr(0, pos_first_comment_tag);
             }
 
-            boost::trim_if(line_wo_comment, boost::is_any_of("\t "));
+            boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
 
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
@@ -692,8 +692,8 @@ void InputParser::parse_atomic_positions(ALMCore *alm)
                 line_wo_comment = line.substr(0, pos_first_comment_tag);
             }
 
-
-            boost::trim_left(line_wo_comment);
+            boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
+//            boost::trim_left(line_wo_comment);
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
 
@@ -712,8 +712,8 @@ void InputParser::parse_atomic_positions(ALMCore *alm)
                 line_wo_comment = line.substr(0, pos_first_comment_tag);
             }
 
-
-            boost::trim_left(line_wo_comment);
+            boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
+//            boost::trim_left(line_wo_comment);
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
 
