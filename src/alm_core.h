@@ -19,7 +19,6 @@ namespace ALM_NS
     {
     public:
         class InputSetter *input;
-        class Memory *memory;
         class System *system;
         class Interaction *interaction;
         class Fcs *fcs;
