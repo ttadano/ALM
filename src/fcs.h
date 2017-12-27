@@ -48,6 +48,17 @@ namespace ALM_NS
             return std::lexicographical_compare(elems.begin(), elems.end(),
                                                 a.elems.begin(), a.elems.end());
         }
+
+        bool operator==(const FcProperty &a) const 
+        {
+            int n = elems.size();
+            int n_ = a.elems.size();
+            if (n != n_) return false;
+            for (int i = 0; i < n; ++i) {
+                if (elems[i] != a.elems[i]) return false;
+            }
+            return true;
+        }
     };
 
     class ForceConstantTable
@@ -94,5 +105,24 @@ namespace ALM_NS
         void set_default_variables();
         void deallocate_variables();
         bool is_ascending(const int, const int *);
+    };
+}
+
+// Define a hash function for FcProperty class
+// Use boost::hash_combine 
+namespace std
+{
+    template <>
+    struct hash<ALM_NS::FcProperty>
+    {
+        std::size_t operator () (ALM_NS::FcProperty const &obj) const
+        {
+            hash<int> hasher;
+            size_t seed = 0;
+            for (auto i : obj.elems) {
+                seed ^= hasher(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            }
+            return seed;
+        }
     };
 }

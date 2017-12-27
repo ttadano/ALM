@@ -22,6 +22,7 @@
 #include "error.h"
 #include <boost/bimap.hpp>
 #include <algorithm>
+#include <unordered_set>
 #include "mathfunctions.h"
 #include "alm_core.h"
 
@@ -614,7 +615,7 @@ void Constraint::get_symmetry_constraint(const int order, const std::set<IntList
     int nsym_in_use;
     double *arr_constraint;
     bool has_constraint_from_symm = false;
-    std::set<FcProperty> list_found;
+    std::unordered_set<FcProperty> list_found;
     std::vector<std::vector<double>> const_mat;
     int **map_sym;
     double ***rotation;
@@ -703,7 +704,7 @@ void Constraint::get_symmetry_constraint(const int order, const std::set<IntList
         int *xyz_index;
         double c_tmp;
 
-        std::set<FcProperty>::iterator iter_found;
+        std::unordered_set<FcProperty>::iterator iter_found;
         std::vector<double> const_now_omp;
         std::vector<std::vector<double>> const_omp;
 
@@ -822,8 +823,8 @@ void Constraint::translational_invariance()
     double *arr_constraint;
 
     std::vector<int> intlist, data;
-    std::set<FcProperty> list_found;
-    std::set<FcProperty>::iterator iter_found;
+    std::unordered_set<FcProperty> list_found;
+    std::unordered_set<FcProperty>::iterator iter_found;
     std::vector<std::vector<int>> data_vec;
     std::vector<FcProperty> list_vec;
     std::vector<FcProperty>::iterator iter_vec;
@@ -897,7 +898,7 @@ void Constraint::translational_invariance()
                             iter_found = list_found.find(
                                 FcProperty(order + 2, 1.0, intarr, 1));
 
-                            //  If found a IFC
+                            //  If found an IFC
                             if (iter_found != list_found.end()) {
                                 // Round the coefficient to integer
                                 const_now[(*iter_found).mother] += nint((*iter_found).sign);
@@ -1109,9 +1110,9 @@ void Constraint::rotational_invariance()
 
     std::vector<int> interaction_list, interaction_list_old, interaction_list_now;
 
-    std::set<FcProperty> list_found;
-    std::set<FcProperty> list_found_last;
-    std::set<FcProperty>::iterator iter_found;
+    std::unordered_set<FcProperty> list_found;
+    std::unordered_set<FcProperty> list_found_last;
+    std::unordered_set<FcProperty>::iterator iter_found;
 
     CombinationWithRepetition<int> g;
 
@@ -1229,8 +1230,7 @@ void Constraint::rotational_invariance()
 
 
                                 if (iter_found != list_found.end()) {
-                                    arr_constraint[(*iter_found).mother]
-                                        += (*iter_found).sign * vec_for_rot[nu];
+                                    arr_constraint[(*iter_found).mother] += (*iter_found).sign * vec_for_rot[nu];
                                 }
 
                                 // Exchange mu <--> nu and repeat again. 
@@ -1774,7 +1774,7 @@ void Constraint::rref(const int nrows,
         if (std::abs(mat[pivot][icol]) > tolerance) ++nrank;
 
         if (pivot != irow) {
-#pragma omp parallel for private(tmp)
+            //#pragma omp parallel for private(tmp)
             for (jcol = icol; jcol < ncols; ++jcol) {
                 tmp = mat[pivot][jcol];
                 mat[pivot][jcol] = mat[irow][jcol];
@@ -1784,7 +1784,7 @@ void Constraint::rref(const int nrows,
 
         tmp = mat[irow][icol];
         tmp = 1.0 / tmp;
-#pragma omp parallel for
+        //#pragma omp parallel for
         for (jcol = icol; jcol < ncols; ++jcol) {
             mat[irow][jcol] *= tmp;
         }
@@ -1793,7 +1793,7 @@ void Constraint::rref(const int nrows,
             if (jrow == irow) continue;
 
             tmp = mat[jrow][icol];
-#pragma omp parallel for
+            //#pragma omp parallel for
             for (jcol = icol; jcol < ncols; ++jcol) {
                 mat[jrow][jcol] -= tmp * mat[irow][jcol];
             }
