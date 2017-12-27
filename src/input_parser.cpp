@@ -28,9 +28,13 @@
 
 using namespace ALM_NS;
 
-InputParser::InputParser() {}
+InputParser::InputParser()
+{
+}
 
-InputParser::~InputParser() {}
+InputParser::~InputParser()
+{
+}
 
 void InputParser::run(ALMCore *alm,
                       const int narg,
@@ -130,16 +134,16 @@ void InputParser::parse_displacement_and_force_files(Error *error,
 
     idata = 0;
     for (i = 0; i < ndata; ++i) {
-    if (i < nstart - 1) continue;
-    if (i > nend - 1) break;
+        if (i < nstart - 1) continue;
+        if (i > nend - 1) break;
 
-    for (j = 0; j < nat; ++j) {
-        for (k = 0; k < 3; ++k) {
-        u[idata][3 * j + k] = u_tmp[3 * nat * i + 3 * j + k];
-        f[idata][3 * j + k] = f_tmp[3 * nat * i + 3 * j + k];
+        for (j = 0; j < nat; ++j) {
+            for (k = 0; k < 3; ++k) {
+                u[idata][3 * j + k] = u_tmp[3 * nat * i + 3 * j + k];
+                f[idata][3 * j + k] = f_tmp[3 * nat * i + 3 * j + k];
+            }
         }
-    }
-    ++idata;
+        ++idata;
     }
     u_tmp.clear();
     f_tmp.clear();
@@ -166,7 +170,7 @@ void InputParser::parse_input(ALMCore *alm)
 
     // kdname is allocated in this method.
     parse_general_vars(alm);
-    
+
     if (!locate_tag("&cell")) {
         alm->error->exit("parse_input",
                          "&cell entry not found in the input file");
@@ -215,10 +219,11 @@ void InputParser::parse_general_vars(ALMCore *alm)
     int noncollinear, trevsym;
     double **magmom, magmag;
     double tolerance;
+    double tolerance_constraint;
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
     std::string str_allowed_list = "PREFIX MODE NAT NKD NSYM KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
-                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN";
+                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST";
     std::string str_no_defaults = "PREFIX MODE NAT NKD KD";
     std::vector<std::string> no_defaults;
     std::map<std::string, std::string> general_var_dict;
@@ -304,6 +309,11 @@ void InputParser::parse_general_vars(ALMCore *alm)
     } else {
         assign_val(tolerance, "TOLERANCE", general_var_dict, alm->error);
     }
+    if (general_var_dict["TOL_CONST"].empty()) {
+        tolerance_constraint = 1.0e-6;
+    } else {
+        assign_val(tolerance_constraint, "TOL_CONST", general_var_dict, alm->error);
+    }
 
     // Convert MAGMOM input to array
     allocate(magmom, nat, 3);
@@ -365,16 +375,16 @@ void InputParser::parse_general_vars(ALMCore *alm)
                 if ((*it).find("*") != std::string::npos) {
                     if ((*it) == "*") {
                         alm->error->exit("parse_general_vars",
-                                    "Please place '*' without space for the MAGMOM-tag.");
+                                         "Please place '*' without space for the MAGMOM-tag.");
                     }
                     boost::split(str_split, (*it), boost::is_any_of("*"));
                     if (str_split.size() != 2) {
                         alm->error->exit("parse_general_vars",
-                                    "Invalid format for the MAGMOM-tag.");
+                                         "Invalid format for the MAGMOM-tag.");
                     } else {
                         if (str_split[0].empty() || str_split[1].empty()) {
                             alm->error->exit("parse_general_vars",
-                                        "Please place '*' without space for the MAGMOM-tag.");
+                                             "Please place '*' without space for the MAGMOM-tag.");
                         }
                         try {
                             magmag = boost::lexical_cast<double>(str_split[1]);
@@ -441,7 +451,8 @@ void InputParser::parse_general_vars(ALMCore *alm)
                                    trevsym,
                                    kdname,
                                    magmom,
-                                   tolerance);
+                                   tolerance,
+                                   tolerance_constraint);
     delete input_setter;
 
     allocate(magmom, nat, 3);
@@ -477,7 +488,7 @@ void InputParser::parse_cell_parameter(ALMCore *alm)
                 line_wo_comment = line.substr(0, pos_first_comment_tag);
             }
 
-            boost::trim_if(line_wo_comment, boost::is_any_of("\t "));
+            boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
 
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
@@ -497,7 +508,7 @@ void InputParser::parse_cell_parameter(ALMCore *alm)
                 line_wo_comment = line.substr(0, pos_first_comment_tag);
             }
 
-            boost::trim_if(line_wo_comment, boost::is_any_of("\t "));
+            boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
 
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
@@ -626,11 +637,11 @@ void InputParser::parse_fitting_vars(ALMCore *alm)
 {
     int ndata, nstart, nend;
     std::string dfile, ffile;
-    int multiply_data, constraint_flag;
+    int constraint_flag;
     std::string rotation_axis;
     std::string fc2_file, fc3_file;
 
-    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE MULTDAT ICONST ROTAXIS FC2XML FC3XML";
+    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML";
     std::string str_no_defaults = "NDATA DFILE FFILE";
     std::vector<std::string> no_defaults;
 
@@ -679,13 +690,6 @@ void InputParser::parse_fitting_vars(ALMCore *alm)
     dfile = fitting_var_dict["DFILE"];
     ffile = fitting_var_dict["FFILE"];
 
-
-    if (fitting_var_dict["MULTDAT"].empty()) {
-        multiply_data = 1;
-    } else {
-        assign_val(multiply_data, "MULTDAT", fitting_var_dict, alm->error);
-    }
-
     if (fitting_var_dict["ICONST"].empty()) {
         constraint_flag = 1;
     } else {
@@ -721,7 +725,6 @@ void InputParser::parse_fitting_vars(ALMCore *alm)
                                    nend,
                                    dfile,
                                    ffile,
-                                   multiply_data,
                                    constraint_flag,
                                    rotation_axis,
                                    fc2_file,
@@ -763,8 +766,8 @@ void InputParser::parse_atomic_positions(ALMCore *alm)
                 line_wo_comment = line.substr(0, pos_first_comment_tag);
             }
 
-
-            boost::trim_left(line_wo_comment);
+            boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
+            //            boost::trim_left(line_wo_comment);
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
 
@@ -783,8 +786,8 @@ void InputParser::parse_atomic_positions(ALMCore *alm)
                 line_wo_comment = line.substr(0, pos_first_comment_tag);
             }
 
-
-            boost::trim_left(line_wo_comment);
+            boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
+            //            boost::trim_left(line_wo_comment);
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
 
@@ -831,7 +834,7 @@ void InputParser::parse_atomic_positions(ALMCore *alm)
     InputSetter *input_setter = new InputSetter();
     input_setter->set_atomic_positions(alm, nat, kd, xeq);
     delete input_setter;
-    
+
     deallocate(xeq);
     deallocate(kd);
     pos_line.clear();
@@ -1237,4 +1240,3 @@ void InputParser::assign_val(T &val,
         }
     }
 }
-

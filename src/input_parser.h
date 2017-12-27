@@ -31,14 +31,14 @@ namespace ALM_NS
                  const char * const *arg);
         void parse_displacement_and_force(ALMCore *alm);
         void parse_displacement_and_force_files(Error *error,
-                                               double **u,
-                                               double **f,
-                                               const int nat,
-                                               const int ndata,
-                                               const int nstart,
-                                               const int nend,
-                                               const std::string file_disp,
-                                               const std::string file_force);
+                                                double **u,
+                                                double **f,
+                                                const int nat,
+                                                const int ndata,
+                                                const int nstart,
+                                                const int nend,
+                                                const std::string file_disp,
+                                                const std::string file_force);
         std::string str_magmom;
 
     private:
@@ -62,7 +62,7 @@ namespace ALM_NS
         bool is_endof_entry(std::string);
         void get_var_dict(const std::string,
                           std::map<std::string,
-                          std::string> &,
+                                   std::string> &,
                           Error *);
 
         template <typename T>
@@ -71,8 +71,8 @@ namespace ALM_NS
                         std::map<std::string, std::string>,
                         Error *);
         void set_displacement_and_force(ALMCore *alm,
-                                        const double * const * u,
-                                        const double * const * f,
+                                        const double * const *u,
+                                        const double * const *f,
                                         const int nat,
                                         const int ndata_used,
                                         const int nmulti);

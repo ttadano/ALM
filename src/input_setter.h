@@ -21,8 +21,8 @@ namespace ALM_NS
         InputSetter();
         ~InputSetter();
 
-        void deallocator(ALMCore* alm_core);
-        void set_general_vars(ALMCore* alm_core,
+        void deallocator(ALMCore *alm_core);
+        void set_general_vars(ALMCore *alm_core,
                               const std::string prefix,
                               const std::string mode,
                               const std::string str_disp_basis,
@@ -37,35 +37,35 @@ namespace ALM_NS
                               const bool print_hessian,
                               const int noncollinear,
                               const int trevsym,
-                              const std::string* kdname,
-                              const double* const * magmom,
-                              const double tolerance);
-        void set_cell_parameter(ALMCore* alm_core,
+                              const std::string *kdname,
+                              const double * const *magmom,
+                              const double tolerance,
+                              const double tolerance_constraint);
+        void set_cell_parameter(ALMCore *alm_core,
                                 const double a,
                                 const double lavec_tmp[3][3]);
-        void set_interaction_vars(ALMCore* alm_core,
+        void set_interaction_vars(ALMCore *alm_core,
                                   const int maxorder,
-                                  const int* nbody_include);
-        void set_cutoff_radii(ALMCore* alm_core,
+                                  const int *nbody_include);
+        void set_cutoff_radii(ALMCore *alm_core,
                               const int maxorder,
                               const int nkd,
-                              const double* const * const * rcs);
-        void set_fitting_vars(ALMCore* alm_core,
+                              const double * const * const *rcs);
+        void set_fitting_vars(ALMCore *alm_core,
                               const int ndata,
                               const int nstart,
                               const int nend,
                               const std::string dfile,
                               const std::string ffile,
-                              const int multiply_data,
                               const int constraint_flag,
                               const std::string rotation_axis,
                               const std::string fc2_file,
                               const std::string fc3_file,
                               const bool fix_harmonic,
                               const bool fix_cubic);
-        void set_atomic_positions(ALMCore* alm_core,
+        void set_atomic_positions(ALMCore *alm_core,
                                   const int nat,
-                                  const int* kd,
-                                  const double* const * xeq);
+                                  const int *kd,
+                                  const double * const *xeq);
     };
 }
