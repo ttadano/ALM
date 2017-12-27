@@ -119,7 +119,6 @@ namespace ALM_NS
         std::vector<ConstraintTypeRelate> *const_relate;
         boost::bimap<int, int> *index_bimap;
 
-        //void constraint_from_symmetry(std::vector<ConstraintClass> *);
         void get_constraint_symmetry(const int, const std::set<IntList>,
                                      const std::vector<SymmetryOperation>,
                                      const std::string,
