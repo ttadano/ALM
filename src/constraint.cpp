@@ -453,12 +453,13 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
 
     if (fix_cubic) {
         double *const_rhs_tmp;
+        int ishift2 = fcs->nequiv[0].size();
         int nfcs_tmp = fcs->nequiv[1].size();
         allocate(const_rhs_tmp, nfcs_tmp);
         system->load_reference_system_xml(fc3_file, 1, const_rhs_tmp);
 
         for (i = 0; i < nfcs_tmp; ++i) {
-            const_mat[i + ishift][i + ishift] = 1.0;
+            const_mat[i + ishift][i + ishift2] = 1.0;
             const_rhs[i + ishift] = const_rhs_tmp[i];
         }
 
