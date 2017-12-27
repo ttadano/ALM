@@ -119,12 +119,17 @@ namespace ALM_NS
         boost::bimap<int, int> *index_bimap;
 
         //void constraint_from_symmetry(std::vector<ConstraintClass> *);
-        void get_symmetry_constraint(const int, const std::set<IntList>,
+        void get_constraint_symmetry(const int, const std::set<IntList>,
                                      const std::vector<SymmetryOperation>,
                                      const std::string,
                                      const std::vector<FcProperty>,
                                      const std::vector<int>,
                                      std::vector<ConstraintClass> &);
+
+        void get_constraint_translation(const int, const std::set<IntList>,
+                                        const std::vector<FcProperty>,
+                                        const std::vector<int>,
+                                        std::vector<ConstraintClass> &);
 
         void get_mapping_constraint(const int, std::vector<int> *,
                                     std::vector<ConstraintClass> *,
@@ -147,7 +152,6 @@ namespace ALM_NS
 
         int levi_civita(const int, const int, const int);
 
-        void translational_invariance();
         void rotational_invariance();
         void calc_constraint_matrix(const int, int &);
 
@@ -163,6 +167,7 @@ namespace ALM_NS
         void rref(std::vector<std::vector<double>> &, const double tolerance = eps12);
 
         void generate_symmetry_constraint_in_cartesian(std::vector<ConstraintClass> *);
+        void generate_translational_constraint(std::vector<ConstraintClass> *);
     };
 
     extern "C"

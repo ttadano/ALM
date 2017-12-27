@@ -135,7 +135,7 @@ void Constraint::setup()
         }
 
         if (impose_inv_T) {
-            translational_invariance();
+            generate_translational_constraint(const_translation);
         }
         if (impose_inv_R) {
             rotational_invariance();
@@ -582,7 +582,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(std::vector<Constrain
         if (has_constraint_from_symm) {
             std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
         }
-        get_symmetry_constraint(order, interaction->pairs[order],
+        get_constraint_symmetry(order, interaction->pairs[order],
                                 symmetry->SymmData, "Cartesian",
                                 fcs->fc_table[order], fcs->nequiv[order],
                                 const_out[order]);
@@ -596,7 +596,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(std::vector<Constrain
 }
 
 
-void Constraint::get_symmetry_constraint(const int order, const std::set<IntList> pairs,
+void Constraint::get_constraint_symmetry(const int order, const std::set<IntList> pairs,
                                          const std::vector<SymmetryOperation> symmop,
                                          const std::string basis,
                                          const std::vector<FcProperty> fc_table,
@@ -680,12 +680,12 @@ void Constraint::get_symmetry_constraint(const int order, const std::set<IntList
     } else {
         deallocate(rotation);
         deallocate(map_sym);
-        error->exit("get_symmetry_constraint", "Invalid basis input");
+        error->exit("get_constraint_symmetry", "Invalid basis input");
     }
 
     // Generate temporary list of parameters
     list_found.clear();
-    for (auto p = fc_table.begin(); p != fc_table.end(); ++p) {
+    for (auto p = fc_table.cbegin(); p != fc_table.cend(); ++p) {
         for (i = 0; i < order + 2; ++i) index_tmp[i] = (*p).elems[i];
         list_found.insert(FcProperty(order + 2, (*p).sign,
                                      index_tmp, (*p).mother));
@@ -798,17 +798,52 @@ void Constraint::get_symmetry_constraint(const int order, const std::set<IntList
 }
 
 
-
-void Constraint::translational_invariance()
+void Constraint::generate_translational_constraint(std::vector<ConstraintClass> *const_out)
 {
     // Create constraint matrix for the translational invariance (aka acoustic sum rule).
+
+    int order;
+    int maxorder = interaction->maxorder;
+    int nparams;
+
+    std::cout << "  Generating constraints for translational invariance ..." << std::endl;
+
+    for (order = 0; order < maxorder; ++order) {
+
+        std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
+
+        nparams = fcs->nequiv[order].size();
+
+        if (nparams == 0) {
+            std::cout << "  No parameters! Skipped." << std::endl;
+            continue;
+        }
+
+        get_constraint_translation(order,
+                                   interaction->pairs[order],
+                                   fcs->fc_table[order],
+                                   fcs->nequiv[order],
+                                   const_out[order]);
+
+
+        std::cout << " done." << std::endl;
+    }
+
+    std::cout << "  Finished !" << std::endl << std::endl;
+}
+
+
+void Constraint::get_constraint_translation(const int order, const std::set<IntList> pairs,
+                                            const std::vector<FcProperty> fc_table,
+                                            const std::vector<int> nequiv,
+                                            std::vector<ConstraintClass> &const_out)
+{
+    // Generate equality constraint for the acoustic sum rule.
 
     int i, j;
     int iat, jat, icrd, jcrd;
     int idata;
-    int order;
     int loc_nonzero;
-    int maxorder = interaction->maxorder;
 
     int *ind;
     int *intarr, *intarr_copy;
@@ -831,247 +866,238 @@ void Constraint::translational_invariance()
     std::vector<int> const_now;
     std::vector<std::vector<int>> const_mat;
 
-    std::cout << "  Generating constraints for translational invariance ..." << std::endl;
 
-    allocate(ind, maxorder + 1);
+    if (order < 0) return;
 
-    for (order = 0; order < maxorder; ++order) {
+    const_mat.clear();
+    nparams = nequiv.size();
 
-        std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
+    if (nparams == 0) return;
 
-        const_mat.clear();
+    allocate(ind, order + 2);
 
-        nparams = fcs->nequiv[order].size();
+    // Make interaction list
 
-        if (nparams == 0) {
-            std::cout << "  No parameters! Skipped." << std::endl;
-            continue;
+    list_found.clear();
+
+    for (auto p = fc_table.cbegin(); p != fc_table.cend(); ++p) {
+        for (i = 0; i < order + 2; ++i) {
+            ind[i] = (*p).elems[i];
         }
-
-        // Make interaction list
-
-        list_found.clear();
-
-        for (auto p = fcs->fc_table[order].cbegin(); p != fcs->fc_table[order].cend(); ++p) {
-            for (i = 0; i < order + 2; ++i) {
-                ind[i] = (*p).elems[i];
-            }
-            if (list_found.find(FcProperty(order + 2, (*p).sign,
-                                           ind, (*p).mother)) != list_found.end()) {
-                error->exit("translational invariance", "Duplicate interaction list found");
-            }
-            list_found.insert(FcProperty(order + 2, (*p).sign,
-                                         ind, (*p).mother));
+        if (list_found.find(FcProperty(order + 2, (*p).sign,
+                                       ind, (*p).mother)) != list_found.end()) {
+            error->exit("get_constraint_translation", "Duplicate interaction list found");
         }
+        list_found.insert(FcProperty(order + 2, (*p).sign,
+                                     ind, (*p).mother));
+    }
 
-        // Generate xyz component for each order
+    deallocate(ind);
 
-        nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 1));
-        allocate(xyzcomponent, nxyz, order + 1);
-        fcs->get_xyzcomponent(order + 1, xyzcomponent);
+    // Generate xyz component for each order
 
-        allocate(arr_constraint, nparams);
-        allocate(intarr, order + 2);
-        allocate(intarr_copy, order + 2);
+    nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 1));
+    allocate(xyzcomponent, nxyz, order + 1);
+    fcs->get_xyzcomponent(order + 1, xyzcomponent);
 
-        const_now.resize(nparams);
+    allocate(intarr, order + 2);
+    allocate(intarr_copy, order + 2);
 
-        for (i = 0; i < natmin; ++i) {
+    const_now.resize(nparams);
 
-            iat = symmetry->map_p2s[i][0];
+    for (i = 0; i < natmin; ++i) {
 
-            // Generate atom pairs for each order
+        iat = symmetry->map_p2s[i][0];
 
-            if (order == 0) {
-                for (icrd = 0; icrd < 3; ++icrd) {
+        // Generate atom pairs for each order
 
-                    intarr[0] = 3 * iat + icrd;
+        if (order == 0) {
+            for (icrd = 0; icrd < 3; ++icrd) {
 
-                    for (jcrd = 0; jcrd < 3; ++jcrd) {
+                intarr[0] = 3 * iat + icrd;
 
-                        // Reset the temporary array for another constraint
-                        for (j = 0; j < nparams; ++j) const_now[j] = 0;
+                for (jcrd = 0; jcrd < 3; ++jcrd) {
 
-                        for (jat = 0; jat < 3 * nat; jat += 3) {
-                            intarr[1] = jat + jcrd;
+                    // Reset the temporary array for another constraint
+                    for (j = 0; j < nparams; ++j) const_now[j] = 0;
 
-                            iter_found = list_found.find(
-                                FcProperty(order + 2, 1.0, intarr, 1));
+                    for (jat = 0; jat < 3 * nat; jat += 3) {
+                        intarr[1] = jat + jcrd;
 
-                            //  If found an IFC
-                            if (iter_found != list_found.end()) {
-                                // Round the coefficient to integer
-                                const_now[(*iter_found).mother] += nint((*iter_found).sign);
-                            }
+                        iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                                intarr, 1));
 
+                        //  If found an IFC
+                        if (iter_found != list_found.end()) {
+                            // Round the coefficient to integer
+                            const_now[(*iter_found).mother] += nint((*iter_found).sign);
                         }
-                        // Add to the constraint list
-                        if (!is_allzero(const_now, loc_nonzero)) {
-                            if (const_now[loc_nonzero] < 0) {
-                                for (j = 0; j < nparams; ++j) const_now[j] *= -1;
-                            }
-                            const_mat.push_back(const_now);
+
+                    }
+                    // Add to the constraint list
+                    if (!is_allzero(const_now, loc_nonzero)) {
+                        if (const_now[loc_nonzero] < 0) {
+                            for (j = 0; j < nparams; ++j) const_now[j] *= -1;
                         }
+                        const_mat.push_back(const_now);
+                    }
+                }
+            }
+
+        } else {
+
+            // Anharmonic cases
+
+            for (j = 0; j < interaction->interaction_pair[order][i].size(); ++j) {
+                intlist.push_back(interaction->interaction_pair[order][i][j]);
+            }
+            std::sort(intlist.begin(), intlist.end());
+
+            data_vec.clear();
+            // Generate data_vec that contains possible interaction clusters.
+            // Each cluster contains (order + 1) atoms, and the last atom index
+            // will be treated seperately below.
+            CombinationWithRepetition<int> g2(intlist.begin(), intlist.end(), order);
+            do {
+                data = g2.now();
+
+                intarr[0] = iat;
+
+                for (isize = 0; isize < data.size(); ++isize) {
+                    intarr[isize + 1] = data[isize];
+                }
+
+                if (interaction->nbody(order + 1, intarr)
+                    <= interaction->nbody_include[order]) {
+                    if (interaction->is_incutoff(order + 1, intarr, order)) {
+                        // Add to list if the atoms interact with each other.
+                        data_vec.push_back(data);
                     }
                 }
 
-            } else {
+            } while (g2.next());
 
-                // Anharmonic cases
+            int ndata = data_vec.size();
 
-                for (j = 0; j < interaction->interaction_pair[order][i].size(); ++j) {
-                    intlist.push_back(interaction->interaction_pair[order][i][j]);
-                }
-                std::sort(intlist.begin(), intlist.end());
-
-                data_vec.clear();
-                // Generate data_vec that contains possible interaction clusters.
-                // Each cluster contains (order + 1) atoms, and the last atom index
-                // will be treated seperately below.
-                CombinationWithRepetition<int> g2(intlist.begin(), intlist.end(), order);
-                do {
-                    data = g2.now();
-
-                    intarr[0] = iat;
-
-                    for (isize = 0; isize < data.size(); ++isize) {
-                        intarr[isize + 1] = data[isize];
-                    }
-
-                    if (interaction->nbody(order + 1, intarr)
-                        <= interaction->nbody_include[order]) {
-                        if (interaction->is_incutoff(order + 1, intarr, order)) {
-                            // Add to list if the atoms interact with each other.
-                            data_vec.push_back(data);
-                        }
-                    }
-
-                } while (g2.next());
-
-                int ndata = data_vec.size();
-
-                // Use openmp for acceleration if possible
+            // Use openmp for acceleration if possible
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-                {
-                    int *intarr_omp, *intarr_copy_omp;
+            {
+                int *intarr_omp, *intarr_copy_omp;
 
-                    allocate(intarr_omp, order + 2);
-                    allocate(intarr_copy_omp, order + 2);
+                allocate(intarr_omp, order + 2);
+                allocate(intarr_copy_omp, order + 2);
 
-                    std::vector<std::vector<int>> const_omp;
-                    std::vector<int> data_omp;
-                    std::vector<int> const_now_omp;
+                std::vector<std::vector<int>> const_omp;
+                std::vector<int> data_omp;
+                std::vector<int> const_now_omp;
 
-                    const_omp.clear();
-                    const_now_omp.resize(nparams);
+                const_omp.clear();
+                const_now_omp.resize(nparams);
 #ifdef _OPENMP
 #pragma omp for private(isize, ixyz, jcrd, j, jat, iter_found, loc_nonzero), schedule(guided), nowait
 #endif
-                    for (idata = 0; idata < ndata; ++idata) {
+                for (idata = 0; idata < ndata; ++idata) {
 
-                        data_omp = data_vec[idata];
+                    data_omp = data_vec[idata];
 
-                        intarr_omp[0] = iat;
-                        for (isize = 0; isize < data_omp.size(); ++isize) {
-                            intarr_omp[isize + 1] = data_omp[isize];
-                        }
+                    intarr_omp[0] = iat;
+                    for (isize = 0; isize < data_omp.size(); ++isize) {
+                        intarr_omp[isize + 1] = data_omp[isize];
+                    }
 
-                        // Loop for xyz component
-                        for (ixyz = 0; ixyz < nxyz; ++ixyz) {
-                            // Loop for the xyz index of the last atom
-                            for (jcrd = 0; jcrd < 3; ++jcrd) {
+                    // Loop for xyz component
+                    for (ixyz = 0; ixyz < nxyz; ++ixyz) {
+                        // Loop for the xyz index of the last atom
+                        for (jcrd = 0; jcrd < 3; ++jcrd) {
 
-                                // Reset the temporary array for another constraint
-                                for (j = 0; j < nparams; ++j) const_now_omp[j] = 0;
+                            // Reset the temporary array for another constraint
+                            for (j = 0; j < nparams; ++j) const_now_omp[j] = 0;
 
-                                // Loop for the last atom index
-                                for (jat = 0; jat < 3 * nat; jat += 3) {
-                                    intarr_omp[order + 1] = jat / 3;
+                            // Loop for the last atom index
+                            for (jat = 0; jat < 3 * nat; jat += 3) {
+                                intarr_omp[order + 1] = jat / 3;
 
-                                    if (interaction->nbody(order + 2, intarr_omp)
-                                        <= interaction->nbody_include[order]) {
-                                        for (j = 0; j < order + 1; ++j) {
-                                            intarr_copy_omp[j] = 3 * intarr_omp[j] + xyzcomponent[ixyz][j];
-                                        }
-                                        intarr_copy_omp[order + 1] = jat + jcrd;
-
-                                        fcs->sort_tail(order + 2, intarr_copy_omp);
-
-                                        iter_found = list_found.find(FcProperty(order + 2, 1.0,
-                                                                                intarr_copy_omp, 1));
-                                        if (iter_found != list_found.end()) {
-                                            const_now_omp[(*iter_found).mother] += nint((*iter_found).sign);
-                                        }
-
+                                if (interaction->nbody(order + 2, intarr_omp)
+                                    <= interaction->nbody_include[order]) {
+                                    for (j = 0; j < order + 1; ++j) {
+                                        intarr_copy_omp[j] = 3 * intarr_omp[j] + xyzcomponent[ixyz][j];
                                     }
-                                } // close loop jat
+                                    intarr_copy_omp[order + 1] = jat + jcrd;
 
-                                // Add the constraint to the private array
-                                if (!is_allzero(const_now_omp, loc_nonzero)) {
-                                    if (const_now_omp[loc_nonzero] < 0) {
-                                        for (j = 0; j < nparams; ++j) const_now_omp[j] *= -1;
+                                    fcs->sort_tail(order + 2, intarr_copy_omp);
+
+                                    iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                                            intarr_copy_omp, 1));
+                                    if (iter_found != list_found.end()) {
+                                        const_now_omp[(*iter_found).mother] += nint((*iter_found).sign);
                                     }
-                                    const_omp.push_back(const_now_omp);
+
                                 }
+                            } // close loop jat
+
+                            // Add the constraint to the private array
+                            if (!is_allzero(const_now_omp, loc_nonzero)) {
+                                if (const_now_omp[loc_nonzero] < 0) {
+                                    for (j = 0; j < nparams; ++j) const_now_omp[j] *= -1;
+                                }
+                                const_omp.push_back(const_now_omp);
                             }
                         }
-                        // sort-->uniq the array
-                        std::sort(const_omp.begin(), const_omp.end());
-                        const_omp.erase(std::unique(const_omp.begin(), const_omp.end()),
-                                        const_omp.end());
+                    }
+                    // sort-->uniq the array
+                    std::sort(const_omp.begin(), const_omp.end());
+                    const_omp.erase(std::unique(const_omp.begin(), const_omp.end()),
+                                    const_omp.end());
 
-                        // Merge vectors
+                    // Merge vectors
 #pragma omp critical
-                        {
-                            for (auto it = const_omp.begin(); it != const_omp.end(); ++it) {
-                                const_mat.push_back(*it);
-                            }
+                    {
+                        for (auto it = const_omp.begin(); it != const_omp.end(); ++it) {
+                            const_mat.push_back(*it);
                         }
-                        const_omp.clear();
+                    }
+                    const_omp.clear();
 
-                    }// close idata (openmp main loop)
+                }// close idata (openmp main loop)
 
-                    deallocate(intarr_omp);
-                    deallocate(intarr_copy_omp);
+                deallocate(intarr_omp);
+                deallocate(intarr_copy_omp);
 
-                } // close openmp
+            } // close openmp
 
-                intlist.clear();
-            } // close if
+            intlist.clear();
+        } // close if
 
-            // sort--> uniq the array (to save memory consumption)
-            std::sort(const_mat.begin(), const_mat.end());
-            const_mat.erase(std::unique(const_mat.begin(), const_mat.end()),
-                            const_mat.end());
-            //            timer->print_elapsed();
-        } // close loop i
+        // sort--> uniq the array (to save memory consumption)
+        std::sort(const_mat.begin(), const_mat.end());
+        const_mat.erase(std::unique(const_mat.begin(), const_mat.end()),
+                        const_mat.end());
+    } // close loop i
 
-        deallocate(xyzcomponent);
-        deallocate(intarr);
-        deallocate(intarr_copy);
-        // Copy to constraint class 
+    deallocate(xyzcomponent);
+    deallocate(intarr);
+    deallocate(intarr_copy);
 
-        const_translation[order].clear();
-        for (auto it = const_mat.rbegin(); it != const_mat.rend(); ++it) {
-            for (i = 0; i < (*it).size(); ++i) {
-                arr_constraint[i] = static_cast<double>((*it)[i]);
-            }
-            const_translation[order].push_back(ConstraintClass(nparams,
-                                                               arr_constraint));
+    // Copy to constraint class 
+
+    const_out.clear();
+    allocate(arr_constraint, nparams);
+    for (auto it = const_mat.rbegin(); it != const_mat.rend(); ++it) {
+        for (i = 0; i < (*it).size(); ++i) {
+            arr_constraint[i] = static_cast<double>((*it)[i]);
         }
-        const_mat.clear();
-        deallocate(arr_constraint);
+        const_out.push_back(ConstraintClass(nparams,
+                                            arr_constraint));
+    }
+    deallocate(arr_constraint);
+    const_mat.clear();
 
-        remove_redundant_rows(nparams, const_translation[order], eps8);
-
-        std::cout << " done." << std::endl;
-    } // close loop order
-    deallocate(ind);
-
-    std::cout << "  Finished !" << std::endl << std::endl;
+    // Transform the matrix into the reduced row echelon form
+    remove_redundant_rows(nparams, const_out, eps8);
 }
+
 
 void Constraint::rotational_invariance()
 {

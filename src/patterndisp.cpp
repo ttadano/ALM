@@ -84,7 +84,7 @@ void Displace::gen_displacement_pattern()
                                            fc_table[order], nequiv[order],
                                            fc_zeros[order], false);
 
-        constraint->get_symmetry_constraint(order, interaction->pairs[order],
+        constraint->get_constraint_symmetry(order, interaction->pairs[order],
                                             symmetry->SymmData, preferred_basis,
                                             fc_table[order], nequiv[order],
                                             constsym[order]);
