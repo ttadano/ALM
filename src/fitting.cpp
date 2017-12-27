@@ -583,8 +583,7 @@ void Fitting::calc_matrix_elements(const int M,
 
                 mm = 0;
 
-                for (std::vector<int>::iterator iter = fcs->nequiv[order].begin();
-                     iter != fcs->nequiv[order].end(); ++iter) {
+                for (auto iter = fcs->nequiv[order].begin(); iter != fcs->nequiv[order].end(); ++iter) {
                     for (i = 0; i < *iter; ++i) {
                         ind[0] = fcs->fc_table[order][mm].elems[0];
                         k = idata + inprim_index(fcs->fc_table[order][mm].elems[0]);

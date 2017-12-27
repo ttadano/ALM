@@ -75,7 +75,8 @@ void InputSetter::set_general_vars(ALMCore *alm_core,
                                    const int trevsym,
                                    const std::string *kdname,
                                    const double * const *magmom,
-                                   const double tolerance)
+                                   const double tolerance,
+                                   const double tolerance_constraint)
 {
     int i, j;
 
@@ -105,6 +106,7 @@ void InputSetter::set_general_vars(ALMCore *alm_core,
     alm_core->system->noncollinear = noncollinear;
     alm_core->symmetry->trev_sym_mag = trevsym;
     alm_core->files->print_hessian = print_hessian;
+    alm_core->constraint->tolerance_constraint = tolerance_constraint;
 
     if (mode == "suggest") {
         alm_core->displace->disp_basis = str_disp_basis;

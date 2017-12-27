@@ -153,7 +153,8 @@ namespace ALM_NS
 
         int levi_civita(const int, const int, const int);
 
-        void rotational_invariance();
+        void rotational_invariance(std::vector<ConstraintClass> *,
+                                   std::vector<ConstraintClass> *);
         void calc_constraint_matrix(const int, int &);
 
         void setup_rotation_axis(bool [3][3]);

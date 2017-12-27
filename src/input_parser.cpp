@@ -219,10 +219,11 @@ void InputParser::parse_general_vars(ALMCore *alm)
     int noncollinear, trevsym;
     double **magmom, magmag;
     double tolerance;
+    double tolerance_constraint;
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
     std::string str_allowed_list = "PREFIX MODE NAT NKD NSYM KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
-                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN";
+                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST";
     std::string str_no_defaults = "PREFIX MODE NAT NKD KD";
     std::vector<std::string> no_defaults;
     std::map<std::string, std::string> general_var_dict;
@@ -307,6 +308,11 @@ void InputParser::parse_general_vars(ALMCore *alm)
         tolerance = 1.0e-6;
     } else {
         assign_val(tolerance, "TOLERANCE", general_var_dict, alm->error);
+    }
+    if (general_var_dict["TOL_CONST"].empty()) {
+        tolerance_constraint = 1.0e-6;
+    } else {
+        assign_val(tolerance_constraint, "TOL_CONST", general_var_dict, alm->error);
     }
 
     // Convert MAGMOM input to array
@@ -445,7 +451,8 @@ void InputParser::parse_general_vars(ALMCore *alm)
                                    trevsym,
                                    kdname,
                                    magmom,
-                                   tolerance);
+                                   tolerance,
+                                   tolerance_constraint);
     delete input_setter;
 
     allocate(magmom, nat, 3);

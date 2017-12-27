@@ -56,6 +56,7 @@ void Constraint::set_default_variables()
     const_relate = nullptr;
     index_bimap = nullptr;
     P = 0;
+    tolerance_constraint = eps6;
 }
 
 void Constraint::deallocate_variables()
@@ -149,11 +150,11 @@ void Constraint::setup()
         if (const_symmetry[order].size() > 0) extra_constraint_from_symmetry = true;
     }
 
-    if (impose_inv_T || fix_harmonic || fix_cubic || extra_constraint_from_symmetry) {
-        exist_constraint = true;
-    } else {
-        exist_constraint = false;
-    }
+    exist_constraint
+        = impose_inv_T
+        || fix_harmonic
+        || fix_cubic
+        || extra_constraint_from_symmetry;
 
     if (exist_constraint) {
 
@@ -180,7 +181,8 @@ void Constraint::setup()
             generate_translational_constraint(const_translation);
         }
         if (impose_inv_R) {
-            rotational_invariance();
+            rotational_invariance(const_rotation_self,
+                                  const_rotation_cross);
         }
 
         if (impose_inv_T || impose_inv_R) {
@@ -430,6 +432,8 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
     irow = 0;
     icol = 0;
 
+    int ishift = 0;
+
     if (fix_harmonic) {
         double *const_rhs_tmp;
         int nfcs_tmp = fcs->nequiv[0].size();
@@ -444,10 +448,10 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
         irow += nfcs_tmp;
         icol += nfcs_tmp;
         deallocate(const_rhs_tmp);
+        ishift += nfcs_tmp;
     }
 
     if (fix_cubic) {
-        int ishift = fcs->nequiv[0].size();
         double *const_rhs_tmp;
         int nfcs_tmp = fcs->nequiv[1].size();
         allocate(const_rhs_tmp, nfcs_tmp);
@@ -1142,7 +1146,8 @@ void Constraint::get_constraint_translation(const int order, const std::set<IntL
 }
 
 
-void Constraint::rotational_invariance()
+void Constraint::rotational_invariance(std::vector<ConstraintClass> *const_rotation_self,
+                                       std::vector<ConstraintClass> *const_rotation_cross)
 {
     // Create constraints for the rotational invariance
 

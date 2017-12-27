@@ -39,7 +39,8 @@ namespace ALM_NS
                               const int trevsym,
                               const std::string *kdname,
                               const double * const *magmom,
-                              const double tolerance);
+                              const double tolerance,
+                              const double tolerance_constraint);
         void set_cell_parameter(ALMCore *alm_core,
                                 const double a,
                                 const double lavec_tmp[3][3]);
