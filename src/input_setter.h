@@ -56,7 +56,6 @@ namespace ALM_NS
                               const int nend,
                               const std::string dfile,
                               const std::string ffile,
-                              const int multiply_data,
                               const int constraint_flag,
                               const std::string rotation_axis,
                               const std::string fc2_file,

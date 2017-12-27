@@ -26,19 +26,8 @@
 #include "constants.h"
 #include "constraint.h"
 #include "mathfunctions.h"
-
-#ifdef _USE_EIGEN
-#include <Eigen/Dense>
-#endif
-
 #include <time.h>
 
-#ifdef _VSL
-#include "mkl_vsl.h"
-
-#else
-#include <cstdlib>
-#endif
 
 using namespace ALM_NS;
 
@@ -51,6 +40,26 @@ Fitting::Fitting(ALMCore *alm): Pointers(alm)
 Fitting::~Fitting()
 {
     deallocate_variables();
+}
+
+void Fitting::set_default_variables()
+{
+    params = nullptr;
+    u_in = nullptr;
+    f_in = nullptr;
+}
+
+void Fitting::deallocate_variables()
+{
+    if (params) {
+        deallocate(params);
+    }
+    if (u_in) {
+        deallocate(u_in);
+    }
+    if (f_in) {
+        deallocate(f_in);
+    }
 }
 
 void Fitting::fitmain()
@@ -70,9 +79,7 @@ void Fitting::fitmain()
     double *fsum_orig;
     double *param_tmp;
 
-    int multiply_data = symmetry->multiply_data;
-    int nmulti = get_number_for_multiplier(multiply_data);
-
+    int nmulti = symmetry->ntran;
 
     amat = nullptr;
     amat_1D = nullptr;
@@ -101,7 +108,7 @@ void Fitting::fitmain()
     } else {
         error->exit("fitmain", "nmulti has to be larger than 0.");
     }
-    data_multiplier(u, f, nat, ndata_used, nmulti, multiply_data);
+    data_multiplier(u, f, nat, ndata_used, nmulti);
 
     N = 0;
     for (i = 0; i < maxorder; ++i) {
@@ -342,8 +349,7 @@ void Fitting::fit_with_constraints(int N,
         std::cout << "  This can cause a difficulty in solving the fitting problem properly      " << std::endl;
         std::cout << "  with DGGLSE, especially when the difference is large. Please check if    " << std::endl;
         std::cout << "  you obtain reliable force constants in the .fcs file.                    " << std::endl << std::endl;
-        std::cout << "  This issue may be resolved by setting MULTDAT = 2 in the &fitting field. " << std::endl;
-        std::cout << "  If not, you may need to reduce the cutoff radii and/or increase NDATA    " << std::endl;
+        std::cout << "  You may need to reduce the cutoff radii and/or increase NDATA            " << std::endl;
         std::cout << "  by giving linearly-independent displacement patterns.                    " << std::endl;
         std::cout << " **************************************************************************" << std::endl;
         std::cout << std::endl;
@@ -763,34 +769,12 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
     std::cout << "done!" << std::endl << std::endl;
 }
 
-void Fitting::set_default_variables()
-{
-    seed = static_cast<unsigned int>(time(nullptr));
-#ifdef _VSL
-    brng = VSL_BRNG_MT19937;
-    vslNewStream(&stream, brng, seed);
-#else
-    std::srand(seed);
-#endif
-
-    params = nullptr;
-    u_in = nullptr;
-    f_in = nullptr;
-}
-
-void Fitting::deallocate_variables()
-{
-    if (params) {
-        deallocate(params);
-    }
-}
 
 void Fitting::data_multiplier(double **u,
                               double **f,
                               const int nat,
                               const int ndata_used,
-                              const int nmulti,
-                              const int multiply_data)
+                              const int nmulti)
 {
     int i, j, k;
     int idata, itran, isym;
@@ -798,74 +782,21 @@ void Fitting::data_multiplier(double **u,
     double u_rot[3], f_rot[3];
 
     // Multiply data
-    if (multiply_data == 0) {
-        std::cout << " MULTDAT = 0: Given displacement-force data sets will be used as is."
-            << std::endl << std::endl;
-        idata = 0;
-        for (i = 0; i < ndata_used; ++i) {
+    idata = 0;
+    for (i = 0; i < ndata_used; ++i) {
+        for (itran = 0; itran < symmetry->ntran; ++itran) {
             for (j = 0; j < nat; ++j) {
+                n_mapped = symmetry->map_sym[j][symmetry->symnum_tran[itran]];
                 for (k = 0; k < 3; ++k) {
-                    u[i][3 * j + k] = u_in[i][3 * j + k];
-                    f[i][3 * j + k] = f_in[i][3 * j + k];
-                }
-            }
-        }
-    } else if (multiply_data == 1) {
-        std::cout << "  MULTDAT = 1: Generate symmetrically equivalent displacement-force " << std::endl;
-        std::cout << "               data sets by using pure translational operations only." << std::endl << std::endl;
-        idata = 0;
-        for (i = 0; i < ndata_used; ++i) {
-            for (itran = 0; itran < symmetry->ntran; ++itran) {
-                for (j = 0; j < nat; ++j) {
-                    n_mapped = symmetry->map_sym[j][symmetry->symnum_tran[itran]];
-                    for (k = 0; k < 3; ++k) {
-                        u[idata][3 * n_mapped + k] = u_in[i][3 * j + k];
-                        f[idata][3 * n_mapped + k] = f_in[i][3 * j + k];
-                    }
-                }
-                ++idata;
-            }
-        }
-    } else if (multiply_data == 2) {
-        std::cout << "  MULTDAT = 2: Generate symmetrically equivalent displacement-force" << std::endl;
-        std::cout << "                data sets. (including rotational part) " << std::endl << std::endl;
-        idata = 0;
-        for (i = 0; i < ndata_used; ++i) {
-#pragma omp parallel for private(j, n_mapped, k, u_rot, f_rot)
-            for (isym = 0; isym < symmetry->nsym; ++isym) {
-                for (j = 0; j < nat; ++j) {
-                    n_mapped = symmetry->map_sym[j][isym];
-                    for (k = 0; k < 3; ++k) {
-                        u_rot[k] = u_in[i][3 * j + k];
-                        f_rot[k] = f_in[i][3 * j + k];
-                    }
-                    rotvec(u_rot, u_rot, symmetry->SymmData[isym].rotation_cart);
-                    rotvec(f_rot, f_rot, symmetry->SymmData[isym].rotation_cart);
-                    for (k = 0; k < 3; ++k) {
-                        u[nmulti * idata + isym][3 * n_mapped + k] = u_rot[k];
-                        f[nmulti * idata + isym][3 * n_mapped + k] = f_rot[k];
-                    }
+                    u[idata][3 * n_mapped + k] = u_in[i][3 * j + k];
+                    f[idata][3 * n_mapped + k] = f_in[i][3 * j + k];
                 }
             }
             ++idata;
         }
-    } else {
-        error->exit("data_multiplier", "Unsupported MULTDAT");
     }
 }
 
-int Fitting::get_number_for_multiplier(const int multiply_data)
-{
-    int nmulti = 0;
-    if (multiply_data == 0) {
-        nmulti = 1;
-    } else if (multiply_data == 1) {
-        nmulti = symmetry->ntran;
-    } else if (multiply_data == 2) {
-        nmulti = symmetry->nsym;
-    }
-    return nmulti;
-}
 
 int Fitting::inprim_index(const int n)
 {
@@ -938,24 +869,6 @@ int Fitting::factorial(const int n)
     }
 }
 
-#ifdef _USE_EIGEN_DISABLED
-int Fitting::getRankEigen(const int m, const int n, double **mat)
-{
-    using namespace Eigen;
-
-    MatrixXd mat_tmp(m, n);
-
-    int i, j;
-
-    for (i = 0; i < m; ++i) {
-        for (j = 0; j < n; ++j) {
-            mat_tmp(i,j) = mat[i][j];
-        }
-    }
-    ColPivHouseholderQR<MatrixXd> qr(mat_tmp);
-    return qr.rank();
-}
-#endif
 
 int Fitting::rankQRD(const int m,
                      const int n,

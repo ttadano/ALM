@@ -29,8 +29,6 @@ namespace ALM_NS
         void fitmain();
 
         double *params;
-        unsigned int seed;
-
         double **u_in;
         double **f_in;
 
@@ -41,12 +39,6 @@ namespace ALM_NS
         void calc_matrix_elements_algebraic_constraint(const int, const int, const int, const int,
                                                        const int, const int, const int, const int,
                                                        double **, double **, double **, double *, double *);
-
-#ifdef _VSL
-        VSLStreamStatePtr stream;
-        int brng;
-#endif
-
         double gamma(const int, const int *);
 
     private:
@@ -56,9 +48,7 @@ namespace ALM_NS
                              double **f,
                              const int nat,
                              const int ndata_used,
-                             const int nmulti,
-                             const int multiply_data);
-        int get_number_for_multiplier(const int multiply_data);
+                             const int nmulti);
         int inprim_index(const int);
         void fit_without_constraints(int, int, double **, double *, double *);
         void fit_algebraic_constraints(int, int, double **, double *,
@@ -75,9 +65,6 @@ namespace ALM_NS
         int rankSVD(const int, const int, double *, const double);
         int rankQRD(const int, const int, double *, const double);
         int rankSVD2(const int, const int, double **, const double);
-#ifdef _USE_EIGEN_DISABLED
-        int getRankEigen(const int, const int, double **);
-#endif
     };
 
     extern "C"

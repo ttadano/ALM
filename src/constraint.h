@@ -78,7 +78,8 @@ namespace ALM_NS
         }
     };
 
-    inline bool equal_within_eps12(const std::vector<double> &a, const std::vector<double> &b)
+    inline bool equal_within_eps12(const std::vector<double> &a,
+                                   const std::vector<double> &b)
     {
         int n = a.size();
         int m = b.size();

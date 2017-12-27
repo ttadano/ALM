@@ -38,6 +38,48 @@ Constraint::~Constraint()
     deallocate_variables();
 }
 
+void Constraint::set_default_variables()
+{
+    constraint_mode = 1;
+    rotation_axis = "";
+    fix_harmonic = false;
+    fix_cubic = false;
+    constraint_algebraic = 0;
+    fc2_file = "";
+    fc3_file = "";
+    exist_constraint = false;
+    extra_constraint_from_symmetry = false;
+    const_mat = nullptr;
+    const_rhs = nullptr;
+    const_symmetry = nullptr;
+    const_fix = nullptr;
+    const_relate = nullptr;
+    index_bimap = nullptr;
+    P = 0;
+}
+
+void Constraint::deallocate_variables()
+{
+    if (const_symmetry) {
+        deallocate(const_symmetry);
+    }
+    if (const_fix) {
+        deallocate(const_fix);
+    }
+    if (const_relate) {
+        deallocate(const_relate);
+    }
+    if (index_bimap) {
+        deallocate(index_bimap);
+    }
+    if (const_mat) {
+        deallocate(const_mat);
+    }
+    if (const_rhs) {
+        deallocate(const_rhs);
+    }
+}
+
 void Constraint::setup()
 {
     alm->timer->start_clock("constraint");
@@ -101,8 +143,8 @@ void Constraint::setup()
         deallocate(const_symmetry);
     }
     allocate(const_symmetry, interaction->maxorder);
-
     generate_symmetry_constraint_in_cartesian(const_symmetry);
+
     for (int order = 0; order < interaction->maxorder; ++order) {
         if (const_symmetry[order].size() > 0) extra_constraint_from_symmetry = true;
     }
@@ -170,34 +212,35 @@ void Constraint::setup()
         int nparam;
         double *arr_tmp;
 
-        std::vector<ConstraintClass>::const_iterator it_const;
-
-        // Merge translational and rotational invariance excluding order-crossing constraints
+        // Merge intra-order constrants and do reduction 
 
         for (order = 0; order < maxorder; ++order) {
 
             nparam = fcs->nequiv[order].size();
             allocate(arr_tmp, nparam);
 
-            for (it_const = const_translation[order].begin();
-                 it_const != const_translation[order].end(); ++it_const) {
-                for (i = 0; i < nparam; ++i) arr_tmp[i] = (*it_const).w_const[i];
+            for (const auto &e : const_translation[order]) {
+                for (i = 0; i < nparam; ++i) {
+                    arr_tmp[i] = e.w_const[i];
+                }
                 const_self[order].push_back(ConstraintClass(nparam, arr_tmp));
             }
 
             if (const_rotation_self[order].size() > 0) {
-                for (it_const = const_rotation_self[order].begin();
-                     it_const != const_rotation_self[order].end(); ++it_const) {
-                    for (i = 0; i < nparam; ++i) arr_tmp[i] = (*it_const).w_const[i];
+                for (const auto &e : const_rotation_self[order]) {
+                    for (i = 0; i < nparam; ++i) {
+                        arr_tmp[i] = e.w_const[i];
+                    }
                     const_self[order].push_back(ConstraintClass(nparam, arr_tmp));
                 }
                 remove_redundant_rows(nparam, const_self[order], eps8);
             }
 
             if (const_symmetry[order].size() > 0) {
-                for (it_const = const_symmetry[order].begin();
-                     it_const != const_symmetry[order].end(); ++it_const) {
-                    for (i = 0; i < nparam; ++i) arr_tmp[i] = (*it_const).w_const[i];
+                for (const auto &e : const_symmetry[order]) {
+                    for (i = 0; i < nparam; ++i) {
+                        arr_tmp[i] = e.w_const[i];
+                    }
                     const_self[order].push_back(ConstraintClass(nparam, arr_tmp));
                 }
                 remove_redundant_rows(nparam, const_self[order], eps8);
@@ -249,7 +292,8 @@ void Constraint::setup()
             }
             allocate(index_bimap, maxorder);
 
-            get_mapping_constraint(maxorder, fcs->nequiv, const_self, const_fix,
+            get_mapping_constraint(maxorder, fcs->nequiv,
+                                   const_self, const_fix,
                                    const_relate, index_bimap, false);
 
             for (order = 0; order < maxorder; ++order) {
@@ -439,7 +483,6 @@ void Constraint::get_mapping_constraint(const int nmax,
 {
     int order;
     unsigned int i;
-    //double const_tol = eps8;
 
     bool *fix_forceconstant;
     std::string *file_forceconstant;
@@ -1359,7 +1402,8 @@ void Constraint::rotational_invariance()
                                             std::sort(atom_tmp.begin(), atom_tmp.end());
 
                                             iter_cluster = interaction->mindist_cluster[order][i].find(
-                                                MinimumDistanceCluster(atom_tmp, cell_dummy));
+                                                MinimumDistanceCluster(atom_tmp,
+                                                                       cell_dummy));
                                             if (iter_cluster != interaction->mindist_cluster[order][i].end()) {
 
                                                 int iloc = -1;
@@ -1571,6 +1615,7 @@ void Constraint::rotational_invariance()
     } // order
 
     for (order = 0; order < maxorder; ++order) {
+        nparam_sub = nparams[order] + nparams[order - 1];
         remove_redundant_rows(nparam_sub, const_rotation_cross[order], eps6);
         remove_redundant_rows(nparams[order], const_rotation_self[order], eps6);
     }
@@ -1632,48 +1677,6 @@ void Constraint::remove_redundant_rows(const int n,
     }
 }
 
-
-void Constraint::set_default_variables()
-{
-    constraint_mode = 1;
-    rotation_axis = "";
-    fix_harmonic = false;
-    fix_cubic = false;
-    constraint_algebraic = 0;
-    fc2_file = "";
-    fc3_file = "";
-    exist_constraint = false;
-    extra_constraint_from_symmetry = false;
-    const_mat = nullptr;
-    const_rhs = nullptr;
-    const_symmetry = nullptr;
-    const_fix = nullptr;
-    const_relate = nullptr;
-    index_bimap = nullptr;
-    P = 0;
-}
-
-void Constraint::deallocate_variables()
-{
-    if (const_symmetry) {
-        deallocate(const_symmetry);
-    }
-    if (const_fix) {
-        deallocate(const_fix);
-    }
-    if (const_relate) {
-        deallocate(const_relate);
-    }
-    if (index_bimap) {
-        deallocate(index_bimap);
-    }
-    if (const_mat) {
-        deallocate(const_mat);
-    }
-    if (const_rhs) {
-        deallocate(const_rhs);
-    }
-}
 
 int Constraint::levi_civita(const int i, const int j, const int k)
 {
@@ -1828,7 +1831,8 @@ void Constraint::rref(const int nrows,
 }
 
 
-void Constraint::rref(std::vector<std::vector<double>> &mat, const double tolerance)
+void Constraint::rref(std::vector<std::vector<double>> &mat,
+                      const double tolerance)
 {
     // Return the reduced row echelon form (rref) of matrix mat.
     // In addition, rank of the matrix is estimated.

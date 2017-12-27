@@ -630,11 +630,11 @@ void InputParser::parse_fitting_vars(ALMCore *alm)
 {
     int ndata, nstart, nend;
     std::string dfile, ffile;
-    int multiply_data, constraint_flag;
+    int constraint_flag;
     std::string rotation_axis;
     std::string fc2_file, fc3_file;
 
-    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE MULTDAT ICONST ROTAXIS FC2XML FC3XML";
+    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML";
     std::string str_no_defaults = "NDATA DFILE FFILE";
     std::vector<std::string> no_defaults;
 
@@ -683,13 +683,6 @@ void InputParser::parse_fitting_vars(ALMCore *alm)
     dfile = fitting_var_dict["DFILE"];
     ffile = fitting_var_dict["FFILE"];
 
-
-    if (fitting_var_dict["MULTDAT"].empty()) {
-        multiply_data = 1;
-    } else {
-        assign_val(multiply_data, "MULTDAT", fitting_var_dict, alm->error);
-    }
-
     if (fitting_var_dict["ICONST"].empty()) {
         constraint_flag = 1;
     } else {
@@ -725,7 +718,6 @@ void InputParser::parse_fitting_vars(ALMCore *alm)
                                    nend,
                                    dfile,
                                    ffile,
-                                   multiply_data,
                                    constraint_flag,
                                    rotation_axis,
                                    fc2_file,

@@ -252,10 +252,6 @@ const void ALM::set_fitting_constraint_rotation_axis
     alm_core->constraint->rotation_axis = rotation_axis;
 }
 
-const void ALM::set_multiplier_option(const int multiply_data) // MULTDAT
-{
-    alm_core->symmetry->multiply_data = multiply_data;
-}
 
 const void ALM::set_fitting_filenames(const std::string dfile, // DFILE
                                       const std::string ffile) // FFILE

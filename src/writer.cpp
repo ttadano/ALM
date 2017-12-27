@@ -87,7 +87,6 @@ void Writer::write_input_vars(ALM *alm)
         std::cout << "  FFILE = " << alm_core->files->file_force << std::endl;
         std::cout << "  NDATA = " << alm_core->system->ndata << "; NSTART = " << alm_core->system->nstart
             << "; NEND = " << alm_core->system->nend << std::endl;
-        std::cout << "  MULTDAT = " << alm_core->symmetry->multiply_data << std::endl;
         std::cout << "  ICONST = " << alm_core->constraint->constraint_mode << std::endl;
         std::cout << "  ROTAXIS = " << alm_core->constraint->rotation_axis << std::endl;
         std::cout << "  FC2XML = " << alm_core->constraint->fc2_file << std::endl;

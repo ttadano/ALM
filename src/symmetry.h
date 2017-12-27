@@ -113,7 +113,6 @@ namespace ALM_NS
 
         unsigned int nsym, ntran, nat_prim;
         int printsymmetry;
-        int multiply_data;
         int *symnum_tran;
 
         double tolerance;

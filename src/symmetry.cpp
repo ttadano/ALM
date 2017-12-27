@@ -200,7 +200,6 @@ void Symmetry::set_default_variables()
     //sym_available = nullptr;
     ntran = 0;
     nat_prim = 0;
-    multiply_data = 1;
     tolerance = 1e-6;
     //symrel_int = nullptr;
 }
