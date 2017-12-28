@@ -54,6 +54,7 @@ void Constraint::set_default_variables()
     const_symmetry = nullptr;
     const_fix = nullptr;
     const_relate = nullptr;
+    const_relate_rotation = nullptr;
     index_bimap = nullptr;
     P = 0;
     tolerance_constraint = eps6;
@@ -69,6 +70,9 @@ void Constraint::deallocate_variables()
     }
     if (const_relate) {
         deallocate(const_relate);
+    }
+    if (const_relate_rotation) {
+        deallocate(const_relate_rotation);
     }
     if (index_bimap) {
         deallocate(index_bimap);
