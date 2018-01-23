@@ -18,9 +18,7 @@ namespace ALM_NS
     class ALMCore
     {
     public:
-        // Declaration of pointers with incomplete class type (opaque pointer)
         class InputSetter *input;
-  //      class Memory *memory;
         class System *system;
         class Interaction *interaction;
         class Fcs *fcs;
@@ -31,13 +29,13 @@ namespace ALM_NS
         class Displace *displace;
         class Error *error;
         class Timer *timer;
-     //   std::unique_ptr<class Timer> timer;
         ALMCore();
         ~ALMCore();
         void create();
         void initialize();
+        void finalize();
 
-        std::string mode; // "suggest" or "fitting"
+        std::string mode;
+        bool print_hessian;
     };
 }
-

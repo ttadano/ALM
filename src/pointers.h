@@ -27,9 +27,13 @@ namespace ALM_NS
             constraint(ptr->constraint),
             files(ptr->files),
             displace(ptr->displace),
-            error(ptr->error) {}
+            error(ptr->error)
+        {
+        }
 
-        virtual ~Pointers() {}
+        virtual ~Pointers()
+        {
+        }
 
     protected:
         ALMCore *alm;
@@ -44,4 +48,3 @@ namespace ALM_NS
         Error *&error;
     };
 }
-
