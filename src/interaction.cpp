@@ -93,12 +93,12 @@ void Interaction::init()
     if (interaction_pair) {
         deallocate(interaction_pair);
     }
-    allocate(interaction_pair, maxorder, symmetry->natmin);
+    allocate(interaction_pair, maxorder, symmetry->nat_prim);
 
     if (mindist_cluster) {
         deallocate(mindist_cluster);
     }
-    allocate(mindist_cluster, maxorder, symmetry->natmin);
+    allocate(mindist_cluster, maxorder, symmetry->nat_prim);
 
     if (pairs) {
         deallocate(pairs);
@@ -119,7 +119,7 @@ void Interaction::init()
     alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
-     alm->timer->stop_clock("interaction");
+    alm->timer->stop_clock("interaction");
 }
 
 void Interaction::generate_pairs(std::set<IntList> *pair_out,
@@ -128,7 +128,7 @@ void Interaction::generate_pairs(std::set<IntList> *pair_out,
     int i, j;
     int iat;
     int order;
-    int natmin = symmetry->natmin;
+    int natmin = symmetry->nat_prim;
     int nat = system->nat;
 
     int *pair_tmp;
@@ -338,7 +338,10 @@ void Interaction::get_pairs_of_minimum_distance(int nat,
 
             dist_min = distall[i][j][0].dist;
             for (auto it = distall[i][j].cbegin(); it != distall[i][j].cend(); ++it) {
-                if (std::abs((*it).dist - dist_min) < eps8) {
+                // The tolerance below (1.e-3) should be chosen so that 
+                // the mirror images with equal distances are found correctly.
+                // If this fails, the phonon dispersion would be incorrect.
+                if (std::abs((*it).dist - dist_min) < 1.0e-3) {
                     mindist_pairs[i][j].push_back(DistInfo(*it));
                 }
             }
@@ -359,9 +362,9 @@ void Interaction::print_neighborlist(std::vector<DistInfo> **mindist)
     double dist_tmp;
     std::vector<DistList> *neighborlist;
 
-    allocate(neighborlist, symmetry->natmin);
+    allocate(neighborlist, symmetry->nat_prim);
 
-    for (i = 0; i < symmetry->natmin; ++i) {
+    for (i = 0; i < symmetry->nat_prim; ++i) {
         neighborlist[i].clear();
 
         iat = symmetry->map_p2s[i][0];
@@ -380,7 +383,7 @@ void Interaction::print_neighborlist(std::vector<DistInfo> **mindist)
     int nthnearest;
     std::vector<int> atomlist;
 
-    for (i = 0; i < symmetry->natmin; ++i) {
+    for (i = 0; i < symmetry->nat_prim; ++i) {
 
         nthnearest = 0;
         atomlist.clear();
@@ -468,7 +471,7 @@ void Interaction::search_interactions(std::vector<int> **interaction_list_out,
     // 
     int i;
     int order;
-    int natmin = symmetry->natmin;
+    int natmin = symmetry->nat_prim;
     int iat, jat;
     int nat = system->nat;
     int ikd, jkd;
@@ -774,7 +777,7 @@ void Interaction::calc_mindist_clusters(std::vector<int> **interaction_pair_in,
     // Calculate the complete set of interaction clusters for each order.
     //
 
-    int natmin = symmetry->natmin;
+    int natmin = symmetry->nat_prim;
     int i, j, k;
     int iat, jat;
     int order;
@@ -805,7 +808,7 @@ void Interaction::calc_mindist_clusters(std::vector<int> **interaction_pair_in,
     std::vector<std::vector<int>> data_vec;
 
     for (order = 0; order < maxorder; ++order) {
-        for (i = 0; i < symmetry->natmin; ++i) {
+        for (i = 0; i < symmetry->nat_prim; ++i) {
 
             mindist_cluster_out[order][i].clear();
 
@@ -1041,7 +1044,7 @@ void Interaction::calc_mindist_clusters2(std::vector<int> **interaction_pair_in,
 {
     std::vector<MinDistList> distance_list;
 
-    int natmin = symmetry->natmin;
+    int natmin = symmetry->nat_prim;
     int i, j, k;
     int iat, jat;
     int ikd, jkd;
@@ -1066,7 +1069,7 @@ void Interaction::calc_mindist_clusters2(std::vector<int> **interaction_pair_in,
     bool isok;
 
     for (order = 0; order < maxorder; ++order) {
-        for (i = 0; i < symmetry->natmin; ++i) {
+        for (i = 0; i < symmetry->nat_prim; ++i) {
 
             mindist_cluster_out[order][i].clear();
             iat = symmetry->map_p2s[i][0];

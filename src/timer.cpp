@@ -21,6 +21,7 @@ Timer::Timer()
 #if defined(WIN32) || defined(_WIN32)
     QueryPerformanceCounter(&walltime_ref);
     QueryPerformanceFrequency(&frequency);
+    cputime_ref = get_cputime();
 #else
     gettimeofday(&walltime_ref, nullptr);
     cputime_ref = static_cast<double>(clock());
@@ -58,13 +59,30 @@ double Timer::elapsed_walltime()
 #endif
 }
 
+#if defined(WIN32) || defined(_WIN32)
+double Timer::get_cputime()
+{
+    FILETIME createTime;
+    FILETIME exitTime;
+    FILETIME kernelTime;
+    FILETIME userTime;
+    if (GetProcessTimes(GetCurrentProcess(),
+                        &createTime, &exitTime, &kernelTime, &userTime) != -1) {
+        SYSTEMTIME userSystemTime;
+        if (FileTimeToSystemTime(&userTime, &userSystemTime) != -1)
+            return (double)userSystemTime.wHour * 3600.0 +
+                (double)userSystemTime.wMinute * 60.0 +
+                (double)userSystemTime.wSecond +
+                (double)userSystemTime.wMilliseconds / 1000.0;
+    }
+    return 0.0;
+}
+#endif
+
 double Timer::elapsed_cputime()
 {
 #if defined(WIN32) || defined(_WIN32)
-    LARGE_INTEGER time_now;
-    QueryPerformanceCounter(&time_now);
-    return static_cast<double>(time_now.QuadPart - time_ref.QuadPart)
-        / static_cast<double>(frequency.QuadPart);
+    return get_cputime() - cputime_ref;
 #else
     return (static_cast<double>(clock()) - cputime_ref) / CLOCKS_PER_SEC;
 #endif
@@ -107,10 +125,10 @@ void Timer::start_clock(const std::string str_tag)
         exit(1);
     }
     // Initialize the counter if the key is new
-    if (walltime.find(str_tag) == walltime.end())  {
+    if (walltime.find(str_tag) == walltime.end()) {
         walltime[str_tag] = 0.0;
     }
-    if (cputime.find(str_tag) == cputime.end())  {
+    if (cputime.find(str_tag) == cputime.end()) {
         cputime[str_tag] = 0.0;
     }
 

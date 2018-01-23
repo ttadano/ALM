@@ -75,7 +75,8 @@ void InputSetter::set_general_vars(ALMCore *alm_core,
                                    const int trevsym,
                                    const std::string *kdname,
                                    const double * const *magmom,
-                                   const double tolerance)
+                                   const double tolerance,
+                                   const double tolerance_constraint)
 {
     int i, j;
 
@@ -105,6 +106,7 @@ void InputSetter::set_general_vars(ALMCore *alm_core,
     alm_core->system->noncollinear = noncollinear;
     alm_core->symmetry->trev_sym_mag = trevsym;
     alm_core->files->print_hessian = print_hessian;
+    alm_core->constraint->tolerance_constraint = tolerance_constraint;
 
     if (mode == "suggest") {
         alm_core->displace->disp_basis = str_disp_basis;
@@ -163,7 +165,6 @@ void InputSetter::set_fitting_vars(ALMCore *alm_core,
                                    const int nend,
                                    const std::string dfile,
                                    const std::string ffile,
-                                   const int multiply_data,
                                    const int constraint_flag,
                                    const std::string rotation_axis,
                                    const std::string fc2_file,
@@ -177,7 +178,6 @@ void InputSetter::set_fitting_vars(ALMCore *alm_core,
 
     alm_core->files->file_disp = dfile;
     alm_core->files->file_force = ffile;
-    alm_core->symmetry->multiply_data = multiply_data;
     alm_core->constraint->constraint_mode = constraint_flag;
     alm_core->constraint->rotation_axis = rotation_axis;
     alm_core->constraint->fc2_file = fc2_file;

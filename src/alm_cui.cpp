@@ -24,7 +24,9 @@
 
 using namespace ALM_NS;
 
-ALMCUI::ALMCUI() {}
+ALMCUI::ALMCUI()
+{
+}
 
 void ALMCUI::run(int narg, char **arg)
 {
@@ -70,12 +72,12 @@ void ALMCUI::run(int narg, char **arg)
     std::cout << std::endl << " Job finished at "
         << alm_core->timer->DateAndTime() << std::endl;
 
-/*
-    std::cout << "FCS: " << alm_core->timer->get_walltime("fcs") << " " << alm_core->timer->get_cputime("fcs") << std::endl;
-    std::cout << "CONSTRAINT: " << alm_core->timer->get_walltime("constraint") << " " << alm_core->timer->get_cputime("constraint") << std::endl;
-    std::cout << "FITTING: " << alm_core->timer->get_walltime("fitting") << " " << alm_core->timer->get_cputime("fitting") << std::endl;
-    std::cout << "SYSTEM: " << alm_core->timer->get_walltime("system") << std::endl;
-*/
+    /*
+        std::cout << "FCS: " << alm_core->timer->get_walltime("fcs") << " " << alm_core->timer->get_cputime("fcs") << std::endl;
+        std::cout << "CONSTRAINT: " << alm_core->timer->get_walltime("constraint") << " " << alm_core->timer->get_cputime("constraint") << std::endl;
+        std::cout << "FITTING: " << alm_core->timer->get_walltime("fitting") << " " << alm_core->timer->get_cputime("fitting") << std::endl;
+        std::cout << "SYSTEM: " << alm_core->timer->get_walltime("system") << std::endl;
+    */
 
     delete alm;
 }
@@ -83,4 +85,3 @@ void ALMCUI::run(int narg, char **arg)
 ALMCUI::~ALMCUI()
 {
 }
-
