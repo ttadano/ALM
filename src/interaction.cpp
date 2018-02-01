@@ -265,6 +265,8 @@ void Interaction::generate_coordinate_of_periodic_images(const unsigned int nat,
         for (ja = -1; ja <= 1; ++ja) {
             for (ka = -1; ka <= 1; ++ka) {
 
+                if (ia == 0 && ja == 0 && ka == 0) continue;
+
                 ++icell;
 
                 // When periodic flag is zero along an axis, 
