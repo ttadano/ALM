@@ -12,7 +12,7 @@
 #include <fstream>
 #include <string>
 #include "alm.h"
-#include "alm_core.h"
+//#include "alm.h"
 #include "constraint.h"
 #include "fcs.h"
 #include "fitting.h"
@@ -28,46 +28,71 @@ using namespace ALM_NS;
 
 ALM::ALM()
 {
-    alm_core = new ALMCore();
-    alm_core->create();
+    //alm = new ALMCore();
+    //create();
+    create();
     verbose = true;
     ofs_alm = nullptr;
     coutbuf = nullptr;
+    mode = "suggest";
 }
 
 ALM::~ALM()
 {
-    if (alm_core->system->kdname) {
-        deallocate(alm_core->system->kdname);
+    if (system->kdname) {
+        deallocate(system->kdname);
     }
-    alm_core->system->kdname = nullptr;
-    if (alm_core->system->xcoord) {
-        deallocate(alm_core->system->xcoord);
+    system->kdname = nullptr;
+    if (system->xcoord) {
+        deallocate(system->xcoord);
     }
-    alm_core->system->xcoord = nullptr;
-    if (alm_core->system->kd) {
-        deallocate(alm_core->system->kd);
+    system->xcoord = nullptr;
+    if (system->kd) {
+        deallocate(system->kd);
     }
-    alm_core->system->kd = nullptr;
-    if (alm_core->system->magmom) {
-        deallocate(alm_core->system->magmom);
+    system->kd = nullptr;
+    if (system->magmom) {
+        deallocate(system->magmom);
     }
-    alm_core->system->magmom = nullptr;
-    if (alm_core->interaction->nbody_include) {
-        deallocate(alm_core->interaction->nbody_include);
+    system->magmom = nullptr;
+    if (interaction->nbody_include) {
+        deallocate(interaction->nbody_include);
     }
-    alm_core->interaction->nbody_include = nullptr;
-    if (alm_core->interaction->rcs) {
-        deallocate(alm_core->interaction->rcs);
+    interaction->nbody_include = nullptr;
+    if (interaction->rcs) {
+        deallocate(interaction->rcs);
     }
-    alm_core->interaction->rcs = nullptr;
+    interaction->rcs = nullptr;
 
-    delete alm_core;
+    delete files;
+    delete system;
+    delete interaction;
+    delete fcs;
+    delete symmetry;
+    delete fitting;
+    delete constraint;
+    delete displace;
+    delete error;
+    delete timer;
 }
 
-const void ALM::set_run_mode(const std::string mode)
+void ALM::create()
 {
-    alm_core->mode = mode;
+    files = new Files();
+    system = new System();
+    interaction = new Interaction();
+    fcs = new Fcs();
+    symmetry = new Symmetry();
+    fitting = new Fitting();
+    constraint = new Constraint();
+    displace = new Displace();
+    error = new Error();
+    timer = new Timer();
+}
+
+const void ALM::set_run_mode(const std::string mode_in)
+{
+    mode = mode_in;
 }
 
 const void ALM::set_verbose(const bool verbose_in)
@@ -77,44 +102,44 @@ const void ALM::set_verbose(const bool verbose_in)
 
 const void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
 {
-    alm_core->files->job_title = prefix;
+    files->job_title = prefix;
 }
 
 const void ALM::set_is_print_symmetry(const int printsymmetry) // PRINTSYM
 {
-    alm_core->symmetry->printsymmetry = printsymmetry;
+    symmetry->printsymmetry = printsymmetry;
 }
 
 const void ALM::set_is_print_hessians(const bool print_hessian) // HESSIAN
 {
-    alm_core->files->print_hessian = print_hessian;
+    files->print_hessian = print_hessian;
 }
 
 const void ALM::set_symmetry_param(const int nsym) // NSYM
 {
-    alm_core->symmetry->nsym = nsym;
+    symmetry->nsym = nsym;
 }
 
 const void ALM::set_symmetry_tolerance(const double tolerance) // TOLERANCE
 {
-    alm_core->symmetry->tolerance = tolerance;
+    symmetry->tolerance = tolerance;
 }
 
 const void ALM::set_displacement_param(const bool trim_dispsign_for_evenfunc) // TRIMEVEN
 {
-    alm_core->displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
+    displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
 }
 
 const void ALM::set_displacement_basis(const std::string str_disp_basis) // DBASIS
 {
-    alm_core->displace->disp_basis = str_disp_basis;
+    displace->disp_basis = str_disp_basis;
 }
 
 const void ALM::set_periodicity(const int is_periodic[3]) // PERIODIC
 {
     int i;
     for (i = 0; i < 3; ++i) {
-        alm_core->interaction->is_periodic[i] = is_periodic[i];
+        interaction->is_periodic[i] = is_periodic[i];
     }
 }
 
@@ -144,46 +169,46 @@ const void ALM::set_cell(const int nat,
         }
     }
 
-    alm_core->system->nkd = nkd;
-    alm_core->system->nat = nat;
+    system->nkd = nkd;
+    system->nat = nat;
 
-    if (alm_core->system->xcoord) {
-        deallocate(alm_core->system->xcoord);
+    if (system->xcoord) {
+        deallocate(system->xcoord);
     }
-    allocate(alm_core->system->xcoord, nat, 3);
+    allocate(system->xcoord, nat, 3);
 
-    if (alm_core->system->kd) {
-        deallocate(alm_core->system->kd);
+    if (system->kd) {
+        deallocate(system->kd);
     }
-    allocate(alm_core->system->kd, nat);
+    allocate(system->kd, nat);
 
-    if (alm_core->system->kdname) {
-        deallocate(alm_core->system->kdname);
+    if (system->kdname) {
+        deallocate(system->kdname);
     }
-    allocate(alm_core->system->kdname, nkd);
+    allocate(system->kdname, nkd);
 
-    if (alm_core->system->magmom) {
-        deallocate(alm_core->system->magmom);
+    if (system->magmom) {
+        deallocate(system->magmom);
     }
-    allocate(alm_core->system->magmom, nat, 3);
+    allocate(system->magmom, nat, 3);
 
     for (i = 0; i < nkd; ++i) {
-        alm_core->system->kdname[i] = kdname[i];
+        system->kdname[i] = kdname[i];
     }
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
-            alm_core->system->lavec[i][j] = lavec[i][j];
+            system->lavec[i][j] = lavec[i][j];
         }
     }
     for (i = 0; i < nat; ++i) {
-        alm_core->system->kd[i] = kd[i];
+        system->kd[i] = kd[i];
         for (j = 0; j < 3; ++j) {
-            alm_core->system->xcoord[i][j] = xcoord[i][j];
+            system->xcoord[i][j] = xcoord[i][j];
         }
     }
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
-            alm_core->system->magmom[i][j] = 0.0;
+            system->magmom[i][j] = 0.0;
         }
     }
 }
@@ -196,20 +221,20 @@ const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
 {
     int i, j, nat;
 
-    nat = alm_core->system->nat;
-    alm_core->system->lspin = lspin;
-    alm_core->system->noncollinear = noncollinear;
-    alm_core->system->str_magmom = str_magmom;
-    alm_core->symmetry->trev_sym_mag = trev_sym_mag;
+    nat = system->nat;
+    system->lspin = lspin;
+    system->noncollinear = noncollinear;
+    system->str_magmom = str_magmom;
+    symmetry->trev_sym_mag = trev_sym_mag;
 
-    if (alm_core->system->magmom) {
-        deallocate(alm_core->system->magmom);
+    if (system->magmom) {
+        deallocate(system->magmom);
     }
-    allocate(alm_core->system->magmom, nat, 3);
+    allocate(system->magmom, nat, 3);
 
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
-            alm_core->system->magmom[i][j] = magmom[i * 3 + j];
+            system->magmom[i][j] = magmom[i * 3 + j];
         }
     }
 }
@@ -222,9 +247,9 @@ const void ALM::set_displacement_and_force(const double *u_in,
     double **u;
     double **f;
 
-    alm_core->system->ndata = ndata_used;
-    alm_core->system->nstart = 1;
-    alm_core->system->nend = ndata_used;
+    system->ndata = ndata_used;
+    system->nstart = 1;
+    system->nend = ndata_used;
 
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
@@ -235,7 +260,7 @@ const void ALM::set_displacement_and_force(const double *u_in,
             f[i][j] = f_in[i * nat * 3 + j];
         }
     }
-    alm_core->fitting->set_displacement_and_force(u, f, nat, ndata_used);
+    fitting->set_displacement_and_force(u, f, nat, ndata_used);
 
     deallocate(u);
     deallocate(f);
@@ -243,47 +268,47 @@ const void ALM::set_displacement_and_force(const double *u_in,
 
 const void ALM::set_fitting_constraint_type(const int constraint_flag) // ICONST
 {
-    alm_core->constraint->constraint_mode = constraint_flag;
+    constraint->constraint_mode = constraint_flag;
 }
 
 const void ALM::set_fitting_constraint_rotation_axis
 (const std::string rotation_axis) // ROTAXIS
 {
-    alm_core->constraint->rotation_axis = rotation_axis;
+    constraint->rotation_axis = rotation_axis;
 }
 
 
 const void ALM::set_fitting_filenames(const std::string dfile, // DFILE
                                       const std::string ffile) // FFILE
 {
-    alm_core->files->file_disp = dfile;
-    alm_core->files->file_force = ffile;
+    files->file_disp = dfile;
+    files->file_force = ffile;
 }
 
 const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
 {
     int i, j, k, nkd;
 
-    alm_core->interaction->maxorder = maxorder;
-    if (alm_core->interaction->nbody_include) {
-        deallocate(alm_core->interaction->nbody_include);
+    interaction->maxorder = maxorder;
+    if (interaction->nbody_include) {
+        deallocate(interaction->nbody_include);
     }
-    allocate(alm_core->interaction->nbody_include, maxorder);
+    allocate(interaction->nbody_include, maxorder);
 
     for (i = 0; i < maxorder; ++i) {
-        alm_core->interaction->nbody_include[i] = i + 2;
+        interaction->nbody_include[i] = i + 2;
     }
 
-    nkd = alm_core->system->nkd;
-    if (alm_core->interaction->rcs) {
-        deallocate(alm_core->interaction->rcs);
+    nkd = system->nkd;
+    if (interaction->rcs) {
+        deallocate(interaction->rcs);
     }
-    allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+    allocate(interaction->rcs, maxorder, nkd, nkd);
 
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                alm_core->interaction->rcs[i][j][k] = -1.0;
+                interaction->rcs[i][j][k] = -1.0;
             }
         }
     }
@@ -291,14 +316,14 @@ const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
 
 const void ALM::set_nbody_include(const int *nbody_include) // NBODY
 {
-    int maxorder = alm_core->interaction->maxorder;
+    int maxorder = interaction->maxorder;
     if (maxorder > 0) {
-        if (alm_core->interaction->nbody_include) {
-            deallocate(alm_core->interaction->nbody_include);
+        if (interaction->nbody_include) {
+            deallocate(interaction->nbody_include);
         }
-        allocate(alm_core->interaction->nbody_include, maxorder);
+        allocate(interaction->nbody_include, maxorder);
         for (int i = 0; i < maxorder; ++i) {
-            alm_core->interaction->nbody_include[i] = nbody_include[i];
+            interaction->nbody_include[i] = nbody_include[i];
         }
     }
 }
@@ -307,39 +332,39 @@ const void ALM::set_cutoff_radii(const double *rcs)
 {
     int i, j, k, nkd, maxorder, count;
 
-    nkd = alm_core->system->nkd;
-    maxorder = alm_core->interaction->maxorder;
+    nkd = system->nkd;
+    maxorder = interaction->maxorder;
     if (maxorder > 0) {
-        if (alm_core->interaction->rcs) {
-            deallocate(alm_core->interaction->rcs);
+        if (interaction->rcs) {
+            deallocate(interaction->rcs);
         }
-        allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+        allocate(interaction->rcs, maxorder, nkd, nkd);
     }
 
     count = 0;
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                alm_core->interaction->rcs[i][j][k] = rcs[count];
+                interaction->rcs[i][j][k] = rcs[count];
                 count++;
             }
         }
     }
 }
 
-ALMCore* ALM::get_alm_core()
-{
-    return alm_core;
-}
+//ALMCore* ALM::get_alm()
+//{
+//    return alm;
+//}
 
 const int ALM::get_atom_mapping_by_pure_translations(int *map_p2s)
 {
-    const int ntran = alm_core->symmetry->ntran;
-    const int natmin = alm_core->symmetry->nat_prim;
+    const int ntran = symmetry->ntran;
+    const int natmin = symmetry->nat_prim;
 
     for (int i = 0; i < ntran; ++i) {
         for (int j = 0; j < natmin; ++j) {
-            map_p2s[i * natmin + j] = alm_core->symmetry->map_p2s[j][i];
+            map_p2s[i * natmin + j] = symmetry->map_p2s[j][i];
         }
     }
     return ntran;
@@ -350,7 +375,7 @@ const int ALM::get_number_of_displacement_patterns(const int fc_order) // harmon
 {
     int order = fc_order - 1;
 
-    return alm_core->displace->pattern_all[order].size();
+    return displace->pattern_all[order].size();
 }
 
 const void ALM::get_numbers_of_displacements(int *numbers,
@@ -358,8 +383,8 @@ const void ALM::get_numbers_of_displacements(int *numbers,
 {
     int order = fc_order - 1;
 
-    for (int i = 0; i < alm_core->displace->pattern_all[order].size(); ++i) {
-        numbers[i] = alm_core->displace->pattern_all[order][i].atoms.size();
+    for (int i = 0; i < displace->pattern_all[order].size(); ++i) {
+        numbers[i] = displace->pattern_all[order][i].atoms.size();
     }
 }
 
@@ -373,8 +398,8 @@ const int ALM::get_displacement_patterns(int *atom_indices,
 
     i_atom = 0;
     i_disp = 0;
-    for (int i = 0; i < alm_core->displace->pattern_all[order].size(); ++i) {
-        displacements = &alm_core->displace->pattern_all[order][i];
+    for (int i = 0; i < displace->pattern_all[order].size(); ++i) {
+        displacements = &displace->pattern_all[order][i];
         for (int j = 0; j < displacements->atoms.size(); ++j) {
             atom_indices[i_atom] = displacements->atoms[j];
             ++i_atom;
@@ -386,9 +411,9 @@ const int ALM::get_displacement_patterns(int *atom_indices,
     }
 
     // 0:Cartesian or 1:Fractional. -1 means something wrong.
-    if (alm_core->displace->disp_basis[0] == 'C') {
+    if (displace->disp_basis[0] == 'C') {
         return 0;
-    } else if (alm_core->displace->disp_basis[0] == 'F') {
+    } else if (displace->disp_basis[0] == 'F') {
         return 1;
     } else {
         return -1;
@@ -400,7 +425,7 @@ const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
     int id, order, num_unique_elems, num_equiv_elems;
     Fcs *fcs;
 
-    fcs = alm_core->fcs;
+    fcs = fcs;
     id = 0;
     order = fc_order - 1;
     if (fcs->nequiv[order].size() < 1) { return 0; }
@@ -422,9 +447,9 @@ const void ALM::get_fc(double *fc_values,
     Fcs *fcs;
     Fitting *fitting;
 
-    fcs = alm_core->fcs;
-    fitting = alm_core->fitting;
-    maxorder = alm_core->interaction->maxorder;
+    fcs = fcs;
+    fitting = fitting;
+    maxorder = interaction->maxorder;
     ip = 0;
     for (order = 0; order < fc_order; ++order) {
         if (fcs->nequiv[order].size() < 1) { continue; }
@@ -458,10 +483,10 @@ const void ALM::run()
         std::cout.rdbuf(ofs_alm->rdbuf());
     }
 
-    alm_core->initialize();
-    if (alm_core->mode == "fitting") {
+    initialize();
+    if (mode == "fitting") {
         run_fitting();
-    } else if (alm_core->mode == "suggest") {
+    } else if (mode == "suggest") {
         run_suggest();
     }
 
@@ -476,11 +501,21 @@ const void ALM::run()
 
 const void ALM::run_fitting()
 {
-    alm_core->constraint->setup();
-    alm_core->fitting->fitmain();
+    constraint->setup();
+    fitting->fitmain();
 }
 
 const void ALM::run_suggest()
 {
-    alm_core->displace->gen_displacement_pattern();
+    displace->gen_displacement_pattern();
+}
+
+
+void ALM::initialize()
+{
+    system->init();
+    files->init();
+    symmetry->init();
+    interaction->init();
+    fcs->init();
 }

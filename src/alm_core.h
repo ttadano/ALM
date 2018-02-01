@@ -1,5 +1,5 @@
 /*
- alm_core.h
+ alm.h
 
  Copyright (c) 2014 2015 2016 Terumasa Tadano
 

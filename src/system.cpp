@@ -30,7 +30,7 @@
 
 using namespace ALM_NS;
 
-System::System(ALMCore *alm): Pointers(alm)
+System::System()
 {
     set_default_variables();
 }
@@ -40,7 +40,7 @@ System::~System()
     deallocate_variables();
 }
 
-void System::init()
+void System::init(ALM *alm)
 {
     using namespace std;
 
@@ -53,7 +53,7 @@ void System::init()
     recips(lavec, rlavec);
 
     cout.setf(ios::scientific);
-
+    
     cout << "  Lattice Vector" << endl;
     cout << setw(16) << lavec[0][0];
     cout << setw(15) << lavec[1][0];

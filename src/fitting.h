@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "pointers.h"
+//#include "pointers.h"
 #include <vector>
 #include <set>
 #include <string>
@@ -20,10 +20,10 @@
 
 namespace ALM_NS
 {
-    class Fitting: protected Pointers
+    class Fitting
     {
     public:
-        Fitting(class ALMCore *);
+        Fitting();
         ~Fitting();
 
         void fitmain();

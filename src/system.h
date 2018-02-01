@@ -10,9 +10,10 @@
 
 #pragma once
 
-#include "pointers.h"
+//#include "pointers.h"
 #include <string>
 #include <vector>
+#include "alm.h"
 
 namespace ALM_NS
 {
@@ -35,12 +36,12 @@ namespace ALM_NS
     };
 
 
-    class System: protected Pointers
+    class System
     {
     public:
-        System(class ALMCore *);
+        System();
         ~System();
-        void init();
+        void init(ALM *);
         void recips(double [3][3], double [3][3]);
         void frac2cart(double **);
         void load_reference_system();

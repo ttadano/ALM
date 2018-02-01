@@ -15,8 +15,9 @@
 #include <set>
 #include <iterator>
 #include <algorithm>
-#include "pointers.h"
+//#include "pointers.h"
 #include "constants.h"
+#include "alm.h"
 
 
 namespace ALM_NS
@@ -214,10 +215,10 @@ namespace ALM_NS
         }
     };
 
-    class Interaction: protected Pointers
+    class Interaction
     {
     public:
-        Interaction(class ALMCore *);
+        Interaction();
         ~Interaction();
 
         int is_periodic[3];
@@ -236,7 +237,7 @@ namespace ALM_NS
         std::vector<int> **interaction_pair;
         std::set<MinimumDistanceCluster> **mindist_cluster;
 
-        void init();
+        void init(ALM *);
         double distance(double *, double *);
         int nbody(const int, const int *);
         bool is_incutoff(const int, int *, const int);
@@ -245,7 +246,7 @@ namespace ALM_NS
         void generate_interaction_information_by_cutoff(const int, const int,
                                                         int *, int **,
                                                         double **, std::vector<int> *);
-        void set_interaction_by_cutoff(ALMCore *);
+        void set_interaction_by_cutoff(ALM *);
 
         template <typename T>
         void insort(int n, T *arr)

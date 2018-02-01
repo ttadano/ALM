@@ -27,7 +27,7 @@
 
 using namespace ALM_NS;
 
-Symmetry::Symmetry(ALMCore *alm) : Pointers(alm)
+Symmetry::Symmetry()
 {
     set_default_variables();
 }
@@ -37,7 +37,7 @@ Symmetry::~Symmetry()
     deallocate_variables();
 }
 
-void Symmetry::init()
+void Symmetry::init(ALM *alm)
 {
     int i, j;
     int nat = system->nat;

@@ -78,7 +78,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="alm.cpp" />
-    <ClCompile Include="alm_core.cpp" />
     <ClCompile Include="alm_cui.cpp" />
     <ClCompile Include="constraint.cpp" />
     <ClCompile Include="error.cpp" />
@@ -97,7 +96,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="alm.h" />
-    <ClInclude Include="alm_core.h" />
     <ClInclude Include="alm_cui.h" />
     <ClInclude Include="combination.h" />
     <ClInclude Include="constraint.h" />
@@ -110,7 +108,6 @@
     <ClInclude Include="interaction.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="patterndisp.h" />
-    <ClInclude Include="pointers.h" />
     <ClInclude Include="symmetry.h" />
     <ClInclude Include="system.h" />
     <ClInclude Include="timer.h" />

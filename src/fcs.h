@@ -11,12 +11,13 @@
 
 #pragma once
 
-#include "pointers.h"
+//#include "pointers.h"
 #include <vector>
 #include <set>
 #include <algorithm>
 #include "symmetry.h"
 #include "interaction.h"
+#include "alm.h"
 
 namespace ALM_NS
 {
@@ -70,13 +71,13 @@ namespace ALM_NS
         ForceConstantTable();
     };
 
-    class Fcs: protected Pointers
+    class Fcs
     {
     public:
-        Fcs(class ALMCore *);
+        Fcs();
         ~Fcs();
 
-        void init();
+        void init(ALM *);
 
         std::vector<int> *nequiv; // stores duplicate number of irreducible force constants
         std::vector<FcProperty> *fc_table; // all force constants

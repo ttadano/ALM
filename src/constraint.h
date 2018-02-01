@@ -13,7 +13,8 @@
 #include <vector>
 #include <set>
 #include <string>
-#include "pointers.h"
+#include "alm.h"
+//#include "pointers.h"
 #include "constants.h"
 #include "interaction.h"
 #include "symmetry.h"
@@ -92,13 +93,13 @@ namespace ALM_NS
         return true;
     }
 
-    class Constraint: protected Pointers
+    class Constraint
     {
     public:
-        Constraint(class ALMCore *);
+        Constraint();
         ~Constraint();
 
-        void setup();
+        void setup(ALM *alm);
 
         int constraint_mode;
         int P;
@@ -120,19 +121,21 @@ namespace ALM_NS
         std::vector<ConstraintTypeRelate> *const_relate_rotation;
         boost::bimap<int, int> *index_bimap;
 
-        void get_constraint_symmetry(const int, const std::set<IntList>,
+        void get_constraint_symmetry(System *, Symmetry *, Fcs *, Error *,
+                                     const int, const std::set<IntList>,
                                      const std::vector<SymmetryOperation>,
                                      const std::string,
                                      const std::vector<FcProperty>,
                                      const std::vector<int>,
                                      std::vector<ConstraintClass> &);
 
-        void get_constraint_translation(const int, const std::set<IntList>,
+        void get_constraint_translation(System *, Symmetry *, Interaction *, Fcs *, Error *,
+                                        const int, const std::set<IntList>,
                                         const std::vector<FcProperty>,
                                         const std::vector<int>,
                                         std::vector<ConstraintClass> &);
 
-        void get_mapping_constraint(const int, std::vector<int> *,
+        void get_mapping_constraint(System *, Error *, const int, std::vector<int> *,
                                     std::vector<ConstraintClass> *,
                                     std::vector<ConstraintTypeFix> *,
                                     std::vector<ConstraintTypeRelate> *,
@@ -153,11 +156,11 @@ namespace ALM_NS
 
         int levi_civita(const int, const int, const int);
 
-        void rotational_invariance(std::vector<ConstraintClass> *,
+        void rotational_invariance(Symmetry *, Interaction *, Fcs *, Error *, std::vector<ConstraintClass> *,
                                    std::vector<ConstraintClass> *);
-        void calc_constraint_matrix(const int, int &);
+        void calc_constraint_matrix(System *, Interaction *, Fcs *, const int, int &);
 
-        void setup_rotation_axis(bool [3][3]);
+        void setup_rotation_axis(Error *, bool [3][3]);
         bool is_allzero(const int, const double *, const int nshift = 0);
         bool is_allzero(const std::vector<int>, int &);
         bool is_allzero(const std::vector<double>, const double, int &);
@@ -168,8 +171,16 @@ namespace ALM_NS
         void rref(int, int, double **, int &, double tolerance = eps12);
         void rref(std::vector<std::vector<double>> &, const double tolerance = eps12);
 
-        void generate_symmetry_constraint_in_cartesian(std::vector<ConstraintClass> *);
-        void generate_translational_constraint(std::vector<ConstraintClass> *);
+        void generate_symmetry_constraint_in_cartesian(System *, Symmetry *,
+                                                       Interaction *,
+                                                       Fcs *, Error *,
+                                                       std::vector<ConstraintClass> *);
+        void generate_translational_constraint(System *,
+                                               Symmetry *,
+                                               Interaction *,
+                                               Fcs *,
+                                               Error *,
+                                               std::vector<ConstraintClass> *);
     };
 
     extern "C"

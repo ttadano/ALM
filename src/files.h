@@ -12,14 +12,14 @@
 
 #include <string>
 #include <fstream>
-#include "pointers.h"
+//#include "pointers.h"
 
 namespace ALM_NS
 {
-    class Files : protected Pointers
+    class Files
     {
     public:
-        Files(class ALMCore *);
+        Files();
         ~Files();
 
         void init();

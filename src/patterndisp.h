@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "pointers.h"
+//#include "pointers.h"
 #include <string>
 #include <vector>
 #include <set>
@@ -118,10 +118,10 @@ namespace ALM_NS
         return a.ind < b.ind;
     }
 
-    class Displace: protected Pointers
+    class Displace
     {
     public:
-        Displace(class ALMCore *);
+        Displace();
         ~Displace();
 
         bool trim_dispsign_for_evenfunc;

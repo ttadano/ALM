@@ -22,10 +22,11 @@
 #include "system.h"
 #include "timer.h"
 #include "constants.h"
+#include "alm.h"
 
 using namespace ALM_NS;
 
-Fcs::Fcs(ALMCore *alm) : Pointers(alm)
+Fcs::Fcs()
 {
     set_default_variables();
 };
@@ -35,10 +36,10 @@ Fcs::~Fcs()
     deallocate_variables();
 };
 
-void Fcs::init()
+void Fcs::init(ALM *alm)
 {
     int i;
-    int maxorder = interaction->maxorder;
+    int maxorder = alm->interaction->maxorder;
 
     alm->timer->start_clock("fcs");
 
@@ -63,15 +64,15 @@ void Fcs::init()
 
     // Generate force constants using the information of interacting atom pairs
     for (i = 0; i < maxorder; ++i) {
-        generate_force_constant_table(i, interaction->pairs[i],
-                                      symmetry->SymmData, "Cartesian",
+        generate_force_constant_table(i, alm->interaction->pairs[i],
+                                      alm->symmetry->SymmData, "Cartesian",
                                       fc_table[i], nequiv[i], fc_zeros[i], true);
     }
 
     std::cout << std::endl;
     for (i = 0; i < maxorder; ++i) {
         std::cout << "  Number of " << std::setw(9)
-            << interaction->str_order[i]
+            << alm->interaction->str_order[i]
             << " FCs : " << nequiv[i].size();
         std::cout << std::endl;
     }

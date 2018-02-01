@@ -22,6 +22,20 @@ namespace ALM_NS
         ALM();
         ~ALM();
 
+        std::string mode;
+
+        class InputSetter *input;
+        class System *system;
+        class Interaction *interaction;
+        class Fcs *fcs;
+        class Symmetry *symmetry;
+        class Fitting *fitting;
+        class Constraint *constraint;
+        class Files *files;
+        class Displace *displace;
+        class Error *error;
+        class Timer *timer;
+
         const void set_run_mode(const std::string mode);
         const void set_verbose(const bool verbose);
         const void set_output_filename_prefix(const std::string prefix);
@@ -55,7 +69,7 @@ namespace ALM_NS
         const void set_norder(const int maxorder);
         const void set_nbody_include(const int *nbody_include);
         const void set_cutoff_radii(const double *rcs);
-        ALMCore* get_alm_core();
+        ALMCore* get_alm();
         const int get_atom_mapping_by_pure_translations(int *map_p2s);
         const int get_number_of_displacement_patterns(const int fc_order); // harmonic=1, ...
         const void get_numbers_of_displacements(int *numbers,
@@ -70,11 +84,16 @@ namespace ALM_NS
         const void run();
 
     private:
-        ALMCore *alm_core;
+
+        // ALMCore *alm;
         bool verbose;
         std::ofstream *ofs_alm;
         std::streambuf *coutbuf;
+        void create();
+        void initialize();
+        void finalize();
         const void run_fitting();
         const void run_suggest();
+        bool print_hessian;
     };
 }

@@ -24,11 +24,11 @@
 #include <algorithm>
 #include <unordered_set>
 #include "mathfunctions.h"
-#include "alm_core.h"
+//#include "alm.h"
 
 using namespace ALM_NS;
 
-Constraint::Constraint(ALMCore *alm) : Pointers(alm)
+Constraint::Constraint()
 {
     set_default_variables();
 }
@@ -85,7 +85,7 @@ void Constraint::deallocate_variables()
     }
 }
 
-void Constraint::setup()
+void Constraint::setup(ALM *alm)
 {
     alm->timer->start_clock("constraint");
     std::cout << " CONSTRAINT" << std::endl;
@@ -123,7 +123,7 @@ void Constraint::setup()
         std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
         break;
     default:
-        error->exit("Constraint::setup", "invalid constraint_mode", constraint_mode);
+        alm->error->exit("Constraint::setup", "invalid constraint_mode", constraint_mode);
         break;
     }
 
@@ -135,7 +135,7 @@ void Constraint::setup()
         std::cout << std::endl;
     }
 
-    fix_cubic = fix_cubic & (interaction->maxorder > 1);
+    fix_cubic = fix_cubic & (alm->interaction->maxorder > 1);
     if (fix_cubic) {
         std::cout << "  FC3XML is given : Cubic force constants will be " << std::endl;
         std::cout << "                    fixed to the values given in " << fc3_file << std::endl;
@@ -147,10 +147,13 @@ void Constraint::setup()
     if (const_symmetry) {
         deallocate(const_symmetry);
     }
-    allocate(const_symmetry, interaction->maxorder);
-    generate_symmetry_constraint_in_cartesian(const_symmetry);
+    allocate(const_symmetry, alm->interaction->maxorder);
+    generate_symmetry_constraint_in_cartesian(alm->system, alm->symmetry,
+                                              alm->interaction,
+                                              alm->fcs, alm->error,
+                                              const_symmetry);
 
-    for (int order = 0; order < interaction->maxorder; ++order) {
+    for (int order = 0; order < alm->interaction->maxorder; ++order) {
         if (const_symmetry[order].size() > 0) extra_constraint_from_symmetry = true;
     }
 
@@ -163,12 +166,12 @@ void Constraint::setup()
     if (exist_constraint) {
 
         int i;
-        int maxorder = interaction->maxorder;
+        int maxorder = alm->interaction->maxorder;
         int Pmax, order;
         int N = 0;
 
         for (i = 0; i < maxorder; ++i) {
-            N += fcs->nequiv[i].size();
+            N += alm->fcs->nequiv[i].size();
         }
 
         allocate(const_translation, maxorder);
@@ -182,17 +185,24 @@ void Constraint::setup()
         }
 
         if (impose_inv_T) {
-            generate_translational_constraint(const_translation);
+            generate_translational_constraint(alm->system,
+                                              alm->symmetry, alm->interaction,
+                                              alm->fcs, alm->error,
+                                              const_translation);
         }
         if (impose_inv_R) {
-            rotational_invariance(const_rotation_self,
+            rotational_invariance(alm->symmetry,
+                                  alm->interaction,
+                                  alm->fcs,
+                                  alm->error,
+                                  const_rotation_self,
                                   const_rotation_cross);
         }
 
         if (impose_inv_T || impose_inv_R) {
             std::cout << "  Number of constraints [T-inv, R-inv (self), R-inv (cross)]:" << std::endl;
             for (order = 0; order < maxorder; ++order) {
-                std::cout << "   " << std::setw(8) << interaction->str_order[order];
+                std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
                 std::cout << std::setw(5) << const_translation[order].size();
                 std::cout << std::setw(5) << const_rotation_self[order].size();
                 std::cout << std::setw(5) << const_rotation_cross[order].size();
@@ -205,7 +215,7 @@ void Constraint::setup()
             std::cout << "  There are constraints from crystal symmetry." << std::endl;
             std::cout << "  The number of such constraints for each order:" << std::endl;
             for (order = 0; order < maxorder; ++order) {
-                std::cout << "   " << std::setw(8) << interaction->str_order[order];
+                std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
                 std::cout << std::setw(5) << const_symmetry[order].size();
                 std::cout << std::endl;
             }
@@ -222,7 +232,7 @@ void Constraint::setup()
 
         for (order = 0; order < maxorder; ++order) {
 
-            nparam = fcs->nequiv[order].size();
+            nparam = alm->fcs->nequiv[order].size();
             allocate(arr_tmp, nparam);
 
             for (const auto &e : const_translation[order]) {
@@ -267,7 +277,7 @@ void Constraint::setup()
         std::cout << "  Number of inequivalent constraints (self, cross) : " << std::endl;
 
         for (order = 0; order < maxorder; ++order) {
-            std::cout << "   " << std::setw(8) << interaction->str_order[order];
+            std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
             std::cout << std::setw(5) << const_self[order].size();
             std::cout << std::setw(5) << const_rotation_cross[order].size();
             std::cout << std::endl;
@@ -298,12 +308,13 @@ void Constraint::setup()
             }
             allocate(index_bimap, maxorder);
 
-            get_mapping_constraint(maxorder, fcs->nequiv,
+            get_mapping_constraint(alm->system, alm->error,
+                                   maxorder, alm->fcs->nequiv,
                                    const_self, const_fix,
                                    const_relate, index_bimap, false);
 
             for (order = 0; order < maxorder; ++order) {
-                std::cout << "  Number of free" << std::setw(9) << interaction->str_order[order]
+                std::cout << "  Number of free" << std::setw(9) << alm->interaction->str_order[order]
                     << " FCs : " << index_bimap[order].size() << std::endl;
             }
             std::cout << std::endl;
@@ -316,11 +327,11 @@ void Constraint::setup()
             }
             if (fix_harmonic) {
                 Pmax -= const_self[0].size();
-                Pmax += fcs->nequiv[0].size();
+                Pmax += alm->fcs->nequiv[0].size();
             }
             if (fix_cubic) {
                 Pmax -= const_self[1].size();
-                Pmax += fcs->nequiv[1].size();
+                Pmax += alm->fcs->nequiv[1].size();
             }
 
             if (const_mat) {
@@ -333,7 +344,9 @@ void Constraint::setup()
             }
             allocate(const_rhs, Pmax);
 
-            calc_constraint_matrix(N, P);
+            calc_constraint_matrix(alm->system,
+                                   alm->interaction,
+                                   alm->fcs, N, P);
             std::cout << "  Total number of constraints = " << P << std::endl << std::endl;
 
         }
@@ -354,7 +367,10 @@ void Constraint::setup()
     alm->timer->stop_clock("constraint");
 }
 
-void Constraint::calc_constraint_matrix(const int N, int &P)
+void Constraint::calc_constraint_matrix(System *system,
+                                        Interaction *interaction,
+                                        Fcs *fcs,
+                                        const int N, int &P)
 {
     int i, j;
     int maxorder = interaction->maxorder;
@@ -482,7 +498,9 @@ void Constraint::calc_constraint_matrix(const int N, int &P)
 }
 
 
-void Constraint::get_mapping_constraint(const int nmax,
+void Constraint::get_mapping_constraint(System *system,
+                                        Error *error,
+                                        const int nmax,
                                         std::vector<int> *nequiv,
                                         std::vector<ConstraintClass> *const_in,
                                         std::vector<ConstraintTypeFix> *const_fix_out,
@@ -611,7 +629,12 @@ void Constraint::get_mapping_constraint(const int nmax,
     deallocate(fix_forceconstant);
     deallocate(file_forceconstant);
 }
-void Constraint::generate_symmetry_constraint_in_cartesian(std::vector<ConstraintClass> *const_out)
+
+void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symmetry *symmetry,
+                                                           Interaction *interaction,
+                                                           Fcs *fcs,
+                                                           Error *error,
+                                                           std::vector<ConstraintClass> *const_out)
 
 {
     // Create constraint matrices arising from the crystal symmetry.
@@ -634,7 +657,8 @@ void Constraint::generate_symmetry_constraint_in_cartesian(std::vector<Constrain
         if (has_constraint_from_symm) {
             std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
         }
-        get_constraint_symmetry(order, interaction->pairs[order],
+        get_constraint_symmetry(system, symmetry, fcs, error,
+                                order, interaction->pairs[order],
                                 symmetry->SymmData, "Cartesian",
                                 fcs->fc_table[order], fcs->nequiv[order],
                                 const_out[order]);
@@ -648,7 +672,11 @@ void Constraint::generate_symmetry_constraint_in_cartesian(std::vector<Constrain
 }
 
 
-void Constraint::get_constraint_symmetry(const int order, const std::set<IntList> pairs,
+void Constraint::get_constraint_symmetry(System *system,
+                                         Symmetry *symmetry,
+                                         Fcs *fcs,
+                                         Error *error,
+                                         const int order, const std::set<IntList> pairs,
                                          const std::vector<SymmetryOperation> symmop,
                                          const std::string basis,
                                          const std::vector<FcProperty> fc_table,
@@ -850,7 +878,12 @@ void Constraint::get_constraint_symmetry(const int order, const std::set<IntList
 }
 
 
-void Constraint::generate_translational_constraint(std::vector<ConstraintClass> *const_out)
+void Constraint::generate_translational_constraint(System *system,
+                                                   Symmetry *symmetry,
+                                                   Interaction *interaction,
+                                                   Fcs *fcs,
+                                                   Error *error,
+                                                   std::vector<ConstraintClass> *const_out)
 {
     // Create constraint matrix for the translational invariance (aka acoustic sum rule).
 
@@ -871,7 +904,8 @@ void Constraint::generate_translational_constraint(std::vector<ConstraintClass> 
             continue;
         }
 
-        get_constraint_translation(order,
+        get_constraint_translation(system, symmetry, interaction, fcs, error,
+                                   order,
                                    interaction->pairs[order],
                                    fcs->fc_table[order],
                                    fcs->nequiv[order],
@@ -885,7 +919,12 @@ void Constraint::generate_translational_constraint(std::vector<ConstraintClass> 
 }
 
 
-void Constraint::get_constraint_translation(const int order, const std::set<IntList> pairs,
+void Constraint::get_constraint_translation(System *system,
+                                            Symmetry *symmetry,
+                                            Interaction *interaction,
+                                            Fcs *fcs,
+                                            Error *error,
+                                            const int order, const std::set<IntList> pairs,
                                             const std::vector<FcProperty> fc_table,
                                             const std::vector<int> nequiv,
                                             std::vector<ConstraintClass> &const_out)
@@ -1151,7 +1190,11 @@ void Constraint::get_constraint_translation(const int order, const std::set<IntL
 }
 
 
-void Constraint::rotational_invariance(std::vector<ConstraintClass> *const_rotation_self,
+void Constraint::rotational_invariance(Symmetry *symmetry,
+                                       Interaction *interaction,
+                                       Fcs *fcs,
+                                       Error *error,
+                                       std::vector<ConstraintClass> *const_rotation_self,
                                        std::vector<ConstraintClass> *const_rotation_cross)
 {
     // Create constraints for the rotational invariance
@@ -1199,7 +1242,7 @@ void Constraint::rotational_invariance(std::vector<ConstraintClass> *const_rotat
     std::vector<std::vector<int>> cell_dummy;
     std::set<MinimumDistanceCluster>::iterator iter_cluster;
 
-    setup_rotation_axis(valid_rotation_axis);
+    setup_rotation_axis(error, valid_rotation_axis);
 
     allocate(ind, maxorder + 1);
     allocate(nparams, maxorder);
@@ -1728,7 +1771,7 @@ bool Constraint::is_allzero(const std::vector<double> vec, const double tol, int
     return true;
 }
 
-void Constraint::setup_rotation_axis(bool flag[3][3])
+void Constraint::setup_rotation_axis(Error *error, bool flag[3][3])
 {
     unsigned int mu, nu;
 

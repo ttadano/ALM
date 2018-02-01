@@ -25,7 +25,7 @@ or http://opensource.org/licenses/mit-license.php for information.
 
 using namespace ALM_NS;
 
-Displace::Displace(ALMCore *alm) : Pointers(alm)
+Displace::Displace()
 {
     set_default_variables();
 }

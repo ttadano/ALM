@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "alm_core.h"
+#include "alm.h"
 #include "timer.h"
 
 namespace ALM_NS

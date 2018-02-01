@@ -12,7 +12,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include "alm_core.h"
+//#include "alm.h"
 #include "files.h"
 #include "fitting.h"
 #include "error.h"
@@ -25,6 +25,7 @@
 #include <set>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include "alm.h"
 
 using namespace ALM_NS;
 
@@ -36,7 +37,7 @@ InputParser::~InputParser()
 {
 }
 
-void InputParser::run(ALMCore *alm,
+void InputParser::run(ALM *alm,
                       const int narg,
                       const char * const *arg)
 {
@@ -58,7 +59,7 @@ void InputParser::run(ALMCore *alm,
     parse_input(alm);
 }
 
-void InputParser::parse_displacement_and_force(ALMCore *alm)
+void InputParser::parse_displacement_and_force(ALM *alm)
 {
     int nat = alm->system->nat;
     int ndata = alm->system->ndata;
@@ -151,7 +152,7 @@ void InputParser::parse_displacement_and_force_files(Error *error,
     ifs_force.close();
 }
 
-void InputParser::parse_input(ALMCore *alm)
+void InputParser::parse_input(ALM *alm)
 {
     // The order of calling methods in this method is important.
     // Since following methods rely on variables those already
@@ -206,7 +207,7 @@ void InputParser::parse_input(ALMCore *alm)
     deallocate(kdname);
 }
 
-void InputParser::parse_general_vars(ALMCore *alm)
+void InputParser::parse_general_vars(ALM *alm)
 {
     int i, j;
     std::string prefix, str_tmp, str_disp_basis;
@@ -463,7 +464,7 @@ void InputParser::parse_general_vars(ALMCore *alm)
     general_var_dict.clear();
 }
 
-void InputParser::parse_cell_parameter(ALMCore *alm)
+void InputParser::parse_cell_parameter(ALM *alm)
 {
     int i, j;
     double a;
@@ -556,7 +557,7 @@ void InputParser::parse_cell_parameter(ALMCore *alm)
 }
 
 
-void InputParser::parse_interaction_vars(ALMCore *alm)
+void InputParser::parse_interaction_vars(ALM *alm)
 {
     int i;
     int *nbody_include;
@@ -633,7 +634,7 @@ void InputParser::parse_interaction_vars(ALMCore *alm)
 }
 
 
-void InputParser::parse_fitting_vars(ALMCore *alm)
+void InputParser::parse_fitting_vars(ALM *alm)
 {
     int ndata, nstart, nend;
     std::string dfile, ffile;
@@ -736,7 +737,7 @@ void InputParser::parse_fitting_vars(ALMCore *alm)
     fitting_var_dict.clear();
 }
 
-void InputParser::parse_atomic_positions(ALMCore *alm)
+void InputParser::parse_atomic_positions(ALM *alm)
 {
     int i, j;
     std::string line, line_wo_comment;
@@ -841,7 +842,7 @@ void InputParser::parse_atomic_positions(ALMCore *alm)
     str_v.clear();
 }
 
-void InputParser::parse_cutoff_radii(ALMCore *alm)
+void InputParser::parse_cutoff_radii(ALM *alm)
 {
     std::string line, line_wo_comment;
     std::string::size_type pos_first_comment_tag;

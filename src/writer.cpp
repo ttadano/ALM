@@ -13,7 +13,7 @@
 #include <boost/lexical_cast.hpp>
 #include "writer.h"
 #include "alm.h"
-#include "alm_core.h"
+//#include "alm.h"
 #include "system.h"
 #include "interaction.h"
 #include "memory.h"
@@ -44,75 +44,75 @@ void Writer::write_input_vars(ALM *alm)
 {
     unsigned int i;
 
-    ALMCore *alm_core = alm->get_alm_core();
+   // ALMCore *alm = alm->get_alm();
 
-    alm_core->timer->start_clock("writer");
+    alm->timer->start_clock("writer");
 
     std::cout << std::endl;
     std::cout << " Input variables:" << std::endl;
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << " General:" << std::endl;
-    std::cout << "  PREFIX = " << alm_core->files->job_title << std::endl;
-    std::cout << "  MODE = " << alm_core->mode << std::endl;
-    std::cout << "  NAT = " << alm_core->system->nat << "; NKD = " << alm_core->system->nkd << std::endl;
-    std::cout << "  NSYM = " << alm_core->symmetry->nsym << "; PRINTSYM = " << alm_core->symmetry->printsymmetry
-        << "; TOLERANCE = " << alm_core->symmetry->tolerance << std::endl;
+    std::cout << "  PREFIX = " << alm->files->job_title << std::endl;
+    std::cout << "  MODE = " << alm->mode << std::endl;
+    std::cout << "  NAT = " << alm->system->nat << "; NKD = " << alm->system->nkd << std::endl;
+    std::cout << "  NSYM = " << alm->symmetry->nsym << "; PRINTSYM = " << alm->symmetry->printsymmetry
+        << "; TOLERANCE = " << alm->symmetry->tolerance << std::endl;
     std::cout << "  KD = ";
-    for (i = 0; i < alm_core->system->nkd; ++i) std::cout << std::setw(4) << alm_core->system->kdname[i];
+    for (i = 0; i < alm->system->nkd; ++i) std::cout << std::setw(4) << alm->system->kdname[i];
     std::cout << std::endl;
     std::cout << "  PERIODIC = ";
-    for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm_core->interaction->is_periodic[i];
+    for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->interaction->is_periodic[i];
     std::cout << std::endl;
-    std::cout << "  MAGMOM = " << alm_core->system->str_magmom << std::endl;
-    std::cout << "  HESSIAN = " << alm_core->files->print_hessian << std::endl;
+    std::cout << "  MAGMOM = " << alm->system->str_magmom << std::endl;
+    std::cout << "  HESSIAN = " << alm->files->print_hessian << std::endl;
     std::cout << std::endl;
 
 
     std::cout << " Interaction:" << std::endl;
-    std::cout << "  NORDER = " << alm_core->interaction->maxorder << std::endl;
+    std::cout << "  NORDER = " << alm->interaction->maxorder << std::endl;
     std::cout << "  NBODY = ";
-    for (i = 0; i < alm_core->interaction->maxorder; ++i)
-        std::cout << std::setw(3) << alm_core->interaction->nbody_include[i];
+    for (i = 0; i < alm->interaction->maxorder; ++i)
+        std::cout << std::setw(3) << alm->interaction->nbody_include[i];
 
     std::cout << std::endl << std::endl;
 
 
-    if (alm_core->mode == "suggest") {
-        std::cout << "  DBASIS = " << alm_core->displace->disp_basis << std::endl;
+    if (alm->mode == "suggest") {
+        std::cout << "  DBASIS = " << alm->displace->disp_basis << std::endl;
         std::cout << std::endl;
 
-    } else if (alm_core->mode == "fitting") {
+    } else if (alm->mode == "fitting") {
         std::cout << " Fitting:" << std::endl;
-        std::cout << "  DFILE = " << alm_core->files->file_disp << std::endl;
-        std::cout << "  FFILE = " << alm_core->files->file_force << std::endl;
-        std::cout << "  NDATA = " << alm_core->system->ndata << "; NSTART = " << alm_core->system->nstart
-            << "; NEND = " << alm_core->system->nend << std::endl;
-        std::cout << "  ICONST = " << alm_core->constraint->constraint_mode << std::endl;
-        std::cout << "  ROTAXIS = " << alm_core->constraint->rotation_axis << std::endl;
-        std::cout << "  FC2XML = " << alm_core->constraint->fc2_file << std::endl;
-        std::cout << "  FC3XML = " << alm_core->constraint->fc3_file << std::endl;
+        std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
+        std::cout << "  FFILE = " << alm->files->file_force << std::endl;
+        std::cout << "  NDATA = " << alm->system->ndata << "; NSTART = " << alm->system->nstart
+            << "; NEND = " << alm->system->nend << std::endl;
+        std::cout << "  ICONST = " << alm->constraint->constraint_mode << std::endl;
+        std::cout << "  ROTAXIS = " << alm->constraint->rotation_axis << std::endl;
+        std::cout << "  FC2XML = " << alm->constraint->fc2_file << std::endl;
+        std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
         std::cout << std::endl;
     }
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
-    alm_core->timer->stop_clock("writer");
+    alm->timer->stop_clock("writer");
 }
 
 void Writer::writeall(ALM *alm)
 {
-    ALMCore *alm_core = alm->get_alm_core();
+    //ALMCore *alm = alm->get_alm();
 
-    //   alm_core->timer->start_clock("writer");
+    //   alm->timer->start_clock("writer");
 
     std::cout << " The following files are created:" << std::endl << std::endl;
     write_force_constants(alm);
     // write_misc_xml breaks data in fcs.
     write_misc_xml(alm);
-    if (alm_core->files->print_hessian) write_hessian(alm);
+    if (alm->files->print_hessian) write_hessian(alm);
     //   write_in_QEformat(alm);
     std::cout << std::endl;
 
-    //   alm_core->timer->stop_clock("writer");
+    //   alm->timer->stop_clock("writer");
 }
 
 void Writer::write_force_constants(ALM *alm)
@@ -128,11 +128,11 @@ void Writer::write_force_constants(ALM *alm)
     std::vector<std::vector<int>> cell_dummy;
     std::set<MinimumDistanceCluster>::iterator iter_cluster;
 
-    ALMCore *alm_core = alm->get_alm_core();
-    int maxorder = alm_core->interaction->maxorder;
+    //ALMCore *alm = alm->get_alm();
+    int maxorder = alm->interaction->maxorder;
 
-    ofs_fcs.open(alm_core->files->file_fcs.c_str(), std::ios::out);
-    if (!ofs_fcs) alm_core->error->exit("openfiles", "cannot open fcs file");
+    ofs_fcs.open(alm->files->file_fcs.c_str(), std::ios::out);
+    if (!ofs_fcs) alm->error->exit("openfiles", "cannot open fcs file");
 
     ofs_fcs << " *********************** Force Constants (FCs) ***********************" << std::endl;
     ofs_fcs << " *        Force constants are printed in Rydberg atomic units.       *" << std::endl;
@@ -160,27 +160,27 @@ void Writer::write_force_constants(ALM *alm)
 
         m = 0;
 
-        if (alm_core->fcs->nequiv[order].size() > 0) {
+        if (alm->fcs->nequiv[order].size() > 0) {
 
             ofs_fcs << std::endl << std::setw(6) << str_fcs[order] << std::endl;
 
-            for (ui = 0; ui < alm_core->fcs->nequiv[order].size(); ++ui) {
+            for (ui = 0; ui < alm->fcs->nequiv[order].size(); ++ui) {
 
                 ofs_fcs << std::setw(8) << k + 1 << std::setw(8) << ui + 1
                     << std::setw(18) << std::setprecision(7)
-                    << std::scientific << alm_core->fitting->params[k];
+                    << std::scientific << alm->fitting->params[k];
 
                 atom_tmp.clear();
                 for (l = 1; l < order + 2; ++l) {
-                    atom_tmp.push_back(alm_core->fcs->fc_table[order][m].elems[l] / 3);
+                    atom_tmp.push_back(alm->fcs->fc_table[order][m].elems[l] / 3);
                 }
-                j = alm_core->symmetry->map_s2p[alm_core->fcs->fc_table[order][m].elems[0] / 3].atom_num;
+                j = alm->symmetry->map_s2p[alm->fcs->fc_table[order][m].elems[0] / 3].atom_num;
                 std::sort(atom_tmp.begin(), atom_tmp.end());
 
-                iter_cluster = alm_core->interaction->mindist_cluster[order][j].find(
+                iter_cluster = alm->interaction->mindist_cluster[order][j].find(
                     MinimumDistanceCluster(atom_tmp, cell_dummy));
 
-                if (iter_cluster != alm_core->interaction->mindist_cluster[order][j].end()) {
+                if (iter_cluster != alm->interaction->mindist_cluster[order][j].end()) {
                     multiplicity = (*iter_cluster).cell.size();
                     distmax = (*iter_cluster).distmax;
                 } else {
@@ -189,19 +189,19 @@ void Writer::write_force_constants(ALM *alm)
                         std::cout << std::setw(5) << atom_tmp[l];
                     }
                     std::cout << std::endl;
-                    alm_core->error->exit("write_force_constants",
+                    alm->error->exit("write_force_constants",
                                           "This cannot happen.");
                 }
                 ofs_fcs << std::setw(4) << multiplicity;
 
                 for (l = 0; l < order + 2; ++l) {
                     ofs_fcs << std::setw(7)
-                        << alm_core->fcs->easyvizint(alm_core->fcs->fc_table[order][m].elems[l]);
+                        << alm->fcs->easyvizint(alm->fcs->fc_table[order][m].elems[l]);
                 }
                 ofs_fcs << std::setw(12) << std::setprecision(3)
                     << std::fixed << distmax << std::endl;
 
-                m += alm_core->fcs->nequiv[order][ui];
+                m += alm->fcs->nequiv[order][ui];
                 ++k;
             }
         }
@@ -209,15 +209,15 @@ void Writer::write_force_constants(ALM *alm)
 
     ofs_fcs << std::endl;
 
-    if (alm_core->constraint->extra_constraint_from_symmetry) {
+    if (alm->constraint->extra_constraint_from_symmetry) {
 
         ofs_fcs << " -------------- Constraints from crystal symmetry --------------" << std::endl << std::endl;;
         for (order = 0; order < maxorder; ++order) {
-            int nparam = alm_core->fcs->nequiv[order].size();
+            int nparam = alm->fcs->nequiv[order].size();
 
 
-            for (std::vector<ConstraintClass>::iterator p = alm_core->constraint->const_symmetry[order].begin();
-                 p != alm_core->constraint->const_symmetry[order].end();
+            for (std::vector<ConstraintClass>::iterator p = alm->constraint->const_symmetry[order].begin();
+                 p != alm->constraint->const_symmetry[order].end();
                  ++p) {
                 ofs_fcs << "   0 = " << std::scientific << std::setprecision(6);
                 ConstraintClass const_pointer = *p;
@@ -253,24 +253,24 @@ void Writer::write_force_constants(ALM *alm)
 
         id = 0;
 
-        if (alm_core->fcs->nequiv[order].size() > 0) {
+        if (alm->fcs->nequiv[order].size() > 0) {
             ofs_fcs << std::endl << std::setw(6) << str_fcs[order] << std::endl;
 
-            for (unsigned int iuniq = 0; iuniq < alm_core->fcs->nequiv[order].size(); ++iuniq) {
+            for (unsigned int iuniq = 0; iuniq < alm->fcs->nequiv[order].size(); ++iuniq) {
 
                 str_tmp = "  # FC" + boost::lexical_cast<std::string>(order + 2) + "_";
                 str_tmp += boost::lexical_cast<std::string>(iuniq + 1);
 
-                ofs_fcs << str_tmp << std::setw(5) << alm_core->fcs->nequiv[order][iuniq]
+                ofs_fcs << str_tmp << std::setw(5) << alm->fcs->nequiv[order][iuniq]
                     << std::setw(16) << std::scientific
-                    << std::setprecision(7) << alm_core->fitting->params[ip] << std::endl;
+                    << std::setprecision(7) << alm->fitting->params[ip] << std::endl;
 
-                for (j = 0; j < alm_core->fcs->nequiv[order][iuniq]; ++j) {
+                for (j = 0; j < alm->fcs->nequiv[order][iuniq]; ++j) {
                     ofs_fcs << std::setw(5) << j + 1 << std::setw(12)
-                        << std::setprecision(5) << std::fixed << alm_core->fcs->fc_table[order][id].sign;
+                        << std::setprecision(5) << std::fixed << alm->fcs->fc_table[order][id].sign;
                     for (k = 0; k < order + 2; ++k) {
                         ofs_fcs << std::setw(6)
-                            << alm_core->fcs->easyvizint(alm_core->fcs->fc_table[order][id].elems[k]);
+                            << alm->fcs->easyvizint(alm->fcs->fc_table[order][id].elems[k]);
                     }
                     ofs_fcs << std::endl;
                     ++id;
@@ -284,7 +284,7 @@ void Writer::write_force_constants(ALM *alm)
     ofs_fcs.close();
 
     std::cout << " Force constants in a human-readable format : "
-        << alm_core->files->file_fcs << std::endl;
+        << alm->files->file_fcs << std::endl;
 }
 
 void Writer::write_displacement_pattern(ALM *alm)
@@ -295,23 +295,23 @@ void Writer::write_displacement_pattern(ALM *alm)
 
     std::ofstream ofs_pattern;
 
-    ALMCore *alm_core = alm->get_alm_core();
-    int maxorder = alm_core->interaction->maxorder;
+    //ALMCore *alm = alm->get_alm();
+    int maxorder = alm->interaction->maxorder;
 
     std::cout << " Suggested displacement patterns are printed in the following files: " << std::endl;
 
     for (order = 0; order < maxorder; ++order) {
-        ofs_pattern.open(alm_core->files->file_disp_pattern[order].c_str(), std::ios::out);
+        ofs_pattern.open(alm->files->file_disp_pattern[order].c_str(), std::ios::out);
         if (!ofs_pattern)
-            alm_core->error->exit("write_displacement_pattern",
+            alm->error->exit("write_displacement_pattern",
                                   "Cannot open file_disp_pattern");
 
         counter = 0;
 
-        ofs_pattern << "Basis : " << alm_core->displace->disp_basis[0] << std::endl;
+        ofs_pattern << "Basis : " << alm->displace->disp_basis[0] << std::endl;
 
-        for (auto it = alm_core->displace->pattern_all[order].begin();
-             it != alm_core->displace->pattern_all[order].end(); ++it) {
+        for (auto it = alm->displace->pattern_all[order].begin();
+             it != alm->displace->pattern_all[order].end(); ++it) {
             AtomWithDirection entry = *it;
 
             ++counter;
@@ -329,8 +329,8 @@ void Writer::write_displacement_pattern(ALM *alm)
 
         ofs_pattern.close();
 
-        std::cout << "  " << alm_core->interaction->str_order[order]
-            << " : " << alm_core->files->file_disp_pattern[order] << std::endl;
+        std::cout << "  " << alm->interaction->str_order[order]
+            << " : " << alm->files->file_disp_pattern[order] << std::endl;
     }
     std::cout << std::endl;
 }
@@ -341,28 +341,28 @@ void Writer::write_misc_xml(ALM *alm)
 
     int i, j;
 
-    ALMCore *alm_core = alm->get_alm_core();
+    //ALMCore *alm = alm->get_alm();
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
-            system_structure.lattice_vector[i][j] = alm_core->system->lavec[i][j];
+            system_structure.lattice_vector[i][j] = alm->system->lavec[i][j];
         }
     }
 
-    system_structure.nat = alm_core->system->nat;
-    system_structure.natmin = alm_core->symmetry->nat_prim;
-    system_structure.ntran = alm_core->symmetry->ntran;
-    system_structure.nspecies = alm_core->system->nkd;
+    system_structure.nat = alm->system->nat;
+    system_structure.natmin = alm->symmetry->nat_prim;
+    system_structure.ntran = alm->symmetry->ntran;
+    system_structure.nspecies = alm->system->nkd;
 
     AtomProperty prop_tmp;
 
-    for (i = 0; i < alm_core->system->nat; ++i) {
-        prop_tmp.x = alm_core->system->xcoord[i][0];
-        prop_tmp.y = alm_core->system->xcoord[i][1];
-        prop_tmp.z = alm_core->system->xcoord[i][2];
-        prop_tmp.kind = alm_core->system->kd[i];
-        prop_tmp.atom = alm_core->symmetry->map_s2p[i].atom_num + 1;
-        prop_tmp.tran = alm_core->symmetry->map_s2p[i].tran_num + 1;
+    for (i = 0; i < alm->system->nat; ++i) {
+        prop_tmp.x = alm->system->xcoord[i][0];
+        prop_tmp.y = alm->system->xcoord[i][1];
+        prop_tmp.z = alm->system->xcoord[i][2];
+        prop_tmp.kind = alm->system->kd[i];
+        prop_tmp.atom = alm->symmetry->map_s2p[i].atom_num + 1;
+        prop_tmp.tran = alm->symmetry->map_s2p[i].tran_num + 1;
 
         system_structure.atoms.push_back(AtomProperty(prop_tmp));
     }
@@ -373,16 +373,16 @@ void Writer::write_misc_xml(ALM *alm)
     std::string str_pos[3];
 
     pt.put("Data.ALM_version", ALAMODE_VERSION);
-    pt.put("Data.Fitting.DisplaceFile", alm_core->files->file_disp);
-    pt.put("Data.Fitting.ForceFile", alm_core->files->file_force);
-    pt.put("Data.Fitting.Constraint", alm_core->constraint->constraint_mode);
+    pt.put("Data.Fitting.DisplaceFile", alm->files->file_disp);
+    pt.put("Data.Fitting.ForceFile", alm->files->file_force);
+    pt.put("Data.Fitting.Constraint", alm->constraint->constraint_mode);
 
     pt.put("Data.Structure.NumberOfAtoms", system_structure.nat);
     pt.put("Data.Structure.NumberOfElements", system_structure.nspecies);
 
     for (i = 0; i < system_structure.nspecies; ++i) {
         ptree &child = pt.add("Data.Structure.AtomicElements.element",
-                              alm_core->system->kdname[i]);
+                              alm->system->kdname[i]);
         child.put("<xmlattr>.number", i + 1);
     }
 
@@ -398,9 +398,9 @@ void Writer::write_misc_xml(ALM *alm)
     pt.put("Data.Structure.LatticeVector.a3", str_pos[2]);
 
     std::stringstream ss;
-    ss << alm_core->interaction->is_periodic[0] << " "
-        << alm_core->interaction->is_periodic[1] << " "
-        << alm_core->interaction->is_periodic[2];
+    ss << alm->interaction->is_periodic[0] << " "
+        << alm->interaction->is_periodic[1] << " "
+        << alm->interaction->is_periodic[2];
     pt.put("Data.Structure.Periodicity", ss.str());
 
     pt.put("Data.Structure.Position", "");
@@ -408,29 +408,29 @@ void Writer::write_misc_xml(ALM *alm)
 
     for (i = 0; i < system_structure.nat; ++i) {
         str_tmp.clear();
-        for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm_core->system->xcoord[i][j]);
+        for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->xcoord[i][j]);
         ptree &child = pt.add("Data.Structure.Position.pos", str_tmp);
         child.put("<xmlattr>.index", i + 1);
-        child.put("<xmlattr>.element", alm_core->system->kdname[alm_core->system->kd[i] - 1]);
+        child.put("<xmlattr>.element", alm->system->kdname[alm->system->kd[i] - 1]);
     }
 
-    pt.put("Data.Symmetry.NumberOfTranslations", alm_core->symmetry->ntran);
+    pt.put("Data.Symmetry.NumberOfTranslations", alm->symmetry->ntran);
     for (i = 0; i < system_structure.ntran; ++i) {
         for (j = 0; j < system_structure.natmin; ++j) {
             ptree &child = pt.add("Data.Symmetry.Translations.map",
-                                  alm_core->symmetry->map_p2s[j][i] + 1);
+                                  alm->symmetry->map_p2s[j][i] + 1);
             child.put("<xmlattr>.tran", i + 1);
             child.put("<xmlattr>.atom", j + 1);
         }
     }
 
-    if (alm_core->system->lspin) {
+    if (alm->system->lspin) {
         pt.put("Data.MagneticMoments", "");
-        pt.put("Data.MagneticMoments.Noncollinear", alm_core->system->noncollinear);
-        pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm_core->symmetry->trev_sym_mag);
+        pt.put("Data.MagneticMoments.Noncollinear", alm->system->noncollinear);
+        pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm->symmetry->trev_sym_mag);
         for (i = 0; i < system_structure.nat; ++i) {
             str_tmp.clear();
-            for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm_core->system->magmom[i][j], 5);
+            for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->magmom[i][j], 5);
             ptree &child = pt.add("Data.MagneticMoments.mag", str_tmp);
             child.put("<xmlattr>.index", i + 1);
         }
@@ -439,30 +439,30 @@ void Writer::write_misc_xml(ALM *alm)
     pt.put("Data.ForceConstants", "");
     str_tmp.clear();
 
-    pt.put("Data.ForceConstants.HarmonicUnique.NFC2", alm_core->fcs->nequiv[0].size());
+    pt.put("Data.ForceConstants.HarmonicUnique.NFC2", alm->fcs->nequiv[0].size());
 
     int ihead = 0;
     int k = 0;
-    int nelem = alm_core->interaction->maxorder + 1;
+    int nelem = alm->interaction->maxorder + 1;
     int *pair_tmp;
 
     allocate(pair_tmp, nelem);
 
-    for (unsigned int ui = 0; ui < alm_core->fcs->nequiv[0].size(); ++ui) {
+    for (unsigned int ui = 0; ui < alm->fcs->nequiv[0].size(); ++ui) {
 
         for (i = 0; i < 2; ++i) {
-            pair_tmp[i] = alm_core->fcs->fc_table[0][ihead].elems[i] / 3;
+            pair_tmp[i] = alm->fcs->fc_table[0][ihead].elems[i] / 3;
         }
-        j = alm_core->symmetry->map_s2p[pair_tmp[0]].atom_num;
+        j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
 
         ptree &child = pt.add("Data.ForceConstants.HarmonicUnique.FC2",
-                              double2string(alm_core->fitting->params[k]));
+                              double2string(alm->fitting->params[k]));
         child.put("<xmlattr>.pairs",
-                  boost::lexical_cast<std::string>(alm_core->fcs->fc_table[0][ihead].elems[0])
-                  + " " + boost::lexical_cast<std::string>(alm_core->fcs->fc_table[0][ihead].elems[1]));
+                  boost::lexical_cast<std::string>(alm->fcs->fc_table[0][ihead].elems[0])
+                  + " " + boost::lexical_cast<std::string>(alm->fcs->fc_table[0][ihead].elems[1]));
         child.put("<xmlattr>.multiplicity",
-                  alm_core->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size());
-        ihead += alm_core->fcs->nequiv[0][ui];
+                  alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size());
+        ihead += alm->fcs->nequiv[0][ui];
         ++k;
     }
     ihead = 0;
@@ -472,15 +472,15 @@ void Writer::write_misc_xml(ALM *alm)
     std::set<MinimumDistanceCluster>::iterator iter_cluster;
     int multiplicity;
 
-    if (alm_core->interaction->maxorder > 1) {
+    if (alm->interaction->maxorder > 1) {
 
-        pt.put("Data.ForceConstants.CubicUnique.NFC3", alm_core->fcs->nequiv[1].size());
+        pt.put("Data.ForceConstants.CubicUnique.NFC3", alm->fcs->nequiv[1].size());
 
-        for (unsigned int ui = 0; ui < alm_core->fcs->nequiv[1].size(); ++ui) {
+        for (unsigned int ui = 0; ui < alm->fcs->nequiv[1].size(); ++ui) {
             for (i = 0; i < 3; ++i) {
-                pair_tmp[i] = alm_core->fcs->fc_table[1][ihead].elems[i] / 3;
+                pair_tmp[i] = alm->fcs->fc_table[1][ihead].elems[i] / 3;
             }
-            j = alm_core->symmetry->map_s2p[pair_tmp[0]].atom_num;
+            j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
 
             atom_tmp.clear();
             for (i = 1; i < 3; ++i) {
@@ -488,45 +488,45 @@ void Writer::write_misc_xml(ALM *alm)
             }
             std::sort(atom_tmp.begin(), atom_tmp.end());
 
-            iter_cluster = alm_core->interaction->mindist_cluster[1][j].find(
+            iter_cluster = alm->interaction->mindist_cluster[1][j].find(
                 MinimumDistanceCluster(atom_tmp, cell_dummy));
-            if (iter_cluster == alm_core->interaction->mindist_cluster[1][j].end()) {
-                alm_core->error->exit("load_reference_system_xml",
+            if (iter_cluster == alm->interaction->mindist_cluster[1][j].end()) {
+                alm->error->exit("load_reference_system_xml",
                                       "Cubic force constant is not found.");
             } else {
                 multiplicity = (*iter_cluster).cell.size();
             }
 
             ptree &child = pt.add("Data.ForceConstants.CubicUnique.FC3",
-                                  double2string(alm_core->fitting->params[k]));
+                                  double2string(alm->fitting->params[k]));
             child.put("<xmlattr>.pairs",
-                      boost::lexical_cast<std::string>(alm_core->fcs->fc_table[1][ihead].elems[0])
-                      + " " + boost::lexical_cast<std::string>(alm_core->fcs->fc_table[1][ihead].elems[1])
-                      + " " + boost::lexical_cast<std::string>(alm_core->fcs->fc_table[1][ihead].elems[2]));
+                      boost::lexical_cast<std::string>(alm->fcs->fc_table[1][ihead].elems[0])
+                      + " " + boost::lexical_cast<std::string>(alm->fcs->fc_table[1][ihead].elems[1])
+                      + " " + boost::lexical_cast<std::string>(alm->fcs->fc_table[1][ihead].elems[2]));
             child.put("<xmlattr>.multiplicity", multiplicity);
-            ihead += alm_core->fcs->nequiv[1][ui];
+            ihead += alm->fcs->nequiv[1][ui];
             ++k;
         }
     }
 
     int ip, ishift;
 
-    std::sort(alm_core->fcs->fc_table[0].begin(), alm_core->fcs->fc_table[0].end());
+    std::sort(alm->fcs->fc_table[0].begin(), alm->fcs->fc_table[0].end());
 
-    for (auto it = alm_core->fcs->fc_table[0].begin();
-         it != alm_core->fcs->fc_table[0].end(); ++it) {
+    for (auto it = alm->fcs->fc_table[0].begin();
+         it != alm->fcs->fc_table[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
         for (k = 0; k < 2; ++k) {
             pair_tmp[k] = fctmp.elems[k] / 3;
         }
-        j = alm_core->symmetry->map_s2p[pair_tmp[0]].atom_num;
-        for (auto it2 = alm_core->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].begin();
-             it2 != alm_core->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].end(); ++it2) {
+        j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+        for (auto it2 = alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].begin();
+             it2 != alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].end(); ++it2) {
             ptree &child = pt.add("Data.ForceConstants.HARMONIC.FC2",
-                                  double2string(alm_core->fitting->params[ip] * fctmp.sign
-                                      / static_cast<double>(alm_core->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size())));
+                                  double2string(alm->fitting->params[ip] * fctmp.sign
+                                      / static_cast<double>(alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size())));
 
             child.put("<xmlattr>.pair1", boost::lexical_cast<std::string>(j + 1)
                       + " " + boost::lexical_cast<std::string>(fctmp.elems[0] % 3 + 1));
@@ -536,7 +536,7 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    ishift = alm_core->fcs->nequiv[0].size();
+    ishift = alm->fcs->nequiv[0].size();
 
     // Print anharmonic force constants to the xml file.
 
@@ -544,19 +544,19 @@ void Writer::write_misc_xml(ALM *alm)
 
     int order;
     std::string elementname;
-    for (order = 1; order < alm_core->interaction->maxorder; ++order) {
+    for (order = 1; order < alm->interaction->maxorder; ++order) {
 
-        std::sort(alm_core->fcs->fc_table[order].begin(), alm_core->fcs->fc_table[order].end());
+        std::sort(alm->fcs->fc_table[order].begin(), alm->fcs->fc_table[order].end());
 
-        for (auto it = alm_core->fcs->fc_table[order].begin();
-             it != alm_core->fcs->fc_table[order].end(); ++it) {
+        for (auto it = alm->fcs->fc_table[order].begin();
+             it != alm->fcs->fc_table[order].end(); ++it) {
             FcProperty fctmp = *it;
             ip = fctmp.mother + ishift;
 
             for (k = 0; k < order + 2; ++k) {
                 pair_tmp[k] = fctmp.elems[k] / 3;
             }
-            j = alm_core->symmetry->map_s2p[pair_tmp[0]].atom_num;
+            j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
 
             atom_tmp.clear();
 
@@ -570,17 +570,17 @@ void Writer::write_misc_xml(ALM *alm)
                 + ".FC" + boost::lexical_cast<std::string>(order + 2);
 
 
-            iter_cluster = alm_core->interaction->mindist_cluster[order][j].find(
+            iter_cluster = alm->interaction->mindist_cluster[order][j].find(
                 MinimumDistanceCluster(atom_tmp, cell_dummy));
 
-            if (iter_cluster != alm_core->interaction->mindist_cluster[order][j].end()) {
+            if (iter_cluster != alm->interaction->mindist_cluster[order][j].end()) {
                 multiplicity = (*iter_cluster).cell.size();
 
                 for (imult = 0; imult < multiplicity; ++imult) {
                     std::vector<int> cell_now = (*iter_cluster).cell[imult];
 
                     ptree &child = pt.add(elementname,
-                                          double2string(alm_core->fitting->params[ip] * fctmp.sign
+                                          double2string(alm->fitting->params[ip] * fctmp.sign
                                               / static_cast<double>(multiplicity)));
 
                     child.put("<xmlattr>.pair1", boost::lexical_cast<std::string>(j + 1)
@@ -594,16 +594,16 @@ void Writer::write_misc_xml(ALM *alm)
                     }
                 }
             } else {
-                alm_core->error->exit("write_misc_xml", "This cannot happen.");
+                alm->error->exit("write_misc_xml", "This cannot happen.");
             }
         }
-        ishift += alm_core->fcs->nequiv[order].size();
+        ishift += alm->fcs->nequiv[order].size();
     }
 
     using namespace boost::property_tree::xml_parser;
     const int indent = 2;
 
-    std::string file_xml = alm_core->files->job_title + ".xml";
+    std::string file_xml = alm->files->job_title + ".xml";
 
 #if BOOST_VERSION >= 105600
     write_xml(file_xml, pt, std::locale(),
@@ -627,8 +627,8 @@ void Writer::write_hessian(ALM *alm)
     std::ofstream ofs_hes;
     double **hessian;
 
-    ALMCore *alm_core = alm->get_alm_core();
-    int nat3 = 3 * alm_core->system->nat;
+    //ALMCore *alm = alm->get_alm();
+    int nat3 = 3 * alm->system->nat;
 
     allocate(hessian, nat3, nat3);
 
@@ -638,23 +638,23 @@ void Writer::write_hessian(ALM *alm)
         }
     }
 
-    for (auto it = alm_core->fcs->fc_table[0].begin();
-         it != alm_core->fcs->fc_table[0].end(); ++it) {
+    for (auto it = alm->fcs->fc_table[0].begin();
+         it != alm->fcs->fc_table[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
         for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
-        for (itran = 0; itran < alm_core->symmetry->ntran; ++itran) {
+        for (itran = 0; itran < alm->symmetry->ntran; ++itran) {
             for (i = 0; i < 2; ++i) {
-                pair_tran[i] = alm_core->symmetry->map_sym[pair_tmp[i]][alm_core->symmetry->symnum_tran[itran]];
+                pair_tran[i] = alm->symmetry->map_sym[pair_tmp[i]][alm->symmetry->symnum_tran[itran]];
             }
             hessian[3 * pair_tran[0] + fctmp.elems[0] % 3][3 * pair_tran[1] + fctmp.elems[1] % 3]
-                = alm_core->fitting->params[ip] * fctmp.sign;
+                = alm->fitting->params[ip] * fctmp.sign;
         }
     }
 
-    ofs_hes.open(alm_core->files->file_hes.c_str(), std::ios::out);
-    if (!ofs_hes) alm_core->error->exit("write_hessian", "cannot create hessian file");
+    ofs_hes.open(alm->files->file_hes.c_str(), std::ios::out);
+    if (!ofs_hes) alm->error->exit("write_hessian", "cannot create hessian file");
 
     ofs_hes << "# atom1, xyz1, atom2, xyz2, FC2 (Ryd/Bohr^2)" << std::endl;
     for (i = 0; i < nat3; ++i) {
@@ -671,7 +671,7 @@ void Writer::write_hessian(ALM *alm)
     ofs_hes.close();
     deallocate(hessian);
 
-    std::cout << " Complete Hessian matrix                    : " << alm_core->files->file_hes << std::endl;
+    std::cout << " Complete Hessian matrix                    : " << alm->files->file_hes << std::endl;
 }
 
 std::string Writer::double2string(const double d, const int nprec)
@@ -684,7 +684,7 @@ std::string Writer::double2string(const double d, const int nprec)
     return rt;
 }
 
-void Writer::write_in_QEformat(ALMCore *alm)
+void Writer::write_in_QEformat(ALM *alm)
 {
     int i, j, itran, ip;
     int pair_tmp[2];

@@ -1,5 +1,5 @@
 /*
- alm_core.cpp
+ alm.cpp
 
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
@@ -9,7 +9,7 @@
 */
 
 #include <iomanip>
-#include "alm_core.h"
+#include "alm.h"
 #include "interaction.h"
 #include "symmetry.h"
 #include "system.h"

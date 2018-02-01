@@ -16,7 +16,7 @@
 
 using namespace ALM_NS;
 
-Files::Files(ALMCore *alm): Pointers(alm)
+Files::Files()
 {
     file_disp_pattern = nullptr;
     print_hessian = false;

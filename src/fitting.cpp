@@ -32,7 +32,7 @@
 using namespace ALM_NS;
 
 
-Fitting::Fitting(ALMCore *alm): Pointers(alm)
+Fitting::Fitting()
 {
     set_default_variables();
 }
@@ -62,16 +62,16 @@ void Fitting::deallocate_variables()
     }
 }
 
-void Fitting::fitmain()
+void Fitting::fitmain(ALM *alm)
 {
     int i;
     int nat = system->nat;
-    int natmin = symmetry->nat_prim;
+    int natmin = alm->symmetry->nat_prim;
     int nstart = system->nstart;
     int nend = system->nend;
     int N, M, N_new;
-    int maxorder = interaction->maxorder;
-    int P = constraint->P;
+    int maxorder = alm->interaction->maxorder;
+    int P = alm->constraint->P;
     int ndata_used = nend - nstart + 1;
 
     double **u, **f;

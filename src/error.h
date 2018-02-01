@@ -11,14 +11,13 @@
 #pragma once
 
 #include <string>
-#include "pointers.h"
 
 namespace ALM_NS
 {
-    class Error : protected Pointers
+    class Error
     {
     public:
-        Error(class ALMCore *);
+        Error();
         ~Error();
 
         void exit(const char *, const char *);

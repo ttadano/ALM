@@ -10,10 +10,11 @@
 
 #pragma once
 
-#include "pointers.h"
+//#include "pointers.h"
 #include <string>
 #include <fstream>
 #include <vector>
+#include "alm.h"
 
 extern "C"
 {
@@ -103,13 +104,13 @@ namespace ALM_NS
         }
     };
 
-    class Symmetry: protected Pointers
+    class Symmetry
     {
     public:
-        Symmetry(class ALMCore *);
+        Symmetry();
         ~Symmetry();
 
-        void init();
+        void init(ALM *);
 
         unsigned int nsym, ntran, nat_prim;
         int printsymmetry;

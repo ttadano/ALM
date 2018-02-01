@@ -14,7 +14,8 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "alm_core.h"
+//#include "alm.h"
+#include "alm.h"
 #include "input_setter.h"
 #include "memory.h"
 #include "error.h"
@@ -26,10 +27,10 @@ namespace ALM_NS
     public:
         InputParser();
         ~InputParser();
-        void run(ALMCore *alm,
+        void run(ALM *alm,
                  const int narg,
                  const char * const *arg);
-        void parse_displacement_and_force(ALMCore *alm);
+        void parse_displacement_and_force(ALM *alm);
         void parse_displacement_and_force_files(Error *error,
                                                 double **u,
                                                 double **f,
@@ -50,13 +51,13 @@ namespace ALM_NS
         int nat;
         int nkd;
 
-        void parse_input(ALMCore *alm);
-        void parse_general_vars(ALMCore *alm);
-        void parse_cell_parameter(ALMCore *alm);
-        void parse_atomic_positions(ALMCore *alm);
-        void parse_interaction_vars(ALMCore *alm);
-        void parse_cutoff_radii(ALMCore *alm);
-        void parse_fitting_vars(ALMCore *alm);
+        void parse_input(ALM *alm);
+        void parse_general_vars(ALM *alm);
+        void parse_cell_parameter(ALM *alm);
+        void parse_atomic_positions(ALM *alm);
+        void parse_interaction_vars(ALM *alm);
+        void parse_cutoff_radii(ALM *alm);
+        void parse_fitting_vars(ALM *alm);
         int locate_tag(std::string);
         void split_str_by_space(const std::string, std::vector<std::string> &);
         bool is_endof_entry(std::string);
@@ -70,7 +71,7 @@ namespace ALM_NS
                         const std::string,
                         std::map<std::string, std::string>,
                         Error *);
-        void set_displacement_and_force(ALMCore *alm,
+        void set_displacement_and_force(ALM *alm,
                                         const double * const *u,
                                         const double * const *f,
                                         const int nat,

@@ -28,7 +28,7 @@ or http://opensource.org/licenses/mit-license.php for information.
 
 using namespace ALM_NS;
 
-Interaction::Interaction(ALMCore *alm) : Pointers(alm)
+Interaction::Interaction()
 {
     set_default_variables();
 }
@@ -38,7 +38,7 @@ Interaction::~Interaction()
     deallocate_variables();
 }
 
-void Interaction::init()
+void Interaction::init(ALM *alm)
 {
     int i, j, k;
     int nat = alm->system->nat;
@@ -93,12 +93,12 @@ void Interaction::init()
     if (interaction_pair) {
         deallocate(interaction_pair);
     }
-    allocate(interaction_pair, maxorder, symmetry->nat_prim);
+    allocate(interaction_pair, maxorder, alm->symmetry->nat_prim);
 
     if (mindist_cluster) {
         deallocate(mindist_cluster);
     }
-    allocate(mindist_cluster, maxorder, symmetry->nat_prim);
+    allocate(mindist_cluster, maxorder, alm->symmetry->nat_prim);
 
     if (pairs) {
         deallocate(pairs);
@@ -520,7 +520,7 @@ void Interaction::generate_interaction_information_by_cutoff(const int nat,
     }
 }
 
-void Interaction::set_interaction_by_cutoff(ALMCore *alm)
+void Interaction::set_interaction_by_cutoff(ALM *alm)
 {
     // This function should be improved so that ALMCore class can be removed.
     int order;
