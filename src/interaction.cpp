@@ -41,8 +41,8 @@ Interaction::~Interaction()
 void Interaction::init()
 {
     int i, j, k;
-    int nat = system->nat;
-    int nkd = system->nkd;
+    int nat = alm->system->nat;
+    int nkd = alm->system->nkd;
 
     alm->timer->start_clock("interaction");
 
@@ -105,16 +105,32 @@ void Interaction::init()
     }
     allocate(pairs, maxorder);
 
-    generate_coordinate_of_periodic_images(nat, system->xcoord,
-                                           is_periodic, x_image, exist_image);
-    get_pairs_of_minimum_distance(nat, x_image, exist_image,
-                                  distall, mindist_pairs);
+    generate_coordinate_of_periodic_images(nat,
+                                           system->xcoord,
+                                           is_periodic,
+                                           x_image,
+                                           exist_image);
+
+    get_pairs_of_minimum_distance(nat,
+                                  x_image,
+                                  exist_image,
+                                  distall,
+                                  mindist_pairs);
+
     print_neighborlist(mindist_pairs);
-    search_interactions(interaction_pair, pairs);
-    //    calc_mindist_clusters2(interaction_pair, mindist_pairs, distall, exist_image, mindist_cluster);
-    calc_mindist_clusters(interaction_pair, mindist_pairs,
-                          distall, exist_image, mindist_cluster);
-    generate_pairs(pairs, mindist_cluster);
+
+    search_interactions(interaction_pair);
+    set_interaction_by_cutoff(alm);
+    //print_interaction_information(interaction_pair);
+
+    calc_mindist_clusters(interaction_pair,
+                          mindist_pairs,
+                          distall,
+                          exist_image,
+                          mindist_cluster);
+
+    generate_pairs(pairs,
+                   mindist_cluster);
 
     alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
@@ -465,8 +481,124 @@ void Interaction::print_neighborlist(std::vector<DistInfo> **mindist)
     deallocate(neighborlist);
 }
 
-void Interaction::search_interactions(std::vector<int> **interaction_list_out,
-                                      std::set<IntList> *pair_out)
+
+void Interaction::generate_interaction_information_by_cutoff(const int nat,
+                                                             const int natmin,
+                                                             int *kd,
+                                                             int **map_p2s,
+                                                             double **rc,
+                                                             std::vector<int> *interaction_list)
+{
+    int i, iat, jat, ikd, jkd;
+    double cutoff_tmp;
+
+    for (i = 0; i < natmin; ++i) {
+
+        interaction_list[i].clear();
+
+        iat = map_p2s[i][0];
+        ikd = kd[iat] - 1;
+
+        for (jat = 0; jat < nat; ++jat) {
+
+            jkd = kd[jat] - 1;
+
+            cutoff_tmp = rc[ikd][jkd];
+
+            if (cutoff_tmp < 0.0) {
+
+                // Cutoff 'None'
+                interaction_list[i].push_back(jat);
+
+            } else {
+
+                if (mindist_pairs[iat][jat][0].dist <= cutoff_tmp) {
+                    interaction_list[i].push_back(jat);
+                }
+            }
+        }
+    }
+}
+
+void Interaction::set_interaction_by_cutoff(ALMCore *alm)
+{
+    // This function should be improved so that ALMCore class can be removed.
+    int order;
+
+    for (order = 0; order < maxorder; ++order) {
+        generate_interaction_information_by_cutoff(alm->system->nat,
+                                                   alm->symmetry->nat_prim,
+                                                   alm->system->kd,
+                                                   alm->symmetry->map_p2s,
+                                                   alm->interaction->rcs[order],
+                                                   alm->interaction->interaction_pair[order]);
+    }
+}
+
+void Interaction::print_interaction_information(std::vector<int> **interaction_list)
+{
+
+
+    int order;
+    int i, iat;
+    int natmin = symmetry->nat_prim;
+    std::vector<int> intlist;
+
+    std::cout << std::endl;
+    std::cout << "  List of interacting atom pairs considered for each order:" << std::endl;
+
+    for (order = 0; order < maxorder; ++order) {
+
+        std::cout << std::endl << "   ***" << str_order[order] << "***" << std::endl;
+
+        for (i = 0; i < natmin; ++i) {
+
+            if (interaction_list[order][i].size() == 0) {
+                std::cout << "   No interacting atoms! Skipped." << std::endl;
+                continue; // no interaction
+            }
+
+            iat = symmetry->map_p2s[i][0];
+
+            intlist.clear();
+            for (auto it = interaction_list[order][i].begin();
+                it != interaction_list[order][i].end(); ++it) {
+                intlist.push_back((*it));
+            }
+            std::sort(intlist.begin(), intlist.end());
+
+            // write atoms inside the cutoff radius
+            int id = 0;
+            std::cout << "    Atom " << std::setw(5) << iat + 1
+                << "(" << std::setw(3) << system->kdname[system->kd[iat] - 1]
+                << ")" << " interacts with atoms ... " << std::endl;
+
+            for (int id = 0; id < intlist.size(); ++id) {
+                if (id % 6 == 0) {
+                    if (id == 0) {
+                        std::cout << "   ";
+                    } else {
+                        std::cout << std::endl;
+                        std::cout << "   ";
+                    }
+                }
+                std::cout << std::setw(5) << intlist[id] + 1 << "("
+                    << std::setw(3) << system->kdname[system->kd[intlist[id]] - 1] << ")";
+            }
+
+            std::cout << std::endl << std::endl;
+            std::cout << "    Number of total interaction pairs = "
+                << interaction_list[order][i].size() << std::endl << std::endl;
+        }
+    }
+
+    std::cout << std::endl;
+}
+
+
+
+
+void Interaction::search_interactions(std::vector<int> **interaction_list_out)
 {
     //
     // Search atoms inside the cutoff radii for harmonic and anharmonic interactions.
@@ -534,7 +666,7 @@ void Interaction::search_interactions(std::vector<int> **interaction_list_out,
                  it != interaction_list_out[order][i].end(); ++it) {
                 intlist.push_back((*it));
             }
-            std::sort(intlist.begin(), intlist.end()); 
+            std::sort(intlist.begin(), intlist.end());
 
             // write atoms inside the cutoff radius
             int id = 0;
@@ -558,8 +690,8 @@ void Interaction::search_interactions(std::vector<int> **interaction_list_out,
             std::cout << std::endl << std::endl;
             std::cout << "    Number of total interaction pairs = "
                 << interaction_list_out[order][i].size() << std::endl << std::endl;
-                    }
-                        }
+        }
+    }
 
     std::cout << std::endl;
 }
@@ -595,52 +727,6 @@ bool Interaction::is_incutoff(const int n,
         }
     }
     return true;
-
-    /*
-    for (i = 0; i < ncheck; ++i) {
-
-    jat = atomnumlist[i + 1];
-    jkd = system->kd[jat] - 1;
-
-    if (rcs[order][ikd][jkd] >= 0.0 && 
-    (mindist_pairs[iat][jat][0].dist > rcs[order][ikd][jkd])) return false;
-
-    for (j = i + 1; j < ncheck; ++j) {
-
-    kat = atomnumlist[j + 1];
-    kkd = system->kd[kat] - 1;
-
-    if (rcs[order][ikd][kkd] >= 0.0 && 
-    (mindist_pairs[iat][kat][0].dist > rcs[order][ikd][kkd])) return false;
-
-    cutoff_tmp = rcs[order][jkd][kkd];
-
-    if (cutoff_tmp >= 0.0) {
-
-    in_cutoff_tmp = false;
-
-    for (it = mindist_pairs[iat][jat].begin(); it != mindist_pairs[iat][jat].end(); ++it) {
-    for (it2 = mindist_pairs[iat][kat].begin(); it2 != mindist_pairs[iat][kat].end(); ++it2) {
-    dist_tmp = distance(x_image[(*it).cell][jat], x_image[(*it2).cell][kat]);
-
-    if (n == 4) {
-    if (iat == 0 && jat == 4 && kat == 20) {
-    std::cout << "DEBUG :" << std::setw(5) << (*it).cell;
-    std::cout << std::setw(5) << (*it2).cell << std::setw(15) << dist_tmp << std::endl;
-    }
-    }
-
-    if (dist_tmp <= cutoff_tmp) {
-    in_cutoff_tmp = true;
-    }
-    }
-    }
-    if (!in_cutoff_tmp) return false;
-    }
-    }
-    }
-    return true;
-    */
 }
 
 bool Interaction::is_incutoff2(const int n,
@@ -964,10 +1050,10 @@ void Interaction::calc_mindist_clusters(std::vector<int> **interaction_pair_in,
                     }
                 }
                 deallocate(list_now);
-                  }
-                  }
             }
         }
+    }
+}
 
 void Interaction::calc_mindist_clusters2(std::vector<int> **interaction_pair_in,
                                          std::vector<DistInfo> **mindist_pair_in,

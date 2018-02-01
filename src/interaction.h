@@ -33,7 +33,7 @@ namespace ALM_NS
 
         IntList(const IntList &a)
         {
-            for (std::vector<int>::const_iterator p = a.iarray.begin(); p != a.iarray.end(); ++p) {
+            for (auto p = a.iarray.begin(); p != a.iarray.end(); ++p) {
                 iarray.push_back(*p);
             }
         }
@@ -104,6 +104,7 @@ namespace ALM_NS
     };
 
     class DistList
+        // This class is used only in print_neighborlist. Can be replaced by a more generalic function.
     {
     public:
         int atom;
@@ -230,7 +231,6 @@ namespace ALM_NS
         int *exist_image;
 
         std::string *str_order;
-        std::vector<DistInfo> **distall;
         std::vector<DistInfo> **mindist_pairs;
         std::set<IntList> *pairs;
         std::vector<int> **interaction_pair;
@@ -241,6 +241,11 @@ namespace ALM_NS
         int nbody(const int, const int *);
         bool is_incutoff(const int, int *, const int);
         bool is_incutoff2(const int, int *, const int);
+
+        void generate_interaction_information_by_cutoff(const int, const int,
+                                                        int *, int **,
+                                                        double **, std::vector<int> *);
+        void set_interaction_by_cutoff(ALMCore *);
 
         template <typename T>
         void insort(int n, T *arr)
@@ -258,6 +263,9 @@ namespace ALM_NS
         }
 
     private:
+
+        std::vector<DistInfo> **distall;
+
         void set_default_variables();
         void deallocate_variables();
         void generate_coordinate_of_periodic_images(const unsigned int, double **,
@@ -268,7 +276,8 @@ namespace ALM_NS
                                            std::vector<DistInfo> **);
 
         void print_neighborlist(std::vector<DistInfo> **);
-        void search_interactions(std::vector<int> **, std::set<IntList> *);
+        void print_interaction_information(std::vector<int> **);
+        void search_interactions(std::vector<int> **);
         void set_ordername();
 
         void calc_mindist_clusters(std::vector<int> **,
