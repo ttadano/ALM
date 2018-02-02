@@ -12,6 +12,8 @@
 
 #include <string>
 #include <fstream>
+#include "alm.h"
+
 //#include "pointers.h"
 
 namespace ALM_NS
@@ -22,7 +24,7 @@ namespace ALM_NS
         Files();
         ~Files();
 
-        void init();
+        void init(ALM *);
 
         bool print_hessian;
         std::string job_title;

@@ -80,7 +80,6 @@
     <ClCompile Include="alm.cpp" />
     <ClCompile Include="alm_cui.cpp" />
     <ClCompile Include="constraint.cpp" />
-    <ClCompile Include="error.cpp" />
     <ClCompile Include="fcs.cpp" />
     <ClCompile Include="files.cpp" />
     <ClCompile Include="fitting.cpp" />

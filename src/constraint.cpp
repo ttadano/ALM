@@ -191,7 +191,8 @@ void Constraint::setup(ALM *alm)
                                               const_translation);
         }
         if (impose_inv_R) {
-            rotational_invariance(alm->symmetry,
+            rotational_invariance(alm->system,
+                                  alm->symmetry,
                                   alm->interaction,
                                   alm->fcs,
                                   const_rotation_self,
@@ -308,6 +309,8 @@ void Constraint::setup(ALM *alm)
             allocate(index_bimap, maxorder);
 
             get_mapping_constraint(alm->system,
+                                   alm->symmetry,
+                                   alm->fcs,
                                    maxorder,
                                    alm->fcs->nequiv,
                                    const_self,
@@ -347,7 +350,7 @@ void Constraint::setup(ALM *alm)
             }
             allocate(const_rhs, Pmax);
 
-            calc_constraint_matrix(alm->system,
+            calc_constraint_matrix(alm->system, alm->symmetry,
                                    alm->interaction,
                                    alm->fcs, N, P);
             std::cout << "  Total number of constraints = " << P << std::endl << std::endl;
@@ -371,6 +374,7 @@ void Constraint::setup(ALM *alm)
 }
 
 void Constraint::calc_constraint_matrix(System *system,
+                                        Symmetry *symmetry,
                                         Interaction *interaction,
                                         Fcs *fcs,
                                         const int N, int &P)
@@ -461,7 +465,7 @@ void Constraint::calc_constraint_matrix(System *system,
         double *const_rhs_tmp;
         int nfcs_tmp = fcs->nequiv[0].size();
         allocate(const_rhs_tmp, nfcs_tmp);
-        system->load_reference_system_xml(fc2_file, 0, const_rhs_tmp);
+        system->load_reference_system_xml(symmetry, fcs, fc2_file, 0, const_rhs_tmp);
 
         for (i = 0; i < nfcs_tmp; ++i) {
             const_mat[i][i] = 1.0;
@@ -479,7 +483,7 @@ void Constraint::calc_constraint_matrix(System *system,
         int ishift2 = fcs->nequiv[0].size();
         int nfcs_tmp = fcs->nequiv[1].size();
         allocate(const_rhs_tmp, nfcs_tmp);
-        system->load_reference_system_xml(fc3_file, 1, const_rhs_tmp);
+        system->load_reference_system_xml(symmetry, fcs, fc3_file, 1, const_rhs_tmp);
 
         for (i = 0; i < nfcs_tmp; ++i) {
             const_mat[i + ishift][i + ishift2] = 1.0;
@@ -501,7 +505,7 @@ void Constraint::calc_constraint_matrix(System *system,
 }
 
 
-void Constraint::get_mapping_constraint(System *system,
+void Constraint::get_mapping_constraint(System *system, Symmetry *symmetry, Fcs *fcs,
                                         const int nmax,
                                         std::vector<int> *nequiv,
                                         std::vector<ConstraintClass> *const_in,
@@ -540,7 +544,7 @@ void Constraint::get_mapping_constraint(System *system,
 
             double *const_rhs_tmp;
             allocate(const_rhs_tmp, nparam);
-            system->load_reference_system_xml(file_forceconstant[order],
+            system->load_reference_system_xml(symmetry, fcs, file_forceconstant[order],
                                               order, const_rhs_tmp);
 
             for (i = 0; i < nparam; ++i) {
@@ -703,6 +707,7 @@ void Constraint::get_constraint_symmetry(System *system,
     if (order < 0) return;
 
     int nsym = symmop.size();
+    int natmin = symmetry->nat_prim;
     int nat = system->nat;
     nparams = nequiv.size();
 
@@ -811,7 +816,7 @@ void Constraint::get_constraint_symmetry(System *system,
 
                 for (i = 0; i < order + 2; ++i)
                     atm_index_symm[i] = map_sym[atm_index[i]][isym];
-                if (!fcs->is_inprim(order + 2, atm_index_symm)) continue;
+                if (!fcs->is_inprim(order + 2, atm_index_symm, natmin, symmetry->map_p2s)) continue;
 
                 for (i = 0; i < nparams; ++i) const_now_omp[i] = 0.0;
 
@@ -821,7 +826,7 @@ void Constraint::get_constraint_symmetry(System *system,
                     for (i = 0; i < order + 2; ++i)
                         ind[i] = 3 * atm_index_symm[i] + xyzcomponent[ixyz][i];
 
-                    i_prim = fcs->min_inprim(order + 2, ind);
+                    i_prim = fcs->min_inprim(order + 2, ind, nat, natmin, symmetry->map_p2s);
                     std::swap(ind[0], ind[i_prim]);
                     fcs->sort_tail(order + 2, ind);
 
@@ -1058,7 +1063,7 @@ void Constraint::get_constraint_translation(System *system,
 
                 if (interaction->nbody(order + 1, intarr)
                     <= interaction->nbody_include[order]) {
-                    if (interaction->is_incutoff(order + 1, intarr, order)) {
+                    if (interaction->is_incutoff(order + 1, intarr, order, system->kd)) {
                         // Add to list if the atoms interact with each other.
                         data_vec.push_back(data);
                     }
@@ -1188,7 +1193,8 @@ void Constraint::get_constraint_translation(System *system,
 }
 
 
-void Constraint::rotational_invariance(Symmetry *symmetry,
+void Constraint::rotational_invariance(System *system,
+                                       Symmetry *symmetry,
                                        Interaction *interaction,
                                        Fcs *fcs,
                                        std::vector<ConstraintClass> *const_rotation_self,
@@ -1442,7 +1448,11 @@ void Constraint::rotational_invariance(Symmetry *symmetry,
                                             jat = *iter_list;
 
                                             interaction_atom[order + 1] = jat;
-                                            if (!interaction->is_incutoff(order + 2, interaction_atom, order)) continue;
+                                            if (!interaction->is_incutoff(order + 2,
+                                                                          interaction_atom,
+                                                                          order,
+                                                                          system->kd))
+                                                continue;
 
                                             atom_tmp.clear();
 

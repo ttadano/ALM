@@ -135,7 +135,8 @@ namespace ALM_NS
                                         const std::vector<int>,
                                         std::vector<ConstraintClass> &);
 
-        void get_mapping_constraint(System *, const int, std::vector<int> *,
+        void get_mapping_constraint(System *, Symmetry *, Fcs *,
+                                    const int, std::vector<int> *,
                                     std::vector<ConstraintClass> *,
                                     std::vector<ConstraintTypeFix> *,
                                     std::vector<ConstraintTypeRelate> *,
@@ -156,9 +157,9 @@ namespace ALM_NS
 
         int levi_civita(const int, const int, const int);
 
-        void rotational_invariance(Symmetry *, Interaction *, Fcs *, std::vector<ConstraintClass> *,
+        void rotational_invariance(System *, Symmetry *, Interaction *, Fcs *, std::vector<ConstraintClass> *,
                                    std::vector<ConstraintClass> *);
-        void calc_constraint_matrix(System *, Interaction *, Fcs *, const int, int &);
+        void calc_constraint_matrix(System *, Symmetry *, Interaction *, Fcs *, const int, int &);
 
         void setup_rotation_axis(bool [3][3]);
         bool is_allzero(const int, const double *, const int nshift = 0);

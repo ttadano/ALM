@@ -44,8 +44,8 @@ namespace ALM_NS
         void init(ALM *);
         void recips(double [3][3], double [3][3]);
         void frac2cart(double **);
-        void load_reference_system();
-        void load_reference_system_xml(std::string, const int, double *);
+        void load_reference_system(Symmetry *, Fcs *, Constraint *);
+        void load_reference_system_xml(Symmetry *, Fcs *, std::string, const int, double *);
 
         int nat, nkd;
         //        int nat_prim;

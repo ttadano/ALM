@@ -50,7 +50,7 @@ namespace ALM_NS
                                                 a.elems.begin(), a.elems.end());
         }
 
-        bool operator==(const FcProperty &a) const 
+        bool operator==(const FcProperty &a) const
         {
             int n = elems.size();
             int n_ = a.elems.size();
@@ -87,15 +87,14 @@ namespace ALM_NS
         void get_xyzcomponent(int, int **);
         void sort_tail(const int, int *);
 
-        bool is_inprim(const int, const int *);
-        bool is_inprim(const int);
-        int min_inprim(const int, const int *);
-        double coef_sym(const int, const int, const int *, const int *);
+        bool is_inprim(const int, const int *, const int, int **);
+        bool is_inprim(const int, const int, int **);
+        int min_inprim(const int, const int *, const int, const int, int **);
         double coef_sym(const int, double **, const int *, const int *);
 
-        void generate_force_constant_table(const int,
+        void generate_force_constant_table(const int, const int,
                                            const std::set<IntList>,
-                                           const std::vector<SymmetryOperation>,
+                                           Symmetry *,
                                            std::string,
                                            std::vector<FcProperty> &,
                                            std::vector<int> &,
@@ -116,7 +115,7 @@ namespace std
     template <>
     struct hash<ALM_NS::FcProperty>
     {
-        std::size_t operator () (ALM_NS::FcProperty const &obj) const
+        std::size_t operator ()(ALM_NS::FcProperty const &obj) const
         {
             hash<int> hasher;
             size_t seed = 0;

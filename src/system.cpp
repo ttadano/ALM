@@ -53,7 +53,7 @@ void System::init(ALM *alm)
     recips(lavec, rlavec);
 
     cout.setf(ios::scientific);
-    
+
     cout << "  Lattice Vector" << endl;
     cout << setw(16) << lavec[0][0];
     cout << setw(15) << lavec[1][0];
@@ -140,7 +140,7 @@ void System::init(ALM *alm)
             cout << "  NONCOLLINEAR = 0: magnetic moments are considered as scalar variables." << endl;
         } else if (noncollinear == 1) {
             cout << "  NONCOLLINEAR = 1: magnetic moments are considered as vector variables." << endl;
-            if (symmetry->trev_sym_mag) {
+            if (alm->symmetry->trev_sym_mag) {
                 cout << "  TREVSYM = 1: Time-reversal symmetry will be considered for generating magnetic space group" << endl;
             } else {
                 cout << "  TREVSYM = 0: Time-reversal symmetry will NOT be considered for generating magnetic space group" << endl;
@@ -181,7 +181,7 @@ void System::recips(double aa[3][3], double bb[3][3])
         - aa[1][0] * aa[0][1] * aa[2][2];
 
     if (std::abs(det) < eps12) {
-        error->exit("recips", "Lattice Vector is singular");
+        exit("recips", "Lattice Vector is singular");
     }
 
     double factor = 2.0 * pi / det;
@@ -219,7 +219,9 @@ void System::frac2cart(double **xf)
     deallocate(x_tmp);
 }
 
-void System::load_reference_system_xml(std::string file_reference_fcs,
+void System::load_reference_system_xml(Symmetry *symmetry,
+                                       Fcs *fcs,
+                                       std::string file_reference_fcs,
                                        const int order_fcs,
                                        double *const_out)
 {
@@ -241,7 +243,7 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
         } else if (order_fcs == 1) {
             str_error = "Cannot open file FC3XML ( " + file_reference_fcs + " )";
         }
-        error->exit("load_reference_system_xml", str_error.c_str());
+        exit("load_reference_system_xml", str_error.c_str());
     }
 
     nat_ref = boost::lexical_cast<int>(
@@ -251,8 +253,8 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
     natmin_ref = nat_ref / ntran_ref;
 
     if (natmin_ref != symmetry->nat_prim) {
-        error->exit("load_reference_system_xml",
-                    "The number of atoms in the primitive cell is not consistent.");
+        exit("load_reference_system_xml",
+             "The number of atoms in the primitive cell is not consistent.");
     }
 
     if (order_fcs == 0) {
@@ -260,8 +262,8 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
             get_value_from_xml(pt, "Data.ForceConstants.HarmonicUnique.NFC2"));
 
         if (nfcs_ref != fcs->nequiv[0].size()) {
-            error->exit("load_reference_system_xml",
-                        "The number of harmonic force constants is not the same.");
+            exit("load_reference_system_xml",
+                 "The number of harmonic force constants is not the same.");
         }
 
     } else if (order_fcs == 1) {
@@ -269,8 +271,8 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
             get_value_from_xml(pt, "Data.ForceConstants.CubicUnique.NFC3"));
 
         if (nfcs_ref != fcs->nequiv[1].size()) {
-            error->exit("load_reference_system_xml",
-                        "The number of cubic force constants is not the same.");
+            exit("load_reference_system_xml",
+                 "The number of cubic force constants is not the same.");
         }
     }
     allocate(fcs_ref, nfcs_ref);
@@ -328,9 +330,9 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
         iter_found = list_found.find(FcProperty(nterms, 1.0,
                                                 intpair_ref[i], 1));
         if (iter_found == list_found.end()) {
-            error->exit("load_reference_system",
-                        "Cannot find equivalent force constant, number: ",
-                        i + 1);
+            exit("load_reference_system",
+                 "Cannot find equivalent force constant, number: ",
+                 i + 1);
         }
         FcProperty arrtmp = *iter_found;
         const_out[arrtmp.mother] = fcs_ref[i];
@@ -342,7 +344,7 @@ void System::load_reference_system_xml(std::string file_reference_fcs,
     list_found.clear();
 }
 
-void System::load_reference_system()
+void System::load_reference_system(Symmetry *symmetry, Fcs *fcs, Constraint *constraint)
 {
     int i;
     int iat, jat;
@@ -360,8 +362,8 @@ void System::load_reference_system()
 
     ifs_fc2.open(constraint->fc2_file.c_str(), std::ios::in);
     if (!ifs_fc2)
-        error->exit("load_reference_system",
-                    "cannot open file fc2_file");
+        exit("load_reference_system",
+             "cannot open file fc2_file");
 
     bool is_found_system = false;
 
@@ -390,8 +392,8 @@ void System::load_reference_system()
             ifs_fc2 >> nat_s >> natmin_ref >> ntran_ref;
 
             if (natmin_ref != symmetry->nat_prim) {
-                error->exit("load_reference_system",
-                            "The number of atoms in the primitive cell is not consistent");
+                exit("load_reference_system",
+                     "The number of atoms in the primitive cell is not consistent");
             }
 
             if (nat_s != nat) {
@@ -418,8 +420,8 @@ void System::load_reference_system()
         }
     }
     if (!is_found_system) {
-        error->exit("load_reference_system",
-                    "SYSTEM INFO flag not found in the fc2_file");
+        exit("load_reference_system",
+             "SYSTEM INFO flag not found in the fc2_file");
     }
 
     //
@@ -459,9 +461,9 @@ void System::load_reference_system()
             }
         }
         if (!map_found) {
-            error->exit("load_reference_system",
-                        "Could not find an equivalent atom for atom ",
-                        iat + 1);
+            exit("load_reference_system",
+                 "Could not find an equivalent atom for atom ",
+                 iat + 1);
         }
     }
 
@@ -482,11 +484,11 @@ void System::load_reference_system()
         if (str_tmp == "##HARMONIC FORCE CONSTANTS") {
             ifs_fc2 >> nparam_harmonic_ref;
             if (nparam_harmonic_ref < nparam_harmonic) {
-                error->exit("load_reference_system",
-                            "Reference file doesn't contain necessary fc2. (too few)");
+                exit("load_reference_system",
+                     "Reference file doesn't contain necessary fc2. (too few)");
             } else if (nparam_harmonic_ref > nparam_harmonic) {
-                error->exit("load_reference_system",
-                            "Reference file contains extra force constants.");
+                exit("load_reference_system",
+                     "Reference file contains extra force constants.");
             }
 
             is_found_fc2 = true;
@@ -518,9 +520,9 @@ void System::load_reference_system()
 
                 iter_found = list_found.find(FcProperty(2, 1.0, intpair_tmp[i], 1));
                 if (iter_found == list_found.end()) {
-                    error->exit("load_reference_system",
-                                "Cannot find equivalent force constant, number: ",
-                                i + 1);
+                    exit("load_reference_system",
+                         "Cannot find equivalent force constant, number: ",
+                         i + 1);
                 }
                 constraint->const_rhs[(*iter_found).mother] = fc2_ref[i];
             }
@@ -533,8 +535,8 @@ void System::load_reference_system()
     }
 
     if (!is_found_fc2) {
-        error->exit("load_reference_system",
-                    "HARMONIC FORCE CONSTANTS flag not found in the fc2_file");
+        exit("load_reference_system",
+             "HARMONIC FORCE CONSTANTS flag not found in the fc2_file");
     }
     ifs_fc2.close();
 }

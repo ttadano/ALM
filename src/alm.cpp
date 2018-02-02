@@ -72,7 +72,6 @@ ALM::~ALM()
     delete fitting;
     delete constraint;
     delete displace;
-    delete error;
     delete timer;
 }
 
@@ -86,7 +85,6 @@ void ALM::create()
     fitting = new Fitting();
     constraint = new Constraint();
     displace = new Displace();
-    error = new Error();
     timer = new Timer();
 }
 
@@ -475,7 +473,7 @@ const void ALM::get_fc(double *fc_values,
     }
 }
 
-const void ALM::run()
+const void ALM::run(ALM *alm)
 {
     if (!verbose) {
         ofs_alm = new std::ofstream("alm.log", std::ofstream::out);
@@ -483,11 +481,12 @@ const void ALM::run()
         std::cout.rdbuf(ofs_alm->rdbuf());
     }
 
-    initialize();
+    initialize(alm);
+
     if (mode == "fitting") {
-        run_fitting();
+        run_fitting(alm);
     } else if (mode == "suggest") {
-        run_suggest();
+        run_suggest(alm);
     }
 
     if (!verbose) {
@@ -499,23 +498,23 @@ const void ALM::run()
     }
 }
 
-const void ALM::run_fitting()
+const void ALM::run_fitting(ALM *alm)
 {
-    constraint->setup();
-    fitting->fitmain();
+    constraint->setup(alm);
+    fitting->fitmain(alm);
 }
 
-const void ALM::run_suggest()
+const void ALM::run_suggest(ALM *alm)
 {
-    displace->gen_displacement_pattern();
+    displace->gen_displacement_pattern(alm);
 }
 
 
-void ALM::initialize()
+void ALM::initialize(ALM *alm)
 {
-    system->init();
-    files->init();
-    symmetry->init();
-    interaction->init();
-    fcs->init();
+    system->init(alm);
+    files->init(alm);
+    symmetry->init(alm);
+    interaction->init(alm);
+    fcs->init(alm);
 }

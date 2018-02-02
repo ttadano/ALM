@@ -240,28 +240,14 @@ namespace ALM_NS
         void init(ALM *);
         double distance(double *, double *);
         int nbody(const int, const int *);
-        bool is_incutoff(const int, int *, const int);
-        bool is_incutoff2(const int, int *, const int);
+        bool is_incutoff(const int, int *, const int, int *kd);
+        bool is_incutoff2(const int, int *, const int, int *kd);
 
         void generate_interaction_information_by_cutoff(const int, const int,
                                                         int *, int **,
                                                         double **, std::vector<int> *);
         void set_interaction_by_cutoff(ALM *);
 
-        template <typename T>
-        void insort(int n, T *arr)
-        {
-            int i, j;
-            T tmp;
-
-            for (i = 1; i < n; ++i) {
-                tmp = arr[i];
-                for (j = i - 1; j >= 0 && arr[j] > tmp; --j) {
-                    arr[j + 1] = arr[j];
-                }
-                arr[j + 1] = tmp;
-            }
-        }
 
     private:
 
@@ -269,24 +255,25 @@ namespace ALM_NS
 
         void set_default_variables();
         void deallocate_variables();
-        void generate_coordinate_of_periodic_images(const unsigned int, double **,
+        void generate_coordinate_of_periodic_images(System *, const unsigned int, double **,
                                                     const int [3], double ***, int *);
 
         void get_pairs_of_minimum_distance(int, double ***, int *,
                                            std::vector<DistInfo> **,
                                            std::vector<DistInfo> **);
 
-        void print_neighborlist(std::vector<DistInfo> **);
-        void print_interaction_information(std::vector<int> **);
-        void search_interactions(std::vector<int> **);
+        void print_neighborlist(const int, const int, int **, int *, std::string *, std::vector<DistInfo> **);
+        void print_interaction_information(const int, int **, int *, std::string *, std::vector<int> **);
+        //void search_interactions(std::vector<int> **);
         void set_ordername();
 
-        void calc_mindist_clusters(std::vector<int> **,
+        void calc_mindist_clusters(const int, int *, int **,
+                                   std::vector<int> **,
                                    std::vector<DistInfo> **,
                                    std::vector<DistInfo> **,
                                    int *, std::set<MinimumDistanceCluster> **);
 
-        void calc_mindist_clusters2(std::vector<int> **,
+        void calc_mindist_clusters2(const int, int *, int **, std::vector<int> **,
                                     std::vector<DistInfo> **,
                                     std::vector<DistInfo> **,
                                     int *, std::set<MinimumDistanceCluster> **);
@@ -295,6 +282,7 @@ namespace ALM_NS
                               int, std::vector<int>,
                               std::vector<std::vector<int>> &);
 
-        void generate_pairs(std::set<IntList> *, std::set<MinimumDistanceCluster> **);
+        void generate_pairs(const int, const int, std::string *, int **,
+                            std::set<IntList> *, std::set<MinimumDistanceCluster> **);
     };
 }

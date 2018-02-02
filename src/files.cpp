@@ -9,7 +9,6 @@
 */
 
 #include "files.h"
-#include "error.h"
 #include "memory.h"
 #include "interaction.h"
 #include <boost/lexical_cast.hpp>
@@ -29,7 +28,7 @@ Files::~Files()
     }
 }
 
-void Files::init()
+void Files::init(ALM *alm)
 {
     int i;
 
@@ -38,9 +37,9 @@ void Files::init()
 
     if (alm->mode == "suggest") {
 
-        allocate(file_disp_pattern, interaction->maxorder);
+        allocate(file_disp_pattern, alm->interaction->maxorder);
 
-        for (i = 0; i < interaction->maxorder; ++i) {
+        for (i = 0; i < alm->interaction->maxorder; ++i) {
             if (i == 0) {
                 file_disp_pattern[i] = job_title + ".pattern_HARMONIC";
             } else {

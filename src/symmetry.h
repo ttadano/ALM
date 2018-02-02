@@ -144,12 +144,13 @@ namespace ALM_NS
         void deallocate_variables();
         void setup_symmetry_operation(int, unsigned int &,
                                       double [3][3], double [3][3],
-                                      double **, int *);
+                                      double **, int *,
+                                      System *system, int *);
         void genmaps(int, double **,
                      int **, int **,
-                     class Symmetry::Maps *);
+                     Symmetry::Maps *, System *);
 
-        void findsym(int, double [3][3], double **,
+        void findsym(int, double [3][3], double **, System *system, int *,
                      std::vector<SymmetryOperation> &);
 
         void findsym_spglib(const int, double [3][3], double **,
@@ -160,8 +161,8 @@ namespace ALM_NS
 
         void symop_in_cart(double [3][3], const int [3][3],
                            const double [3][3], const double [3][3]);
-        void pure_translations();
-        void print_symmetrized_coordinate(double **);
+        void pure_translations(System *);
+        void print_symmetrized_coordinate(const int, double **);
 
         template <typename T>
         bool is_compatible(const T [3][3], const double tolerance_zero = 1.0e-5);
@@ -172,6 +173,7 @@ namespace ALM_NS
 
         void find_crystal_symmetry(int, int,
                                    std::vector<unsigned int> *, double **,
+                                   System *, int *,
                                    std::vector<RotationMatrix>,
                                    std::vector<SymmetryOperation> &);
 

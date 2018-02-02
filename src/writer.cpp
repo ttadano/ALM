@@ -44,7 +44,7 @@ void Writer::write_input_vars(ALM *alm)
 {
     unsigned int i;
 
-   // ALMCore *alm = alm->get_alm();
+    // ALMCore *alm = alm->get_alm();
 
     alm->timer->start_clock("writer");
 
@@ -132,7 +132,7 @@ void Writer::write_force_constants(ALM *alm)
     int maxorder = alm->interaction->maxorder;
 
     ofs_fcs.open(alm->files->file_fcs.c_str(), std::ios::out);
-    if (!ofs_fcs) alm->error->exit("openfiles", "cannot open fcs file");
+    if (!ofs_fcs) exit("openfiles", "cannot open fcs file");
 
     ofs_fcs << " *********************** Force Constants (FCs) ***********************" << std::endl;
     ofs_fcs << " *        Force constants are printed in Rydberg atomic units.       *" << std::endl;
@@ -189,8 +189,8 @@ void Writer::write_force_constants(ALM *alm)
                         std::cout << std::setw(5) << atom_tmp[l];
                     }
                     std::cout << std::endl;
-                    alm->error->exit("write_force_constants",
-                                          "This cannot happen.");
+                    exit("write_force_constants",
+                         "This cannot happen.");
                 }
                 ofs_fcs << std::setw(4) << multiplicity;
 
@@ -303,8 +303,8 @@ void Writer::write_displacement_pattern(ALM *alm)
     for (order = 0; order < maxorder; ++order) {
         ofs_pattern.open(alm->files->file_disp_pattern[order].c_str(), std::ios::out);
         if (!ofs_pattern)
-            alm->error->exit("write_displacement_pattern",
-                                  "Cannot open file_disp_pattern");
+            exit("write_displacement_pattern",
+                 "Cannot open file_disp_pattern");
 
         counter = 0;
 
@@ -491,8 +491,8 @@ void Writer::write_misc_xml(ALM *alm)
             iter_cluster = alm->interaction->mindist_cluster[1][j].find(
                 MinimumDistanceCluster(atom_tmp, cell_dummy));
             if (iter_cluster == alm->interaction->mindist_cluster[1][j].end()) {
-                alm->error->exit("load_reference_system_xml",
-                                      "Cubic force constant is not found.");
+                exit("load_reference_system_xml",
+                     "Cubic force constant is not found.");
             } else {
                 multiplicity = (*iter_cluster).cell.size();
             }
@@ -594,7 +594,7 @@ void Writer::write_misc_xml(ALM *alm)
                     }
                 }
             } else {
-                alm->error->exit("write_misc_xml", "This cannot happen.");
+                exit("write_misc_xml", "This cannot happen.");
             }
         }
         ishift += alm->fcs->nequiv[order].size();
@@ -654,7 +654,7 @@ void Writer::write_hessian(ALM *alm)
     }
 
     ofs_hes.open(alm->files->file_hes.c_str(), std::ios::out);
-    if (!ofs_hes) alm->error->exit("write_hessian", "cannot create hessian file");
+    if (!ofs_hes) exit("write_hessian", "cannot create hessian file");
 
     ofs_hes << "# atom1, xyz1, atom2, xyz2, FC2 (Ryd/Bohr^2)" << std::endl;
     for (i = 0; i < nat3; ++i) {
@@ -718,7 +718,7 @@ void Writer::write_in_QEformat(ALM *alm)
     std::string file_fc = alm->files->job_title + ".fc";
 
     ofs_hes.open(file_fc.c_str(), std::ios::out);
-    if (!ofs_hes) alm->error->exit("write_hessian", "cannot create hessian file");
+    if (!ofs_hes) exit("write_hessian", "cannot create hessian file");
 
     ofs_hes << "  1  1  1" << std::endl;
     for (int icrd = 0; icrd < 3; ++icrd) {

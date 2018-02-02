@@ -14,7 +14,6 @@
 
 namespace ALM_NS
 {
-
     class ALM
     {
     public:
@@ -67,7 +66,7 @@ namespace ALM_NS
         const void set_norder(const int maxorder);
         const void set_nbody_include(const int *nbody_include);
         const void set_cutoff_radii(const double *rcs);
-        ALMCore* get_alm();
+
         const int get_atom_mapping_by_pure_translations(int *map_p2s);
         const int get_number_of_displacement_patterns(const int fc_order); // harmonic=1, ...
         const void get_numbers_of_displacements(int *numbers,
@@ -79,7 +78,7 @@ namespace ALM_NS
         const void get_fc(double *fc_value,
                           int *elem_indices, // (len(fc_value), fc_order) is flatten.
                           const int fc_order); // harmonic=2, ...
-        const void run();
+        const void run(ALM *alm);
 
     private:
 
@@ -88,10 +87,10 @@ namespace ALM_NS
         std::ofstream *ofs_alm;
         std::streambuf *coutbuf;
         void create();
-        void initialize();
+        void initialize(ALM *);
         void finalize();
-        const void run_fitting();
-        const void run_suggest();
+        const void run_fitting(ALM *);
+        const void run_suggest(ALM *);
         bool print_hessian;
     };
 }

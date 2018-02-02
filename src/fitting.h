@@ -14,6 +14,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include "alm.h"
 #ifdef _VSL
 #include "mkl_vsl.h"
 #endif
@@ -26,7 +27,7 @@ namespace ALM_NS
         Fitting();
         ~Fitting();
 
-        void fitmain();
+        void fitmain(ALM *);
 
         double *params;
         double **u_in;
@@ -38,7 +39,8 @@ namespace ALM_NS
                                         const int ndata_used);
         void calc_matrix_elements_algebraic_constraint(const int, const int, const int, const int,
                                                        const int, const int, const int, const int,
-                                                       double **, double **, double **, double *, double *);
+                                                       double **, double **, double **, double *, double *,
+                                                       Symmetry *, Fcs *, Constraint *);
         double gamma(const int, const int *);
 
     private:
@@ -48,18 +50,21 @@ namespace ALM_NS
                              double **f,
                              const int nat,
                              const int ndata_used,
-                             const int nmulti);
-        int inprim_index(const int);
+                             const int nmulti,
+                             Symmetry *);
+        int inprim_index(const int, Symmetry *);
         void fit_without_constraints(int, int, double **, double *, double *);
         void fit_algebraic_constraints(int, int, double **, double *,
-                                       double *, double *, const int);
+                                       double *, double *, const int,
+                                       Fcs *, Constraint *);
 
         void fit_with_constraints(int, int, int, double **, double *,
                                   double *, double **, double *);
 
         void calc_matrix_elements(const int, const int, const int,
                                   const int, const int, const int, const int,
-                                  double **, double **, double **, double *);
+                                  double **, double **, double **, double *,
+                                  Symmetry *, Fcs *);
 
         int factorial(const int);
         int rankSVD(const int, const int, double *, const double);

@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include "alm.h"
 
 namespace ALM_NS
 {
@@ -128,13 +129,14 @@ namespace ALM_NS
 
         std::string disp_basis;
         std::vector<AtomWithDirection> *pattern_all;
-        void gen_displacement_pattern();
+        void gen_displacement_pattern(ALM *);
 
     private:
         std::vector<DispDirectionHarmonic> disp_harm, disp_harm_best;
         void set_default_variables();
         void deallocate_variables();
-        void generate_pattern_all(const int,
+        void generate_pattern_all(const int, const int, double [3][3],
+                                  Symmetry *symmetry,
                                   std::vector<AtomWithDirection> *,
                                   std::set<DispAtomSet> *,
                                   const std::string);
@@ -143,7 +145,7 @@ namespace ALM_NS
                                std::vector<std::vector<int>> &,
                                std::vector<int>);
 
-        void find_unique_sign_pairs(const int,
+        void find_unique_sign_pairs(const int, const int, Symmetry *,
                                     std::vector<std::vector<int>>,
                                     std::vector<int>,
                                     std::vector<std::vector<int>> &,

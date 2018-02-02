@@ -65,10 +65,10 @@ void Fitting::deallocate_variables()
 void Fitting::fitmain(ALM *alm)
 {
     int i;
-    int nat = system->nat;
+    int nat = alm->system->nat;
     int natmin = alm->symmetry->nat_prim;
-    int nstart = system->nstart;
-    int nend = system->nend;
+    int nstart = alm->system->nstart;
+    int nend = alm->system->nend;
     int N, M, N_new;
     int maxorder = alm->interaction->maxorder;
     int P = alm->constraint->P;
@@ -79,7 +79,7 @@ void Fitting::fitmain(ALM *alm)
     double *fsum_orig;
     double *param_tmp;
 
-    int nmulti = symmetry->ntran;
+    int nmulti = alm->symmetry->ntran;
 
     amat = nullptr;
     amat_1D = nullptr;
@@ -93,8 +93,8 @@ void Fitting::fitmain(ALM *alm)
     std::cout << " =======" << std::endl << std::endl;
 
     std::cout << "  Reference files" << std::endl;
-    std::cout << "   Displacement: " << files->file_disp << std::endl;
-    std::cout << "   Force       : " << files->file_force << std::endl;
+    std::cout << "   Displacement: " << alm->files->file_disp << std::endl;
+    std::cout << "   Force       : " << alm->files->file_force << std::endl;
     std::cout << std::endl;
 
     std::cout << "  NSTART = " << nstart << "; NEND = " << nend << std::endl;
@@ -106,13 +106,13 @@ void Fitting::fitmain(ALM *alm)
         allocate(u, ndata_used * nmulti, 3 * nat);
         allocate(f, ndata_used * nmulti, 3 * nat);
     } else {
-        error->exit("fitmain", "nmulti has to be larger than 0.");
+        exit("fitmain", "nmulti has to be larger than 0.");
     }
-    data_multiplier(u, f, nat, ndata_used, nmulti);
+    data_multiplier(u, f, nat, ndata_used, nmulti, alm->symmetry);
 
     N = 0;
     for (i = 0; i < maxorder; ++i) {
-        N += fcs->nequiv[i].size();
+        N += alm->fcs->nequiv[i].size();
     }
     std::cout << "  Total Number of Parameters : "
         << N << std::endl << std::endl;
@@ -121,10 +121,10 @@ void Fitting::fitmain(ALM *alm)
 
     M = 3 * natmin * ndata_used * nmulti;
 
-    if (constraint->constraint_algebraic) {
+    if (alm->constraint->constraint_algebraic) {
         N_new = 0;
         for (i = 0; i < maxorder; ++i) {
-            N_new += constraint->index_bimap[i].size();
+            N_new += alm->constraint->index_bimap[i].size();
         }
         std::cout << "  Total Number of Free Parameters : "
             << N_new << std::endl << std::endl;
@@ -135,13 +135,14 @@ void Fitting::fitmain(ALM *alm)
 
         calc_matrix_elements_algebraic_constraint(M, N, N_new, nat, natmin, ndata_used,
                                                   nmulti, maxorder, u, f, amat, fsum,
-                                                  fsum_orig);
+                                                  fsum_orig, alm->symmetry, alm->fcs, alm->constraint);
     } else {
         allocate(amat, M, N);
         allocate(fsum, M);
 
         calc_matrix_elements(M, N, nat, natmin, ndata_used,
-                             nmulti, maxorder, u, f, amat, fsum);
+                             nmulti, maxorder, u, f, amat, fsum,
+                             alm->symmetry, alm->fcs);
     }
 
     deallocate(u);
@@ -154,14 +155,14 @@ void Fitting::fitmain(ALM *alm)
 
     // Fitting with singular value decomposition or QR-Decomposition
 
-    if (constraint->constraint_algebraic) {
+    if (alm->constraint->constraint_algebraic) {
         fit_algebraic_constraints(N_new, M, amat, fsum, param_tmp,
-                                  fsum_orig, maxorder);
+                                  fsum_orig, maxorder, alm->fcs, alm->constraint);
 
-    } else if (constraint->exist_constraint) {
+    } else if (alm->constraint->exist_constraint) {
         fit_with_constraints(N, M, P, amat, fsum, param_tmp,
-                             constraint->const_mat,
-                             constraint->const_rhs);
+                             alm->constraint->const_mat,
+                             alm->constraint->const_rhs);
     } else {
         fit_without_constraints(N, M, amat, fsum, param_tmp);
     }
@@ -173,7 +174,7 @@ void Fitting::fitmain(ALM *alm)
     }
     allocate(params, N);
 
-    if (constraint->constraint_algebraic) {
+    if (alm->constraint->constraint_algebraic) {
 
         for (i = 0; i < N; ++i) {
             params[i] = param_tmp[i];
@@ -280,8 +281,8 @@ void Fitting::fit_without_constraints(int N,
 
     std::cout << "  RANK of the matrix = " << nrank << std::endl;
     if (nrank < N)
-        error->warn("fit_without_constraints",
-                    "Matrix is rank-deficient. Force constants could not be determined uniquely :(");
+        warn("fit_without_constraints",
+             "Matrix is rank-deficient. Force constants could not be determined uniquely :(");
 
     if (nrank == N) {
         double f_residual = 0.0;
@@ -421,7 +422,9 @@ void Fitting::fit_algebraic_constraints(int N,
                                         double *bvec,
                                         double *param_out,
                                         double *bvec_orig,
-                                        const int maxorder)
+                                        const int maxorder,
+                                        Fcs *fcs,
+                                        Constraint *constraint)
 {
     int i, j;
     unsigned long k;
@@ -468,8 +471,8 @@ void Fitting::fit_algebraic_constraints(int N,
 
     std::cout << "  RANK of the matrix = " << nrank << std::endl;
     if (nrank < N)
-        error->warn("fit_without_constraints",
-                    "Matrix is rank-deficient. Force constants could not be determined uniquely :(");
+        warn("fit_without_constraints",
+             "Matrix is rank-deficient. Force constants could not be determined uniquely :(");
 
     if (nrank == N) {
         double f_residual = 0.0;
@@ -533,7 +536,9 @@ void Fitting::calc_matrix_elements(const int M,
                                    double **u,
                                    double **f,
                                    double **amat,
-                                   double *bvec)
+                                   double *bvec,
+                                   Symmetry *symmetry,
+                                   Fcs *fcs)
 {
     int i, j;
     int irow;
@@ -586,7 +591,7 @@ void Fitting::calc_matrix_elements(const int M,
                 for (auto iter = fcs->nequiv[order].begin(); iter != fcs->nequiv[order].end(); ++iter) {
                     for (i = 0; i < *iter; ++i) {
                         ind[0] = fcs->fc_table[order][mm].elems[0];
-                        k = idata + inprim_index(fcs->fc_table[order][mm].elems[0]);
+                        k = idata + inprim_index(fcs->fc_table[order][mm].elems[0], symmetry);
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
                             ind[j] = fcs->fc_table[order][mm].elems[j];
@@ -620,7 +625,10 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
                                                         double **f,
                                                         double **amat,
                                                         double *bvec,
-                                                        double *bvec_orig)
+                                                        double *bvec_orig,
+                                                        Symmetry *symmetry,
+                                                        Fcs *fcs,
+                                                        Constraint *constraint)
 {
     int i, j;
     int irow;
@@ -695,7 +703,7 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
                 for (auto iter = fcs->nequiv[order].begin(); iter != fcs->nequiv[order].end(); ++iter) {
                     for (i = 0; i < *iter; ++i) {
                         ind[0] = fcs->fc_table[order][mm].elems[0];
-                        k = inprim_index(ind[0]);
+                        k = inprim_index(ind[0], symmetry);
 
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
@@ -772,7 +780,8 @@ void Fitting::data_multiplier(double **u,
                               double **f,
                               const int nat,
                               const int ndata_used,
-                              const int nmulti)
+                              const int nmulti,
+                              Symmetry *symmetry)
 {
     int i, j, k;
     int idata, itran, isym;
@@ -796,7 +805,7 @@ void Fitting::data_multiplier(double **u,
 }
 
 
-int Fitting::inprim_index(const int n)
+int Fitting::inprim_index(const int n, Symmetry *symmetry)
 {
     int in;
     int atmn = n / 3;
@@ -828,7 +837,7 @@ double Fitting::gamma(const int n, const int *arr)
     ind_front = arr[0];
     nsame_to_front = 1;
 
-    interaction->insort(n, arr_tmp);
+    insort(n, arr_tmp);
 
     int nuniq = 1;
     int iuniq = 0;

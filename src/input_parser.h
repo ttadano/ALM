@@ -31,8 +31,7 @@ namespace ALM_NS
                  const int narg,
                  const char * const *arg);
         void parse_displacement_and_force(ALM *alm);
-        void parse_displacement_and_force_files(Error *error,
-                                                double **u,
+        void parse_displacement_and_force_files(double **u,
                                                 double **f,
                                                 const int nat,
                                                 const int ndata,
@@ -59,18 +58,18 @@ namespace ALM_NS
         void parse_cutoff_radii(ALM *alm);
         void parse_fitting_vars(ALM *alm);
         int locate_tag(std::string);
-        void split_str_by_space(const std::string, std::vector<std::string> &);
+        void split_str_by_space(const std::string,
+                                std::vector<std::string> &);
         bool is_endof_entry(std::string);
         void get_var_dict(const std::string,
                           std::map<std::string,
-                                   std::string> &,
-                          Error *);
+                                   std::string> &);
 
         template <typename T>
         void assign_val(T &,
                         const std::string,
-                        std::map<std::string, std::string>,
-                        Error *);
+                        std::map<std::string, std::string>);
+
         void set_displacement_and_force(ALM *alm,
                                         const double * const *u,
                                         const double * const *f,

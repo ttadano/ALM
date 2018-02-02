@@ -40,7 +40,7 @@ Symmetry::~Symmetry()
 void Symmetry::init(ALM *alm)
 {
     int i, j;
-    int nat = system->nat;
+    int nat = alm->system->nat;
 
     alm->timer->start_clock("symmetry");
 
@@ -48,8 +48,9 @@ void Symmetry::init(ALM *alm)
     std::cout << " ========" << std::endl << std::endl;
 
     setup_symmetry_operation(nat, nsym,
-                             system->lavec, system->rlavec,
-                             system->xcoord, system->kd);
+                             alm->system->lavec, alm->system->rlavec,
+                             alm->system->xcoord, alm->system->kd, alm->system,
+                             alm->interaction->is_periodic);
 
     std::cout << "  Number of symmetry operations = " << SymmData.size() << std::endl;
 
@@ -112,7 +113,7 @@ void Symmetry::init(ALM *alm)
     //                       lavec_prim, nat_prim,
     //                       kd_prim, xcoord_prim,
     //                       tolerance);
-    pure_translations();
+    pure_translations(alm->system);
 
     // std::cout.setf(std::ios::scientific);
     // std::cout << "  Primitive cell contains " << nat_prim << " atoms" << std::endl;
@@ -158,7 +159,7 @@ void Symmetry::init(ALM *alm)
     }
     allocate(map_s2p, nat);
 
-    genmaps(nat, system->xcoord, map_sym, map_p2s, map_s2p);
+    genmaps(nat, alm->system->xcoord, map_sym, map_p2s, map_s2p, alm->system);
 
     std::cout << std::endl;
     std::cout << "  **Cell-Atom Correspondens Below**" << std::endl;
@@ -237,7 +238,8 @@ void Symmetry::setup_symmetry_operation(int nat,
                                         double aa[3][3],
                                         double bb[3][3],
                                         double **x,
-                                        int *kd)
+                                        int *kd, System *system,
+                                        int *is_periodic)
 {
     int i, j;
 
@@ -250,7 +252,7 @@ void Symmetry::setup_symmetry_operation(int nat,
         std::cout << "  NSYM = 0 : Automatic detection of the space group." << std::endl;
         std::cout << "             This can take a while for a large supercell." << std::endl << std::endl;
 
-        findsym(nat, aa, x, SymmData);
+        findsym(nat, aa, x, system, is_periodic, SymmData);
         //findsym_spglib(nat, aa, x, system->kd, SymmData, tolerance);
         // The order in SymmData changes for each run because it was generated
         // with OpenMP. Therefore, we sort the list here to have the same result. 
@@ -326,8 +328,8 @@ void Symmetry::setup_symmetry_operation(int nat,
         ifs_sym >> nsym2;
 
         if (nsym != nsym2)
-            error->exit("setup_symmetry_operations",
-                        "nsym in the given file and the input file are not consistent.");
+            exit("setup_symmetry_operations",
+                 "nsym in the given file and the input file are not consistent.");
 
         for (i = 0; i < nsym; ++i) {
             ifs_sym
@@ -355,6 +357,7 @@ void Symmetry::setup_symmetry_operation(int nat,
 void Symmetry::findsym(int nat,
                        double aa[3][3],
                        double **x,
+                       System *system, int *is_periodic,
                        std::vector<SymmetryOperation> &symop_all)
 {
     std::vector<RotationMatrix> LatticeSymmList;
@@ -366,6 +369,7 @@ void Symmetry::findsym(int nat,
     // Generate all the space group operations with translational vectors
     symop_all.clear();
     find_crystal_symmetry(nat, system->nclassatom, system->atomlist_class, x,
+                          system, is_periodic,
                           LatticeSymmList, symop_all);
 
     LatticeSymmList.clear();
@@ -490,7 +494,7 @@ void Symmetry::find_lattice_symmetry(double aa[3][3],
     }
 
     if (LatticeSymmList.size() > 48) {
-        error->exit("find_lattice_symmetry", "Number of lattice symmetry is larger than 48.");
+        exit("find_lattice_symmetry", "Number of lattice symmetry is larger than 48.");
     }
 }
 
@@ -498,6 +502,8 @@ void Symmetry::find_crystal_symmetry(int nat,
                                      int nclass,
                                      std::vector<unsigned int> *atomclass,
                                      double **x,
+                                     System *system,
+                                     int *is_periodic,
                                      std::vector<RotationMatrix> LatticeSymmList,
                                      std::vector<SymmetryOperation> &CrystalSymmList)
 {
@@ -569,9 +575,9 @@ void Symmetry::find_crystal_symmetry(int nat,
                 tran[i] = tran[i] - nint(tran[i]);
             }
 
-            if ((std::abs(tran[0]) > eps12 && !interaction->is_periodic[0]) ||
-                (std::abs(tran[1]) > eps12 && !interaction->is_periodic[1]) ||
-                (std::abs(tran[2]) > eps12 && !interaction->is_periodic[2]))
+            if ((std::abs(tran[0]) > eps12 && !is_periodic[0]) ||
+                (std::abs(tran[1]) > eps12 && !is_periodic[1]) ||
+                (std::abs(tran[2]) > eps12 && !is_periodic[2]))
                 continue;
 
             is_identity_matrix =
@@ -633,28 +639,28 @@ void Symmetry::find_crystal_symmetry(int nat,
                     }
 
 
-                rotvec(mag_rot, mag_rot, rot_cart);
+                    rotvec(mag_rot, mag_rot, rot_cart);
 
-                // In the case of improper rotation, the factor -1 should be multiplied
-                // because the inversion operation doesn't flip the spin.
-                if (!is_proper(rot_cart)) {
-                    for (i = 0; i < 3; ++i) {
-                        mag_rot[i] = -mag_rot[i];
+                    // In the case of improper rotation, the factor -1 should be multiplied
+                    // because the inversion operation doesn't flip the spin.
+                    if (!is_proper(rot_cart)) {
+                        for (i = 0; i < 3; ++i) {
+                            mag_rot[i] = -mag_rot[i];
+                        }
                     }
-                }
 
-                mag_sym1 = (std::pow(mag[0] - mag_rot[0], 2.0)
-                    + std::pow(mag[1] - mag_rot[1], 2.0)
-                    + std::pow(mag[2] - mag_rot[2], 2.0)) < eps6;
+                    mag_sym1 = (std::pow(mag[0] - mag_rot[0], 2.0)
+                        + std::pow(mag[1] - mag_rot[1], 2.0)
+                        + std::pow(mag[2] - mag_rot[2], 2.0)) < eps6;
 
-                mag_sym2 = (std::pow(mag[0] + mag_rot[0], 2.0)
-                    + std::pow(mag[1] + mag_rot[1], 2.0)
-                    + std::pow(mag[2] + mag_rot[2], 2.0)) < eps6;
+                    mag_sym2 = (std::pow(mag[0] + mag_rot[0], 2.0)
+                        + std::pow(mag[1] + mag_rot[1], 2.0)
+                        + std::pow(mag[2] + mag_rot[2], 2.0)) < eps6;
 
-                if (!mag_sym1 && !mag_sym2) {
-                    isok = false;
-                } else if (!mag_sym1 && mag_sym2 && !trev_sym_mag) {
-                    isok = false;
+                    if (!mag_sym1 && !mag_sym2) {
+                        isok = false;
+                    } else if (!mag_sym1 && mag_sym2 && !trev_sym_mag) {
+                        isok = false;
                     }
                 }
             }
@@ -710,7 +716,7 @@ void Symmetry::findsym_spglib(const int nat,
     // First find the number of symmetry operations
     nsym = spg_get_multiplicity(aa_tmp, position, types_tmp, nat, symprec);
 
-    if (nsym == 0) error->exit("findsym_spglib", "Error occured in spg_get_multiplicity");
+    if (nsym == 0) exit("findsym_spglib", "Error occured in spg_get_multiplicity");
 
     allocate(translation, nsym);
     allocate(rotation, nsym);
@@ -774,7 +780,7 @@ void Symmetry::symop_in_cart(double rot_cart[3][3],
 }
 
 
-void Symmetry::pure_translations()
+void Symmetry::pure_translations(System *system)
 {
     int i;
 
@@ -795,8 +801,8 @@ void Symmetry::pure_translations()
     std::cout << "  Primitive cell contains " << nat_prim << " atoms" << std::endl;
 
     if (system->nat % ntran) {
-        error->exit("pure_translations",
-                    "nat != nat_prim * ntran. Something is wrong in the structure.");
+        exit("pure_translations",
+             "nat != nat_prim * ntran. Something is wrong in the structure.");
     }
 
     if (symnum_tran) {
@@ -815,7 +821,8 @@ void Symmetry::genmaps(int nat,
                        double **x,
                        int **map_sym,
                        int **map_p2s,
-                       Maps *map_s2p)
+                       Maps *map_s2p,
+                       System *system)
 {
     int isym, iat, jat;
     int i, j;
@@ -867,9 +874,9 @@ void Symmetry::genmaps(int nat,
                     }
                 }
                 if (map_sym[iat][isym] == -1) {
-                    error->exit("genmaps",
-                                "cannot find symmetry for operation # ",
-                                isym + 1);
+                    exit("genmaps",
+                         "cannot find symmetry for operation # ",
+                         isym + 1);
                 }
             }
         }
@@ -1124,11 +1131,10 @@ void Symmetry::symop_availability_check(double ***rot,
     }
 }
 
-void Symmetry::print_symmetrized_coordinate(double **x)
+void Symmetry::print_symmetrized_coordinate(const int nat, double **x)
 {
     int i, j, k, l;
     int isym = 0;
-    int nat = system->nat;
     int m11, m12, m13, m21, m22, m23, m31, m32, m33;
     int det;
     double tran[3];
@@ -1200,8 +1206,8 @@ void Symmetry::print_symmetrized_coordinate(double **x)
                 }
             }
             if (l == -1)
-                error->exit("print_symmetrized_coordinate",
-                            "This cannot happen.");
+                exit("print_symmetrized_coordinate",
+                     "This cannot happen.");
 
             for (j = 0; j < 3; ++j) {
                 x_symm[l][j] = usi[j];
@@ -1262,7 +1268,7 @@ bool Symmetry::is_proper(const double rot[3][3])
     } else if (std::abs(det + 1.0) < eps12) {
         ret = false;
     } else {
-        error->exit("is_proper", "This cannot happen.");
+        exit("is_proper", "This cannot happen.");
     }
 
     return ret;
