@@ -14,7 +14,6 @@
 
 namespace ALM_NS
 {
-    class ALMCore;
 
     class ALM
     {
@@ -33,7 +32,6 @@ namespace ALM_NS
         class Constraint *constraint;
         class Files *files;
         class Displace *displace;
-        class Error *error;
         class Timer *timer;
 
         const void set_run_mode(const std::string mode);

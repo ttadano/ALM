@@ -123,7 +123,7 @@ void Constraint::setup(ALM *alm)
         std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
         break;
     default:
-        alm->error->exit("Constraint::setup", "invalid constraint_mode", constraint_mode);
+        exit("Constraint::setup", "invalid constraint_mode", constraint_mode);
         break;
     }
 
@@ -150,7 +150,7 @@ void Constraint::setup(ALM *alm)
     allocate(const_symmetry, alm->interaction->maxorder);
     generate_symmetry_constraint_in_cartesian(alm->system, alm->symmetry,
                                               alm->interaction,
-                                              alm->fcs, alm->error,
+                                              alm->fcs,
                                               const_symmetry);
 
     for (int order = 0; order < alm->interaction->maxorder; ++order) {
@@ -187,14 +187,13 @@ void Constraint::setup(ALM *alm)
         if (impose_inv_T) {
             generate_translational_constraint(alm->system,
                                               alm->symmetry, alm->interaction,
-                                              alm->fcs, alm->error,
+                                              alm->fcs,
                                               const_translation);
         }
         if (impose_inv_R) {
             rotational_invariance(alm->symmetry,
                                   alm->interaction,
                                   alm->fcs,
-                                  alm->error,
                                   const_rotation_self,
                                   const_rotation_cross);
         }
@@ -308,10 +307,14 @@ void Constraint::setup(ALM *alm)
             }
             allocate(index_bimap, maxorder);
 
-            get_mapping_constraint(alm->system, alm->error,
-                                   maxorder, alm->fcs->nequiv,
-                                   const_self, const_fix,
-                                   const_relate, index_bimap, false);
+            get_mapping_constraint(alm->system,
+                                   maxorder,
+                                   alm->fcs->nequiv,
+                                   const_self,
+                                   const_fix,
+                                   const_relate,
+                                   index_bimap,
+                                   false);
 
             for (order = 0; order < maxorder; ++order) {
                 std::cout << "  Number of free" << std::setw(9) << alm->interaction->str_order[order]
@@ -499,7 +502,6 @@ void Constraint::calc_constraint_matrix(System *system,
 
 
 void Constraint::get_mapping_constraint(System *system,
-                                        Error *error,
                                         const int nmax,
                                         std::vector<int> *nequiv,
                                         std::vector<ConstraintClass> *const_in,
@@ -562,8 +564,8 @@ void Constraint::get_mapping_constraint(System *system,
                 }
 
                 if (p_index_target == -1) {
-                    error->exit("get_mapping_constraint",
-                                "No finite entry found in the constraint.");
+                    exit("get_mapping_constraint",
+                         "No finite entry found in the constraint.");
                 }
 
                 alpha_tmp.clear();
@@ -633,7 +635,6 @@ void Constraint::get_mapping_constraint(System *system,
 void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symmetry *symmetry,
                                                            Interaction *interaction,
                                                            Fcs *fcs,
-                                                           Error *error,
                                                            std::vector<ConstraintClass> *const_out)
 
 {
@@ -657,7 +658,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symme
         if (has_constraint_from_symm) {
             std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
         }
-        get_constraint_symmetry(system, symmetry, fcs, error,
+        get_constraint_symmetry(system, symmetry, fcs,
                                 order, interaction->pairs[order],
                                 symmetry->SymmData, "Cartesian",
                                 fcs->fc_table[order], fcs->nequiv[order],
@@ -675,7 +676,6 @@ void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symme
 void Constraint::get_constraint_symmetry(System *system,
                                          Symmetry *symmetry,
                                          Fcs *fcs,
-                                         Error *error,
                                          const int order, const std::set<IntList> pairs,
                                          const std::vector<SymmetryOperation> symmop,
                                          const std::string basis,
@@ -760,7 +760,7 @@ void Constraint::get_constraint_symmetry(System *system,
     } else {
         deallocate(rotation);
         deallocate(map_sym);
-        error->exit("get_constraint_symmetry", "Invalid basis input");
+        exit("get_constraint_symmetry", "Invalid basis input");
     }
 
     // Generate temporary list of parameters
@@ -882,7 +882,6 @@ void Constraint::generate_translational_constraint(System *system,
                                                    Symmetry *symmetry,
                                                    Interaction *interaction,
                                                    Fcs *fcs,
-                                                   Error *error,
                                                    std::vector<ConstraintClass> *const_out)
 {
     // Create constraint matrix for the translational invariance (aka acoustic sum rule).
@@ -904,7 +903,7 @@ void Constraint::generate_translational_constraint(System *system,
             continue;
         }
 
-        get_constraint_translation(system, symmetry, interaction, fcs, error,
+        get_constraint_translation(system, symmetry, interaction, fcs,
                                    order,
                                    interaction->pairs[order],
                                    fcs->fc_table[order],
@@ -923,7 +922,6 @@ void Constraint::get_constraint_translation(System *system,
                                             Symmetry *symmetry,
                                             Interaction *interaction,
                                             Fcs *fcs,
-                                            Error *error,
                                             const int order, const std::set<IntList> pairs,
                                             const std::vector<FcProperty> fc_table,
                                             const std::vector<int> nequiv,
@@ -977,7 +975,7 @@ void Constraint::get_constraint_translation(System *system,
         }
         if (list_found.find(FcProperty(order + 2, (*p).sign,
                                        ind, (*p).mother)) != list_found.end()) {
-            error->exit("get_constraint_translation", "Duplicate interaction list found");
+            exit("get_constraint_translation", "Duplicate interaction list found");
         }
         list_found.insert(FcProperty(order + 2, (*p).sign,
                                      ind, (*p).mother));
@@ -1193,7 +1191,6 @@ void Constraint::get_constraint_translation(System *system,
 void Constraint::rotational_invariance(Symmetry *symmetry,
                                        Interaction *interaction,
                                        Fcs *fcs,
-                                       Error *error,
                                        std::vector<ConstraintClass> *const_rotation_self,
                                        std::vector<ConstraintClass> *const_rotation_cross)
 {
@@ -1242,7 +1239,7 @@ void Constraint::rotational_invariance(Symmetry *symmetry,
     std::vector<std::vector<int>> cell_dummy;
     std::set<MinimumDistanceCluster>::iterator iter_cluster;
 
-    setup_rotation_axis(error, valid_rotation_axis);
+    setup_rotation_axis(valid_rotation_axis);
 
     allocate(ind, maxorder + 1);
     allocate(nparams, maxorder);
@@ -1331,8 +1328,8 @@ void Constraint::rotational_invariance(Symmetry *symmetry,
                                     MinimumDistanceCluster(atom_tmp, cell_dummy));
 
                                 if (iter_cluster == interaction->mindist_cluster[order][i].end()) {
-                                    error->exit("rotational_invariance",
-                                                "interaction not found ...");
+                                    exit("rotational_invariance",
+                                         "interaction not found ...");
                                 } else {
                                     for (j = 0; j < 3; ++j) vec_for_rot[j] = 0.0;
 
@@ -1469,7 +1466,7 @@ void Constraint::rotational_invariance(Symmetry *symmetry,
                                                 }
 
                                                 if (iloc == -1) {
-                                                    error->exit("rotational_invariance", "This cannot happen.");
+                                                    exit("rotational_invariance", "This cannot happen.");
                                                 }
 
                                                 for (j = 0; j < 3; ++j) vec_for_rot[j] = 0.0;
@@ -1771,7 +1768,7 @@ bool Constraint::is_allzero(const std::vector<double> vec, const double tol, int
     return true;
 }
 
-void Constraint::setup_rotation_axis(Error *error, bool flag[3][3])
+void Constraint::setup_rotation_axis(bool flag[3][3])
 {
     unsigned int mu, nu;
 
@@ -1813,8 +1810,8 @@ void Constraint::setup_rotation_axis(Error *error, bool flag[3][3])
     } else if (rotation_axis == "xyz") {
         // do nothing
     } else {
-        error->warn("setup_rotation_axis",
-                    "Invalid rotation_axis. Default value(xyz) will be used.");
+        warn("setup_rotation_axis",
+             "Invalid rotation_axis. Default value(xyz) will be used.");
     }
 }
 
