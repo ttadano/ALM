@@ -42,9 +42,7 @@ set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
 # Source code
 include_directories("${PROJECT_SOURCE_DIR}/src")
 set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
-            ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
             ${PROJECT_SOURCE_DIR}/src/constraint.cpp
-            ${PROJECT_SOURCE_DIR}/src/error.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
             ${PROJECT_SOURCE_DIR}/src/fitting.cpp
@@ -76,7 +74,8 @@ set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
 # Shared library
 add_library(almcxx SHARED ${SOURCES})
 #target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
-target_link_libraries(almcxx ${LAPACK_LIBRARIES})
+target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib})
+#target_link_libraries(almcxx ${LAPACK_LIBRARIES})
 set_property(TARGET almcxx PROPERTY VERSION ${serial})
 set_property(TARGET almcxx PROPERTY SOVERSION ${soserial})
 set_property(TARGET almcxx PROPERTY CXX_STANDARD 11)

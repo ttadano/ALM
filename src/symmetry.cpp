@@ -18,6 +18,7 @@
 #include "timer.h"
 #include "error.h"
 #include "interaction.h"
+#include "spglib.h"
 #include <vector>
 #include <algorithm>
 
