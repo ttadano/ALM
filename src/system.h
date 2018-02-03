@@ -48,10 +48,8 @@ namespace ALM_NS
         void load_reference_system_xml(Symmetry *, Fcs *, std::string, const int, double *);
 
         int nat, nkd;
-        //        int nat_prim;
         int ndata, nstart, nend;
         int *kd;
-        //        int *kd_prim;
         double lavec[3][3], rlavec[3][3];
         double **xcoord; // fractional coordinate
         double **x_cartesian;
