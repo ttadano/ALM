@@ -8,18 +8,17 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include <cmath>
-#include <iostream>
-#include <iomanip>
-#include <string>
+#include "input_parser.h"
 #include "alm.h"
+#include "error.h"
 #include "files.h"
 #include "fitting.h"
-#include "error.h"
-#include "input_parser.h"
 #include "input_setter.h"
 #include "memory.h"
 #include "system.h"
+#include <iostream>
+#include <iomanip>
+#include <string>
 #include <algorithm>
 #include <map>
 #include <set>
@@ -212,7 +211,7 @@ void InputParser::parse_general_vars(ALM *alm)
     int nsym;
     int printsymmetry, is_periodic[3];
     int icount, ncount;
-    bool trim_dispsign_for_evenfunc;
+    bool trim_dispsign_for_evenfunc = true;
     bool lspin;
     bool print_hessian;
     int noncollinear, trevsym;
@@ -237,12 +236,11 @@ void InputParser::parse_general_vars(ALM *alm)
 
     boost::split(no_defaults, str_no_defaults, boost::is_space());
 
-    for (std::vector<std::string>::iterator it = no_defaults.begin();
-         it != no_defaults.end(); ++it) {
-        if (general_var_dict.find(*it) == general_var_dict.end()) {
+    for (const auto &it : no_defaults) {
+        if (general_var_dict.find(it) == general_var_dict.end()) {
             exit("parse_general_vars",
                  "The following variable is not found in &general input region: ",
-                 (*it).c_str());
+                 it.c_str());
         }
     }
 
@@ -283,7 +281,7 @@ void InputParser::parse_general_vars(ALM *alm)
 
     split_str_by_space(general_var_dict["PERIODIC"], periodic_v);
 
-    if (periodic_v.size() == 0) {
+    if (periodic_v.empty()) {
         for (i = 0; i < 3; ++i) {
             is_periodic[i] = 1;
         }
@@ -423,9 +421,7 @@ void InputParser::parse_general_vars(ALM *alm)
             exit("parse_general_vars", "Invalid DBASIS");
         }
 
-        if (general_var_dict["TRIMEVEN"].empty()) {
-            trim_dispsign_for_evenfunc = true;
-        } else {
+        if (!general_var_dict["TRIMEVEN"].empty()) {
             assign_val(trim_dispsign_for_evenfunc,
                        "TRIMEVEN", general_var_dict);
         }
@@ -577,12 +573,11 @@ void InputParser::parse_interaction_vars(ALM *alm)
 
     boost::split(no_defaults, str_no_defaults, boost::is_space());
 
-    for (std::vector<std::string>::iterator it = no_defaults.begin();
-         it != no_defaults.end(); ++it) {
-        if (interaction_var_dict.find(*it) == interaction_var_dict.end()) {
+    for (const auto &it : no_defaults) {
+        if (interaction_var_dict.find(it) == interaction_var_dict.end()) {
             exit("parse_interaction_vars",
                  "The following variable is not found in &interaction input region: ",
-                 (*it).c_str());
+                 it.c_str());
         }
     }
 
@@ -635,18 +630,12 @@ void InputParser::parse_interaction_vars(ALM *alm)
 void InputParser::parse_fitting_vars(ALM *alm)
 {
     int ndata, nstart, nend;
-    std::string dfile, ffile;
     int constraint_flag;
     std::string rotation_axis;
-    std::string fc2_file, fc3_file;
-
     std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML";
     std::string str_no_defaults = "NDATA DFILE FFILE";
     std::vector<std::string> no_defaults;
-
     std::map<std::string, std::string> fitting_var_dict;
-
-    bool fix_harmonic, fix_cubic;
 
     if (from_stdin) {
         std::cin.ignore();
@@ -658,12 +647,11 @@ void InputParser::parse_fitting_vars(ALM *alm)
 
     boost::split(no_defaults, str_no_defaults, boost::is_space());
 
-    for (std::vector<std::string>::iterator it = no_defaults.begin();
-         it != no_defaults.end(); ++it) {
-        if (fitting_var_dict.find(*it) == fitting_var_dict.end()) {
+    for (const auto &it : no_defaults) {
+        if (fitting_var_dict.find(it) == fitting_var_dict.end()) {
             exit("parse_fitting_vars",
                  "The following variable is not found in &fitting input region: ",
-                 (*it).c_str());
+                 it.c_str());
         }
     }
 
@@ -686,8 +674,8 @@ void InputParser::parse_fitting_vars(ALM *alm)
              "ndata, nstart, nend are not consistent with each other");
     }
 
-    dfile = fitting_var_dict["DFILE"];
-    ffile = fitting_var_dict["FFILE"];
+    auto dfile = fitting_var_dict["DFILE"];
+    auto ffile = fitting_var_dict["FFILE"];
 
     if (fitting_var_dict["ICONST"].empty()) {
         constraint_flag = 1;
@@ -695,21 +683,12 @@ void InputParser::parse_fitting_vars(ALM *alm)
         assign_val(constraint_flag, "ICONST", fitting_var_dict);
     }
 
-    fc2_file = fitting_var_dict["FC2XML"];
-    if (fc2_file.empty()) {
-        fix_harmonic = false;
-    } else {
-        fix_harmonic = true;
-    }
+    auto fc2_file = fitting_var_dict["FC2XML"];
+	auto fc3_file = fitting_var_dict["FC3XML"];
+	bool fix_harmonic = !fc2_file.empty();
+	bool fix_cubic = !fc3_file.empty();
 
-    fc3_file = fitting_var_dict["FC3XML"];
-    if (fc3_file.empty()) {
-        fix_cubic = false;
-    } else {
-        fix_cubic = true;
-    }
-
-    if (constraint_flag % 10 >= 2) {
+	if (constraint_flag % 10 >= 2) {
         rotation_axis = fitting_var_dict["ROTAXIS"];
         if (rotation_axis.empty()) {
             exit("parse_fitting_vars",
@@ -766,7 +745,6 @@ void InputParser::parse_atomic_positions(ALM *alm)
             }
 
             boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
-            //            boost::trim_left(line_wo_comment);
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
 
@@ -786,7 +764,6 @@ void InputParser::parse_atomic_positions(ALM *alm)
             }
 
             boost::trim_if(line_wo_comment, boost::is_any_of("\t\n\r "));
-            //            boost::trim_left(line_wo_comment);
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
 
@@ -1048,18 +1025,15 @@ void InputParser::get_var_dict(const std::string keywords,
             if (line_wo_comment.empty()) continue;
             if (is_endof_entry(line_wo_comment)) break;
 
-            //	std::cout << line_wo_comment << std::endl;
-
             // Split the input line by ';'
 
             boost::split(str_entry, line_wo_comment, boost::is_any_of(";"));
 
-            for (std::vector<std::string>::iterator it = str_entry.begin();
-                 it != str_entry.end(); ++it) {
+            for (auto &it : str_entry) {
 
                 // Split the input entry by '='
 
-                std::string str_tmp = boost::trim_copy(*it);
+                std::string str_tmp = boost::trim_copy(it);
 
                 if (!str_tmp.empty()) {
 
@@ -1111,12 +1085,11 @@ void InputParser::get_var_dict(const std::string keywords,
 
             boost::split(str_entry, line_wo_comment, boost::is_any_of(";"));
 
-            for (std::vector<std::string>::iterator it = str_entry.begin();
-                 it != str_entry.end(); ++it) {
+            for (auto &it : str_entry) {
 
                 // Split the input entry by '='
 
-                std::string str_tmp = boost::trim_copy(*it);
+                std::string str_tmp = boost::trim_copy(it);
 
                 if (!str_tmp.empty()) {
 
@@ -1191,11 +1164,7 @@ int InputParser::locate_tag(std::string key)
 
 bool InputParser::is_endof_entry(std::string str)
 {
-    if (str[0] == '/') {
-        return true;
-    } else {
-        return false;
-    }
+	return str[0] == '/';
 }
 
 void InputParser::split_str_by_space(const std::string str,
@@ -1229,9 +1198,8 @@ void InputParser::assign_val(T &val,
             val = boost::lexical_cast<T>(dict[key]);
         }
         catch (std::exception &e) {
-            std::string str_tmp;
             std::cout << e.what() << std::endl;
-            str_tmp = "Invalid entry for the " + key + " tag.\n";
+            std::string str_tmp = "Invalid entry for the " + key + " tag.\n";
             str_tmp += " Please check the input value.";
             exit("assign_val", str_tmp.c_str());
         }

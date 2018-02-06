@@ -8,28 +8,25 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include <iostream>
-#include <fstream>
-#include <string>
 #include "alm.h"
-//#include "alm.h"
 #include "constraint.h"
 #include "fcs.h"
-#include "fitting.h"
 #include "files.h"
+#include "fitting.h"
 #include "interaction.h"
 #include "memory.h"
+#include "patterndisp.h"
 #include "symmetry.h"
 #include "system.h"
 #include "timer.h"
-#include "patterndisp.h"
+#include <fstream>
+#include <iostream>
+#include <string>
 
 using namespace ALM_NS;
 
 ALM::ALM()
 {
-    //alm = new ALMCore();
-    //create();
     create();
     verbose = true;
     ofs_alm = nullptr;

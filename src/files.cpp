@@ -9,23 +9,16 @@
 */
 
 #include "files.h"
-#include "memory.h"
-#include "interaction.h"
-#include <boost/lexical_cast.hpp>
 
 using namespace ALM_NS;
 
 Files::Files()
 {
-    file_disp_pattern = nullptr;
-    print_hessian = false;
+	print_hessian = false;
 }
 
 Files::~Files()
 {
-    if (file_disp_pattern) {
-        deallocate(file_disp_pattern);
-    }
 }
 
 void Files::init(ALM *alm)
@@ -34,18 +27,4 @@ void Files::init(ALM *alm)
 
     file_fcs = job_title + ".fcs";
     file_hes = job_title + ".hessian";
-
-    if (alm->mode == "suggest") {
-
-        allocate(file_disp_pattern, alm->interaction->maxorder);
-
-        for (i = 0; i < alm->interaction->maxorder; ++i) {
-            if (i == 0) {
-                file_disp_pattern[i] = job_title + ".pattern_HARMONIC";
-            } else {
-                file_disp_pattern[i] = job_title + ".pattern_ANHARM"
-                    + boost::lexical_cast<std::string>(i + 2);
-            }
-        }
-    }
 }

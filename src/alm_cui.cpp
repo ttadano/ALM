@@ -45,7 +45,6 @@ void ALMCUI::run(int narg, char **arg)
         << omp_get_max_threads() << std::endl << std::endl;
 #endif
 
-    //ALMCore *alm = alm->get_alm();
     std::cout << " Job started at " << alm->timer->DateAndTime() << std::endl;
     // alm->mode is set herein.
     InputParser *input_parser = new InputParser();

@@ -82,7 +82,6 @@ namespace ALM_NS
 
     private:
 
-        // ALMCore *alm;
         bool verbose;
         std::ofstream *ofs_alm;
         std::streambuf *coutbuf;
@@ -91,6 +90,5 @@ namespace ALM_NS
         void finalize();
         const void run_fitting(ALM *);
         const void run_suggest(ALM *);
-        bool print_hessian;
     };
 }
