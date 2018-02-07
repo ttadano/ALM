@@ -59,7 +59,7 @@ void ALMCUI::run(int narg, char **arg)
     }
     delete input_parser;
 
-    alm->run(alm);
+    alm->run();
 
     if (alm->mode == "fitting") {
         writer->writeall(alm);

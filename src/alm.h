@@ -78,7 +78,7 @@ namespace ALM_NS
         const void get_fc(double *fc_value,
                           int *elem_indices, // (len(fc_value), fc_order) is flatten.
                           const int fc_order); // harmonic=2, ...
-        const void run(ALM *alm);
+        const void run();
 
     private:
 
