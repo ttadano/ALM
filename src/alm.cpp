@@ -470,7 +470,7 @@ const void ALM::get_fc(double *fc_values,
     }
 }
 
-const void ALM::run(ALM *alm)
+const void ALM::run()
 {
     if (!verbose) {
         ofs_alm = new std::ofstream("alm.log", std::ofstream::out);
@@ -478,12 +478,12 @@ const void ALM::run(ALM *alm)
         std::cout.rdbuf(ofs_alm->rdbuf());
     }
 
-    initialize(alm);
+    initialize(this);
 
     if (mode == "fitting") {
-        run_fitting(alm);
+        run_fitting(this);
     } else if (mode == "suggest") {
-        run_suggest(alm);
+        run_suggest(this);
     }
 
     if (!verbose) {
