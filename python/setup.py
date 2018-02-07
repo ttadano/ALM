@@ -15,10 +15,8 @@ include_dir_spglib=['/Users/tadano/src/spglib/include']
 library_dirs = []
 if compile_with_sources:
     sources = ['alm.cpp',
-               'alm_core.cpp',
                'alm_cui.cpp',
                'constraint.cpp',
-               'error.cpp',
                'fcs.cpp',
                'files.cpp',
                'fitting.cpp',
