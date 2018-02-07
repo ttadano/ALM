@@ -181,6 +181,9 @@ namespace ALM_NS
                                                Interaction *,
                                                Fcs *,
                                                std::vector<ConstraintClass> *);
+
+        void load_reference_system_xml(Symmetry *, Fcs *, std::string, const int, double *);
+
     };
 
     extern "C"

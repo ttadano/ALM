@@ -24,6 +24,12 @@
 #include <algorithm>
 #include <unordered_set>
 #include "mathfunctions.h"
+#include "xml_parser.h"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+
 //#include "alm.h"
 
 using namespace ALM_NS;
@@ -268,7 +274,8 @@ void Constraint::setup(ALM *alm)
         }
 
         if (extra_constraint_from_symmetry) {
-            std::cout << "  Constraints of T-inv, R-inv (self), and those from crystal symmetry are merged." << std::endl;
+            std::cout << "  Constraints of T-inv, R-inv (self), and those from crystal symmetry are merged." << std::
+                endl;
         } else {
             std::cout << "  Constraints of T-inv and R-inv (self) are merged." << std::endl;
         }
@@ -290,7 +297,8 @@ void Constraint::setup(ALM *alm)
                 << std::endl << std::endl;
 
             if (impose_inv_R) {
-                std::cout << "  WARNING : Inter-order constraints for rotational invariance will be neglected." << std::endl;
+                std::cout << "  WARNING : Inter-order constraints for rotational invariance will be neglected." << std::
+                    endl;
             }
 
             if (const_fix) {
@@ -465,7 +473,7 @@ void Constraint::calc_constraint_matrix(System *system,
         double *const_rhs_tmp;
         int nfcs_tmp = fcs->nequiv[0].size();
         allocate(const_rhs_tmp, nfcs_tmp);
-        system->load_reference_system_xml(symmetry, fcs, fc2_file, 0, const_rhs_tmp);
+        load_reference_system_xml(symmetry, fcs, fc2_file, 0, const_rhs_tmp);
 
         for (i = 0; i < nfcs_tmp; ++i) {
             const_mat[i][i] = 1.0;
@@ -483,7 +491,7 @@ void Constraint::calc_constraint_matrix(System *system,
         int ishift2 = fcs->nequiv[0].size();
         int nfcs_tmp = fcs->nequiv[1].size();
         allocate(const_rhs_tmp, nfcs_tmp);
-        system->load_reference_system_xml(symmetry, fcs, fc3_file, 1, const_rhs_tmp);
+        load_reference_system_xml(symmetry, fcs, fc3_file, 1, const_rhs_tmp);
 
         for (i = 0; i < nfcs_tmp; ++i) {
             const_mat[i + ishift][i + ishift2] = 1.0;
@@ -544,8 +552,8 @@ void Constraint::get_mapping_constraint(System *system, Symmetry *symmetry, Fcs 
 
             double *const_rhs_tmp;
             allocate(const_rhs_tmp, nparam);
-            system->load_reference_system_xml(symmetry, fcs, file_forceconstant[order],
-                                              order, const_rhs_tmp);
+            load_reference_system_xml(symmetry, fcs, file_forceconstant[order],
+                                      order, const_rhs_tmp);
 
             for (i = 0; i < nparam; ++i) {
                 const_fix_out[order].push_back(ConstraintTypeFix(i, const_rhs_tmp[i]));
@@ -1154,11 +1162,10 @@ void Constraint::get_constraint_translation(System *system,
                     }
                     const_omp.clear();
 
-                }// close idata (openmp main loop)
+                } // close idata (openmp main loop)
 
                 deallocate(intarr_omp);
                 deallocate(intarr_copy_omp);
-
             } // close openmp
 
             intlist.clear();
@@ -1485,7 +1492,8 @@ void Constraint::rotational_invariance(System *system,
 
                                                 for (j = 0; j < nsize_equiv; ++j) {
                                                     for (int k = 0; k < 3; ++k) {
-                                                        vec_for_rot[k] += interaction->x_image[(*iter_cluster).cell[j][iloc]][jat][k];
+                                                        vec_for_rot[k] += interaction->x_image[(*iter_cluster).cell[j][
+                                                            iloc]][jat][k];
                                                     }
                                                 }
 
@@ -1502,7 +1510,8 @@ void Constraint::rotational_invariance(System *system,
 
                                             fcs->sort_tail(order + 2, interaction_tmp);
 
-                                            iter_found = list_found.find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
+                                            iter_found = list_found.
+                                                find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
                                             if (iter_found != list_found.end()) {
                                                 arr_constraint[nparams[order - 1] + (*iter_found).mother]
                                                     += (*iter_found).sign * vec_for_rot[nu];
@@ -1515,7 +1524,8 @@ void Constraint::rotational_invariance(System *system,
 
                                             fcs->sort_tail(order + 2, interaction_tmp);
 
-                                            iter_found = list_found.find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
+                                            iter_found = list_found.
+                                                find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
                                             if (iter_found != list_found.end()) {
                                                 arr_constraint[nparams[order - 1] + (*iter_found).mother]
                                                     -= (*iter_found).sign * vec_for_rot[mu];
@@ -1528,14 +1538,17 @@ void Constraint::rotational_invariance(System *system,
 
                                             for (jcrd = 0; jcrd < 3; ++jcrd) {
 
-                                                for (j = 0; j < order + 1; ++j) interaction_tmp[j] = interaction_index[j];
+                                                for (j = 0; j < order + 1; ++j)
+                                                    interaction_tmp[j] = interaction_index[j
+                                                    ];
 
                                                 interaction_tmp[lambda] = 3 * interaction_atom[lambda] + jcrd;
 
                                                 levi_factor = 0;
 
                                                 for (j = 0; j < 3; ++j) {
-                                                    levi_factor += levi_civita(j, mu, nu) * levi_civita(j, mu_lambda, jcrd);
+                                                    levi_factor += levi_civita(j, mu, nu) * levi_civita(
+                                                        j, mu_lambda, jcrd);
                                                 }
 
                                                 if (levi_factor == 0) continue;
@@ -1953,4 +1966,131 @@ void Constraint::rref(std::vector<std::vector<double>> &mat,
 
     mat.erase(mat.begin() + nrank, mat.end());
     mat.shrink_to_fit();
+}
+
+
+void Constraint::load_reference_system_xml(Symmetry *symmetry,
+                                           Fcs *fcs,
+                                           std::string file_reference_fcs,
+                                           const int order_fcs,
+                                           double *const_out
+)
+{
+    using namespace boost::property_tree;
+    ptree pt;
+
+    int nat_ref, natmin_ref, ntran_ref;
+    int **intpair_ref;
+    std::string str_error;
+    double *fcs_ref;
+    int nfcs_ref;
+
+    try {
+        read_xml(file_reference_fcs, pt);
+    }
+    catch (std::exception &e) {
+        if (order_fcs == 0) {
+            str_error = "Cannot open file FC2XML ( " + file_reference_fcs + " )";
+        } else if (order_fcs == 1) {
+            str_error = "Cannot open file FC3XML ( " + file_reference_fcs + " )";
+        }
+        exit("load_reference_system_xml", str_error.c_str());
+    }
+
+    nat_ref = boost::lexical_cast<int>(
+        get_value_from_xml(pt, "Data.Structure.NumberOfAtoms"));
+    ntran_ref = boost::lexical_cast<int>(
+        get_value_from_xml(pt, "Data.Symmetry.NumberOfTranslations"));
+    natmin_ref = nat_ref / ntran_ref;
+
+    if (natmin_ref != symmetry->nat_prim) {
+        exit("load_reference_system_xml",
+             "The number of atoms in the primitive cell is not consistent.");
+    }
+
+    if (order_fcs == 0) {
+        nfcs_ref = boost::lexical_cast<int>(
+            get_value_from_xml(pt, "Data.ForceConstants.HarmonicUnique.NFC2"));
+
+        if (nfcs_ref != fcs->nequiv[0].size()) {
+            exit("load_reference_system_xml",
+                 "The number of harmonic force constants is not the same.");
+        }
+
+    } else if (order_fcs == 1) {
+        nfcs_ref = boost::lexical_cast<int>(
+            get_value_from_xml(pt, "Data.ForceConstants.CubicUnique.NFC3"));
+
+        if (nfcs_ref != fcs->nequiv[1].size()) {
+            exit("load_reference_system_xml",
+                 "The number of cubic force constants is not the same.");
+        }
+    }
+    allocate(fcs_ref, nfcs_ref);
+    allocate(intpair_ref, nfcs_ref, 3);
+
+    int counter = 0;
+
+    if (order_fcs == 0) {
+        BOOST_FOREACH(const ptree::value_type & child_, pt.get_child("Data.ForceConstants.HarmonicUnique")) {
+            if (child_.first == "FC2") {
+                const ptree &child = child_.second;
+                const std::string str_intpair = child.get<std::string>("<xmlattr>.pairs");
+                const std::string str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
+
+                std::istringstream is(str_intpair);
+                is >> intpair_ref[counter][0] >> intpair_ref[counter][1];
+                fcs_ref[counter] = boost::lexical_cast<double>(child.data());
+                ++counter;
+            }
+        }
+    } else if (order_fcs == 1) {
+        BOOST_FOREACH(const ptree::value_type & child_, pt.get_child("Data.ForceConstants.CubicUnique")) {
+            if (child_.first == "FC3") {
+                const ptree &child = child_.second;
+                const std::string str_intpair = child.get<std::string>("<xmlattr>.pairs");
+                const std::string str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
+
+                std::istringstream is(str_intpair);
+                is >> intpair_ref[counter][0] >> intpair_ref[counter][1] >> intpair_ref[counter][2];
+                fcs_ref[counter] = boost::lexical_cast<double>(child.data());
+                ++counter;
+            }
+        }
+    }
+
+    int i;
+    std::set<FcProperty> list_found;
+    std::set<FcProperty>::iterator iter_found;
+    int *ind;
+    int nterms = order_fcs + 2;
+    allocate(ind, nterms);
+
+    list_found.clear();
+
+    for (auto p = fcs->fc_table[order_fcs].begin(); p != fcs->fc_table[order_fcs].end(); ++p) {
+        FcProperty list_tmp = *p; // Using copy constructor
+        for (i = 0; i < nterms; ++i) {
+            ind[i] = list_tmp.elems[i];
+        }
+        list_found.insert(FcProperty(nterms, list_tmp.sign,
+                                     ind, list_tmp.mother));
+    }
+
+    for (i = 0; i < nfcs_ref; ++i) {
+        iter_found = list_found.find(FcProperty(nterms, 1.0,
+                                                intpair_ref[i], 1));
+        if (iter_found == list_found.end()) {
+            exit("load_reference_system",
+                 "Cannot find equivalent force constant, number: ",
+                 i + 1);
+        }
+        FcProperty arrtmp = *iter_found;
+        const_out[arrtmp.mother] = fcs_ref[i];
+    }
+
+    deallocate(intpair_ref);
+    deallocate(fcs_ref);
+    deallocate(ind);
+    list_found.clear();
 }
