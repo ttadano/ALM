@@ -49,7 +49,7 @@ void Symmetry::init(ALM *alm)
     std::cout << " ========" << std::endl << std::endl;
 
     setup_symmetry_operation(nat, nsym,
-                             alm->system->lavec, alm->system->rlavec,
+                             alm->system->supercell.lattice_vector, alm->system->supercell.reciprocal_lattice_vector,
                              alm->system->xcoord, alm->system->kd, alm->system,
                              alm->interaction->is_periodic);
 
@@ -192,7 +192,6 @@ void Symmetry::set_default_variables()
     // Default values
     nsym = 0;
     printsymmetry = 0;
-    trev_sym_mag = 1;
     symnum_tran = nullptr;
     //tnons = nullptr;
     //symrel = nullptr;
@@ -339,7 +338,9 @@ void Symmetry::setup_symmetry_operation(int nat,
                 >> rot_tmp[2][0] >> rot_tmp[2][1] >> rot_tmp[2][2]
                 >> tran_tmp[0] >> tran_tmp[1] >> tran_tmp[2];
 
-            symop_in_cart(rot_cart_tmp, rot_tmp, system->lavec, system->rlavec);
+            symop_in_cart(rot_cart_tmp, rot_tmp,
+                          system->supercell.lattice_vector,
+                          system->supercell.reciprocal_lattice_vector);
             SymmData.push_back(SymmetryOperation(rot_tmp,
                                                  tran_tmp,
                                                  rot_cart_tmp,
@@ -624,8 +625,8 @@ void Symmetry::find_crystal_symmetry(int nat,
             }
 
             if (isok) {
-                matmul3(rot_tmp, rot, system->rlavec);
-                matmul3(rot_cart, system->lavec, rot_tmp);
+                matmul3(rot_tmp, rot, system->supercell.reciprocal_lattice_vector);
+                matmul3(rot_cart, system->supercell.lattice_vector, rot_tmp);
 
                 for (i = 0; i < 3; ++i) {
                     for (j = 0; j < 3; ++j) {
@@ -660,7 +661,7 @@ void Symmetry::find_crystal_symmetry(int nat,
 
                     if (!mag_sym1 && !mag_sym2) {
                         isok = false;
-                    } else if (!mag_sym1 && mag_sym2 && !trev_sym_mag) {
+                    } else if (!mag_sym1 && mag_sym2 && !system->trev_sym_mag) {
                         isok = false;
                     }
                 }
@@ -885,7 +886,7 @@ void Symmetry::genmaps(int nat,
 
     double shift[3];
     double pos[3], pos_std[3];
-#ifdef _DEBUG
+#ifdef _DEBUG2
     std::cout << "Origin shift = ";
     for (i = 0; i < 3; ++i) {
         shift[i] = SymmData->origin_shift[i];

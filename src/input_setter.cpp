@@ -105,7 +105,7 @@ void InputSetter::set_general_vars(ALM *alm,
     }
     alm->system->lspin = lspin;
     alm->system->noncollinear = noncollinear;
-    alm->symmetry->trev_sym_mag = trevsym;
+    alm->system->trev_sym_mag = trevsym;
     alm->files->print_hessian = print_hessian;
     alm->constraint->tolerance_constraint = tolerance_constraint;
 

@@ -28,6 +28,10 @@ ALMCUI::ALMCUI()
 {
 }
 
+ALMCUI::~ALMCUI()
+{
+}
+
 void ALMCUI::run(int narg, char **arg)
 {
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
@@ -71,6 +75,9 @@ void ALMCUI::run(int narg, char **arg)
     std::cout << std::endl << " Job finished at "
         << alm->timer->DateAndTime() << std::endl;
 
+    //std::cout << alm->get_number_of_fc_elements(1) << std::endl;
+    //std::cout << alm->get_number_of_fc_elements(2) << std::endl;
+
     /*
         std::cout << "FCS: " << alm->timer->get_walltime("fcs") << " " << alm->timer->get_cputime("fcs") << std::endl;
         std::cout << "CONSTRAINT: " << alm->timer->get_walltime("constraint") << " " << alm->timer->get_cputime("constraint") << std::endl;
@@ -79,8 +86,4 @@ void ALMCUI::run(int narg, char **arg)
     */
 
     delete alm;
-}
-
-ALMCUI::~ALMCUI()
-{
 }

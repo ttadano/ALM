@@ -8,20 +8,20 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include "system.h"
+#include "constants.h"
+#include "constraint.h"
+#include "error.h"
+#include "fcs.h"
+#include "fitting.h"
+#include "mathfunctions.h"
+#include "memory.h"
+#include "symmetry.h"
+#include "timer.h"
+#include "xml_parser.h"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include "system.h"
-#include "constants.h"
-#include "mathfunctions.h"
-#include "timer.h"
-#include "memory.h"
-#include "error.h"
-#include "constraint.h"
-#include "fcs.h"
-#include "symmetry.h"
-#include "fitting.h"
-#include "xml_parser.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -42,120 +42,69 @@ System::~System()
 
 void System::init(ALM *alm)
 {
-    using namespace std;
-
     int i, j;
     alm->timer->start_clock("system");
 
-    cout << " SYSTEM" << endl;
-    cout << " ======" << endl << endl;
-
-    recips(lavec, rlavec);
-
-    cout.setf(ios::scientific);
-
-    cout << "  Lattice Vector" << endl;
-    cout << setw(16) << lavec[0][0];
-    cout << setw(15) << lavec[1][0];
-    cout << setw(15) << lavec[2][0];
-    cout << " : a1" << endl;
-
-    cout << setw(16) << lavec[0][1];
-    cout << setw(15) << lavec[1][1];
-    cout << setw(15) << lavec[2][1];
-    cout << " : a2" << endl;
-
-    cout << setw(16) << lavec[0][2];
-    cout << setw(15) << lavec[1][2];
-    cout << setw(15) << lavec[2][2];
-    cout << " : a3" << endl;
-    cout << endl;
-
-    double vec_tmp[3][3];
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
-            vec_tmp[i][j] = lavec[j][i];
-        }
-    }
-
-    cell_volume = volume(vec_tmp[0], vec_tmp[1], vec_tmp[2]);
-    cout << "  Cell volume = " << cell_volume << " (a.u)^3"
-        << endl << endl;
-
-    cout << "  Reciprocal Lattice Vector" << std::endl;
-    cout << setw(16) << rlavec[0][0];
-    cout << setw(15) << rlavec[0][1];
-    cout << setw(15) << rlavec[0][2];
-    cout << " : b1" << endl;
-
-    cout << setw(16) << rlavec[1][0];
-    cout << setw(15) << rlavec[1][1];
-    cout << setw(15) << rlavec[1][2];
-    cout << " : b2" << endl;
-
-    cout << setw(16) << rlavec[2][0];
-    cout << setw(15) << rlavec[2][1];
-    cout << setw(15) << rlavec[2][2];
-    cout << " : b3" << endl;
-    cout << endl;
-
-    cout << "  Atomic species:" << endl;
-    for (i = 0; i < nkd; ++i) {
-        cout << setw(6) << i + 1 << setw(5) << kdname[i] << endl;
-    }
-    cout << endl;
-
-    cout << "  Atomic positions in fractional basis and atomic species" << endl;
-    for (i = 0; i < nat; ++i) {
-        cout << setw(6) << i + 1;
-        cout << setw(15) << xcoord[i][0];
-        cout << setw(15) << xcoord[i][1];
-        cout << setw(15) << xcoord[i][2];
-        cout << setw(5) << kd[i] << endl;
-    }
-    cout << endl << endl;
-    cout.unsetf(ios::scientific);
-
-    // Generate Cartesian coordinate
-    allocate(x_cartesian, nat, 3);
-    for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
-            x_cartesian[i][j] = xcoord[i][j];
-        }
-    }
-    frac2cart(x_cartesian);
+    set_cell(lavec, nat, nkd, kd, xcoord, supercell);
     setup_atomic_class(kd);
 
-    if (lspin) {
-        cout << "  MAGMOM is given. The magnetic moments of each atom are as follows:" << endl;
-        for (i = 0; i < nat; ++i) {
-            cout << setw(6) << i + 1;
-            cout << setw(5) << magmom[i][0];
-            cout << setw(5) << magmom[i][1];
-            cout << setw(5) << magmom[i][2];
-            cout << endl;
-        }
-        cout << endl;
-        if (noncollinear == 0) {
-            cout << "  NONCOLLINEAR = 0: magnetic moments are considered as scalar variables." << endl;
-        } else if (noncollinear == 1) {
-            cout << "  NONCOLLINEAR = 1: magnetic moments are considered as vector variables." << endl;
-            if (alm->symmetry->trev_sym_mag) {
-                cout << "  TREVSYM = 1: Time-reversal symmetry will be considered for generating magnetic space group" << endl;
-            } else {
-                cout << "  TREVSYM = 0: Time-reversal symmetry will NOT be considered for generating magnetic space group" << endl;
-            }
-        }
-        cout << endl << endl;
-    }
-
+    print_structure_stdout(supercell);
+    if (lspin) print_magmom_stdout();
     alm->timer->print_elapsed();
-    cout << " -------------------------------------------------------------------" << endl;
-    cout << endl;
+    std::cout << " -------------------------------------------------------------------" << std::endl;
+    std::cout << std::endl;
+
     alm->timer->stop_clock("system");
 }
 
-void System::recips(double aa[3][3], double bb[3][3])
+void System::set_cell(const double lavec_in[3][3],
+                      const unsigned int nat_in,
+                      const unsigned int nkd_in,
+                      int *kd_in,
+                      double **xf_in,
+                      Cell &cell_out)
+{
+    unsigned int i, j;
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            cell_out.lattice_vector[i][j] = lavec_in[i][j];
+        }
+    }
+    set_reciprocal_latt(cell_out.lattice_vector,
+                        cell_out.reciprocal_lattice_vector);
+
+    cell_out.volume = volume(cell_out.lattice_vector, Direct);
+    cell_out.number_of_atmos = nat_in;
+    cell_out.number_of_elems = nkd_in;
+    cell_out.kind.clear();
+    cell_out.x_fractional.clear();
+    cell_out.x_cartesian.clear();
+
+    std::vector<double> xtmp;
+    xtmp.resize(3);
+    for (i = 0; i < nat_in; ++i) {
+        cell_out.kind.push_back(kd_in[i]);
+        for (j = 0; j < 3; ++j) {
+            xtmp[j] = xf_in[i][j];
+        }
+        cell_out.x_fractional.push_back(xtmp);
+    }
+
+    double xf_tmp[3], xc_tmp[3];
+
+    for (const auto &xf : cell_out.x_fractional) {
+        for (i = 0; i < 3; ++i) {
+            xf_tmp[i] = xf[i];
+        }
+        rotvec(xc_tmp, xf_tmp, cell_out.lattice_vector);
+        for (i = 0; i < 3; ++i) {
+            xtmp[i] = xc_tmp[i];
+        }
+        cell_out.x_cartesian.push_back(xtmp);
+    }
+}
+
+void System::set_reciprocal_latt(const double aa[3][3], double bb[3][3])
 {
     /*
     Calculate Reciprocal Lattice Vectors
@@ -181,7 +130,7 @@ void System::recips(double aa[3][3], double bb[3][3])
         - aa[1][0] * aa[0][1] * aa[2][2];
 
     if (std::abs(det) < eps12) {
-        exit("recips", "Lattice Vector is singular");
+        exit("set_reciprocal_latt", "Lattice Vector is singular");
     }
 
     double factor = 2.0 * pi / det;
@@ -282,30 +231,30 @@ void System::load_reference_system_xml(Symmetry *symmetry,
 
     if (order_fcs == 0) {
         BOOST_FOREACH (const ptree::value_type& child_, pt.get_child("Data.ForceConstants.HarmonicUnique")) {
-                if (child_.first == "FC2") {
-                    const ptree &child = child_.second;
-                    const std::string str_intpair = child.get<std::string>("<xmlattr>.pairs");
-                    const std::string str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
+            if (child_.first == "FC2") {
+                const ptree &child = child_.second;
+                const std::string str_intpair = child.get<std::string>("<xmlattr>.pairs");
+                const std::string str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
 
-                    std::istringstream is(str_intpair);
-                    is >> intpair_ref[counter][0] >> intpair_ref[counter][1];
-                    fcs_ref[counter] = boost::lexical_cast<double>(child.data());
-                    ++counter;
-                }
+                std::istringstream is(str_intpair);
+                is >> intpair_ref[counter][0] >> intpair_ref[counter][1];
+                fcs_ref[counter] = boost::lexical_cast<double>(child.data());
+                ++counter;
             }
+        }
     } else if (order_fcs == 1) {
         BOOST_FOREACH (const ptree::value_type& child_, pt.get_child("Data.ForceConstants.CubicUnique")) {
-                if (child_.first == "FC3") {
-                    const ptree &child = child_.second;
-                    const std::string str_intpair = child.get<std::string>("<xmlattr>.pairs");
-                    const std::string str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
+            if (child_.first == "FC3") {
+                const ptree &child = child_.second;
+                const std::string str_intpair = child.get<std::string>("<xmlattr>.pairs");
+                const std::string str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
 
-                    std::istringstream is(str_intpair);
-                    is >> intpair_ref[counter][0] >> intpair_ref[counter][1] >> intpair_ref[counter][2];
-                    fcs_ref[counter] = boost::lexical_cast<double>(child.data());
-                    ++counter;
-                }
+                std::istringstream is(str_intpair);
+                is >> intpair_ref[counter][0] >> intpair_ref[counter][1] >> intpair_ref[counter][2];
+                fcs_ref[counter] = boost::lexical_cast<double>(child.data());
+                ++counter;
             }
+        }
     }
 
     int i;
@@ -443,7 +392,7 @@ void System::load_reference_system(Symmetry *symmetry, Fcs *fcs, Constraint *con
         map_found = false;
 
         rotvec(xtmp, xcoord_s[iat], lavec_s);
-        rotvec(xtmp, xtmp, rlavec);
+        rotvec(xtmp, xtmp, supercell.reciprocal_lattice_vector);
 
         for (icrd = 0; icrd < 3; ++icrd) xtmp[icrd] /= 2.0 * pi;
 
@@ -541,16 +490,34 @@ void System::load_reference_system(Symmetry *symmetry, Fcs *fcs, Constraint *con
     ifs_fc2.close();
 }
 
-double System::volume(double vec1[3], double vec2[3], double vec3[3])
+double System::volume(const double latt_in[3][3], LatticeType type)
 {
-    double vol;
+    int i, j;
+    double mat[3][3];
 
-    vol = std::abs(vec1[0] * (vec2[1] * vec3[2] - vec2[2] * vec3[1])
-        + vec1[1] * (vec2[2] * vec3[0] - vec2[0] * vec3[2])
-        + vec1[2] * (vec2[0] * vec3[1] - vec2[1] * vec3[0]));
+    if (type == Direct) {
+        for (i = 0; i < 3; ++i) {
+            for (j = 0; j < 3; ++j) {
+                mat[i][j] = latt_in[j][i];
+            }
+        }
+    } else if (type == Reciprocal) {
+        for (i = 0; i < 3; ++i) {
+            for (j = 0; j < 3; ++j) {
+                mat[i][j] = latt_in[i][j];
+            }
+        }
+    } else {
+        exit("volume", "Invalid LatticeType is given");
+    }
+
+    auto vol = std::abs(mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1])
+        + mat[0][1] * (mat[1][2] * mat[2][0] - mat[1][0] * mat[2][2])
+        + mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]));
 
     return vol;
 }
+
 
 void System::set_default_variables()
 {
@@ -565,19 +532,16 @@ void System::set_default_variables()
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             lavec[i][j] = 0;
-            rlavec[i][j] = 0;
         }
     }
-    x_cartesian = nullptr;
     xcoord = nullptr;
-    cell_volume = 0;
-
     str_magmom = "";
     atomlist_class = nullptr;
     nclassatom = 0;
     lspin = false;
     noncollinear = 0;
     magmom = nullptr;
+    trev_sym_mag = 1;
 }
 
 void System::deallocate_variables()
@@ -587,9 +551,6 @@ void System::deallocate_variables()
     }
     if (kdname) {
         deallocate(kdname);
-    }
-    if (x_cartesian) {
-        deallocate(x_cartesian);
     }
     if (xcoord) {
         deallocate(xcoord);
@@ -648,4 +609,100 @@ void System::setup_atomic_class(int *kd)
         }
     }
     set_type.clear();
+}
+
+
+void System::print_structure_stdout(const Cell &cell)
+{
+    using namespace std;
+    int i, j;
+
+    cout << " SYSTEM" << endl;
+    cout << " ======" << endl << endl;
+
+    cout.setf(ios::scientific);
+
+    cout << "  Lattice Vector" << endl;
+    cout << setw(16) << cell.lattice_vector[0][0];
+    cout << setw(15) << cell.lattice_vector[1][0];
+    cout << setw(15) << cell.lattice_vector[2][0];
+    cout << " : a1" << endl;
+
+    cout << setw(16) << cell.lattice_vector[0][1];
+    cout << setw(15) << cell.lattice_vector[1][1];
+    cout << setw(15) << cell.lattice_vector[2][1];
+    cout << " : a2" << endl;
+
+    cout << setw(16) << cell.lattice_vector[0][2];
+    cout << setw(15) << cell.lattice_vector[1][2];
+    cout << setw(15) << cell.lattice_vector[2][2];
+    cout << " : a3" << endl;
+    cout << endl;
+
+    cout << "  Cell volume = " << cell.volume << " (a.u)^3"
+        << endl << endl;
+
+    cout << "  Reciprocal Lattice Vector" << std::endl;
+    cout << setw(16) << supercell.reciprocal_lattice_vector[0][0];
+    cout << setw(15) << supercell.reciprocal_lattice_vector[0][1];
+    cout << setw(15) << supercell.reciprocal_lattice_vector[0][2];
+    cout << " : b1" << endl;
+
+    cout << setw(16) << supercell.reciprocal_lattice_vector[1][0];
+    cout << setw(15) << supercell.reciprocal_lattice_vector[1][1];
+    cout << setw(15) << supercell.reciprocal_lattice_vector[1][2];
+    cout << " : b2" << endl;
+
+    cout << setw(16) << supercell.reciprocal_lattice_vector[2][0];
+    cout << setw(15) << supercell.reciprocal_lattice_vector[2][1];
+    cout << setw(15) << supercell.reciprocal_lattice_vector[2][2];
+    cout << " : b3" << endl;
+    cout << endl;
+
+    cout << "  Atomic species:" << endl;
+    for (i = 0; i < cell.number_of_elems; ++i) {
+        cout << setw(6) << i + 1 << setw(5) << kdname[i] << endl;
+    }
+    cout << endl;
+
+    cout << "  Atomic positions in fractional basis and atomic species" << endl;
+    for (i = 0; i < cell.number_of_atmos; ++i) {
+        cout << setw(6) << i + 1;
+        cout << setw(15) << cell.x_fractional[i][0];
+        cout << setw(15) << cell.x_fractional[i][1];
+        cout << setw(15) << cell.x_fractional[i][2];
+        cout << setw(5) << cell.kind[i] << endl;
+    }
+    cout << endl << endl;
+    cout.unsetf(ios::scientific);
+}
+
+
+void System::print_magmom_stdout()
+{
+    using namespace std;
+
+    cout << "  MAGMOM is given. The magnetic moments of each atom are as follows:" << endl;
+    for (auto i = 0; i < supercell.number_of_atmos; ++i) {
+        cout << setw(6) << i + 1;
+        cout << setw(5) << magmom[i][0];
+        cout << setw(5) << magmom[i][1];
+        cout << setw(5) << magmom[i][2];
+        cout << endl;
+    }
+    cout << endl;
+    if (noncollinear == 0) {
+        cout << "  NONCOLLINEAR = 0: magnetic moments are considered as scalar variables." << endl;
+    } else if (noncollinear == 1) {
+        cout << "  NONCOLLINEAR = 1: magnetic moments are considered as vector variables." << endl;
+        if (trev_sym_mag) {
+            cout << "  TREVSYM = 1: Time-reversal symmetry will be considered for generating magnetic space group"
+                << endl;
+        } else {
+            cout <<
+                "  TREVSYM = 0: Time-reversal symmetry will NOT be considered for generating magnetic space group"
+                << endl;
+        }
+    }
+    cout << endl << endl;
 }

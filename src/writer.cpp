@@ -421,7 +421,7 @@ void Writer::write_misc_xml(ALM *alm)
 	if (alm->system->lspin) {
 		pt.put("Data.MagneticMoments", "");
 		pt.put("Data.MagneticMoments.Noncollinear", alm->system->noncollinear);
-		pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm->symmetry->trev_sym_mag);
+		pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm->system->trev_sym_mag);
 		for (i = 0; i < system_structure.nat; ++i) {
 			str_tmp.clear();
 			for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->magmom[i][j], 5);

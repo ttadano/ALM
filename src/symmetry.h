@@ -135,7 +135,6 @@ namespace ALM_NS
 
         Maps *map_s2p;
 
-        int trev_sym_mag;
 
         std::vector<SymmetryOperation> SymmData;
 

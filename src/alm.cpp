@@ -220,7 +220,7 @@ const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
     system->lspin = lspin;
     system->noncollinear = noncollinear;
     system->str_magmom = str_magmom;
-    symmetry->trev_sym_mag = trev_sym_mag;
+    system->trev_sym_mag = trev_sym_mag;
 
     if (system->magmom) {
         deallocate(system->magmom);
@@ -423,10 +423,10 @@ const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
     fcs = fcs;
     id = 0;
     order = fc_order - 1;
-    if (fcs->nequiv[order].size() < 1) { return 0; }
-    num_unique_elems = fcs->nequiv[order].size();
+    if (this->fcs->nequiv[order].empty()) { return 0; }
+    num_unique_elems = this->fcs->nequiv[order].size();
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
-        num_equiv_elems = fcs->nequiv[order][iuniq];
+        num_equiv_elems = this->fcs->nequiv[order][iuniq];
         id += num_equiv_elems;
     }
     return id;
