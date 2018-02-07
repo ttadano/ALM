@@ -56,7 +56,6 @@ namespace ALM_NS
         ~System();
         void init(ALM *);
         void frac2cart(double **);
-        void load_reference_system(Symmetry *, Fcs *, Constraint *);
         void load_reference_system_xml(Symmetry *, Fcs *, std::string, const int, double *);
 
         void set_cell(const double [3][3], const unsigned int,
