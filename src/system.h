@@ -64,6 +64,7 @@ namespace ALM_NS
         std::string *kdname;
         unsigned int nclassatom;
         std::vector<unsigned int> *atomlist_class;
+        int is_periodic[3];
 
         // Variables for spins
         bool lspin;

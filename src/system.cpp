@@ -201,6 +201,9 @@ void System::set_default_variables()
         }
     }
     xcoord = nullptr;
+    is_periodic[0] = 1;
+    is_periodic[1] = 1;
+    is_periodic[2] = 1;
     str_magmom = "";
     atomlist_class = nullptr;
     nclassatom = 0;

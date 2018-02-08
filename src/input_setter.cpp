@@ -96,7 +96,7 @@ void InputSetter::set_general_vars(ALM *alm,
         alm->system->kdname[i] = kdname[i];
     }
     for (i = 0; i < 3; ++i) {
-        alm->interaction->is_periodic[i] = is_periodic[i];
+        alm->system->is_periodic[i] = is_periodic[i];
     }
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {

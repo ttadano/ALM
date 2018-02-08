@@ -221,7 +221,6 @@ namespace ALM_NS
         Interaction();
         ~Interaction();
 
-        int is_periodic[3];
         int nneib;
         int maxorder;
 

@@ -57,7 +57,7 @@ void Writer::write_input_vars(ALM *alm)
 	for (i = 0; i < alm->system->nkd; ++i) std::cout << std::setw(4) << alm->system->kdname[i];
 	std::cout << std::endl;
 	std::cout << "  PERIODIC = ";
-	for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->interaction->is_periodic[i];
+	for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->system->is_periodic[i];
 	std::cout << std::endl;
 	std::cout << "  MAGMOM = " << alm->system->str_magmom << std::endl;
 	std::cout << "  HESSIAN = " << alm->files->print_hessian << std::endl;
@@ -392,9 +392,9 @@ void Writer::write_misc_xml(ALM *alm)
 	pt.put("Data.Structure.LatticeVector.a3", str_pos[2]);
 
 	std::stringstream ss;
-	ss << alm->interaction->is_periodic[0] << " "
-		<< alm->interaction->is_periodic[1] << " "
-		<< alm->interaction->is_periodic[2];
+	ss << alm->system->is_periodic[0] << " "
+		<< alm->system->is_periodic[1] << " "
+		<< alm->system->is_periodic[2];
 	pt.put("Data.Structure.Periodicity", ss.str());
 
 	pt.put("Data.Structure.Position", "");

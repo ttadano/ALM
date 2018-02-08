@@ -134,7 +134,7 @@ const void ALM::set_periodicity(const int is_periodic[3]) // PERIODIC
 {
     int i;
     for (i = 0; i < 3; ++i) {
-        interaction->is_periodic[i] = is_periodic[i];
+        system->is_periodic[i] = is_periodic[i];
     }
 }
 

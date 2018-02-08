@@ -8,17 +8,18 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include <cmath>
-#include <iostream>
-#include <iomanip>
-#include "mathfunctions.h"
 #include "symmetry.h"
-#include "system.h"
-#include "memory.h"
-#include "timer.h"
 #include "error.h"
 #include "interaction.h"
+#include "memory.h"
+#include "mathfunctions.h"
 #include "spglib.h"
+#include "system.h"
+#include "timer.h"
+#include <cmath>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <vector>
 #include <algorithm>
 
@@ -53,63 +54,10 @@ void Symmetry::init(ALM *alm)
                              alm->system->supercell.reciprocal_lattice_vector,
                              alm->system->supercell.x_fractional,
                              alm->system->supercell.kind, alm->system,
-                             alm->interaction->is_periodic);
+                             alm->system->is_periodic);
 
     std::cout << "  Number of symmetry operations = " << SymmData.size() << std::endl;
 
-    // if (tnons) {
-    //     deallocate(tnons);
-    // }
-    // allocate(tnons, nsym, 3);
-
-    // if (symrel_int) {
-    //     deallocate(symrel_int);
-    // }
-    // allocate(symrel_int, nsym, 3, 3);
-
-    // int isym = 0;
-    // for (auto it = SymmData.begin(); it != SymmData.end(); ++it) {
-    //     for (i = 0; i < 3; ++i) {
-    //         for (j = 0; j < 3; ++j) {
-    //             symrel_int[isym][i][j] = (*it).rot[i][j];
-    //         }
-    //     }
-    //     for (i = 0; i < 3; ++i) {
-    //         tnons[isym][i] = (*it).tran[i];
-    //     }
-    //     ++isym;
-    // }
-
-    // std::cout << "  Number of symmetry operations = " << nsym << std::endl;
-
-    // if (symrel) {
-    //     deallocate(symrel);
-    // }
-    // allocate(symrel, nsym, 3, 3);
-
-    // symop_in_cart(system->lavec, system->rlavec);
-
-    // if (sym_available) {
-    //     deallocate(sym_available);
-    // }
-    // allocate(sym_available, nsym);
-
-    // int nsym_fc;
-    // symop_availability_check(symrel, sym_available, nsym, nsym_fc);
-
-    // if (nsym_fc == nsym) {
-    //     std::cout << "  All symmetry operations will be used to" << std::endl;
-    //     std::cout << "  reduce the number of force constants." << std::endl;
-    // } else {
-    //     std::cout << "  " << nsym_fc << " symmetry operations out of "
-    //         << nsym << " will be used to reduce the number of parameters." << std::endl;
-    //     std::cout << "  Other " << nsym - nsym_fc
-    //         << " symmetry operations will be imposed as constraints." << std::endl;
-    // }
-    // std::cout << std::endl;
-
-    // allocate(kd_prim, nat);
-    // allocate(xcoord_prim, nat, 3);
 
     // set_primitive_lattice(system->lavec, system->supercell.number_of_atoms,
     //                       system->kd, system->xcoord,
@@ -117,35 +65,6 @@ void Symmetry::init(ALM *alm)
     //                       kd_prim, xcoord_prim,
     //                       tolerance);
     pure_translations(alm->system);
-
-    // std::cout.setf(std::ios::scientific);
-    // std::cout << "  Primitive cell contains " << nat_prim << " atoms" << std::endl;
-    // std::cout << std::endl;
-    // std::cout << "  Primitive Lattice Vector:" << std::endl;
-    // std::cout << std::setw(16) << lavec_prim[0][0];
-    // std::cout << std::setw(15) << lavec_prim[1][0];
-    // std::cout << std::setw(15) << lavec_prim[2][0];
-    // std::cout << " : a1 primitive" << std::endl;
-    // std::cout << std::setw(16) << lavec_prim[0][1];
-    // std::cout << std::setw(15) << lavec_prim[1][1];
-    // std::cout << std::setw(15) << lavec_prim[2][1];
-    // std::cout << " : a2 primitive" << std::endl;
-    // std::cout << std::setw(16) << lavec_prim[0][2];
-    // std::cout << std::setw(15) << lavec_prim[1][2];
-    // std::cout << std::setw(15) << lavec_prim[2][2];
-    // std::cout << " : a3 primitive" << std::endl;
-
-    // std::cout << "  " << std::endl;
-    // std::cout << "  Fractional coordinates of atoms in the primitive lattice:" << std::endl;
-    // for (i = 0; i < nat_prim; ++i) {
-    //     std::cout << std::setw(6) << i + 1;
-    //     std::cout << std::setw(15) << xcoord_prim[i][0];
-    //     std::cout << std::setw(15) << xcoord_prim[i][1];
-    //     std::cout << std::setw(15) << xcoord_prim[i][2];
-    //     std::cout << std::setw(5) << kd_prim[i] << std::endl;
-    // }
-    // std::cout << std::endl << std::endl;
-    // std::cout.unsetf(std::ios::scientific);
 
     if (map_sym) {
         deallocate(map_sym);

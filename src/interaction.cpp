@@ -108,7 +108,7 @@ void Interaction::init(ALM *alm)
 
     generate_coordinate_of_periodic_images(alm->system, nat,
                                            alm->system->supercell.x_fractional,
-                                           is_periodic,
+                                           alm->system->is_periodic,
                                            x_image,
                                            exist_image);
 
@@ -208,9 +208,7 @@ void Interaction::generate_pairs(const int nat,
 void Interaction::set_default_variables()
 {
     maxorder = 0;
-    is_periodic[0] = 1;
-    is_periodic[1] = 1;
-    is_periodic[2] = 1;
+
     nbody_include = nullptr;
 
     nneib = 0;
