@@ -399,6 +399,10 @@ void InputParser::parse_general_vars(ALM *alm)
 
                 } else {
                     magmag = boost::lexical_cast<double>((*it));
+                    if (icount == nat) {
+                        icount = 0;
+                        break;
+                    }
                     magmom[icount++][2] = magmag;
                 }
             }
