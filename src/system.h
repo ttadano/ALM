@@ -47,6 +47,14 @@ namespace ALM_NS
         std::vector<std::vector<double>> x_cartesian;
     };
 
+    class Spin
+    {
+    public:
+        bool lspin;
+        int time_reversal_symm;
+        int noncollinear;
+        std::vector<std::vector<double>> magmom;
+    };
 
     class System
     {
@@ -56,14 +64,22 @@ namespace ALM_NS
         void init(ALM *);
         void frac2cart(double **);
 
-        void set_cell(const double [3][3], unsigned int,
-                      unsigned int, int *, double **, Cell &);
+        void set_cell(const double [3][3],
+                      unsigned int,
+                      unsigned int,
+                      int *,
+                      double **,
+                      Cell &);
+
+        void set_spin_variable(const bool, const int, const int,
+                               const unsigned int, double **);
 
         Cell primitivecell, supercell;
+        Spin spin;
 
         std::string *kdname;
-        unsigned int nclassatom;
-        std::vector<unsigned int> *atomlist_class;
+        // concatenate atomic kind and magmom (only for collinear case)
+        std::vector<std::vector<unsigned int>> atomtype_group;
         int is_periodic[3];
 
         // Variables for spins
@@ -87,7 +103,7 @@ namespace ALM_NS
         void deallocate_variables();
 
         double volume(const double [3][3], LatticeType);
-        void setup_atomic_class(int *);
+        void set_atomtype_group();
         void print_structure_stdout(const Cell &);
         void print_magmom_stdout();
     };

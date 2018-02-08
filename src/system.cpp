@@ -37,7 +37,13 @@ void System::init(ALM *alm)
 
     // Generate the information of the supercell
     set_cell(lavec, nat, nkd, kd, xcoord, supercell);
-    setup_atomic_class(kd);
+
+    // Generate the information of spins 
+    set_spin_variable(lspin, noncollinear, trev_sym_mag,
+                      nat, magmom);
+
+    // Set atomic types (kind + magmom)
+    set_atomtype_group();
 
     print_structure_stdout(supercell);
     if (lspin) print_magmom_stdout();
@@ -195,9 +201,9 @@ void System::set_default_variables()
     kd = nullptr;
     kdname = nullptr;
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; j++) {
-            lavec[i][j] = 0;
+            lavec[i][j] = 0.0;
         }
     }
     xcoord = nullptr;
@@ -205,8 +211,6 @@ void System::set_default_variables()
     is_periodic[1] = 1;
     is_periodic[2] = 1;
     str_magmom = "";
-    atomlist_class = nullptr;
-    nclassatom = 0;
     lspin = false;
     noncollinear = 0;
     magmom = nullptr;
@@ -224,15 +228,33 @@ void System::deallocate_variables()
     if (xcoord) {
         deallocate(xcoord);
     }
-    if (atomlist_class) {
-        deallocate(atomlist_class);
-    }
     if (magmom) {
         deallocate(magmom);
     }
 }
 
-void System::setup_atomic_class(int *kd)
+void System::set_spin_variable(const bool lspin_in,
+                               const int noncol_in,
+                               const int trev_sym_in,
+                               const unsigned int nat,
+                               double **magmom_in)
+{
+    spin.lspin = lspin_in;
+    spin.noncollinear = noncol_in;
+    spin.time_reversal_symm = trev_sym_in;
+    spin.magmom.clear();
+
+    std::vector<double> vec(3);
+    for (auto i = 0; i < nat; ++i) {
+        for (auto j = 0; j < 3; ++j) {
+            vec[j] = magmom_in[i][j];
+        }
+        spin.magmom.push_back(vec);
+    }
+}
+
+
+void System::set_atomtype_group()
 {
     // In the case of collinear calculation, spin moments are considered as scalar
     // variables. Therefore, the same elements with different magnetic moments are
@@ -242,12 +264,12 @@ void System::setup_atomic_class(int *kd)
     // using time-reversal symmetry.
 
     unsigned int i;
-    AtomType type_tmp;
+    AtomType type_tmp{};
     std::set<AtomType> set_type;
     set_type.clear();
 
-    for (i = 0; i < nat; ++i) {
-        type_tmp.element = kd[i];
+    for (i = 0; i < supercell.number_of_atoms; ++i) {
+        type_tmp.element = supercell.kind[i];
 
         if (noncollinear == 0) {
             type_tmp.magmom = magmom[i][2];
@@ -257,21 +279,20 @@ void System::setup_atomic_class(int *kd)
         set_type.insert(type_tmp);
     }
 
-    nclassatom = set_type.size();
+    int natomtypes = set_type.size();
+    atomtype_group.resize(natomtypes);
 
-    allocate(atomlist_class, nclassatom);
-
-    for (i = 0; i < nat; ++i) {
+    for (i = 0; i < supercell.number_of_atoms; ++i) {
         int count = 0;
-        for (auto it = set_type.cbegin(); it != set_type.cend(); ++it) {
+        for (auto it : set_type) {
             if (noncollinear) {
-                if (kd[i] == (*it).element) {
-                    atomlist_class[count].push_back(i);
+                if (supercell.kind[i] == it.element) {
+                    atomtype_group[count].push_back(i);
                 }
             } else {
-                if ((kd[i] == (*it).element)
-                    && (std::abs(magmom[i][2] - (*it).magmom) < eps6)) {
-                    atomlist_class[count].push_back(i);
+                if ((supercell.kind[i] == it.element)
+                    && (std::abs(magmom[i][2] - it.magmom) < eps6)) {
+                    atomtype_group[count].push_back(i);
                 }
             }
             ++count;
