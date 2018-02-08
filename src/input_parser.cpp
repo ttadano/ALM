@@ -60,9 +60,9 @@ void InputParser::run(ALM *alm,
 void InputParser::parse_displacement_and_force(ALM *alm)
 {
     int nat = alm->system->nat;
-    int ndata = alm->system->ndata;
-    int nstart = alm->system->nstart;
-    int nend = alm->system->nend;
+    int ndata = alm->fitting->ndata;
+    int nstart = alm->fitting->nstart;
+    int nend = alm->fitting->nend;
     int ndata_used = nend - nstart + 1;
     double **u;
     double **f;
@@ -460,8 +460,7 @@ void InputParser::parse_general_vars(ALM *alm)
 
 void InputParser::parse_cell_parameter(ALM *alm)
 {
-    int i, j;
-    double a;
+    double a = 0.0;
     double lavec_tmp[3][3];
     std::string line;
     std::string line_wo_comment, line_tmp;
@@ -518,7 +517,7 @@ void InputParser::parse_cell_parameter(ALM *alm)
                                             The number of valid lines for the &cell field should be 4.");
     }
 
-    for (i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; ++i) {
 
         line = line_vec[i];
         boost::split(line_split, line, boost::is_any_of("\t "), boost::token_compress_on);
@@ -535,7 +534,7 @@ void InputParser::parse_cell_parameter(ALM *alm)
         } else {
             // Lattice vectors a1, a2, a3
             if (line_split.size() == 3) {
-                for (j = 0; j < 3; ++j) {
+                for (int j = 0; j < 3; ++j) {
                     lavec_tmp[j][i - 1] = boost::lexical_cast<double>(line_split[j]);
                 }
             } else {

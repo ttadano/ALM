@@ -29,6 +29,8 @@ namespace ALM_NS
 
         void fitmain(ALM *);
 
+        int ndata, nstart, nend;
+
         double *params;
         double **u_in;
         double **f_in;

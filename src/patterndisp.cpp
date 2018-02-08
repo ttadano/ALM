@@ -82,7 +82,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
 
     for (order = 0; order < maxorder; ++order) {
 
-        alm->fcs->generate_force_constant_table(order, alm->system->nat,
+        alm->fcs->generate_force_constant_table(order, alm->system->supercell.number_of_atoms,
                                                 alm->interaction->pairs[order],
                                                 alm->symmetry, preferred_basis,
                                                 fc_table[order], nequiv[order],
@@ -175,7 +175,9 @@ void Displace::gen_displacement_pattern(ALM *alm)
     deallocate(fc_table);
 
     allocate(pattern_all, maxorder);
-    generate_pattern_all(maxorder, alm->system->nat, alm->system->lavec,
+    generate_pattern_all(maxorder,
+                         alm->system->supercell.number_of_atoms,
+                         alm->system->supercell.lattice_vector,
                          alm->symmetry,
                          pattern_all,
                          dispset, preferred_basis);

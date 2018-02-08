@@ -240,11 +240,11 @@ namespace ALM_NS
         void init(ALM *);
         double distance(double *, double *);
         int nbody(const int, const int *);
-        bool is_incutoff(const int, int *, const int, int *kd);
+        bool is_incutoff(const int, int *, const int, const std::vector<int>);
         bool is_incutoff2(const int, int *, const int, int *kd);
 
         void generate_interaction_information_by_cutoff(const int, const int,
-                                                        int *, int **,
+                                                        const std::vector<int> &, int **,
                                                         double **, std::vector<int> *);
         void set_interaction_by_cutoff(ALM *);
 
@@ -255,19 +255,22 @@ namespace ALM_NS
 
         void set_default_variables();
         void deallocate_variables();
-        void generate_coordinate_of_periodic_images(System *, const unsigned int, double **,
+        void generate_coordinate_of_periodic_images(System *, const unsigned int,
+                                                    const std::vector<std::vector<double>> &,
                                                     const int [3], double ***, int *);
 
         void get_pairs_of_minimum_distance(int, double ***, int *,
                                            std::vector<DistInfo> **,
                                            std::vector<DistInfo> **);
 
-        void print_neighborlist(const int, const int, int **, int *, std::string *, std::vector<DistInfo> **);
-        void print_interaction_information(const int, int **, int *, std::string *, std::vector<int> **);
+        void print_neighborlist(const int, const int, int **, const std::vector<int> &,
+                                std::string *, std::vector<DistInfo> **);
+        void print_interaction_information(const int, int **, const std::vector<int> &, std::string *,
+                                           std::vector<int> **);
         //void search_interactions(std::vector<int> **);
         void set_ordername();
 
-        void calc_mindist_clusters(const int, int *, int **,
+        void calc_mindist_clusters(const int, const std::vector<int> &, int **,
                                    std::vector<int> **,
                                    std::vector<DistInfo> **,
                                    std::vector<DistInfo> **,

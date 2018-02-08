@@ -242,9 +242,9 @@ const void ALM::set_displacement_and_force(const double *u_in,
     double **u;
     double **f;
 
-    system->ndata = ndata_used;
-    system->nstart = 1;
-    system->nend = ndata_used;
+    fitting->ndata = ndata_used;
+    fitting->nstart = 1;
+    fitting->nend = ndata_used;
 
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
@@ -294,7 +294,7 @@ const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
         interaction->nbody_include[i] = i + 2;
     }
 
-    nkd = system->nkd;
+    nkd = system->supercell.number_of_elems;
     if (interaction->rcs) {
         deallocate(interaction->rcs);
     }
@@ -327,7 +327,7 @@ const void ALM::set_cutoff_radii(const double *rcs)
 {
     int i, j, k, nkd, maxorder, count;
 
-    nkd = system->nkd;
+    nkd = system->supercell.number_of_elems;
     maxorder = interaction->maxorder;
     if (maxorder > 0) {
         if (interaction->rcs) {
@@ -347,10 +347,6 @@ const void ALM::set_cutoff_radii(const double *rcs)
     }
 }
 
-//ALMCore* ALM::get_alm()
-//{
-//    return alm;
-//}
 
 const int ALM::get_atom_mapping_by_pure_translations(int *map_p2s)
 {

@@ -65,7 +65,7 @@ void System::set_cell(const double lavec_in[3][3],
                         cell_out.reciprocal_lattice_vector);
 
     cell_out.volume = volume(cell_out.lattice_vector, Direct);
-    cell_out.number_of_atmos = nat_in;
+    cell_out.number_of_atoms = nat_in;
     cell_out.number_of_elems = nkd_in;
     cell_out.kind.clear();
     cell_out.x_fractional.clear();
@@ -144,16 +144,14 @@ void System::frac2cart(double **xf)
 {
     // x_cartesian = A x_fractional
 
-    int i, j;
-
     double *x_tmp;
     allocate(x_tmp, 3);
 
-    for (i = 0; i < nat; ++i) {
+    for (int i = 0; i < nat; ++i) {
 
-        rotvec(x_tmp, xf[i], lavec);
+        rotvec(x_tmp, xf[i], supercell.lattice_vector);
 
-        for (j = 0; j < 3; ++j) {
+        for (int j = 0; j < 3; ++j) {
             xf[i][j] = x_tmp[j];
         }
     }
@@ -196,9 +194,7 @@ void System::set_default_variables()
     nkd = 0;
     kd = nullptr;
     kdname = nullptr;
-    ndata = 0;
-    nstart = 1;
-    nend = 0;
+
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             lavec[i][j] = 0;
@@ -336,7 +332,7 @@ void System::print_structure_stdout(const Cell &cell)
     cout << endl;
 
     cout << "  Atomic positions in fractional basis and atomic species" << endl;
-    for (i = 0; i < cell.number_of_atmos; ++i) {
+    for (i = 0; i < cell.number_of_atoms; ++i) {
         cout << setw(6) << i + 1;
         cout << setw(15) << cell.x_fractional[i][0];
         cout << setw(15) << cell.x_fractional[i][1];
@@ -353,7 +349,7 @@ void System::print_magmom_stdout()
     using namespace std;
 
     cout << "  MAGMOM is given. The magnetic moments of each atom are as follows:" << endl;
-    for (auto i = 0; i < supercell.number_of_atmos; ++i) {
+    for (auto i = 0; i < supercell.number_of_atoms; ++i) {
         cout << setw(6) << i + 1;
         cout << setw(5) << magmom[i][0];
         cout << setw(5) << magmom[i][1];

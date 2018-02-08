@@ -16,8 +16,7 @@
 #include <vector>
 #include "alm.h"
 
-extern "C"
-{
+extern "C" {
 #include "spglib.h"
 }
 
@@ -143,13 +142,16 @@ namespace ALM_NS
         void deallocate_variables();
         void setup_symmetry_operation(int, unsigned int &,
                                       double [3][3], double [3][3],
-                                      double **, int *,
+                                      const std::vector<std::vector<double>> &,
+                                      const std::vector<int> &,
                                       System *system, int *);
-        void genmaps(int, double **,
+        void genmaps(int, const std::vector<std::vector<double>> &,
                      int **, int **,
                      Symmetry::Maps *, System *);
 
-        void findsym(int, double [3][3], double **, System *system, int *,
+        void findsym(int, double [3][3],
+                     const std::vector<std::vector<double>> &,
+                     System *system, int *,
                      std::vector<SymmetryOperation> &);
 
         void findsym_spglib(const int, double [3][3], double **,
@@ -171,7 +173,8 @@ namespace ALM_NS
         void find_lattice_symmetry(double [3][3], std::vector<RotationMatrix> &);
 
         void find_crystal_symmetry(int, int,
-                                   std::vector<unsigned int> *, double **,
+                                   std::vector<unsigned int> *,
+                                   const std::vector<std::vector<double>> &,
                                    System *, int *,
                                    std::vector<RotationMatrix>,
                                    std::vector<SymmetryOperation> &);

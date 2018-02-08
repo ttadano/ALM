@@ -10,10 +10,9 @@
 
 #pragma once
 
-//#include "pointers.h"
+#include "alm.h"
 #include <string>
 #include <vector>
-#include "alm.h"
 
 namespace ALM_NS
 {
@@ -27,11 +26,11 @@ namespace ALM_NS
         {
             if (this->element < a.element) {
                 return true;
-            } else if (this->element == a.element) {
-                return this->magmom < a.magmom;
-            } else {
-                return false;
             }
+            if (this->element == a.element) {
+                return this->magmom < a.magmom;
+            }
+            return false;
         }
     };
 
@@ -41,7 +40,7 @@ namespace ALM_NS
         double lattice_vector[3][3];
         double reciprocal_lattice_vector[3][3];
         double volume;
-        unsigned int number_of_atmos;
+        unsigned int number_of_atoms;
         unsigned int number_of_elems;
         std::vector<int> kind;
         std::vector<std::vector<double>> x_fractional;
@@ -57,25 +56,27 @@ namespace ALM_NS
         void init(ALM *);
         void frac2cart(double **);
 
-        void set_cell(const double [3][3], const unsigned int,
-                      const unsigned int, int *, double **, Cell &);
+        void set_cell(const double [3][3], unsigned int,
+                      unsigned int, int *, double **, Cell &);
 
         Cell primitivecell, supercell;
-        int nat, nkd;
-        int ndata, nstart, nend;
-        int *kd;
-        double lavec[3][3];
-        double **xcoord; // fractional coordinate
 
         std::string *kdname;
         unsigned int nclassatom;
         std::vector<unsigned int> *atomlist_class;
 
+        // Variables for spins
         bool lspin;
         int trev_sym_mag;
+        int noncollinear;
         double **magmom;
         std::string str_magmom;
-        int noncollinear;
+
+        // Referenced from input_setter, writer
+        int nat, nkd;
+        int *kd;
+        double lavec[3][3];
+        double **xcoord; // fractional coordinate
 
     private:
         enum LatticeType { Direct, Reciprocal };

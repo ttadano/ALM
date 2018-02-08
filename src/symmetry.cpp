@@ -41,7 +41,7 @@ Symmetry::~Symmetry()
 void Symmetry::init(ALM *alm)
 {
     int i, j;
-    int nat = alm->system->nat;
+    int nat = alm->system->supercell.number_of_atoms;
 
     alm->timer->start_clock("symmetry");
 
@@ -49,8 +49,10 @@ void Symmetry::init(ALM *alm)
     std::cout << " ========" << std::endl << std::endl;
 
     setup_symmetry_operation(nat, nsym,
-                             alm->system->supercell.lattice_vector, alm->system->supercell.reciprocal_lattice_vector,
-                             alm->system->xcoord, alm->system->kd, alm->system,
+                             alm->system->supercell.lattice_vector,
+                             alm->system->supercell.reciprocal_lattice_vector,
+                             alm->system->supercell.x_fractional,
+                             alm->system->supercell.kind, alm->system,
                              alm->interaction->is_periodic);
 
     std::cout << "  Number of symmetry operations = " << SymmData.size() << std::endl;
@@ -109,7 +111,7 @@ void Symmetry::init(ALM *alm)
     // allocate(kd_prim, nat);
     // allocate(xcoord_prim, nat, 3);
 
-    // set_primitive_lattice(system->lavec, system->nat,
+    // set_primitive_lattice(system->lavec, system->supercell.number_of_atoms,
     //                       system->kd, system->xcoord,
     //                       lavec_prim, nat_prim,
     //                       kd_prim, xcoord_prim,
@@ -160,7 +162,8 @@ void Symmetry::init(ALM *alm)
     }
     allocate(map_s2p, nat);
 
-    genmaps(nat, alm->system->xcoord, map_sym, map_p2s, map_s2p, alm->system);
+    genmaps(nat, alm->system->supercell.x_fractional,
+            map_sym, map_p2s, map_s2p, alm->system);
 
     std::cout << std::endl;
     std::cout << "  **Cell-Atom Correspondens Below**" << std::endl;
@@ -207,15 +210,6 @@ void Symmetry::set_default_variables()
 
 void Symmetry::deallocate_variables()
 {
-    // if (symrel) {
-    //     deallocate(symrel);
-    // }
-    // if (symrel_int) {
-    //     deallocate(symrel_int);
-    // }
-    // if (tnons) {
-    //     deallocate(tnons);
-    // }
     if (map_sym) {
         deallocate(map_sym);
     }
@@ -228,17 +222,15 @@ void Symmetry::deallocate_variables()
     if (symnum_tran) {
         deallocate(symnum_tran);
     }
-    // if (sym_available) {
-    //     deallocate(sym_available);
-    // }
 }
 
 void Symmetry::setup_symmetry_operation(int nat,
                                         unsigned int &nsym,
                                         double aa[3][3],
                                         double bb[3][3],
-                                        double **x,
-                                        int *kd, System *system,
+                                        const std::vector<std::vector<double>> &x,
+                                        const std::vector<int> &kd,
+                                        System *system,
                                         int *is_periodic)
 {
     int i, j;
@@ -358,7 +350,7 @@ void Symmetry::setup_symmetry_operation(int nat,
 
 void Symmetry::findsym(int nat,
                        double aa[3][3],
-                       double **x,
+                       const std::vector<std::vector<double>> &x,
                        System *system, int *is_periodic,
                        std::vector<SymmetryOperation> &symop_all)
 {
@@ -503,7 +495,7 @@ void Symmetry::find_lattice_symmetry(double aa[3][3],
 void Symmetry::find_crystal_symmetry(int nat,
                                      int nclass,
                                      std::vector<unsigned int> *atomclass,
-                                     double **x,
+                                     const std::vector<std::vector<double>> &x,
                                      System *system,
                                      int *is_periodic,
                                      std::vector<RotationMatrix> LatticeSymmList,
@@ -511,7 +503,7 @@ void Symmetry::find_crystal_symmetry(int nat,
 {
     unsigned int i, j;
     unsigned int iat, jat, kat, lat;
-    double x_rot[3];
+    double x_rot[3], x_tmp[3];
     double rot[3][3], rot_tmp[3][3], rot_cart[3][3];
     double mag[3], mag_rot[3];
     double tran[3];
@@ -563,10 +555,11 @@ void Symmetry::find_crystal_symmetry(int nat,
             }
         }
 
-        rotvec(x_rot, x[iat], rot);
+        for (i = 0; i < 3; ++i) x_tmp[i] = x[iat][i];
+        rotvec(x_rot, x_tmp, rot);
 
 #ifdef _OPENMP
-#pragma omp parallel for private(jat, tran, isok, kat, x_rot_tmp, is_found, lat, tmp, diff, \
+#pragma omp parallel for private(jat, tran, isok, kat, x_tmp, x_rot_tmp, is_found, lat, tmp, diff, \
     i, j, itype, jj, kk, is_identity_matrix, mag, mag_rot, rot_tmp, rot_cart, mag_sym1, mag_sym2)
 #endif
         for (ii = 0; ii < atomclass[0].size(); ++ii) {
@@ -597,7 +590,8 @@ void Symmetry::find_crystal_symmetry(int nat,
 
                     kat = atomclass[itype][jj];
 
-                    rotvec(x_rot_tmp, x[kat], rot);
+                    for (i = 0; i < 3; ++i) x_tmp[i] = x[kat][i];
+                    rotvec(x_rot_tmp, x_tmp, rot);
 
                     for (i = 0; i < 3; ++i) {
                         x_rot_tmp[i] += tran[i];
@@ -791,7 +785,7 @@ void Symmetry::pure_translations(System *system)
         if (SymmData[i].is_translation) ++ntran;
     }
 
-    nat_prim = system->nat / ntran;
+    nat_prim = system->supercell.number_of_atoms / ntran;
 
     if (ntran > 1) {
         std::cout << "  Given system is not a primitive cell." << std::endl;
@@ -802,7 +796,7 @@ void Symmetry::pure_translations(System *system)
     }
     std::cout << "  Primitive cell contains " << nat_prim << " atoms" << std::endl;
 
-    if (system->nat % ntran) {
+    if (system->supercell.number_of_atoms % ntran) {
         exit("pure_translations",
              "nat != nat_prim * ntran. Something is wrong in the structure.");
     }
@@ -820,7 +814,7 @@ void Symmetry::pure_translations(System *system)
 }
 
 void Symmetry::genmaps(int nat,
-                       double **x,
+                       const std::vector<std::vector<double>> &x,
                        int **map_sym,
                        int **map_p2s,
                        Maps *map_s2p,
@@ -830,7 +824,7 @@ void Symmetry::genmaps(int nat,
     int i, j;
     int itype;
     int ii, jj;
-    double xnew[3];
+    double xnew[3], x_tmp[3];
     double tmp[3], diff;
     double rot_double[3][3];
 
@@ -841,7 +835,7 @@ void Symmetry::genmaps(int nat,
     }
 
 #ifdef _OPENMP
-#pragma omp parallel for private(i, j, rot_double, itype, ii, iat, xnew, jj, jat, tmp, diff, isym)
+#pragma omp parallel for private(i, j, rot_double, itype, ii, iat, x_tmp, xnew, jj, jat, tmp, diff, isym)
 #endif
     for (isym = 0; isym < nsym; ++isym) {
 
@@ -857,7 +851,8 @@ void Symmetry::genmaps(int nat,
 
                 iat = system->atomlist_class[itype][ii];
 
-                rotvec(xnew, x[iat], rot_double);
+                for (i = 0; i < 3; ++i) x_tmp[i] = x[iat][i];
+                rotvec(xnew, x_tmp, rot_double);
 
                 for (i = 0; i < 3; ++i) xnew[i] += SymmData[isym].tran[i];
 

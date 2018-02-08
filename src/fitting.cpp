@@ -47,6 +47,9 @@ void Fitting::set_default_variables()
     params = nullptr;
     u_in = nullptr;
     f_in = nullptr;
+    ndata = 0;
+    nstart = 1;
+    nend = 0;
 }
 
 void Fitting::deallocate_variables()
@@ -65,10 +68,10 @@ void Fitting::deallocate_variables()
 void Fitting::fitmain(ALM *alm)
 {
     int i;
-    int nat = alm->system->nat;
+    int nat = alm->system->supercell.number_of_atoms;
     int natmin = alm->symmetry->nat_prim;
-    int nstart = alm->system->nstart;
-    int nend = alm->system->nend;
+ //   int nstart = alm->fitting->nstart;
+ //   int nend = alm->system->nend;
     int N, M, N_new;
     int maxorder = alm->interaction->maxorder;
     int P = alm->constraint->P;

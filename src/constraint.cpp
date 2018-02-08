@@ -716,7 +716,7 @@ void Constraint::get_constraint_symmetry(System *system,
 
     int nsym = symmop.size();
     int natmin = symmetry->nat_prim;
-    int nat = system->nat;
+    int nat = system->supercell.number_of_atoms;
     nparams = nequiv.size();
 
     if (nparams == 0) return;
@@ -953,7 +953,7 @@ void Constraint::get_constraint_translation(System *system,
 
     int ixyz, nxyz;
     int natmin = symmetry->nat_prim;
-    int nat = system->nat;
+    int nat = system->supercell.number_of_atoms;
     int nparams;
 
     unsigned int isize;
@@ -1071,7 +1071,7 @@ void Constraint::get_constraint_translation(System *system,
 
                 if (interaction->nbody(order + 1, intarr)
                     <= interaction->nbody_include[order]) {
-                    if (interaction->is_incutoff(order + 1, intarr, order, system->kd)) {
+                    if (interaction->is_incutoff(order + 1, intarr, order, system->supercell.kind)) {
                         // Add to list if the atoms interact with each other.
                         data_vec.push_back(data);
                     }
@@ -1458,7 +1458,7 @@ void Constraint::rotational_invariance(System *system,
                                             if (!interaction->is_incutoff(order + 2,
                                                                           interaction_atom,
                                                                           order,
-                                                                          system->kd))
+                                                                          system->supercell.kind))
                                                 continue;
 
                                             atom_tmp.clear();

@@ -173,9 +173,9 @@ void InputSetter::set_fitting_vars(ALM *alm,
                                    const bool fix_harmonic,
                                    const bool fix_cubic)
 {
-    alm->system->ndata = ndata;
-    alm->system->nstart = nstart;
-    alm->system->nend = nend;
+    alm->fitting->ndata = ndata;
+    alm->fitting->nstart = nstart;
+    alm->fitting->nend = nend;
 
     alm->files->file_disp = dfile;
     alm->files->file_force = ffile;

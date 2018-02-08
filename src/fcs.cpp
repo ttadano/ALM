@@ -65,7 +65,7 @@ void Fcs::init(ALM *alm)
 
     // Generate force constants using the information of interacting atom pairs
     for (i = 0; i < maxorder; ++i) {
-        generate_force_constant_table(i, alm->system->nat,
+        generate_force_constant_table(i, alm->system->supercell.number_of_atoms,
                                       alm->interaction->pairs[i],
                                       alm->symmetry, "Cartesian",
                                       fc_table[i], nequiv[i], fc_zeros[i], true);
