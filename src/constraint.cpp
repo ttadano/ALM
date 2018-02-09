@@ -1351,7 +1351,7 @@ void Constraint::rotational_invariance(System *system,
                                     for (j = 0; j < nsize_equiv; ++j) {
                                         for (int k = 0; k < 3; ++k) {
                                             vec_for_rot[k]
-                                                += interaction->x_image[(*iter_cluster).cell[j][0]][jat][k];
+                                                += system->x_image[(*iter_cluster).cell[j][0]][jat][k];
                                         }
                                     }
 
@@ -1492,7 +1492,7 @@ void Constraint::rotational_invariance(System *system,
 
                                                 for (j = 0; j < nsize_equiv; ++j) {
                                                     for (int k = 0; k < 3; ++k) {
-                                                        vec_for_rot[k] += interaction->x_image[(*iter_cluster).cell[j][
+                                                        vec_for_rot[k] += system->x_image[(*iter_cluster).cell[j][
                                                             iloc]][jat][k];
                                                     }
                                                 }

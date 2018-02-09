@@ -8,23 +8,23 @@ Please see the file 'LICENCE.txt' in the root directory
 or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include "interaction.h"
+#include "combination.h"
+#include "constants.h"
+#include "error.h"
+#include "fcs.h"
+#include "files.h"
+#include "mathfunctions.h"
+#include "memory.h"
+#include "symmetry.h"
+#include "system.h"
+#include "timer.h"
 #include <iostream>
 #include <iomanip>
 #include <vector>
 #include <algorithm>
 #include <set>
 #include <boost/lexical_cast.hpp>
-#include "interaction.h"
-#include "memory.h"
-#include "system.h"
-#include "error.h"
-#include "symmetry.h"
-#include "combination.h"
-#include "constants.h"
-#include "files.h"
-#include "timer.h"
-#include "fcs.h"
-#include "mathfunctions.h"
 #include <cmath>
 
 using namespace ALM_NS;
@@ -41,11 +41,12 @@ Interaction::~Interaction()
 
 void Interaction::init(ALM *alm)
 {
+    alm->timer->start_clock("interaction");
+
     int i, j, k;
     int nat = alm->system->supercell.number_of_atoms;
     int nkd = alm->system->supercell.number_of_elems;
 
-    alm->timer->start_clock("interaction");
 
     std::cout << " INTERACTION" << std::endl;
     std::cout << " ===========" << std::endl << std::endl;
@@ -70,16 +71,6 @@ void Interaction::init(ALM *alm)
         std::cout << std::endl;
     }
 
-    nneib = 27;
-    if (x_image) {
-        deallocate(x_image);
-    }
-    allocate(x_image, nneib, nat, 3);
-
-    if (exist_image) {
-        deallocate(exist_image);
-    }
-    allocate(exist_image, nneib);
 
     if (distall) {
         deallocate(distall);
@@ -106,15 +97,9 @@ void Interaction::init(ALM *alm)
     }
     allocate(pairs, maxorder);
 
-    generate_coordinate_of_periodic_images(alm->system, nat,
-                                           alm->system->supercell.x_fractional,
-                                           alm->system->is_periodic,
-                                           x_image,
-                                           exist_image);
-
     get_pairs_of_minimum_distance(nat,
-                                  x_image,
-                                  exist_image,
+                                  alm->system->x_image,
+                                  alm->system->exist_image,
                                   distall,
                                   mindist_pairs);
 
@@ -139,7 +124,8 @@ void Interaction::init(ALM *alm)
                           interaction_pair,
                           mindist_pairs,
                           distall,
-                          exist_image,
+                          alm->system->x_image,
+                          alm->system->exist_image,
                           mindist_cluster);
 
     generate_pairs(alm->system->supercell.number_of_atoms,
@@ -211,11 +197,8 @@ void Interaction::set_default_variables()
 
     nbody_include = nullptr;
 
-    nneib = 0;
     maxorder = 0;
     rcs = nullptr;
-    x_image = nullptr;
-    exist_image = nullptr;
     str_order = nullptr;
     distall = nullptr;
     mindist_pairs = nullptr;
@@ -226,12 +209,6 @@ void Interaction::set_default_variables()
 
 void Interaction::deallocate_variables()
 {
-    if (x_image) {
-        deallocate(x_image);
-    }
-    if (exist_image) {
-        deallocate(exist_image);
-    }
     if (str_order) {
         deallocate(str_order);
     }
@@ -249,76 +226,6 @@ void Interaction::deallocate_variables()
     }
     if (distall) {
         deallocate(distall);
-    }
-}
-
-void Interaction::generate_coordinate_of_periodic_images(System *system,
-                                                         const unsigned int nat,
-                                                         const std::vector<std::vector<double>> &xf_in,
-                                                         const int periodic_flag[3],
-                                                         double ***xc_out,
-                                                         int *is_allowed)
-{
-    //
-    // Generate Cartesian coordinates of atoms in the neighboring 27 supercells
-    // 
-
-    unsigned int i, j;
-    int ia, ja, ka;
-    int icell;
-
-    icell = 0;
-    for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
-            xc_out[0][i][j] = xf_in[i][j];
-        }
-    }
-    // Convert to Cartesian coordinate
-    system->frac2cart(xc_out[0]);
-
-    for (ia = -1; ia <= 1; ++ia) {
-        for (ja = -1; ja <= 1; ++ja) {
-            for (ka = -1; ka <= 1; ++ka) {
-
-                if (ia == 0 && ja == 0 && ka == 0) continue;
-
-                ++icell;
-                for (i = 0; i < nat; ++i) {
-                    xc_out[icell][i][0] = xf_in[i][0] + static_cast<double>(ia);
-                    xc_out[icell][i][1] = xf_in[i][1] + static_cast<double>(ja);
-                    xc_out[icell][i][2] = xf_in[i][2] + static_cast<double>(ka);
-                }
-                // Convert to Cartesian coordinate
-                system->frac2cart(xc_out[icell]);
-            }
-        }
-    }
-
-    icell = 0;
-    is_allowed[0] = 1;
-
-    for (ia = -1; ia <= 1; ++ia) {
-        for (ja = -1; ja <= 1; ++ja) {
-            for (ka = -1; ka <= 1; ++ka) {
-
-                if (ia == 0 && ja == 0 && ka == 0) continue;
-
-                ++icell;
-
-                // When periodic flag is zero along an axis, 
-                // periodic images along that axis cannot be considered.
-                if (((std::abs(ia) == 1) && (periodic_flag[0] == 0)) ||
-                    ((std::abs(ja) == 1) && (periodic_flag[1] == 0)) ||
-                    ((std::abs(ka) == 1) && (periodic_flag[2] == 0))) {
-
-                    is_allowed[icell] = 0;
-
-                } else {
-
-                    is_allowed[icell] = 1;
-                }
-            }
-        }
     }
 }
 
@@ -352,7 +259,7 @@ void Interaction::get_pairs_of_minimum_distance(int nat,
 
             distall[i][j].clear();
 
-            for (icell = 0; icell < nneib; ++icell) {
+            for (icell = 0; icell < 27; ++icell) {
 
                 if (exist[icell]) {
 
@@ -656,66 +563,66 @@ bool Interaction::is_incutoff(const int n,
     return true;
 }
 
-bool Interaction::is_incutoff2(const int n,
-                               int *atomnumlist,
-                               const int order,
-                               int *kd)
-{
-    int i, j;
-    int iat, jat, kat;
-    int ikd, jkd, kkd;
-    int ncheck = n - 1;
-    //    int order = n - 2;   
-    bool in_cutoff_tmp;
-    double cutoff_tmp;
-    double dist_tmp;
-    std::vector<DistInfo>::const_iterator it, it2;
-
-    iat = atomnumlist[0];
-    ikd = kd[iat] - 1;
-
-    for (i = 0; i < ncheck; ++i) {
-
-        jat = atomnumlist[i + 1];
-        jkd = kd[jat] - 1;
-
-        if (rcs[order][ikd][jkd] >= 0.0 &&
-            (mindist_pairs[iat][jat][0].dist > rcs[order][ikd][jkd]))
-            return false;
-
-        for (j = i + 1; j < ncheck; ++j) {
-
-            kat = atomnumlist[j + 1];
-            kkd = kd[kat] - 1;
-
-            if (rcs[order][ikd][kkd] >= 0.0 &&
-                (mindist_pairs[iat][kat][0].dist > rcs[order][ikd][kkd]))
-                return false;
-
-            cutoff_tmp = rcs[order][jkd][kkd];
-
-            if (cutoff_tmp >= 0.0) {
-
-                in_cutoff_tmp = false;
-
-                for (it = mindist_pairs[iat][jat].begin();
-                     it != mindist_pairs[iat][jat].end(); ++it) {
-                    for (it2 = mindist_pairs[iat][kat].begin();
-                         it2 != mindist_pairs[iat][kat].end(); ++it2) {
-                        dist_tmp = distance(x_image[(*it).cell][jat], x_image[(*it2).cell][kat]);
-
-                        if (dist_tmp <= cutoff_tmp) {
-                            in_cutoff_tmp = true;
-                        }
-                    }
-                }
-                if (!in_cutoff_tmp) return false;
-            }
-        }
-    }
-
-    return true;
-}
+//bool Interaction::is_incutoff2(const int n,
+//                               int *atomnumlist,
+//                               const int order,
+//                               int *kd)
+//{
+//    int i, j;
+//    int iat, jat, kat;
+//    int ikd, jkd, kkd;
+//    int ncheck = n - 1;
+//    //    int order = n - 2;   
+//    bool in_cutoff_tmp;
+//    double cutoff_tmp;
+//    double dist_tmp;
+//    std::vector<DistInfo>::const_iterator it, it2;
+//
+//    iat = atomnumlist[0];
+//    ikd = kd[iat] - 1;
+//
+//    for (i = 0; i < ncheck; ++i) {
+//
+//        jat = atomnumlist[i + 1];
+//        jkd = kd[jat] - 1;
+//
+//        if (rcs[order][ikd][jkd] >= 0.0 &&
+//            (mindist_pairs[iat][jat][0].dist > rcs[order][ikd][jkd]))
+//            return false;
+//
+//        for (j = i + 1; j < ncheck; ++j) {
+//
+//            kat = atomnumlist[j + 1];
+//            kkd = kd[kat] - 1;
+//
+//            if (rcs[order][ikd][kkd] >= 0.0 &&
+//                (mindist_pairs[iat][kat][0].dist > rcs[order][ikd][kkd]))
+//                return false;
+//
+//            cutoff_tmp = rcs[order][jkd][kkd];
+//
+//            if (cutoff_tmp >= 0.0) {
+//
+//                in_cutoff_tmp = false;
+//
+//                for (it = mindist_pairs[iat][jat].begin();
+//                     it != mindist_pairs[iat][jat].end(); ++it) {
+//                    for (it2 = mindist_pairs[iat][kat].begin();
+//                         it2 != mindist_pairs[iat][kat].end(); ++it2) {
+//                        dist_tmp = distance(x_image[(*it).cell][jat], x_image[(*it2).cell][kat]);
+//
+//                        if (dist_tmp <= cutoff_tmp) {
+//                            in_cutoff_tmp = true;
+//                        }
+//                    }
+//                }
+//                if (!in_cutoff_tmp) return false;
+//            }
+//        }
+//    }
+//
+//    return true;
+//}
 
 void Interaction::set_ordername()
 {
@@ -753,6 +660,7 @@ void Interaction::calc_mindist_clusters(const int natmin,
                                         std::vector<int> **interaction_pair_in,
                                         std::vector<DistInfo> **mindist_pair_in,
                                         std::vector<DistInfo> **distance_image,
+                                        double ***x_image,
                                         int *exist,
                                         std::set<MinimumDistanceCluster> **mindist_cluster_out)
 {
@@ -990,6 +898,7 @@ void Interaction::calc_mindist_clusters2(const int natmin, int *kd, int **map_p2
                                          std::vector<int> **interaction_pair_in,
                                          std::vector<DistInfo> **mindist_pair_in,
                                          std::vector<DistInfo> **distance_image,
+                                         double ***x_image,
                                          int *exist,
                                          std::set<MinimumDistanceCluster> **mindist_cluster_out)
 {

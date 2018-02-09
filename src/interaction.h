@@ -10,14 +10,13 @@
 
 #pragma once
 
+#include "alm.h"
+#include "constants.h"
 #include <string>
 #include <vector>
 #include <set>
 #include <iterator>
 #include <algorithm>
-//#include "pointers.h"
-#include "constants.h"
-#include "alm.h"
 
 
 namespace ALM_NS
@@ -221,14 +220,11 @@ namespace ALM_NS
         Interaction();
         ~Interaction();
 
-        int nneib;
         int maxorder;
 
         int *nbody_include;
 
         double ***rcs;
-        double ***x_image;
-        int *exist_image;
 
         std::string *str_order;
         std::vector<DistInfo> **mindist_pairs;
@@ -240,7 +236,7 @@ namespace ALM_NS
         double distance(double *, double *);
         int nbody(const int, const int *);
         bool is_incutoff(const int, int *, const int, const std::vector<int>);
-        bool is_incutoff2(const int, int *, const int, int *kd);
+        // bool is_incutoff2(const int, int *, const int, int *kd);
 
         void generate_interaction_information_by_cutoff(const int, const int,
                                                         const std::vector<int> &, int **,
@@ -254,9 +250,6 @@ namespace ALM_NS
 
         void set_default_variables();
         void deallocate_variables();
-        void generate_coordinate_of_periodic_images(System *, const unsigned int,
-                                                    const std::vector<std::vector<double>> &,
-                                                    const int [3], double ***, int *);
 
         void get_pairs_of_minimum_distance(int, double ***, int *,
                                            std::vector<DistInfo> **,
@@ -273,11 +266,13 @@ namespace ALM_NS
                                    std::vector<int> **,
                                    std::vector<DistInfo> **,
                                    std::vector<DistInfo> **,
+                                   double ***,
                                    int *, std::set<MinimumDistanceCluster> **);
 
         void calc_mindist_clusters2(const int, int *, int **, std::vector<int> **,
                                     std::vector<DistInfo> **,
                                     std::vector<DistInfo> **,
+                                    double ***,
                                     int *, std::set<MinimumDistanceCluster> **);
 
         void cell_combination(std::vector<std::vector<int>>,

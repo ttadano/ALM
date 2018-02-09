@@ -81,6 +81,8 @@ namespace ALM_NS
         // concatenate atomic kind and magmom (only for collinear case)
         std::vector<std::vector<unsigned int>> atomtype_group;
         int is_periodic[3];
+        double ***x_image;
+        int *exist_image;
 
         // Variables for spins
         bool lspin;
@@ -104,6 +106,10 @@ namespace ALM_NS
 
         double volume(const double [3][3], LatticeType);
         void set_atomtype_group();
+
+        void generate_coordinate_of_periodic_images(System *, const unsigned int,
+                                                    const std::vector<std::vector<double>> &,
+                                                    const int [3], double ***, int *);
         void print_structure_stdout(const Cell &);
         void print_magmom_stdout();
     };

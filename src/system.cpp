@@ -45,6 +45,24 @@ void System::init(ALM *alm)
     // Set atomic types (kind + magmom)
     set_atomtype_group();
 
+    int nneib = 27;
+    if (x_image) {
+        deallocate(x_image);
+    }
+    allocate(x_image, nneib, nat, 3);
+
+    if (exist_image) {
+        deallocate(exist_image);
+    }
+    allocate(exist_image, nneib);
+
+    generate_coordinate_of_periodic_images(alm->system, nat,
+                                           alm->system->supercell.x_fractional,
+                                           alm->system->is_periodic,
+                                           x_image,
+                                           exist_image);
+
+
     print_structure_stdout(supercell);
     if (lspin) print_magmom_stdout();
     alm->timer->print_elapsed();
@@ -210,6 +228,8 @@ void System::set_default_variables()
     is_periodic[0] = 1;
     is_periodic[1] = 1;
     is_periodic[2] = 1;
+    x_image = nullptr;
+    exist_image = nullptr;
     str_magmom = "";
     lspin = false;
     noncollinear = 0;
@@ -230,6 +250,12 @@ void System::deallocate_variables()
     }
     if (magmom) {
         deallocate(magmom);
+    }
+    if (x_image) {
+        deallocate(x_image);
+    }
+    if (exist_image) {
+        deallocate(exist_image);
     }
 }
 
@@ -299,6 +325,77 @@ void System::set_atomtype_group()
         }
     }
     set_type.clear();
+}
+
+
+void System::generate_coordinate_of_periodic_images(System *system,
+                                                    const unsigned int nat,
+                                                    const std::vector<std::vector<double>> &xf_in,
+                                                    const int periodic_flag[3],
+                                                    double ***xc_out,
+                                                    int *is_allowed)
+{
+    //
+    // Generate Cartesian coordinates of atoms in the neighboring 27 supercells
+    // 
+
+    unsigned int i, j;
+    int ia, ja, ka;
+    int icell;
+
+    icell = 0;
+    for (i = 0; i < nat; ++i) {
+        for (j = 0; j < 3; ++j) {
+            xc_out[0][i][j] = xf_in[i][j];
+        }
+    }
+    // Convert to Cartesian coordinate
+    system->frac2cart(xc_out[0]);
+
+    for (ia = -1; ia <= 1; ++ia) {
+        for (ja = -1; ja <= 1; ++ja) {
+            for (ka = -1; ka <= 1; ++ka) {
+
+                if (ia == 0 && ja == 0 && ka == 0) continue;
+
+                ++icell;
+                for (i = 0; i < nat; ++i) {
+                    xc_out[icell][i][0] = xf_in[i][0] + static_cast<double>(ia);
+                    xc_out[icell][i][1] = xf_in[i][1] + static_cast<double>(ja);
+                    xc_out[icell][i][2] = xf_in[i][2] + static_cast<double>(ka);
+                }
+                // Convert to Cartesian coordinate
+                system->frac2cart(xc_out[icell]);
+            }
+        }
+    }
+
+    icell = 0;
+    is_allowed[0] = 1;
+
+    for (ia = -1; ia <= 1; ++ia) {
+        for (ja = -1; ja <= 1; ++ja) {
+            for (ka = -1; ka <= 1; ++ka) {
+
+                if (ia == 0 && ja == 0 && ka == 0) continue;
+
+                ++icell;
+
+                // When periodic flag is zero along an axis, 
+                // periodic images along that axis cannot be considered.
+                if (((std::abs(ia) == 1) && (periodic_flag[0] == 0)) ||
+                    ((std::abs(ja) == 1) && (periodic_flag[1] == 0)) ||
+                    ((std::abs(ka) == 1) && (periodic_flag[2] == 0))) {
+
+                    is_allowed[icell] = 0;
+
+                } else {
+
+                    is_allowed[icell] = 1;
+                }
+            }
+        }
+    }
 }
 
 
