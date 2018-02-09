@@ -671,7 +671,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symme
             std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
         }
         get_constraint_symmetry(system, symmetry, fcs,
-                                order, interaction->pairs[order],
+                                order, interaction->cluster_list[order],
                                 symmetry->SymmData, "Cartesian",
                                 fcs->fc_table[order], fcs->nequiv[order],
                                 const_out[order]);
@@ -918,7 +918,7 @@ void Constraint::generate_translational_constraint(System *system,
 
         get_constraint_translation(system, symmetry, interaction, fcs,
                                    order,
-                                   interaction->pairs[order],
+                                   interaction->cluster_list[order],
                                    fcs->fc_table[order],
                                    fcs->nequiv[order],
                                    const_out[order]);

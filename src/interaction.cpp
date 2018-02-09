@@ -72,10 +72,10 @@ void Interaction::init(ALM *alm)
     }
     allocate(interaction_cluster, maxorder, alm->symmetry->nat_prim);
 
-    if (pairs) {
-        deallocate(pairs);
+    if (cluster_list) {
+        deallocate(cluster_list);
     }
-    allocate(pairs, maxorder);
+    allocate(cluster_list, maxorder);
 
     get_pairs_of_minimum_distance(nat,
                                   alm->system->x_image,
@@ -96,10 +96,9 @@ void Interaction::init(ALM *alm)
                               alm->system->exist_image,
                               interaction_cluster);
 
-    generate_pairs(alm->system->supercell.number_of_atoms,
-                   alm->symmetry->nat_prim,
+    generate_pairs(alm->symmetry->nat_prim,
                    alm->symmetry->map_p2s,
-                   pairs,
+                   cluster_list,
                    interaction_cluster);
 
 
@@ -132,17 +131,25 @@ void Interaction::init(ALM *alm)
                        alm->system->supercell.kind,
                        alm->system->kdname);
 
+    for (i = 0; i < maxorder; ++i) {
+        if (i + 2 > nbody_include[i]) {
+            std::cout << "  For " << std::setw(8) << str_order[i] << ", ";
+            std::cout << "interactions related to more than" << std::setw(2) << nbody_include[i];
+            std::cout << " atoms will be neglected." << std::endl;
+        }
+    }
+
+
     alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
     alm->timer->stop_clock("interaction");
 }
 
-void Interaction::generate_pairs(const int nat,
-                                 const int natmin,
+void Interaction::generate_pairs(const int natmin,
                                  int **map_p2s,
                                  std::set<IntList> *pair_out,
-                                 std::set<InteractionCluster> **mindist_cluster)
+                                 std::set<InteractionCluster> **interaction_cluster)
 {
     int i, j;
     int iat;
@@ -152,20 +159,14 @@ void Interaction::generate_pairs(const int nat,
 
         pair_out[order].clear();
 
-        //if (order + 2 > nbody_include[order]) {
-        //    std::cout << "  For " << std::setw(8) << str_order[order] << ", ";
-        //    std::cout << "interactions related to more than" << std::setw(2) << nbody_include[order];
-        //    std::cout << " atoms will be neglected." << std::endl;
-        //}
-
         allocate(pair_tmp, order + 2);
 
         for (i = 0; i < natmin; ++i) {
 
             iat = map_p2s[i][0];
 
-            for (auto it = mindist_cluster[order][i].begin();
-                 it != mindist_cluster[order][i].end(); ++it) {
+            for (auto it = interaction_cluster[order][i].begin();
+                 it != interaction_cluster[order][i].end(); ++it) {
 
                 pair_tmp[0] = iat;
                 for (j = 0; j < order + 1; ++j) {
@@ -175,7 +176,7 @@ void Interaction::generate_pairs(const int nat,
                 insort(order + 2, pair_tmp);
 
                 // Ignore many-body case 
-                if (!satisfy_nbody_rule(order + 2, pair_tmp, order)) continue;
+                // if (!satisfy_nbody_rule(order + 2, pair_tmp, order)) continue;
                 pair_out[order].insert(IntList(order + 2, pair_tmp));
             }
         }
@@ -190,15 +191,15 @@ void Interaction::set_default_variables()
     rcs = nullptr;
     distall = nullptr;
     mindist_pairs = nullptr;
-    pairs = nullptr;
+    cluster_list = nullptr;
     interaction_pair = nullptr;
     interaction_cluster = nullptr;
 }
 
 void Interaction::deallocate_variables()
 {
-    if (pairs) {
-        deallocate(pairs);
+    if (cluster_list) {
+        deallocate(cluster_list);
     }
     if (mindist_pairs) {
         deallocate(mindist_pairs);

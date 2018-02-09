@@ -201,9 +201,9 @@ namespace ALM_NS
         double ***rcs;
 
         std::vector<std::string> str_order;
-        std::set<IntList> *pairs;
+        std::set<IntList> *cluster_list;
         std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
-        std::set<InteractionCluster> **interaction_cluster;
+        std::set<InteractionCluster> **interaction_cluster; // Interaction many-body clusters with mirrow image information
 
         void init(ALM *);
 
@@ -280,7 +280,7 @@ namespace ALM_NS
                               int, std::vector<int>,
                               std::vector<std::vector<int>> &);
 
-        void generate_pairs(const int, const int,
+        void generate_pairs(const int,
                             int **,
                             std::set<IntList> *,
                             std::set<InteractionCluster> **);

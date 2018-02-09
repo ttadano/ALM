@@ -83,7 +83,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
     for (order = 0; order < maxorder; ++order) {
 
         alm->fcs->generate_force_constant_table(order, alm->system->supercell.number_of_atoms,
-                                                alm->interaction->pairs[order],
+                                                alm->interaction->cluster_list[order],
                                                 alm->symmetry, preferred_basis,
                                                 fc_table[order], nequiv[order],
                                                 fc_zeros[order], false);
@@ -91,7 +91,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
         alm->constraint->get_constraint_symmetry(alm->system,
                                                  alm->symmetry,
                                                  alm->fcs,
-                                                 order, alm->interaction->pairs[order],
+                                                 order, alm->interaction->cluster_list[order],
                                                  alm->symmetry->SymmData, preferred_basis,
                                                  fc_table[order], nequiv[order],
                                                  constsym[order]);
