@@ -89,12 +89,12 @@ void Interaction::init(ALM *alm)
                               interaction_pair);
 
     calc_interaction_clusters(alm->symmetry->nat_prim,
-                          alm->system->supercell.kind,
-                          alm->symmetry->map_p2s,
-                          interaction_pair,
-                          alm->system->x_image,
-                          alm->system->exist_image,
-                          interaction_cluster);
+                              alm->system->supercell.kind,
+                              alm->symmetry->map_p2s,
+                              interaction_pair,
+                              alm->system->x_image,
+                              alm->system->exist_image,
+                              interaction_cluster);
 
     generate_pairs(alm->system->supercell.number_of_atoms,
                    alm->symmetry->nat_prim,
@@ -541,66 +541,6 @@ bool Interaction::is_incutoff(const int n,
     return true;
 }
 
-//bool Interaction::is_incutoff2(const int n,
-//                               int *atomnumlist,
-//                               const int order,
-//                               int *kd)
-//{
-//    int i, j;
-//    int iat, jat, kat;
-//    int ikd, jkd, kkd;
-//    int ncheck = n - 1;
-//    //    int order = n - 2;   
-//    bool in_cutoff_tmp;
-//    double cutoff_tmp;
-//    double dist_tmp;
-//    std::vector<DistInfo>::const_iterator it, it2;
-//
-//    iat = atomnumlist[0];
-//    ikd = kd[iat] - 1;
-//
-//    for (i = 0; i < ncheck; ++i) {
-//
-//        jat = atomnumlist[i + 1];
-//        jkd = kd[jat] - 1;
-//
-//        if (rcs[order][ikd][jkd] >= 0.0 &&
-//            (mindist_pairs[iat][jat][0].dist > rcs[order][ikd][jkd]))
-//            return false;
-//
-//        for (j = i + 1; j < ncheck; ++j) {
-//
-//            kat = atomnumlist[j + 1];
-//            kkd = kd[kat] - 1;
-//
-//            if (rcs[order][ikd][kkd] >= 0.0 &&
-//                (mindist_pairs[iat][kat][0].dist > rcs[order][ikd][kkd]))
-//                return false;
-//
-//            cutoff_tmp = rcs[order][jkd][kkd];
-//
-//            if (cutoff_tmp >= 0.0) {
-//
-//                in_cutoff_tmp = false;
-//
-//                for (it = mindist_pairs[iat][jat].begin();
-//                     it != mindist_pairs[iat][jat].end(); ++it) {
-//                    for (it2 = mindist_pairs[iat][kat].begin();
-//                         it2 != mindist_pairs[iat][kat].end(); ++it2) {
-//                        dist_tmp = distance(x_image[(*it).cell][jat], x_image[(*it2).cell][kat]);
-//
-//                        if (dist_tmp <= cutoff_tmp) {
-//                            in_cutoff_tmp = true;
-//                        }
-//                    }
-//                }
-//                if (!in_cutoff_tmp) return false;
-//            }
-//        }
-//    }
-//
-//    return true;
-//}
 
 void Interaction::set_ordername()
 {
@@ -637,15 +577,42 @@ bool Interaction::satisfy_nbody_rule(const int nelem,
 
 
 void Interaction::calc_interaction_clusters(const int natmin,
-                                        const std::vector<int> &kd,
-                                        int **map_p2s,
-                                        std::vector<int> **interaction_pair_in,
-                                        double ***x_image,
-                                        int *exist,
-                                        std::set<InteractionCluster> **interaction_cluster_out)
+                                            const std::vector<int> &kd,
+                                            int **map_p2s,
+                                            std::vector<int> **interaction_pair_in,
+                                            double ***x_image,
+                                            int *exist,
+                                            std::set<InteractionCluster> **interaction_cluster_out)
 {
     //
-    // Calculate the complete set of interaction clusters for each order.
+    // Calculate the complete set of interaction clusters for all orders.
+    //
+
+    for (int order = 0; order < maxorder; ++order) {
+        set_interaction_cluster(order,
+                                natmin,
+                                kd,
+                                map_p2s,
+                                interaction_pair_in[order],
+                                x_image,
+                                exist,
+                                interaction_cluster_out[order]);
+
+    }
+}
+
+
+void Interaction::set_interaction_cluster(const int order,
+                                          const int natmin,
+                                          const std::vector<int> &kd,
+                                          int **map_p2s,
+                                          std::vector<int> *interaction_pair_in,
+                                          double ***x_image,
+                                          int *exist,
+                                          std::set<InteractionCluster> *interaction_cluster_out)
+{
+    //
+    // Calculate a set of interaction clusters for the given order
     //
 
     int j, k;
@@ -675,422 +642,202 @@ void Interaction::calc_interaction_clusters(const int natmin,
     std::vector<MinDistList> distance_list;
     std::vector<std::vector<int>> data_vec;
 
+    allocate(list_now, order + 2);
 
-    for (int order = 0; order < maxorder; ++order) {
-        
-        allocate(list_now, order + 2);
+    for (int i = 0; i < natmin; ++i) {
 
-        for (int i = 0; i < natmin; ++i) {
+        interaction_cluster_out[i].clear();
 
-            interaction_cluster_out[order][i].clear();
+        iat = map_p2s[i][0];
+        ikd = kd[iat] - 1;
+        list_now[0] = iat;
 
-            iat = map_p2s[i][0];
-            ikd = kd[iat] - 1;
-            list_now[0] = iat;
+        // List of 2-body interaction pairs
+        std::vector<int> intlist(interaction_pair_in[i]);
+        std::sort(intlist.begin(), intlist.end()); // Need to sort here
 
-            // List of 2-body interaction pairs
-            std::vector<int> intlist(interaction_pair_in[order][i]);
-            std::sort(intlist.begin(), intlist.end()); // Need to sort here
+        if (order == 0) {
 
-            if (order == 0) {
+            // Harmonic term
 
-                // Harmonic term
+            for (ielem = 0; ielem < intlist.size(); ++ielem) {
 
-                for (ielem = 0; ielem < intlist.size(); ++ielem) {
+                jat = intlist[ielem];
+                list_now[1] = jat;
 
-                    jat = intlist[ielem];
-                    list_now[1] = jat;
+                if (!satisfy_nbody_rule(2, list_now, 0)) continue;
 
-                    if (!satisfy_nbody_rule(2, list_now, 0)) continue;
+                comb_cell_min.clear();
+                atom_tmp.clear();
+                atom_tmp.push_back(jat);
 
-                    comb_cell_min.clear();
-                    atom_tmp.clear();
-                    atom_tmp.push_back(jat);
+                for (j = 0; j < mindist_pairs[iat][jat].size(); ++j) {
+                    cell_tmp.clear();
+                    cell_tmp.push_back(mindist_pairs[iat][jat][j].cell);
+                    comb_cell_min.push_back(cell_tmp);
+                }
+                distmax = mindist_pairs[iat][jat][0].dist;
+                interaction_cluster_out[i].insert(InteractionCluster(atom_tmp,
+                                                                     comb_cell_min,
+                                                                     distmax));
+            }
 
-                    for (j = 0; j < mindist_pairs[iat][jat].size(); ++j) {
-                        cell_tmp.clear();
-                        cell_tmp.push_back(mindist_pairs[iat][jat][j].cell);
-                        comb_cell_min.push_back(cell_tmp);
-                    }
-                    distmax = mindist_pairs[iat][jat][0].dist;
-                    interaction_cluster_out[order][i].insert(InteractionCluster(atom_tmp,
-                                                                                comb_cell_min,
-                                                                                distmax));
+        } else if (order > 0) {
+
+            // Anharmonic terms
+
+            data_vec.clear();
+
+            // First, we generate all possible combinations of interaction clusters.
+            CombinationWithRepetition<int> g(intlist.begin(), intlist.end(), order + 1);
+            do {
+                std::vector<int> data = g.now();
+
+                list_now[0] = iat;
+                for (j = 0; j < order + 1; ++j) list_now[j + 1] = data[j];
+
+                // Save as a candidate if the cluster satisfies the NBODY-rule.
+                if (satisfy_nbody_rule(order + 2, list_now, order)) {
+                    data_vec.emplace_back(data);
                 }
 
-            } else if (order > 0) {
+            } while (g.next());
 
-                // Anharmonic terms
+            intlist.clear();
 
-                data_vec.clear();
+            int ndata = data_vec.size();
 
-                // First, we generate all possible combinations of interaction clusters.
-                CombinationWithRepetition<int> g(intlist.begin(), intlist.end(), order + 1);
-                do {
-                    std::vector<int> data = g.now();
+            for (idata = 0; idata < ndata; ++idata) {
 
-                    list_now[0] = iat;
-                    for (j = 0; j < order + 1; ++j) list_now[j + 1] = data[j];
+                data_now = data_vec[idata];
 
-                    // Save as a candidate if the cluster satisfies the NBODY-rule.
-                    if (satisfy_nbody_rule(order + 2, list_now, order)) {
-                        data_vec.emplace_back(data);
+                // Uniq the list of atoms in data like as follows:
+                // cubic   term : (i, i) --> (i) x 2
+                // quartic term : (i, i, j) --> (i, j) x (2, 1)
+                intpair_uniq.clear();
+                group_atom.clear();
+                icount = 1;
+
+                for (j = 0; j < order; ++j) {
+                    if (data_now[j] == data_now[j + 1]) {
+                        ++icount;
+                    } else {
+                        group_atom.push_back(icount);
+                        intpair_uniq.push_back(data_now[j]);
+                        icount = 1;
                     }
+                }
+                group_atom.push_back(icount);
+                intpair_uniq.push_back(data_now[order]);
 
-                } while (g.next());
+                pairs_icell.clear();
+                for (j = 0; j < intpair_uniq.size(); ++j) {
+                    jat = intpair_uniq[j];
+                    jkd = kd[jat] - 1;
 
-                intlist.clear();
+                    rc_tmp = rcs[order][ikd][jkd];
+                    cell_vector.clear();
 
-                int ndata = data_vec.size();
-
-                for (idata = 0; idata < ndata; ++idata) {
-
-                    data_now = data_vec[idata];
-
-                    // Uniq the list of atoms in data like as follows:
-                    // cubic   term : (i, i) --> (i) x 2
-                    // quartic term : (i, i, j) --> (i, j) x (2, 1)
-                    intpair_uniq.clear();
-                    group_atom.clear();
-                    icount = 1;
-
-                    for (j = 0; j < order; ++j) {
-                        if (data_now[j] == data_now[j + 1]) {
-                            ++icount;
-                        } else {
-                            group_atom.push_back(icount);
-                            intpair_uniq.push_back(data_now[j]);
-                            icount = 1;
+                    // Loop over the cell images of atom 'jat' and add to the list 
+                    // as a candidate for the interaction cluster.
+                    // The mirror images whose distance is larger than the minimum value
+                    // of the distance(iat, jat) can be added to the cell_vector list.
+                    for (const auto &it : distall[iat][jat]) {
+                        if (exist[it.cell]) {
+                            if (rc_tmp < 0.0 || it.dist <= rc_tmp) {
+                                cell_vector.push_back(it.cell);
+                            }
                         }
                     }
-                    group_atom.push_back(icount);
-                    intpair_uniq.push_back(data_now[order]);
+                    pairs_icell.push_back(cell_vector);
+                }
+
+                accum_tmp.clear();
+                comb_cell.clear();
+                cell_combination(pairs_icell, 0, accum_tmp, comb_cell);
+
+                distance_list.clear();
+                for (j = 0; j < comb_cell.size(); ++j) {
+
+                    cellpair.clear();
+
+                    for (k = 0; k < group_atom.size(); ++k) {
+                        for (ii = 0; ii < group_atom[k]; ++ii) {
+                            cellpair.push_back(comb_cell[j][k]);
+                        }
+                    }
+
+                    dist_vector.clear();
+
+                    for (k = 0; k < cellpair.size(); ++k) {
+                        dist_tmp = distance(x_image[cellpair[k]][data_now[k]], x_image[0][iat]);
+                        dist_vector.push_back(dist_tmp);
+                    }
+
+                    // Flag to check if the distance is smaller than the cutoff radius
+                    isok = true;
+
+                    for (k = 0; k < cellpair.size(); ++k) {
+                        for (ii = k + 1; ii < cellpair.size(); ++ii) {
+                            dist_tmp = distance(x_image[cellpair[k]][data_now[k]],
+                                                x_image[cellpair[ii]][data_now[ii]]);
+                            rc_tmp = rcs[order][kd[data_now[k]] - 1][kd[data_now[ii]] - 1];
+                            if (rc_tmp >= 0.0 && dist_tmp > rc_tmp) {
+                                isok = false;
+                                break;
+                            }
+                            dist_vector.push_back(dist_tmp);
+                        }
+                        if (!isok) break;
+                    }
+                    if (isok) {
+                        // This combination is a candidate of the minimum distance cluster
+                        distance_list.emplace_back(MinDistList(cellpair, dist_vector));
+                    }
+                } // close loop over the mirror image combination
+
+                if (!distance_list.empty()) {
+                    // If the distance_list is not empty, there is a set of mirror images
+                    // that satisfies the condition of the interaction.
 
                     pairs_icell.clear();
                     for (j = 0; j < intpair_uniq.size(); ++j) {
                         jat = intpair_uniq[j];
-                        jkd = kd[jat] - 1;
-
-                        rc_tmp = rcs[order][ikd][jkd];
                         cell_vector.clear();
 
-                        // Loop over the cell images of atom 'jat' and add to the list 
-                        // as a candidate for the interaction cluster.
-                        // The mirror images whose distance is larger than the minimum value
-                        // of the distance(iat, jat) can be added to the cell_vector list.
-                        for (const auto &it : distall[iat][jat]) {
-                            if (exist[it.cell]) {
-                                if (rc_tmp < 0.0 || it.dist <= rc_tmp) {
-                                    cell_vector.push_back(it.cell);
-                                }
-                            }
+                        for (ii = 0; ii < mindist_pairs[iat][jat].size(); ++ii) {
+                            cell_vector.push_back(mindist_pairs[iat][jat][ii].cell);
                         }
                         pairs_icell.push_back(cell_vector);
                     }
 
                     accum_tmp.clear();
                     comb_cell.clear();
+                    comb_cell_atom_center.clear();
                     cell_combination(pairs_icell, 0, accum_tmp, comb_cell);
 
-                    distance_list.clear();
                     for (j = 0; j < comb_cell.size(); ++j) {
-
                         cellpair.clear();
-
                         for (k = 0; k < group_atom.size(); ++k) {
                             for (ii = 0; ii < group_atom[k]; ++ii) {
                                 cellpair.push_back(comb_cell[j][k]);
                             }
                         }
-
-                        dist_vector.clear();
-
-                        for (k = 0; k < cellpair.size(); ++k) {
-                            dist_tmp = distance(x_image[cellpair[k]][data_now[k]], x_image[0][iat]);
-                            dist_vector.push_back(dist_tmp);
-                        }
-
-                        // Flag to check if the distance is smaller than the cutoff radius
-                        isok = true;
-
-                        for (k = 0; k < cellpair.size(); ++k) {
-                            for (ii = k + 1; ii < cellpair.size(); ++ii) {
-                                dist_tmp = distance(x_image[cellpair[k]][data_now[k]],
-                                                    x_image[cellpair[ii]][data_now[ii]]);
-                                rc_tmp = rcs[order][kd[data_now[k]] - 1][kd[data_now[ii]] - 1];
-                                if (rc_tmp >= 0.0 && dist_tmp > rc_tmp) {
-                                    isok = false;
-                                    break;
-                                }
-                                dist_vector.push_back(dist_tmp);
-                            }
-                            if (!isok) break;
-                        }
-                        if (isok) {
-                            // This combination is a candidate of the minimum distance cluster
-                            distance_list.push_back(MinDistList(cellpair, dist_vector));
-                        }
-                    } // close loop over the mirror image combination
-
-                    if (!distance_list.empty()) {
-                        // If the distance_list is not empty, there is a set of mirror images
-                        // that satisfies the condition of the interaction.
-
-                        pairs_icell.clear();
-                        for (j = 0; j < intpair_uniq.size(); ++j) {
-                            jat = intpair_uniq[j];
-                            cell_vector.clear();
-
-                            for (ii = 0; ii < mindist_pairs[iat][jat].size(); ++ii) {
-                                cell_vector.push_back(mindist_pairs[iat][jat][ii].cell);
-                            }
-                            pairs_icell.push_back(cell_vector);
-                        }
-
-                        accum_tmp.clear();
-                        comb_cell.clear();
-                        comb_cell_atom_center.clear();
-                        cell_combination(pairs_icell, 0, accum_tmp, comb_cell);
-
-                        for (j = 0; j < comb_cell.size(); ++j) {
-                            cellpair.clear();
-                            for (k = 0; k < group_atom.size(); ++k) {
-                                for (ii = 0; ii < group_atom[k]; ++ii) {
-                                    cellpair.push_back(comb_cell[j][k]);
-                                }
-                            }
-                            comb_cell_atom_center.push_back(cellpair);
-                        }
-
-                        std::sort(distance_list.begin(), distance_list.end(),
-                                  MinDistList::compare_max_distance);
-                        distmax = *std::max_element(distance_list[0].dist.begin(),
-                                                    distance_list[0].dist.end());
-                        interaction_cluster_out[order][i].insert(InteractionCluster(data_now,
-                                                                                    comb_cell_atom_center,
-                                                                                    distmax));
+                        comb_cell_atom_center.push_back(cellpair);
                     }
+
+                    std::sort(distance_list.begin(), distance_list.end(),
+                              MinDistList::compare_max_distance);
+                    distmax = *std::max_element(distance_list[0].dist.begin(),
+                                                distance_list[0].dist.end());
+                    interaction_cluster_out[i].insert(InteractionCluster(data_now,
+                                                                         comb_cell_atom_center,
+                                                                         distmax));
                 }
             }
         }
-        deallocate(list_now);
-
     }
-}
-
-void Interaction::calc_mindist_clusters2(const int natmin, int *kd, int **map_p2s,
-                                         std::vector<int> **interaction_pair_in,
-                                         std::vector<DistInfo> **mindist_pair_in,
-                                         std::vector<DistInfo> **distance_image,
-                                         double ***x_image,
-                                         int *exist,
-                                         std::set<InteractionCluster> **mindist_cluster_out)
-{
-    std::vector<MinDistList> distance_list;
-
-    // int natmin = symmetry->nat_prim;
-    int i, j, k;
-    int iat, jat;
-    int ikd, jkd;
-    int order;
-    int ii;
-    std::vector<int> intlist;
-
-    double rc_tmp;
-    double dist_tmp;
-    double sum_dist_min, sum_dist;
-    double dist_max;
-
-    std::vector<int> cell_vector;
-    std::vector<double> dist_vector;
-    std::vector<std::vector<int>> pairs_icell, comb_cell, comb_cell_min;
-    std::vector<int> accum_tmp;
-    std::vector<int> atom_tmp, cell_tmp;
-    std::vector<int> intpair_uniq, cellpair;
-    std::vector<int> group_atom;
-
-    int icount;
-    bool isok;
-
-    for (order = 0; order < maxorder; ++order) {
-        for (i = 0; i < natmin; ++i) {
-
-            mindist_cluster_out[order][i].clear();
-            iat = map_p2s[i][0];
-            ikd = kd[iat] - 1;
-
-            intlist.clear();
-            for (std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<int>>>::value_type it :
-                 interaction_pair_in[order][i]) {
-                intlist.push_back(it);
-            }
-            std::sort(intlist.begin(), intlist.end()); // Need to sort here
-
-            if (!intlist.empty()) {
-
-                if (order == 0) {
-                    // For harmonic case, the minimum distance cluster is equivalen to the 
-                    // minimum distance pairs.
-                    for (int ielem : intlist) {
-
-                        comb_cell_min.clear();
-                        atom_tmp.clear();
-
-                        jat = ielem;
-                        atom_tmp.push_back(jat);
-
-                        for (j = 0; j < mindist_pair_in[iat][jat].size(); ++j) {
-                            cell_tmp.clear();
-                            cell_tmp.push_back(mindist_pair_in[iat][jat][j].cell);
-                            comb_cell_min.push_back(cell_tmp);
-                        }
-                        dist_max = mindist_pair_in[iat][jat][0].dist;
-                        mindist_cluster_out[order][i].insert(InteractionCluster(atom_tmp,
-                                                                                    comb_cell_min));
-                    }
-
-                } else if (order > 0) {
-
-                    // For anharmonic cases, the minimum distance cluster is the set of
-                    // cell images having the smallest value for the sum of distance.
-
-                    // Generate all possible combination of atoms from intlist
-                    CombinationWithRepetition<int> g(intlist.begin(), intlist.end(), order + 1);
-                    do {
-                        std::vector<int> data = g.now();
-
-                        // Uniq the list of atoms in data like as follows:
-                        // cubic   term : (i, i) --> (i) x 2
-                        // quartic term : (i, i, j) --> (i, j) x (2, 1)
-                        intpair_uniq.clear();
-                        group_atom.clear();
-                        icount = 1;
-
-                        for (j = 0; j < order; ++j) {
-                            if (data[j] == data[j + 1]) {
-                                ++icount;
-                            } else {
-                                group_atom.push_back(icount);
-                                intpair_uniq.push_back(data[j]);
-                                icount = 1;
-                            }
-                        }
-                        group_atom.push_back(icount);
-                        intpair_uniq.push_back(data[order]);
-
-                        pairs_icell.clear();
-                        for (j = 0; j < intpair_uniq.size(); ++j) {
-                            jat = intpair_uniq[j];
-                            jkd = kd[jat] - 1;
-
-                            rc_tmp = rcs[order][ikd][jkd];
-                            cell_vector.clear();
-
-                            // Loop over the cell images of atom 'jat' and add to the list 
-                            // as a candidate for the minimum distance cluster
-                            for (const auto &it : distance_image[iat][jat]) {
-                                if (exist[it.cell]) {
-                                    if (rc_tmp < 0.0 || it.dist <= rc_tmp) {
-                                        cell_vector.push_back(it.cell);
-                                        // std::cout << " iat = " << std::setw(5) << iat;
-                                        // std::cout << " jat = " << std::setw(5) << jat;
-                                        // std::cout << " cell = " << (*it).cell;
-                                        // std::cout << " dist = " << (*it).dist;
-                                        // std::cout << " rc = " << rc_tmp << std::endl;
-                                    }
-                                }
-                            }
-                            pairs_icell.push_back(cell_vector);
-                        }
-
-                        // Generate all possible combinations of mirror images
-                        accum_tmp.clear();
-                        comb_cell.clear();
-                        cell_combination(pairs_icell, 0, accum_tmp, comb_cell);
-
-                        distance_list.clear();
-
-                        // Loop over the combination of the mirror images and 
-                        // generate the list of atomic distances of all pairs for each combination.
-                        // Add to list only if the distance is smaller than the cutoff radius.
-
-                        for (j = 0; j < comb_cell.size(); ++j) {
-
-                            cellpair.clear();
-
-                            for (k = 0; k < group_atom.size(); ++k) {
-                                for (ii = 0; ii < group_atom[k]; ++ii) {
-                                    cellpair.push_back(comb_cell[j][k]);
-                                }
-                            }
-
-                            dist_vector.clear();
-
-                            for (k = 0; k < cellpair.size(); ++k) {
-                                dist_tmp = distance(x_image[cellpair[k]][data[k]], x_image[0][iat]);
-                                if (dist_tmp > eps15) dist_vector.push_back(dist_tmp);
-                            }
-
-                            // Flag to check if the distance is smaller than the cutoff radius
-                            isok = true;
-
-                            for (k = 0; k < cellpair.size(); ++k) {
-                                for (ii = k + 1; ii < cellpair.size(); ++ii) {
-                                    dist_tmp = distance(x_image[cellpair[k]][data[k]],
-                                                        x_image[cellpair[ii]][data[ii]]);
-                                    rc_tmp = rcs[order][kd[data[k]] - 1][kd[data[ii]] - 1];
-                                    if (rc_tmp >= 0.0 && dist_tmp > rc_tmp) {
-                                        isok = false;
-                                        //                                            break;
-                                    }
-                                    if (dist_tmp > eps15) dist_vector.push_back(dist_tmp);
-                                }
-                            }
-                            if (isok) {
-                                // This combination a candidate for the minimum distance cluster
-                                distance_list.push_back(MinDistList(cellpair, dist_vector));
-                            }
-                        }
-
-                        std::sort(distance_list.begin(), distance_list.end(),
-                                  MinDistList::compare_sum_distance);
-
-                        comb_cell_min.clear();
-
-                        sum_dist_min = 0.0;
-                        dist_max = 0.0;
-                        for (j = 0; j < distance_list[0].dist.size(); ++j) {
-                            sum_dist_min += distance_list[0].dist[j];
-                            dist_max = std::max<double>(dist_max, distance_list[0].dist[j]);
-                        }
-
-                        for (j = 0; j < distance_list.size(); ++j) {
-                            sum_dist = 0.0;
-
-                            for (k = 0; k < distance_list[j].dist.size(); ++k) {
-                                sum_dist += distance_list[j].dist[k];
-                            }
-
-                            // In the following, only pairs having minimum sum of distances
-                            // are stored. 
-                            if (std::abs(sum_dist - sum_dist_min) < eps6) {
-                                comb_cell_min.push_back(distance_list[j].cell);
-                            } else {
-                                break;
-                            }
-                        }
-
-                        if (!comb_cell_min.empty()) {
-                            mindist_cluster_out[order][i].insert(InteractionCluster(data,
-                                                                                        comb_cell_min));
-                        }
-
-                    } while (g.next());
-                }
-            }
-            intlist.clear();
-        }
-    }
+    deallocate(list_now);
 }
 
 

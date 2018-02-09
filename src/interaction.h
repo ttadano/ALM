@@ -160,8 +160,8 @@ namespace ALM_NS
         InteractionCluster();
 
         InteractionCluster(const std::vector<int> atom_in,
-                               const std::vector<std::vector<int>> cell_in,
-                               const double dist_in)
+                           const std::vector<std::vector<int>> cell_in,
+                           const double dist_in)
         {
             for (int i = 0; i < atom_in.size(); ++i) {
                 atom.push_back(atom_in[i]);
@@ -173,7 +173,7 @@ namespace ALM_NS
         }
 
         InteractionCluster(const std::vector<int> atom_in,
-                               const std::vector<std::vector<int>> cell_in)
+                           const std::vector<std::vector<int>> cell_in)
         {
             for (int i = 0; i < atom_in.size(); ++i) {
                 atom.push_back(atom_in[i]);
@@ -254,23 +254,27 @@ namespace ALM_NS
                                            const std::vector<int> &,
                                            std::string *,
                                            std::vector<int> **);
-        //void search_interactions(std::vector<int> **);
-        // bool is_incutoff2(const int, int *, const int, int *kd);
 
         void set_ordername();
         double distance(double *, double *);
         int nbody(const int, const int *);
 
-        void calc_interaction_clusters(const int, const std::vector<int> &, int **,
-                                   std::vector<int> **,
-                                   double ***,
-                                   int *, std::set<InteractionCluster> **);
+        void calc_interaction_clusters(const int,
+                                       const std::vector<int> &,
+                                       int **,
+                                       std::vector<int> **,
+                                       double ***,
+                                       int *,
+                                       std::set<InteractionCluster> **);
 
-        void calc_mindist_clusters2(const int, int *, int **, std::vector<int> **,
-                                    std::vector<DistInfo> **,
-                                    std::vector<DistInfo> **,
-                                    double ***,
-                                    int *, std::set<InteractionCluster> **);
+        void set_interaction_cluster(const int,
+                                     const int,
+                                     const std::vector<int> &,
+                                     int **,
+                                     std::vector<int> *,
+                                     double ***,
+                                     int *,
+                                     std::set<InteractionCluster> *);
 
         void cell_combination(std::vector<std::vector<int>>,
                               int, std::vector<int>,
