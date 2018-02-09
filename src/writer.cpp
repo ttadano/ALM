@@ -189,7 +189,7 @@ void Writer::write_force_constants(ALM *alm)
 
 				for (l = 0; l < order + 2; ++l) {
 					ofs_fcs << std::setw(7)
-						<< alm->fcs->easyvizint(alm->fcs->fc_table[order][m].elems[l]);
+						<< easyvizint(alm->fcs->fc_table[order][m].elems[l]);
 				}
 				ofs_fcs << std::setw(12) << std::setprecision(3)
 					<< std::fixed << distmax << std::endl;
@@ -263,7 +263,7 @@ void Writer::write_force_constants(ALM *alm)
 						<< std::setprecision(5) << std::fixed << alm->fcs->fc_table[order][id].sign;
 					for (k = 0; k < order + 2; ++k) {
 						ofs_fcs << std::setw(6)
-							<< alm->fcs->easyvizint(alm->fcs->fc_table[order][id].elems[k]);
+							<< easyvizint(alm->fcs->fc_table[order][id].elems[k]);
 					}
 					ofs_fcs << std::endl;
 					++id;
@@ -779,4 +779,17 @@ void Writer::write_in_QEformat(ALM *alm)
 	}
 	ofs_hes.close();
 	deallocate(hessian);
+}
+
+std::string Writer::easyvizint(const int n)
+{
+    int atmn;
+    int crdn;
+    atmn = n / 3 + 1;
+    crdn = n % 3;
+    std::string str_crd[3] = { "x", "y", "z" };
+    std::string str_tmp = std::to_string(atmn);
+    str_tmp += str_crd[crdn];
+
+    return str_tmp;
 }

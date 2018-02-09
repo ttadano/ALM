@@ -11,7 +11,6 @@ or http://opensource.org/licenses/mit-license.php for information.
 #include "interaction.h"
 #include "combination.h"
 #include "constants.h"
-#include "error.h"
 #include "fcs.h"
 #include "mathfunctions.h"
 #include "memory.h"
@@ -23,7 +22,6 @@ or http://opensource.org/licenses/mit-license.php for information.
 #include <vector>
 #include <algorithm>
 #include <set>
-#include <boost/lexical_cast.hpp>
 #include <cmath>
 
 using namespace ALM_NS;

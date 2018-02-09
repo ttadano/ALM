@@ -11,13 +11,11 @@
 
 #pragma once
 
-//#include "pointers.h"
+#include "alm.h"
+#include "interaction.h"
 #include <vector>
 #include <set>
 #include <algorithm>
-#include "symmetry.h"
-#include "interaction.h"
-#include "alm.h"
 
 namespace ALM_NS
 {
@@ -83,7 +81,6 @@ namespace ALM_NS
         std::vector<FcProperty> *fc_table; // all force constants
         std::vector<FcProperty> *fc_zeros;
 
-        std::string easyvizint(const int);
         void get_xyzcomponent(int, int **);
         void sort_tail(const int, int *);
 

@@ -8,22 +8,23 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include "fcs.h"
+#include "alm.h"
+#include "constants.h"
+#include "error.h"
+#include "interaction.h"
+#include "mathfunctions.h"
+#include "memory.h"
+#include "symmetry.h"
+#include "system.h"
+#include "timer.h"
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include <cmath>
 #include "../external/combination.hpp"
 #include <boost/lexical_cast.hpp>
-#include "interaction.h"
-#include "error.h"
-#include "memory.h"
-#include "fcs.h"
-#include "symmetry.h"
-#include "system.h"
-#include "timer.h"
-#include "constants.h"
-#include "alm.h"
-#include "mathfunctions.h"
+
 
 using namespace ALM_NS;
 
@@ -481,17 +482,3 @@ void Fcs::sort_tail(const int n, int *arr)
     deallocate(ind_tmp);
 }
 
-std::string Fcs::easyvizint(const int n)
-{
-    int atmn;
-    int crdn;
-    atmn = n / 3 + 1;
-    crdn = n % 3;
-    std::string str_crd[3] = {"x", "y", "z"};
-    std::string str_tmp;
-
-    str_tmp = boost::lexical_cast<std::string>(atmn);
-    str_tmp += str_crd[crdn];
-
-    return str_tmp;
-}
