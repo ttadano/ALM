@@ -50,6 +50,17 @@ namespace ALM_NS
             return std::lexicographical_compare(iarray.begin(), iarray.end(),
                                                 a.iarray.begin(), a.iarray.end());
         }
+
+        bool operator==(const IntList &a) const
+        {
+            int n = iarray.size();
+            int n_ = a.iarray.size();
+            if (n != n_) return false;
+            for (int i = 0; i < n; ++i) {
+                if (iarray[i] != a.iarray[i]) return false;
+            }
+            return true;
+        }
     };
 
 
@@ -203,7 +214,8 @@ namespace ALM_NS
         std::vector<std::string> str_order;
         std::set<IntList> *cluster_list;
         std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
-        std::set<InteractionCluster> **interaction_cluster; // Interaction many-body clusters with mirrow image information
+        std::set<InteractionCluster> **interaction_cluster;
+        // Interaction many-body clusters with mirrow image information
 
         void init(ALM *);
 
@@ -284,5 +296,22 @@ namespace ALM_NS
                             int **,
                             std::set<IntList> *,
                             std::set<InteractionCluster> **);
+    };
+}
+
+namespace std
+{
+    template <>
+    struct hash<ALM_NS::IntList>
+    {
+        std::size_t operator ()(ALM_NS::IntList const &obj) const
+        {
+            hash<int> hasher;
+            size_t seed = 0;
+            for (auto i : obj.iarray) {
+                seed ^= hasher(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            }
+            return seed;
+        }
     };
 }

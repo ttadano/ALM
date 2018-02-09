@@ -160,7 +160,7 @@ void Constraint::setup(ALM *alm)
                                               const_symmetry);
 
     for (int order = 0; order < alm->interaction->maxorder; ++order) {
-        if (const_symmetry[order].size() > 0) extra_constraint_from_symmetry = true;
+        if (!const_symmetry[order].empty()) extra_constraint_from_symmetry = true;
     }
 
     exist_constraint
@@ -248,7 +248,7 @@ void Constraint::setup(ALM *alm)
                 const_self[order].push_back(ConstraintClass(nparam, arr_tmp));
             }
 
-            if (const_rotation_self[order].size() > 0) {
+            if (!const_rotation_self[order].empty()) {
                 for (const auto &e : const_rotation_self[order]) {
                     for (i = 0; i < nparam; ++i) {
                         arr_tmp[i] = e.w_const[i];
@@ -258,7 +258,7 @@ void Constraint::setup(ALM *alm)
                 remove_redundant_rows(nparam, const_self[order], eps8);
             }
 
-            if (const_symmetry[order].size() > 0) {
+            if (!const_symmetry[order].empty()) {
                 for (const auto &e : const_symmetry[order]) {
                     for (i = 0; i < nparam; ++i) {
                         arr_tmp[i] = e.w_const[i];
@@ -670,10 +670,9 @@ void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symme
         if (has_constraint_from_symm) {
             std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
         }
-        get_constraint_symmetry(system, symmetry, fcs,
-                                order, interaction->cluster_list[order],
-                                symmetry->SymmData, "Cartesian",
-                                fcs->fc_table[order], fcs->nequiv[order],
+        fcs->get_constraint_symmetry(system->supercell.number_of_atoms, symmetry, fcs,
+                                order, interaction->cluster_list[order], "Cartesian",
+                                fcs->fc_table[order], fcs->nequiv[order].size(),
                                 const_out[order]);
         if (has_constraint_from_symm) {
             std::cout << " done." << std::endl;
@@ -684,211 +683,6 @@ void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symme
     }
 }
 
-
-void Constraint::get_constraint_symmetry(System *system,
-                                         Symmetry *symmetry,
-                                         Fcs *fcs,
-                                         const int order, const std::set<IntList> pairs,
-                                         const std::vector<SymmetryOperation> symmop,
-                                         const std::string basis,
-                                         const std::vector<FcProperty> fc_table,
-                                         const std::vector<int> nequiv,
-                                         std::vector<ConstraintClass> &const_out)
-{
-    // Create constraint matrices arising from the crystal symmetry.
-
-    int i, j;
-    unsigned int isym;
-    int ixyz, nxyz;
-    int *index_tmp;
-    int **xyzcomponent;
-    int nparams;
-    int counter;
-    int nsym_in_use;
-    double *arr_constraint;
-    bool has_constraint_from_symm = false;
-    std::unordered_set<FcProperty> list_found;
-    std::vector<std::vector<double>> const_mat;
-    int **map_sym;
-    double ***rotation;
-
-    if (order < 0) return;
-
-    int nsym = symmop.size();
-    int natmin = symmetry->nat_prim;
-    int nat = system->supercell.number_of_atoms;
-    nparams = nequiv.size();
-
-    if (nparams == 0) return;
-
-    allocate(rotation, nsym, 3, 3);
-    allocate(map_sym, nat, nsym);
-    allocate(index_tmp, order + 2);
-    nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 2));
-    allocate(xyzcomponent, nxyz, order + 2);
-    fcs->get_xyzcomponent(order + 2, xyzcomponent);
-    nsym_in_use = 0;
-    counter = 0;
-    const_mat.clear();
-    int nfcs = fc_table.size();
-
-    if (basis == "Cartesian") {
-
-        for (auto it = symmop.begin(); it != symmop.end(); ++it) {
-
-            if (!(*it).compatible_with_cartesian) {
-
-                for (i = 0; i < 3; ++i) {
-                    for (j = 0; j < 3; ++j) {
-                        rotation[nsym_in_use][i][j] = (*it).rotation_cart[i][j];
-                    }
-                }
-                for (i = 0; i < nat; ++i) {
-                    map_sym[i][nsym_in_use] = symmetry->map_sym[i][counter];
-                }
-                ++nsym_in_use;
-            }
-            ++counter;
-        }
-
-    } else if (basis == "Lattice") {
-
-        for (auto it = symmop.begin(); it != symmop.end(); ++it) {
-            if (!(*it).compatible_with_lattice) {
-                for (i = 0; i < 3; ++i) {
-                    for (j = 0; j < 3; ++j) {
-                        rotation[nsym_in_use][i][j]
-                            = static_cast<double>((*it).rotation[i][j]);
-                    }
-                }
-                for (i = 0; i < nat; ++i) {
-                    map_sym[i][nsym_in_use] = symmetry->map_sym[i][counter];
-                }
-                ++nsym_in_use;
-            }
-            ++counter;
-        }
-
-
-    } else {
-        deallocate(rotation);
-        deallocate(map_sym);
-        exit("get_constraint_symmetry", "Invalid basis input");
-    }
-
-    // Generate temporary list of parameters
-    list_found.clear();
-    for (auto p = fc_table.cbegin(); p != fc_table.cend(); ++p) {
-        for (i = 0; i < order + 2; ++i) index_tmp[i] = (*p).elems[i];
-        list_found.insert(FcProperty(order + 2, (*p).sign,
-                                     index_tmp, (*p).mother));
-    }
-
-
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-    {
-        int j;
-        int i_prim;
-        int loc_nonzero;
-        int *ind;
-        int *atm_index, *atm_index_symm;
-        int *xyz_index;
-        double c_tmp;
-
-        std::unordered_set<FcProperty>::iterator iter_found;
-        std::vector<double> const_now_omp;
-        std::vector<std::vector<double>> const_omp;
-
-        allocate(ind, order + 2);
-        allocate(atm_index, order + 2);
-        allocate(atm_index_symm, order + 2);
-        allocate(xyz_index, order + 2);
-
-        const_omp.clear();
-        const_now_omp.resize(nparams);
-
-#ifdef _OPENMP
-#pragma omp for private(i, isym, ixyz), schedule(static)
-#endif
-        for (int ii = 0; ii < nfcs; ++ii) {
-            FcProperty list_tmp = fc_table[ii];
-
-            for (i = 0; i < order + 2; ++i) {
-                atm_index[i] = list_tmp.elems[i] / 3;
-                xyz_index[i] = list_tmp.elems[i] % 3;
-            }
-
-            for (isym = 0; isym < nsym_in_use; ++isym) {
-
-                for (i = 0; i < order + 2; ++i)
-                    atm_index_symm[i] = map_sym[atm_index[i]][isym];
-                if (!fcs->is_inprim(order + 2, atm_index_symm, natmin, symmetry->map_p2s)) continue;
-
-                for (i = 0; i < nparams; ++i) const_now_omp[i] = 0.0;
-
-                const_now_omp[list_tmp.mother] = -list_tmp.sign;
-
-                for (ixyz = 0; ixyz < nxyz; ++ixyz) {
-                    for (i = 0; i < order + 2; ++i)
-                        ind[i] = 3 * atm_index_symm[i] + xyzcomponent[ixyz][i];
-
-                    i_prim = fcs->min_inprim(order + 2, ind, nat, natmin, symmetry->map_p2s);
-                    std::swap(ind[0], ind[i_prim]);
-                    fcs->sort_tail(order + 2, ind);
-
-                    iter_found = list_found.find(FcProperty(order + 2, 1.0, ind, 1));
-                    if (iter_found != list_found.end()) {
-                        c_tmp = fcs->coef_sym(order + 2, rotation[isym], xyz_index, xyzcomponent[ixyz]);
-                        const_now_omp[(*iter_found).mother] += (*iter_found).sign * c_tmp;
-                    }
-                }
-                if (!is_allzero(const_now_omp, eps8, loc_nonzero)) {
-                    if (const_now_omp[loc_nonzero] < 0.0) {
-                        for (j = 0; j < nparams; ++j) const_now_omp[j] *= -1.0;
-                    }
-                    const_omp.push_back(const_now_omp);
-                }
-
-            } // close isym loop
-
-            if (const_omp.size() > nparams) rref(const_omp, tolerance_constraint);
-
-        } // close ii loop
-
-        deallocate(ind);
-        deallocate(atm_index);
-        deallocate(atm_index_symm);
-        deallocate(xyz_index);
-
-#pragma omp critical
-        {
-            for (auto it = const_omp.begin(); it != const_omp.end(); ++it) {
-                const_mat.push_back(*it);
-            }
-        }
-        const_omp.clear();
-    } // close openmp region
-
-    allocate(arr_constraint, nparams);
-    for (auto it = const_mat.crbegin(); it != const_mat.crend(); ++it) {
-        for (i = 0; i < nparams; ++i) {
-            arr_constraint[i] = (*it)[i];
-        }
-        const_out.push_back(ConstraintClass(nparams,
-                                            arr_constraint));
-    }
-    const_mat.clear();
-
-    deallocate(xyzcomponent);
-    deallocate(arr_constraint);
-    deallocate(index_tmp);
-    deallocate(rotation);
-    deallocate(map_sym);
-
-    remove_redundant_rows(nparams, const_out, tolerance_constraint);
-}
 
 
 void Constraint::generate_translational_constraint(System *system,
@@ -1126,7 +920,7 @@ void Constraint::get_constraint_translation(System *system,
                                     }
                                     intarr_copy_omp[order + 1] = jat + jcrd;
 
-                                    fcs->sort_tail(order + 2, intarr_copy_omp);
+                                    sort_tail(order + 2, intarr_copy_omp);
 
                                     iter_found = list_found.find(FcProperty(order + 2, 1.0,
                                                                             intarr_copy_omp, 1));
@@ -1468,7 +1262,7 @@ void Constraint::rotational_invariance(System *system,
 
                                             iter_cluster = interaction->interaction_cluster[order][i].find(
                                                 InteractionCluster(atom_tmp,
-                                                                       cell_dummy));
+                                                                   cell_dummy));
                                             if (iter_cluster != interaction->interaction_cluster[order][i].end()) {
 
                                                 int iloc = -1;
@@ -1506,7 +1300,7 @@ void Constraint::rotational_invariance(System *system,
                                             interaction_index[order + 1] = 3 * jat + mu;
                                             for (j = 0; j < order + 2; ++j) interaction_tmp[j] = interaction_index[j];
 
-                                            fcs->sort_tail(order + 2, interaction_tmp);
+                                            sort_tail(order + 2, interaction_tmp);
 
                                             iter_found = list_found.
                                                 find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
@@ -1520,7 +1314,7 @@ void Constraint::rotational_invariance(System *system,
                                             interaction_index[order + 1] = 3 * jat + nu;
                                             for (j = 0; j < order + 2; ++j) interaction_tmp[j] = interaction_index[j];
 
-                                            fcs->sort_tail(order + 2, interaction_tmp);
+                                            sort_tail(order + 2, interaction_tmp);
 
                                             iter_found = list_found.
                                                 find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
@@ -1551,7 +1345,7 @@ void Constraint::rotational_invariance(System *system,
 
                                                 if (levi_factor == 0) continue;
 
-                                                fcs->sort_tail(order + 1, interaction_tmp);
+                                                sort_tail(order + 1, interaction_tmp);
 
                                                 iter_found = list_found_last.find(FcProperty(order + 1, 1.0,
                                                                                              interaction_tmp, 1));
@@ -1643,7 +1437,7 @@ void Constraint::rotational_invariance(System *system,
 
                                             if (levi_factor == 0) continue;
 
-                                            fcs->sort_tail(order + 2, interaction_tmp);
+                                            sort_tail(order + 2, interaction_tmp);
 
                                             iter_found = list_found.find(FcProperty(order + 2, 1.0,
                                                                                     interaction_tmp, 1));
@@ -1755,39 +1549,6 @@ int Constraint::levi_civita(const int i, const int j, const int k)
     return epsilon;
 }
 
-bool Constraint::is_allzero(const int n, const double *arr, const int nshift)
-{
-    for (int i = nshift; i < n; ++i) {
-        if (std::abs(arr[i]) > eps10) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool Constraint::is_allzero(const std::vector<int> vec, int &loc)
-{
-    loc = -1;
-    for (int i = 0; i < vec.size(); ++i) {
-        if (std::abs(vec[i]) > 0) {
-            loc = i;
-            return false;
-        }
-    }
-    return true;
-}
-
-bool Constraint::is_allzero(const std::vector<double> vec, const double tol, int &loc)
-{
-    loc = -1;
-    for (int i = 0; i < vec.size(); ++i) {
-        if (std::abs(vec[i]) > tol) {
-            loc = i;
-            return false;
-        }
-    }
-    return true;
-}
 
 void Constraint::setup_rotation_axis(bool flag[3][3])
 {
@@ -1836,135 +1597,6 @@ void Constraint::setup_rotation_axis(bool flag[3][3])
     }
 }
 
-
-void Constraint::rref(const int nrows,
-                      const int ncols,
-                      double **mat,
-                      int &nrank,
-                      const double tolerance)
-{
-    // Return the reduced row echelon form (rref) of matrix mat.
-    // In addition, rank of the matrix is estimated.
-
-    int irow, icol, jrow, jcol;
-    int pivot;
-    double tmp;
-
-    nrank = 0;
-
-    icol = 0;
-
-    for (irow = 0; irow < nrows; ++irow) {
-
-        pivot = irow;
-
-        while (std::abs(mat[pivot][icol]) < tolerance) {
-            ++pivot;
-
-            if (pivot == nrows) {
-                pivot = irow;
-                ++icol;
-
-                if (icol == ncols) break;
-            }
-        }
-
-        if (icol == ncols) break;
-
-        if (std::abs(mat[pivot][icol]) > tolerance) ++nrank;
-
-        if (pivot != irow) {
-            //#pragma omp parallel for private(tmp)
-            for (jcol = icol; jcol < ncols; ++jcol) {
-                tmp = mat[pivot][jcol];
-                mat[pivot][jcol] = mat[irow][jcol];
-                mat[irow][jcol] = tmp;
-            }
-        }
-
-        tmp = mat[irow][icol];
-        tmp = 1.0 / tmp;
-        //#pragma omp parallel for
-        for (jcol = icol; jcol < ncols; ++jcol) {
-            mat[irow][jcol] *= tmp;
-        }
-
-        for (jrow = 0; jrow < nrows; ++jrow) {
-            if (jrow == irow) continue;
-
-            tmp = mat[jrow][icol];
-            //#pragma omp parallel for
-            for (jcol = icol; jcol < ncols; ++jcol) {
-                mat[jrow][jcol] -= tmp * mat[irow][jcol];
-            }
-        }
-    }
-}
-
-
-void Constraint::rref(std::vector<std::vector<double>> &mat,
-                      const double tolerance)
-{
-    // Return the reduced row echelon form (rref) of matrix mat.
-    // In addition, rank of the matrix is estimated.
-
-    int irow, icol, jrow, jcol;
-    int pivot;
-    double tmp;
-
-    int nrank = 0;
-
-    icol = 0;
-
-    int nrows = mat.size();
-    int ncols = mat[0].size();
-
-    for (irow = 0; irow < nrows; ++irow) {
-
-        pivot = irow;
-
-        while (std::abs(mat[pivot][icol]) < tolerance) {
-            ++pivot;
-
-            if (pivot == nrows) {
-                pivot = irow;
-                ++icol;
-
-                if (icol == ncols) break;
-            }
-        }
-
-        if (icol == ncols) break;
-
-        if (std::abs(mat[pivot][icol]) > tolerance) ++nrank;
-
-        if (pivot != irow) {
-            for (jcol = icol; jcol < ncols; ++jcol) {
-                tmp = mat[pivot][jcol];
-                mat[pivot][jcol] = mat[irow][jcol];
-                mat[irow][jcol] = tmp;
-            }
-        }
-
-        tmp = mat[irow][icol];
-        tmp = 1.0 / tmp;
-        for (jcol = icol; jcol < ncols; ++jcol) {
-            mat[irow][jcol] *= tmp;
-        }
-
-        for (jrow = 0; jrow < nrows; ++jrow) {
-            if (jrow == irow) continue;
-
-            tmp = mat[jrow][icol];
-            for (jcol = icol; jcol < ncols; ++jcol) {
-                mat[jrow][jcol] -= tmp * mat[irow][jcol];
-            }
-        }
-    }
-
-    mat.erase(mat.begin() + nrank, mat.end());
-    mat.shrink_to_fit();
-}
 
 
 void Constraint::load_reference_system_xml(Symmetry *symmetry,
@@ -2091,4 +1723,40 @@ void Constraint::load_reference_system_xml(Symmetry *symmetry,
     deallocate(fcs_ref);
     deallocate(ind);
     list_found.clear();
+}
+
+
+
+bool Constraint::is_allzero(const int n, const double *arr, const int nshift)
+{
+    for (int i = nshift; i < n; ++i) {
+        if (std::abs(arr[i]) > eps10) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Constraint::is_allzero(const std::vector<int> &vec, int &loc)
+{
+    loc = -1;
+    for (int i = 0; i < vec.size(); ++i) {
+        if (std::abs(vec[i]) > 0) {
+            loc = i;
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Constraint::is_allzero(const std::vector<double> &vec, const double tol, int &loc)
+{
+    loc = -1;
+    for (int i = 0; i < vec.size(); ++i) {
+        if (std::abs(vec[i]) > tol) {
+            loc = i;
+            return false;
+        }
+    }
+    return true;
 }

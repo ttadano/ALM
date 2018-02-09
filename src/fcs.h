@@ -12,6 +12,7 @@
 #pragma once
 
 #include "alm.h"
+#include "constraint.h"
 #include "interaction.h"
 #include <vector>
 #include <set>
@@ -79,29 +80,44 @@ namespace ALM_NS
 
         std::vector<int> *nequiv; // stores duplicate number of irreducible force constants
         std::vector<FcProperty> *fc_table; // all force constants
-        std::vector<FcProperty> *fc_zeros;
+        std::vector<FcProperty> *fc_zeros; // zero force constants (due to space group symm.)
 
         void get_xyzcomponent(int, int **);
-        void sort_tail(const int, int *);
-
-        bool is_inprim(const int, const int *, const int, int **);
-        bool is_inprim(const int, const int, int **);
-        int min_inprim(const int, const int *, const int, const int, int **);
-        double coef_sym(const int, double **, const int *, const int *);
+        bool is_inprim(const int,
+                       const int *,
+                       const int,
+                       int **);
+        int get_minimum_index_in_primitive(const int,
+                                           const int *,
+                                           const int,
+                                           const int,
+                                           int **);
+        double coef_sym(const int,
+                        double **,
+                        const int *,
+                        const int *);
 
         void generate_force_constant_table(const int, const int,
-                                           const std::set<IntList>,
+                                           const std::set<IntList> &,
                                            Symmetry *,
-                                           std::string,
+                                           const std::string,
                                            std::vector<FcProperty> &,
                                            std::vector<int> &,
                                            std::vector<FcProperty> &,
                                            const bool);
 
+        void get_constraint_symmetry(const int, Symmetry *, Fcs *,
+                                     const int, const std::set<IntList> &,
+                                     const std::string,
+                                     const std::vector<FcProperty> &,
+                                     const int,
+                                     std::vector<ConstraintClass> &);
+
     private:
         void set_default_variables();
         void deallocate_variables();
         bool is_ascending(const int, const int *);
+        bool is_inprim(const int, const int, int **);
     };
 }
 

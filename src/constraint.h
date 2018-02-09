@@ -10,16 +10,14 @@
 
 #pragma once
 
+#include "alm.h"
+#include "constants.h"
+#include "interaction.h"
+#include "fcs.h"
+#include <boost/bimap.hpp>
 #include <vector>
 #include <set>
 #include <string>
-#include "alm.h"
-//#include "pointers.h"
-#include "constants.h"
-#include "interaction.h"
-#include "symmetry.h"
-#include "fcs.h"
-#include <boost/bimap.hpp>
 
 namespace ALM_NS
 {
@@ -121,13 +119,6 @@ namespace ALM_NS
         std::vector<ConstraintTypeRelate> *const_relate_rotation;
         boost::bimap<int, int> *index_bimap;
 
-        void get_constraint_symmetry(System *, Symmetry *, Fcs *,
-                                     const int, const std::set<IntList>,
-                                     const std::vector<SymmetryOperation>,
-                                     const std::string,
-                                     const std::vector<FcProperty>,
-                                     const std::vector<int>,
-                                     std::vector<ConstraintClass> &);
 
         void get_constraint_translation(System *, Symmetry *, Interaction *, Fcs *,
                                         const int, const std::set<IntList>,
@@ -163,14 +154,14 @@ namespace ALM_NS
 
         void setup_rotation_axis(bool [3][3]);
         bool is_allzero(const int, const double *, const int nshift = 0);
-        bool is_allzero(const std::vector<int>, int &);
-        bool is_allzero(const std::vector<double>, const double, int &);
+        bool is_allzero(const std::vector<int>&, int &);
+        bool is_allzero(const std::vector<double>&, const double, int &);
 
         void remove_redundant_rows(const int, std::vector<ConstraintClass> &,
                                    const double tolerance = eps12);
 
-        void rref(int, int, double **, int &, double tolerance = eps12);
-        void rref(std::vector<std::vector<double>> &, const double tolerance = eps12);
+        //  void rref(int, int, double **, int &, double tolerance = eps12);
+        //  void rref(std::vector<std::vector<double>> &, const double tolerance = eps12);
 
         void generate_symmetry_constraint_in_cartesian(System *, Symmetry *,
                                                        Interaction *,
@@ -183,11 +174,9 @@ namespace ALM_NS
                                                std::vector<ConstraintClass> *);
 
         void load_reference_system_xml(Symmetry *, Fcs *, std::string, const int, double *);
-
     };
 
-    extern "C"
-    {
-        void dgetrf_(int *m, int *n, double *a, int *lda, int *ipiv, int *info);
+    extern "C" {
+    void dgetrf_(int *m, int *n, double *a, int *lda, int *ipiv, int *info);
     }
 }
