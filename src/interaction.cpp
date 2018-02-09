@@ -51,8 +51,63 @@ void Interaction::init(ALM *alm)
     std::cout << " INTERACTION" << std::endl;
     std::cout << " ===========" << std::endl << std::endl;
 
-    allocate(str_order, maxorder);
     set_ordername();
+
+    if (distall) {
+        deallocate(distall);
+    }
+    allocate(distall, nat, nat);
+
+    if (mindist_pairs) {
+        deallocate(mindist_pairs);
+    }
+    allocate(mindist_pairs, nat, nat);
+
+    if (interaction_pair) {
+        deallocate(interaction_pair);
+    }
+    allocate(interaction_pair, maxorder, alm->symmetry->nat_prim);
+
+    if (interaction_cluster) {
+        deallocate(interaction_cluster);
+    }
+    allocate(interaction_cluster, maxorder, alm->symmetry->nat_prim);
+
+    if (pairs) {
+        deallocate(pairs);
+    }
+    allocate(pairs, maxorder);
+
+    get_pairs_of_minimum_distance(nat,
+                                  alm->system->x_image,
+                                  alm->system->exist_image,
+                                  distall,
+                                  mindist_pairs);
+
+    set_interaction_by_cutoff(alm->system->supercell.number_of_atoms,
+                              alm->system->supercell.kind,
+                              alm->symmetry->nat_prim,
+                              alm->symmetry->map_p2s,
+                              rcs,
+                              interaction_pair);
+
+
+    calc_mindist_clusters(alm->symmetry->nat_prim,
+                          alm->system->supercell.kind,
+                          alm->symmetry->map_p2s,
+                          interaction_pair,
+                          mindist_pairs,
+                          distall,
+                          alm->system->x_image,
+                          alm->system->exist_image,
+                          interaction_cluster);
+
+    generate_pairs(alm->system->supercell.number_of_atoms,
+                   alm->symmetry->nat_prim,
+                   alm->symmetry->map_p2s,
+                   pairs,
+                   interaction_cluster);
+
 
     std::cout << "  +++ Cutoff Radii Matrix in Bohr Unit (NKD x NKD matrix) +++" << std::endl;
 
@@ -71,37 +126,11 @@ void Interaction::init(ALM *alm)
         std::cout << std::endl;
     }
 
-
-    if (distall) {
-        deallocate(distall);
-    }
-    allocate(distall, nat, nat);
-
-    if (mindist_pairs) {
-        deallocate(mindist_pairs);
-    }
-    allocate(mindist_pairs, nat, nat);
-
-    if (interaction_pair) {
-        deallocate(interaction_pair);
-    }
-    allocate(interaction_pair, maxorder, alm->symmetry->nat_prim);
-
-    if (mindist_cluster) {
-        deallocate(mindist_cluster);
-    }
-    allocate(mindist_cluster, maxorder, alm->symmetry->nat_prim);
-
-    if (pairs) {
-        deallocate(pairs);
-    }
-    allocate(pairs, maxorder);
-
-    get_pairs_of_minimum_distance(nat,
-                                  alm->system->x_image,
-                                  alm->system->exist_image,
-                                  distall,
-                                  mindist_pairs);
+    print_interaction_information(alm->symmetry->nat_prim,
+                                  alm->symmetry->map_p2s,
+                                  alm->system->supercell.kind,
+                                  alm->system->kdname,
+                                  interaction_pair);
 
     print_neighborlist(alm->system->supercell.number_of_atoms,
                        alm->symmetry->nat_prim,
@@ -109,31 +138,6 @@ void Interaction::init(ALM *alm)
                        alm->system->supercell.kind,
                        alm->system->kdname,
                        mindist_pairs);
-
-    //search_interactions(interaction_pair);
-    set_interaction_by_cutoff(alm);
-    print_interaction_information(alm->symmetry->nat_prim,
-                                  alm->symmetry->map_p2s,
-                                  alm->system->supercell.kind,
-                                  alm->system->kdname,
-                                  interaction_pair);
-
-    calc_mindist_clusters(alm->symmetry->nat_prim,
-                          alm->system->supercell.kind,
-                          alm->symmetry->map_p2s,
-                          interaction_pair,
-                          mindist_pairs,
-                          distall,
-                          alm->system->x_image,
-                          alm->system->exist_image,
-                          mindist_cluster);
-
-    generate_pairs(alm->system->supercell.number_of_atoms,
-                   alm->symmetry->nat_prim,
-                   alm->interaction->str_order,
-                   alm->symmetry->map_p2s,
-                   pairs,
-                   mindist_cluster);
 
     alm->timer->print_elapsed();
     std::cout << " -------------------------------------------------------------------" << std::endl;
@@ -143,28 +147,23 @@ void Interaction::init(ALM *alm)
 
 void Interaction::generate_pairs(const int nat,
                                  const int natmin,
-                                 std::string *str_order,
                                  int **map_p2s,
                                  std::set<IntList> *pair_out,
                                  std::set<MinimumDistanceCluster> **mindist_cluster)
 {
     int i, j;
     int iat;
-    int order;
-    //int natmin = symmetry->nat_prim;
-    //int nat = system->supercell.number_of_atoms;
-
     int *pair_tmp;
 
-    for (order = 0; order < maxorder; ++order) {
+    for (int order = 0; order < maxorder; ++order) {
 
         pair_out[order].clear();
 
-        if (order + 2 > nbody_include[order]) {
-            std::cout << "  For " << std::setw(8) << str_order[order] << ", ";
-            std::cout << "interactions related to more than" << std::setw(2) << nbody_include[order];
-            std::cout << " atoms will be neglected." << std::endl;
-        }
+        //if (order + 2 > nbody_include[order]) {
+        //    std::cout << "  For " << std::setw(8) << str_order[order] << ", ";
+        //    std::cout << "interactions related to more than" << std::setw(2) << nbody_include[order];
+        //    std::cout << " atoms will be neglected." << std::endl;
+        //}
 
         allocate(pair_tmp, order + 2);
 
@@ -183,7 +182,7 @@ void Interaction::generate_pairs(const int nat,
                 insort(order + 2, pair_tmp);
 
                 // Ignore many-body case 
-                if (nbody(order + 2, pair_tmp) > nbody_include[order]) continue;
+                if (!satisfy_nbody_rule(order + 2, pair_tmp, order)) continue;
                 pair_out[order].insert(IntList(order + 2, pair_tmp));
             }
         }
@@ -194,24 +193,17 @@ void Interaction::generate_pairs(const int nat,
 void Interaction::set_default_variables()
 {
     maxorder = 0;
-
     nbody_include = nullptr;
-
-    maxorder = 0;
     rcs = nullptr;
-    str_order = nullptr;
     distall = nullptr;
     mindist_pairs = nullptr;
     pairs = nullptr;
     interaction_pair = nullptr;
-    mindist_cluster = nullptr;
+    interaction_cluster = nullptr;
 }
 
 void Interaction::deallocate_variables()
 {
-    if (str_order) {
-        deallocate(str_order);
-    }
     if (pairs) {
         deallocate(pairs);
     }
@@ -221,8 +213,8 @@ void Interaction::deallocate_variables()
     if (interaction_pair) {
         deallocate(interaction_pair);
     }
-    if (mindist_cluster) {
-        deallocate(mindist_cluster);
+    if (interaction_cluster) {
+        deallocate(interaction_cluster);
     }
     if (distall) {
         deallocate(distall);
@@ -248,7 +240,7 @@ void Interaction::get_pairs_of_minimum_distance(int nat,
     // Calculate the minimum distance between atom i and j 
     // under the periodic boundary conditions
     //
-    int icell = 0;
+    int icell;
     int i, j, k;
     double dist_tmp;
     double vec[3];
@@ -267,7 +259,7 @@ void Interaction::get_pairs_of_minimum_distance(int nat,
 
                     for (k = 0; k < 3; ++k) vec[k] = xc_in[icell][j][k] - xc_in[0][i][k];
 
-                    distall[i][j].push_back(DistInfo(icell, dist_tmp, vec));
+                    distall[i][j].emplace_back(DistInfo(icell, dist_tmp, vec));
                 }
             }
             std::sort(distall[i][j].begin(), distall[i][j].end());
@@ -287,7 +279,7 @@ void Interaction::get_pairs_of_minimum_distance(int nat,
                 // the mirror images with equal distances are found correctly.
                 // If this fails, the phonon dispersion would be incorrect.
                 if (std::abs((*it).dist - dist_min) < 1.0e-3) {
-                    mindist_pairs[i][j].push_back(DistInfo(*it));
+                    mindist_pairs[i][j].emplace_back(DistInfo(*it));
                 }
             }
         }
@@ -306,7 +298,6 @@ void Interaction::print_neighborlist(const int nat,
     //
     int i, j, k;
     int iat;
-    //int nat = system->supercell.number_of_atoms;
     int icount;
 
     double dist_tmp;
@@ -320,7 +311,7 @@ void Interaction::print_neighborlist(const int nat,
         iat = map_p2s[i][0];
 
         for (j = 0; j < nat; ++j) {
-            neighborlist[i].push_back(DistList(j, mindist[iat][j][0].dist));
+            neighborlist[i].emplace_back(DistList(j, mindist[iat][j][0].dist));
         }
         std::sort(neighborlist[i].begin(), neighborlist[i].end());
     }
@@ -452,18 +443,20 @@ void Interaction::generate_interaction_information_by_cutoff(const int nat,
     }
 }
 
-void Interaction::set_interaction_by_cutoff(ALM *alm)
+void Interaction::set_interaction_by_cutoff(const unsigned int nat,
+                                            const std::vector<int> &kd,
+                                            const unsigned int nat_prim,
+                                            int **map_p2s_in,
+                                            double ***rcs,
+                                            std::vector<int> **interaction_pair_out)
 {
-    // This function should be improved so that ALMCore class can be removed.
-    int order;
-
-    for (order = 0; order < maxorder; ++order) {
-        generate_interaction_information_by_cutoff(alm->system->supercell.number_of_atoms,
-                                                   alm->symmetry->nat_prim,
-                                                   alm->system->supercell.kind,
-                                                   alm->symmetry->map_p2s,
-                                                   alm->interaction->rcs[order],
-                                                   alm->interaction->interaction_pair[order]);
+    for (int order = 0; order < maxorder; ++order) {
+        generate_interaction_information_by_cutoff(nat,
+                                                   nat_prim,
+                                                   kd,
+                                                   map_p2s_in,
+                                                   rcs[order],
+                                                   interaction_pair_out[order]);
     }
 }
 
@@ -486,7 +479,7 @@ void Interaction::print_interaction_information(const int natmin,
 
         for (i = 0; i < natmin; ++i) {
 
-            if (interaction_list[order][i].size() == 0) {
+            if (interaction_list[order][i].empty()) {
                 std::cout << "   No interacting atoms! Skipped." << std::endl;
                 continue; // no interaction
             }
@@ -537,12 +530,7 @@ bool Interaction::is_incutoff(const int n,
     int i, j;
     int iat, jat;
     int ikd, jkd;
-    int ncheck = n - 1;
     double cutoff_tmp;
-    std::vector<DistInfo>::const_iterator it, it2;
-
-    iat = atomnumlist[0];
-    ikd = kd[iat] - 1;
 
     for (i = 0; i < n; ++i) {
         iat = atomnumlist[i];
@@ -626,20 +614,17 @@ bool Interaction::is_incutoff(const int n,
 
 void Interaction::set_ordername()
 {
-    std::string strnum;
-
+    str_order.resize(maxorder);
     str_order[0] = "HARMONIC";
 
     for (int i = 1; i < maxorder; ++i) {
-        strnum = boost::lexical_cast<std::string>(i + 2);
-        str_order[i] = "ANHARM" + strnum;
+        str_order[i] = "ANHARM" + std::to_string(i + 2);
     }
 }
 
 int Interaction::nbody(const int n, const int *arr)
 {
     std::vector<int> v(n);
-    int ret;
 
     for (unsigned int i = 0; i < n; ++i) {
         v[i] = arr[i];
@@ -647,10 +632,17 @@ int Interaction::nbody(const int n, const int *arr)
     std::stable_sort(v.begin(), v.end());
     v.erase(std::unique(v.begin(), v.end()), v.end());
 
-    ret = v.size();
+    int ret = v.size();
     v.clear();
 
     return ret;
+}
+
+bool Interaction::satisfy_nbody_rule(const int nelem,
+                                     const int *arr,
+                                     const int order)
+{
+    return nbody(nelem, arr) <= nbody_include[order];
 }
 
 
@@ -668,7 +660,6 @@ void Interaction::calc_mindist_clusters(const int natmin,
     // Calculate the complete set of interaction clusters for each order.
     //
 
-    //  int natmin = symmetry->nat_prim;
     int i, j, k;
     int iat, jat;
     int order;
@@ -753,7 +744,7 @@ void Interaction::calc_mindist_clusters(const int natmin,
                     for (j = 0; j < order + 1; ++j) list_now[j + 1] = data[j];
 
                     // Save as a candidate if the cluster satisfies the NBODY-rule.
-                    if (nbody(order + 2, list_now) <= nbody_include[order]) {
+                    if (satisfy_nbody_rule(order + 2, list_now, order)) {
                         data_vec.push_back(data);
                     }
 

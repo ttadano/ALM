@@ -1069,8 +1069,7 @@ void Constraint::get_constraint_translation(System *system,
                     intarr[isize + 1] = data[isize];
                 }
 
-                if (interaction->nbody(order + 1, intarr)
-                    <= interaction->nbody_include[order]) {
+                if (interaction->satisfy_nbody_rule(order + 1, intarr, order)) {
                     if (interaction->is_incutoff(order + 1, intarr, order, system->supercell.kind)) {
                         // Add to list if the atoms interact with each other.
                         data_vec.push_back(data);
@@ -1121,8 +1120,7 @@ void Constraint::get_constraint_translation(System *system,
                             for (jat = 0; jat < 3 * nat; jat += 3) {
                                 intarr_omp[order + 1] = jat / 3;
 
-                                if (interaction->nbody(order + 2, intarr_omp)
-                                    <= interaction->nbody_include[order]) {
+                                if (interaction->satisfy_nbody_rule(order + 2, intarr_omp, order)) {
                                     for (j = 0; j < order + 1; ++j) {
                                         intarr_copy_omp[j] = 3 * intarr_omp[j] + xyzcomponent[ixyz][j];
                                     }
@@ -1337,10 +1335,10 @@ void Constraint::rotational_invariance(System *system,
                                 atom_tmp.clear();
                                 atom_tmp.push_back(jat);
                                 cell_dummy.clear();
-                                iter_cluster = interaction->mindist_cluster[order][i].find(
+                                iter_cluster = interaction->interaction_cluster[order][i].find(
                                     MinimumDistanceCluster(atom_tmp, cell_dummy));
 
-                                if (iter_cluster == interaction->mindist_cluster[order][i].end()) {
+                                if (iter_cluster == interaction->interaction_cluster[order][i].end()) {
                                     exit("rotational_invariance",
                                          "interaction not found ...");
                                 } else {
@@ -1468,10 +1466,10 @@ void Constraint::rotational_invariance(System *system,
                                             }
                                             std::sort(atom_tmp.begin(), atom_tmp.end());
 
-                                            iter_cluster = interaction->mindist_cluster[order][i].find(
+                                            iter_cluster = interaction->interaction_cluster[order][i].find(
                                                 MinimumDistanceCluster(atom_tmp,
                                                                        cell_dummy));
-                                            if (iter_cluster != interaction->mindist_cluster[order][i].end()) {
+                                            if (iter_cluster != interaction->interaction_cluster[order][i].end()) {
 
                                                 int iloc = -1;
 

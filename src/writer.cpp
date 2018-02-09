@@ -170,10 +170,10 @@ void Writer::write_force_constants(ALM *alm)
 				j = alm->symmetry->map_s2p[alm->fcs->fc_table[order][m].elems[0] / 3].atom_num;
 				std::sort(atom_tmp.begin(), atom_tmp.end());
 
-				iter_cluster = alm->interaction->mindist_cluster[order][j].find(
+				iter_cluster = alm->interaction->interaction_cluster[order][j].find(
 					MinimumDistanceCluster(atom_tmp, cell_dummy));
 
-				if (iter_cluster != alm->interaction->mindist_cluster[order][j].end()) {
+				if (iter_cluster != alm->interaction->interaction_cluster[order][j].end()) {
 					multiplicity = (*iter_cluster).cell.size();
 					distmax = (*iter_cluster).distmax;
 				} else {
@@ -482,9 +482,9 @@ void Writer::write_misc_xml(ALM *alm)
 			}
 			std::sort(atom_tmp.begin(), atom_tmp.end());
 
-			iter_cluster = alm->interaction->mindist_cluster[1][j].find(
+			iter_cluster = alm->interaction->interaction_cluster[1][j].find(
 				MinimumDistanceCluster(atom_tmp, cell_dummy));
-			if (iter_cluster == alm->interaction->mindist_cluster[1][j].end()) {
+			if (iter_cluster == alm->interaction->interaction_cluster[1][j].end()) {
 				exit("load_reference_system_xml",
 				     "Cubic force constant is not found.");
 			} else {
@@ -564,10 +564,10 @@ void Writer::write_misc_xml(ALM *alm)
 				+ ".FC" + std::to_string(order + 2);
 
 
-			iter_cluster = alm->interaction->mindist_cluster[order][j].find(
+			iter_cluster = alm->interaction->interaction_cluster[order][j].find(
 				MinimumDistanceCluster(atom_tmp, cell_dummy));
 
-			if (iter_cluster != alm->interaction->mindist_cluster[order][j].end()) {
+			if (iter_cluster != alm->interaction->interaction_cluster[order][j].end()) {
 				multiplicity = (*iter_cluster).cell.size();
 
 				for (imult = 0; imult < multiplicity; ++imult) {
