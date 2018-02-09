@@ -120,7 +120,7 @@ void Writer::write_force_constants(ALM *alm)
 	std::ofstream ofs_fcs;
 	std::vector<int> atom_tmp;
 	std::vector<std::vector<int>> cell_dummy;
-	std::set<MinimumDistanceCluster>::iterator iter_cluster;
+	std::set<InteractionCluster>::iterator iter_cluster;
 
 	int maxorder = alm->interaction->maxorder;
 
@@ -171,7 +171,7 @@ void Writer::write_force_constants(ALM *alm)
 				std::sort(atom_tmp.begin(), atom_tmp.end());
 
 				iter_cluster = alm->interaction->interaction_cluster[order][j].find(
-					MinimumDistanceCluster(atom_tmp, cell_dummy));
+					InteractionCluster(atom_tmp, cell_dummy));
 
 				if (iter_cluster != alm->interaction->interaction_cluster[order][j].end()) {
 					multiplicity = (*iter_cluster).cell.size();
@@ -439,32 +439,45 @@ void Writer::write_misc_xml(ALM *alm)
 	int k = 0;
 	int nelem = alm->interaction->maxorder + 1;
 	int *pair_tmp;
+    std::vector<int> atom_tmp;
+    std::vector<std::vector<int>> cell_dummy;
+    std::set<InteractionCluster>::iterator iter_cluster;
+    int multiplicity;
+
 
 	allocate(pair_tmp, nelem);
 
 	for (unsigned int ui = 0; ui < alm->fcs->nequiv[0].size(); ++ui) {
 
-		for (i = 0; i < 2; ++i) {
-			pair_tmp[i] = alm->fcs->fc_table[0][ihead].elems[i] / 3;
-		}
-		j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+        for (i = 0; i < 2; ++i) {
+            pair_tmp[i] = alm->fcs->fc_table[0][ihead].elems[i] / 3;
+        }
+        j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+
+        atom_tmp.clear();
+        atom_tmp.push_back(pair_tmp[1]);
+
+        iter_cluster = alm->interaction->interaction_cluster[0][j].find(
+            InteractionCluster(atom_tmp, cell_dummy));
+        if (iter_cluster == alm->interaction->interaction_cluster[0][j].end()) {
+            exit("load_reference_system_xml",
+                "Cubic force constant is not found.");
+        }
+        else {
+            multiplicity = (*iter_cluster).cell.size();
+        }
 
 		ptree &child = pt.add("Data.ForceConstants.HarmonicUnique.FC2",
 		                      double2string(alm->fitting->params[k]));
 		child.put("<xmlattr>.pairs",
 		          std::to_string(alm->fcs->fc_table[0][ihead].elems[0])
 		          + " " + std::to_string(alm->fcs->fc_table[0][ihead].elems[1]));
-		child.put("<xmlattr>.multiplicity",
-		          alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size());
+        child.put("<xmlattr>.multiplicity", multiplicity);
 		ihead += alm->fcs->nequiv[0][ui];
 		++k;
 	}
 	ihead = 0;
 
-	std::vector<int> atom_tmp;
-	std::vector<std::vector<int>> cell_dummy;
-	std::set<MinimumDistanceCluster>::iterator iter_cluster;
-	int multiplicity;
 
 	if (alm->interaction->maxorder > 1) {
 
@@ -483,7 +496,7 @@ void Writer::write_misc_xml(ALM *alm)
 			std::sort(atom_tmp.begin(), atom_tmp.end());
 
 			iter_cluster = alm->interaction->interaction_cluster[1][j].find(
-				MinimumDistanceCluster(atom_tmp, cell_dummy));
+				InteractionCluster(atom_tmp, cell_dummy));
 			if (iter_cluster == alm->interaction->interaction_cluster[1][j].end()) {
 				exit("load_reference_system_xml",
 				     "Cubic force constant is not found.");
@@ -504,40 +517,73 @@ void Writer::write_misc_xml(ALM *alm)
 	}
 
 	int ip, ishift;
+    int imult;
+    std::string elementname = "Data.ForceConstants.HARMONIC.FC2";
 
 	std::sort(alm->fcs->fc_table[0].begin(), alm->fcs->fc_table[0].end());
 
-	for (auto it = alm->fcs->fc_table[0].begin();
-	     it != alm->fcs->fc_table[0].end(); ++it) {
+	for (auto it = alm->fcs->fc_table[0].begin(); it != alm->fcs->fc_table[0].end(); ++it) {
 		FcProperty fctmp = *it;
 		ip = fctmp.mother;
 
 		for (k = 0; k < 2; ++k) {
 			pair_tmp[k] = fctmp.elems[k] / 3;
 		}
-		j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
-		for (auto it2 = alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].begin();
-		     it2 != alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].end(); ++it2) {
-			ptree &child = pt.add("Data.ForceConstants.HARMONIC.FC2",
-			                      double2string(alm->fitting->params[ip] * fctmp.sign
-				                      / static_cast<double>(alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size())));
 
-			child.put("<xmlattr>.pair1", std::to_string(j + 1)
-			          + " " + std::to_string(fctmp.elems[0] % 3 + 1));
-			child.put("<xmlattr>.pair2", std::to_string(pair_tmp[1] + 1)
-			          + " " + std::to_string(fctmp.elems[1] % 3 + 1)
-			          + " " + std::to_string((*it2).cell + 1));
-		}
+        j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+
+        atom_tmp.clear();
+        atom_tmp.push_back(pair_tmp[1]);
+   
+        iter_cluster = alm->interaction->interaction_cluster[0][j].find(
+            InteractionCluster(atom_tmp, cell_dummy));
+
+        if (iter_cluster != alm->interaction->interaction_cluster[0][j].end()) {
+            multiplicity = (*iter_cluster).cell.size();
+
+            for (imult = 0; imult < multiplicity; ++imult) {
+                std::vector<int> cell_now = (*iter_cluster).cell[imult];
+
+                ptree &child = pt.add(elementname,
+                    double2string(alm->fitting->params[ip] * fctmp.sign
+                        / static_cast<double>(multiplicity)));
+
+                child.put("<xmlattr>.pair1", std::to_string(j + 1)
+                    + " " + std::to_string(fctmp.elems[0] % 3 + 1));
+
+                for (k = 1; k < 2; ++k) {
+                    child.put("<xmlattr>.pair" + std::to_string(k + 1),
+                        std::to_string(pair_tmp[k] + 1)
+                        + " " + std::to_string(fctmp.elems[k] % 3 + 1)
+                        + " " + std::to_string(cell_now[k - 1] + 1));
+                }
+            }
+        }
+        else {
+            exit("write_misc_xml", "This cannot happen.");
+        }
+
+		//j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+		//for (auto it2 = alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].begin();
+		//     it2 != alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].end(); ++it2) {
+		//	ptree &child = pt.add("Data.ForceConstants.HARMONIC.FC2",
+		//	                      double2string(alm->fitting->params[ip] * fctmp.sign
+		//		                      / static_cast<double>(alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size())));
+
+		//	child.put("<xmlattr>.pair1", std::to_string(j + 1)
+		//	          + " " + std::to_string(fctmp.elems[0] % 3 + 1));
+		//	child.put("<xmlattr>.pair2", std::to_string(pair_tmp[1] + 1)
+		//	          + " " + std::to_string(fctmp.elems[1] % 3 + 1)
+		//	          + " " + std::to_string((*it2).cell + 1));
+		//}
 	}
 
 	ishift = alm->fcs->nequiv[0].size();
 
 	// Print anharmonic force constants to the xml file.
 
-	int imult;
 
 	int order;
-	std::string elementname;
 	for (order = 1; order < alm->interaction->maxorder; ++order) {
 
 		std::sort(alm->fcs->fc_table[order].begin(), alm->fcs->fc_table[order].end());
@@ -565,7 +611,7 @@ void Writer::write_misc_xml(ALM *alm)
 
 
 			iter_cluster = alm->interaction->interaction_cluster[order][j].find(
-				MinimumDistanceCluster(atom_tmp, cell_dummy));
+				InteractionCluster(atom_tmp, cell_dummy));
 
 			if (iter_cluster != alm->interaction->interaction_cluster[order][j].end()) {
 				multiplicity = (*iter_cluster).cell.size();

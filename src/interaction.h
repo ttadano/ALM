@@ -52,27 +52,6 @@ namespace ALM_NS
         }
     };
 
-    class InteractionCluster
-    {
-    public:
-        std::vector<double> x;
-
-        InteractionCluster();
-
-        InteractionCluster(const double *arr)
-        {
-            for (int i = 0; i < 3; ++i) {
-                x.push_back(arr[i]);
-            }
-        }
-
-        bool operator<(const InteractionCluster &a) const
-        {
-            return std::lexicographical_compare(x.begin(), x.end(),
-                                                a.x.begin(), a.x.end());
-        }
-    };
-
 
     class DistInfo
     {
@@ -133,8 +112,8 @@ namespace ALM_NS
 
         MinDistList();
 
-        MinDistList(const std::vector<int> cell_in,
-                    const std::vector<double> dist_in)
+        MinDistList(const std::vector<int> &cell_in,
+                    const std::vector<double> &dist_in)
         {
             for (auto it = cell_in.begin(); it != cell_in.end(); ++it) {
                 cell.push_back(*it);
@@ -171,16 +150,16 @@ namespace ALM_NS
         }
     };
 
-    class MinimumDistanceCluster
+    class InteractionCluster
     {
     public:
         std::vector<int> atom;
         std::vector<std::vector<int>> cell;
         double distmax;
 
-        MinimumDistanceCluster();
+        InteractionCluster();
 
-        MinimumDistanceCluster(const std::vector<int> atom_in,
+        InteractionCluster(const std::vector<int> atom_in,
                                const std::vector<std::vector<int>> cell_in,
                                const double dist_in)
         {
@@ -193,7 +172,7 @@ namespace ALM_NS
             distmax = dist_in;
         }
 
-        MinimumDistanceCluster(const std::vector<int> atom_in,
+        InteractionCluster(const std::vector<int> atom_in,
                                const std::vector<std::vector<int>> cell_in)
         {
             for (int i = 0; i < atom_in.size(); ++i) {
@@ -204,7 +183,7 @@ namespace ALM_NS
             }
         }
 
-        bool operator<(const MinimumDistanceCluster &a) const
+        bool operator<(const InteractionCluster &a) const
         {
             return lexicographical_compare(atom.begin(), atom.end(),
                                            a.atom.begin(), a.atom.end());
@@ -222,15 +201,20 @@ namespace ALM_NS
         double ***rcs;
 
         std::vector<std::string> str_order;
-        std::vector<DistInfo> **mindist_pairs;
         std::set<IntList> *pairs;
-        std::vector<int> **interaction_pair;
-        std::set<MinimumDistanceCluster> **interaction_cluster;
+        std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
+        std::set<InteractionCluster> **interaction_cluster;
 
         void init(ALM *);
-        bool satisfy_nbody_rule(const int, const int *, const int);
-        bool is_incutoff(const int, int *, const int, const std::vector<int>);
-        // bool is_incutoff2(const int, int *, const int, int *kd);
+
+        bool satisfy_nbody_rule(const int,
+                                const int *,
+                                const int);
+
+        bool is_incutoff(const int,
+                         int *,
+                         const int,
+                         const std::vector<int>);
 
         void generate_interaction_information_by_cutoff(const int,
                                                         const int,
@@ -238,6 +222,7 @@ namespace ALM_NS
                                                         int **,
                                                         double **,
                                                         std::vector<int> *);
+
         void set_interaction_by_cutoff(const unsigned int,
                                        const std::vector<int> &,
                                        const unsigned int,
@@ -249,22 +234,20 @@ namespace ALM_NS
     private:
 
         std::vector<DistInfo> **distall; // Distance of all pairs (i,j) under the PBC
+        std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
 
         void set_default_variables();
         void deallocate_variables();
 
         void get_pairs_of_minimum_distance(int,
                                            double ***,
-                                           int *,
-                                           std::vector<DistInfo> **,
-                                           std::vector<DistInfo> **);
+                                           int *);
 
         void print_neighborlist(const int,
                                 const int,
                                 int **,
                                 const std::vector<int> &,
-                                std::string *,
-                                std::vector<DistInfo> **);
+                                std::string *);
 
         void print_interaction_information(const int,
                                            int **,
@@ -272,22 +255,22 @@ namespace ALM_NS
                                            std::string *,
                                            std::vector<int> **);
         //void search_interactions(std::vector<int> **);
+        // bool is_incutoff2(const int, int *, const int, int *kd);
+
         void set_ordername();
         double distance(double *, double *);
         int nbody(const int, const int *);
 
-        void calc_mindist_clusters(const int, const std::vector<int> &, int **,
+        void calc_interaction_clusters(const int, const std::vector<int> &, int **,
                                    std::vector<int> **,
-                                   std::vector<DistInfo> **,
-                                   std::vector<DistInfo> **,
                                    double ***,
-                                   int *, std::set<MinimumDistanceCluster> **);
+                                   int *, std::set<InteractionCluster> **);
 
         void calc_mindist_clusters2(const int, int *, int **, std::vector<int> **,
                                     std::vector<DistInfo> **,
                                     std::vector<DistInfo> **,
                                     double ***,
-                                    int *, std::set<MinimumDistanceCluster> **);
+                                    int *, std::set<InteractionCluster> **);
 
         void cell_combination(std::vector<std::vector<int>>,
                               int, std::vector<int>,
@@ -296,6 +279,6 @@ namespace ALM_NS
         void generate_pairs(const int, const int,
                             int **,
                             std::set<IntList> *,
-                            std::set<MinimumDistanceCluster> **);
+                            std::set<InteractionCluster> **);
     };
 }

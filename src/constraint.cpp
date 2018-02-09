@@ -1248,7 +1248,7 @@ void Constraint::rotational_invariance(System *system,
 
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
-    std::set<MinimumDistanceCluster>::iterator iter_cluster;
+    std::set<InteractionCluster>::iterator iter_cluster;
 
     setup_rotation_axis(valid_rotation_axis);
 
@@ -1336,7 +1336,7 @@ void Constraint::rotational_invariance(System *system,
                                 atom_tmp.push_back(jat);
                                 cell_dummy.clear();
                                 iter_cluster = interaction->interaction_cluster[order][i].find(
-                                    MinimumDistanceCluster(atom_tmp, cell_dummy));
+                                    InteractionCluster(atom_tmp, cell_dummy));
 
                                 if (iter_cluster == interaction->interaction_cluster[order][i].end()) {
                                     exit("rotational_invariance",
@@ -1467,7 +1467,7 @@ void Constraint::rotational_invariance(System *system,
                                             std::sort(atom_tmp.begin(), atom_tmp.end());
 
                                             iter_cluster = interaction->interaction_cluster[order][i].find(
-                                                MinimumDistanceCluster(atom_tmp,
+                                                InteractionCluster(atom_tmp,
                                                                        cell_dummy));
                                             if (iter_cluster != interaction->interaction_cluster[order][i].end()) {
 
