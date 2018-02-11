@@ -476,8 +476,7 @@ void Interaction::print_interaction_information(const int natmin,
             iat = map_p2s[i][0];
 
             intlist.clear();
-            for (std::_Vector_iterator<std::_Vector_val<std::_Simple_types<int>>>::value_type &it : interaction_list[
-                     order][i]) {
+            for (auto &it : interaction_list[order][i]) {
                 intlist.push_back(it);
             }
             std::sort(intlist.begin(), intlist.end());
