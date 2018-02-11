@@ -12,7 +12,6 @@
 #pragma once
 
 #include "alm.h"
-#include "constraint.h"
 #include "interaction.h"
 #include <vector>
 #include <set>
@@ -30,9 +29,7 @@ namespace ALM_NS
         FcProperty();
 
         FcProperty(const FcProperty &obj) :
-            sign(obj.sign), mother(obj.mother), elems(obj.elems)
-        {
-        }
+            sign(obj.sign), mother(obj.mother), elems(obj.elems) { }
 
         FcProperty(const int n, const double c, const int *arr, const int m)
         {
@@ -106,18 +103,23 @@ namespace ALM_NS
                                            std::vector<FcProperty> &,
                                            const bool);
 
-        void get_constraint_symmetry(const int, Symmetry *, Fcs *,
-                                     const int, const std::set<IntList> &,
+        void get_constraint_symmetry(const int,
+                                     Symmetry *,
+                                     Fcs *,
+                                     const int,
+                                     const std::set<IntList> &,
                                      const std::string,
                                      const std::vector<FcProperty> &,
                                      const int,
-                                     std::vector<ConstraintClass> &);
+                                     const double,
+                                     std::vector<std::vector<double>> &);
 
     private:
         void set_default_variables();
         void deallocate_variables();
         bool is_ascending(const int, const int *);
         bool is_inprim(const int, const int, int **);
+        bool is_allzero(const std::vector<double> &, const double, int &);
     };
 }
 

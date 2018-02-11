@@ -20,6 +20,7 @@
 #include "combination.h"
 #include "constants.h"
 #include "error.h"
+#include "rref.h"
 #include <boost/bimap.hpp>
 #include <algorithm>
 #include <unordered_set>
@@ -29,8 +30,6 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-
-//#include "alm.h"
 
 using namespace ALM_NS;
 
@@ -656,6 +655,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symme
     int order;
     int maxorder = interaction->maxorder;
     bool has_constraint_from_symm = false;
+    std::vector<std::vector<double>> const_tmp;
 
     for (isym = 0; isym < symmetry->nsym; ++isym) {
         if (symmetry->SymmData[isym].compatible_with_cartesian) continue;
@@ -671,9 +671,13 @@ void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symme
             std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
         }
         fcs->get_constraint_symmetry(system->supercell.number_of_atoms, symmetry, fcs,
-                                order, interaction->cluster_list[order], "Cartesian",
-                                fcs->fc_table[order], fcs->nequiv[order].size(),
-                                const_out[order]);
+                                     order, interaction->cluster_list[order], "Cartesian",
+                                     fcs->fc_table[order], fcs->nequiv[order].size(),
+                                     tolerance_constraint,
+                                     const_tmp);
+        for (auto &it : const_tmp) {
+            const_out[order].emplace_back(ConstraintClass(it));
+        }
         if (has_constraint_from_symm) {
             std::cout << " done." << std::endl;
         }
@@ -682,7 +686,6 @@ void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symme
         std::cout << "  Finished !" << std::endl << std::endl;
     }
 }
-
 
 
 void Constraint::generate_translational_constraint(System *system,
@@ -1491,57 +1494,6 @@ void Constraint::rotational_invariance(System *system,
     deallocate(nparams);
 }
 
-void Constraint::remove_redundant_rows(const int n,
-                                       std::vector<ConstraintClass> &Constraint_vec,
-                                       const double tolerance)
-{
-    int i, j;
-
-    int nparam = n;
-    int nconst = Constraint_vec.size();
-    double *arr_tmp;
-    double **mat_tmp;
-
-    int nrank;
-
-    if (nconst > 0) {
-
-        allocate(mat_tmp, nconst, nparam);
-
-        i = 0;
-
-        for (auto p = Constraint_vec.begin(); p != Constraint_vec.end(); ++p) {
-            for (j = 0; j < nparam; ++j) {
-                mat_tmp[i][j] = (*p).w_const[j];
-            }
-            ++i;
-        }
-
-        rref(nconst, nparam, mat_tmp, nrank, tolerance);
-
-        allocate(arr_tmp, nparam);
-
-        Constraint_vec.clear();
-
-        for (i = 0; i < nrank; ++i) {
-            for (j = 0; j < i; ++j) arr_tmp[j] = 0.0;
-
-            for (j = i; j < nparam; ++j) {
-                if (std::abs(mat_tmp[i][j]) < tolerance) {
-                    arr_tmp[j] = 0.0;
-                } else {
-                    arr_tmp[j] = mat_tmp[i][j];
-                }
-            }
-            Constraint_vec.push_back(ConstraintClass(nparam, arr_tmp));
-        }
-
-        deallocate(mat_tmp);
-        deallocate(arr_tmp);
-
-    }
-}
-
 
 int Constraint::levi_civita(const int i, const int j, const int k)
 {
@@ -1596,7 +1548,6 @@ void Constraint::setup_rotation_axis(bool flag[3][3])
              "Invalid rotation_axis. Default value(xyz) will be used.");
     }
 }
-
 
 
 void Constraint::load_reference_system_xml(Symmetry *symmetry,
@@ -1726,7 +1677,6 @@ void Constraint::load_reference_system_xml(Symmetry *symmetry,
 }
 
 
-
 bool Constraint::is_allzero(const int n, const double *arr, const int nshift)
 {
     for (int i = nshift; i < n; ++i) {
@@ -1752,11 +1702,64 @@ bool Constraint::is_allzero(const std::vector<int> &vec, int &loc)
 bool Constraint::is_allzero(const std::vector<double> &vec, const double tol, int &loc)
 {
     loc = -1;
-    for (int i = 0; i < vec.size(); ++i) {
+    auto n = vec.size();
+    for (int i = 0; i < n; ++i) {
         if (std::abs(vec[i]) > tol) {
             loc = i;
             return false;
         }
     }
     return true;
+}
+
+
+void Constraint::remove_redundant_rows(const int n,
+                                       std::vector<ConstraintClass> &Constraint_vec,
+                                       const double tolerance)
+{
+    int i, j;
+
+    int nparam = n;
+    int nconst = Constraint_vec.size();
+    double *arr_tmp;
+    double **mat_tmp;
+
+    int nrank;
+
+    if (nconst > 0) {
+
+        allocate(mat_tmp, nconst, nparam);
+
+        i = 0;
+
+        for (auto p = Constraint_vec.begin(); p != Constraint_vec.end(); ++p) {
+            for (j = 0; j < nparam; ++j) {
+                mat_tmp[i][j] = (*p).w_const[j];
+            }
+            ++i;
+        }
+
+        rref(nconst, nparam, mat_tmp, nrank, tolerance);
+
+        allocate(arr_tmp, nparam);
+
+        Constraint_vec.clear();
+
+        for (i = 0; i < nrank; ++i) {
+            for (j = 0; j < i; ++j) arr_tmp[j] = 0.0;
+
+            for (j = i; j < nparam; ++j) {
+                if (std::abs(mat_tmp[i][j]) < tolerance) {
+                    arr_tmp[j] = 0.0;
+                } else {
+                    arr_tmp[j] = mat_tmp[i][j];
+                }
+            }
+            Constraint_vec.push_back(ConstraintClass(nparam, arr_tmp));
+        }
+
+        deallocate(mat_tmp);
+        deallocate(arr_tmp);
+
+    }
 }

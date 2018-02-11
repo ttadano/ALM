@@ -43,6 +43,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
     std::string preferred_basis;
     std::vector<int> group_tmp;
     std::vector<ConstraintClass> *constsym;
+    std::vector<std::vector<double>> const_tmp;
 
     std::vector<int> pairs;
     std::set<int> *include_set;
@@ -88,13 +89,20 @@ void Displace::gen_displacement_pattern(ALM *alm)
                                                 fc_table[order], nequiv[order],
                                                 fc_zeros[order], false);
 
-        alm->constraint->get_constraint_symmetry(alm->system,
-                                                 alm->symmetry,
-                                                 alm->fcs,
-                                                 order, alm->interaction->cluster_list[order],
-                                                 alm->symmetry->SymmData, preferred_basis,
-                                                 fc_table[order], nequiv[order],
-                                                 constsym[order]);
+        alm->fcs->get_constraint_symmetry(alm->system->supercell.number_of_atoms,
+                                          alm->symmetry,
+                                          alm->fcs,
+                                          order,
+                                          alm->interaction->cluster_list[order],
+                                          preferred_basis,
+                                          fc_table[order],
+                                          nequiv[order].size(),
+                                          alm->constraint->tolerance_constraint,
+                                          const_tmp);
+        for (auto &it : const_tmp) {
+            constsym[order].emplace_back(ConstraintClass(it));
+        }
+
     }
 
     alm->constraint->get_mapping_constraint(alm->system,

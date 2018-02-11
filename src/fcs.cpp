@@ -16,6 +16,7 @@
 #include "interaction.h"
 #include "mathfunctions.h"
 #include "memory.h"
+#include "rref.h"
 #include "symmetry.h"
 #include "system.h"
 #include "timer.h"
@@ -368,7 +369,8 @@ void Fcs::get_constraint_symmetry(const int nat,
                                   const std::string basis,
                                   const std::vector<FcProperty> &fc_table,
                                   const int nparams,
-                                  std::vector<ConstraintClass> &const_out)
+                                  const double tolerance,
+                                  std::vector<std::vector<double>> &const_out)
 {
     // Create constraint matrices arising from the crystal symmetry.
 
@@ -382,7 +384,7 @@ void Fcs::get_constraint_symmetry(const int nat,
     double *arr_constraint;
     bool has_constraint_from_symm = false;
     std::unordered_set<FcProperty> list_found;
-    std::vector<std::vector<double>> const_mat;
+
     int **map_sym;
     double ***rotation;
 
@@ -401,7 +403,7 @@ void Fcs::get_constraint_symmetry(const int nat,
     fcs->get_xyzcomponent(order + 2, xyzcomponent);
     nsym_in_use = 0;
     counter = 0;
-    const_mat.clear();
+    const_out.clear();
     int nfcs = fc_table.size();
 
     if (basis == "Cartesian") {
@@ -517,16 +519,16 @@ void Fcs::get_constraint_symmetry(const int nat,
                     }
                 }
                 // Comment out for debug
-  /*              if (!is_allzero(const_now_omp, eps8, loc_nonzero)) {
+                if (!is_allzero(const_now_omp, eps8, loc_nonzero)) {
                     if (const_now_omp[loc_nonzero] < 0.0) {
                         for (j = 0; j < nparams; ++j) const_now_omp[j] *= -1.0;
                     }
                     const_omp.push_back(const_now_omp);
-                }*/
+                }
 
             } // close isym loop
 
-           // if (const_omp.size() > nparams) rref(const_omp, tolerance_constraint);
+            if (const_omp.size() > nparams) rref(const_omp, tolerance);
 
         } // close ii loop
 
@@ -538,21 +540,11 @@ void Fcs::get_constraint_symmetry(const int nat,
 #pragma omp critical
         {
             for (auto it = const_omp.begin(); it != const_omp.end(); ++it) {
-                const_mat.push_back(*it);
+                const_out.push_back(*it);
             }
         }
         const_omp.clear();
     } // close openmp region
-
-    allocate(arr_constraint, nparams);
-    for (auto it = const_mat.crbegin(); it != const_mat.crend(); ++it) {
-        for (i = 0; i < nparams; ++i) {
-            arr_constraint[i] = (*it)[i];
-        }
-        const_out.push_back(ConstraintClass(nparams,
-                                            arr_constraint));
-    }
-    const_mat.clear();
 
     deallocate(xyzcomponent);
     deallocate(arr_constraint);
@@ -560,7 +552,7 @@ void Fcs::get_constraint_symmetry(const int nat,
     deallocate(rotation);
     deallocate(map_sym);
 
-   //  remove_redundant_rows(nparams, const_out, tolerance_constraint);
+     remove_redundant_rows(nparams, const_out, tolerance);
 }
 
 
@@ -674,4 +666,19 @@ void Fcs::get_xyzcomponent(int n, int **xyz)
         for (i = 1; i < n; ++i) xyz[m][i] = v[i];
         ++m;
     } while (boost::next_partial_permutation(v.begin(), v.begin() + n, v.end()));
+}
+
+bool Fcs::is_allzero(const std::vector<double> &vec,
+                     const double tol,
+                     int &loc)
+{
+    loc = -1;
+    auto n = vec.size();
+    for (int i = 0; i < n; ++i) {
+        if (std::abs(vec[i]) > tol) {
+            loc = i;
+            return false;
+        }
+    }
+    return true;
 }
