@@ -378,8 +378,6 @@ void Fcs::get_constraint_symmetry(const int nat,
                          rotation,
                          use_compatible);
 
-    std::cout << "nsym_in_use = " << nsym_in_use << std::endl;
-
     // Generate temporary list of parameters
     list_found.clear();
     for (const auto &p : fc_table) {

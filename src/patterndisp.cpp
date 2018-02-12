@@ -105,16 +105,16 @@ void Displace::gen_displacement_pattern(ALM *alm)
 
     }
 
-    alm->constraint->get_mapping_constraint(alm->system,
-                                            alm->symmetry,
-                                            alm->fcs,
-                                            maxorder,
+    for (order = 0; order < maxorder; ++order) {
+        const_fix_tmp[order].clear();
+    }
+
+    alm->constraint->get_mapping_constraint(maxorder,
                                             nequiv,
                                             constsym,
                                             const_fix_tmp,
                                             const_relate_tmp,
-                                            index_bimap_tmp,
-                                            true);
+                                            index_bimap_tmp);
 
     for (order = 0; order < maxorder; ++order) {
         std::cout << "  Number of free" << std::setw(9)

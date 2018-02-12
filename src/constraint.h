@@ -14,9 +14,12 @@
 #include "constants.h"
 #include "interaction.h"
 #include "fcs.h"
+#include "system.h"
 #include <boost/bimap.hpp>
+#include <utility>
 #include <vector>
 #include <set>
+#include <iostream>
 #include <string>
 
 namespace ALM_NS
@@ -32,7 +35,7 @@ namespace ALM_NS
         {
         }
 
-        ConstraintClass(const std::vector<double> &vec) : w_const(vec)
+        ConstraintClass(std::vector<double> vec) : w_const(std::move(vec))
         {
         }
 
@@ -70,8 +73,8 @@ namespace ALM_NS
         std::vector<unsigned int> p_index_orig;
 
         ConstraintTypeRelate(const unsigned int index_in,
-                             const std::vector<double> alpha_in,
-                             const std::vector<unsigned int> p_index_in) :
+                             const std::vector<double> &alpha_in,
+                             const std::vector<unsigned int> &p_index_in) :
             p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in)
         {
         }
@@ -120,18 +123,12 @@ namespace ALM_NS
         boost::bimap<int, int> *index_bimap;
 
 
-        void get_constraint_translation(System *, Symmetry *, Interaction *, Fcs *,
-                                        const int, const std::set<IntList>,
-                                        const std::vector<FcProperty>,
-                                        const std::vector<int>,
-                                        std::vector<ConstraintClass> &);
-
-        void get_mapping_constraint(System *, Symmetry *, Fcs *,
-                                    const int, std::vector<int> *,
+        void get_mapping_constraint(const int,
+                                    std::vector<int> *,
                                     std::vector<ConstraintClass> *,
                                     std::vector<ConstraintTypeFix> *,
                                     std::vector<ConstraintTypeRelate> *,
-                                    boost::bimap<int, int> *, const bool);
+                                    boost::bimap<int, int> *);
 
     private:
 
@@ -140,7 +137,6 @@ namespace ALM_NS
         std::vector<ConstraintClass> *const_translation;
         std::vector<ConstraintClass> *const_rotation_self;
         std::vector<ConstraintClass> *const_rotation_cross;
-
         std::vector<ConstraintClass> *const_self;
 
         void set_default_variables();
@@ -148,16 +144,27 @@ namespace ALM_NS
 
         int levi_civita(const int, const int, const int);
 
-        void generate_rotational_constraint(System *, Symmetry *, Interaction *, Fcs *, std::vector<ConstraintClass> *,
-                                   std::vector<ConstraintClass> *);
-        void calc_constraint_matrix(System *, Symmetry *, Interaction *, Fcs *, const int, int &);
+        void generate_rotational_constraint(System *,
+                                            Symmetry *,
+                                            Interaction *,
+                                            Fcs *,
+                                            std::vector<ConstraintClass> *,
+                                            std::vector<ConstraintClass> *);
+
+        void calc_constraint_matrix(System *,
+                                    Symmetry *,
+                                    Interaction *,
+                                    Fcs *,
+                                    const int,
+                                    int &);
 
         void setup_rotation_axis(bool [3][3]);
         bool is_allzero(const int, const double *, const int nshift = 0);
         bool is_allzero(const std::vector<int> &, int &);
         bool is_allzero(const std::vector<double> &, const double, int &);
 
-        void remove_redundant_rows(const int, std::vector<ConstraintClass> &,
+        void remove_redundant_rows(const int,
+                                   std::vector<ConstraintClass> &,
                                    const double tolerance = eps12);
 
 
@@ -167,13 +174,26 @@ namespace ALM_NS
                                                        Fcs *,
                                                        std::vector<ConstraintClass> *);
 
-        void generate_translational_constraint(System *,
+        void get_constraint_translation(const Cell &,
+                                        Symmetry *,
+                                        Interaction *,
+                                        Fcs *,
+                                        const int,
+                                        const std::vector<FcProperty> &,
+                                        const int,
+                                        std::vector<ConstraintClass> &);
+
+        void generate_translational_constraint(const Cell &,
                                                Symmetry *,
                                                Interaction *,
                                                Fcs *,
                                                std::vector<ConstraintClass> *);
 
-        void load_reference_system_xml(Symmetry *, Fcs *, std::string, const int, double *);
+        void fix_forceconstants_to_file(const int,
+                                        Symmetry *,
+                                        Fcs *,
+                                        const std::string,
+                                        std::vector<ConstraintTypeFix> &);
     };
 
     extern "C" {
