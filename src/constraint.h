@@ -18,7 +18,6 @@
 #include <boost/bimap.hpp>
 #include <utility>
 #include <vector>
-#include <set>
 #include <iostream>
 #include <string>
 
@@ -31,13 +30,9 @@ namespace ALM_NS
 
         ConstraintClass();
 
-        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const)
-        {
-        }
+        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const) { }
 
-        ConstraintClass(std::vector<double> vec) : w_const(std::move(vec))
-        {
-        }
+        ConstraintClass(std::vector<double> vec) : w_const(std::move(vec)) { }
 
         ConstraintClass(const int n, const double *arr, const int nshift = 0)
         {
@@ -60,9 +55,7 @@ namespace ALM_NS
         double val_to_fix;
 
         ConstraintTypeFix(const unsigned int index_in, const double val_in) :
-            p_index_target(index_in), val_to_fix(val_in)
-        {
-        }
+            p_index_target(index_in), val_to_fix(val_in) { }
     };
 
     class ConstraintTypeRelate
@@ -75,9 +68,7 @@ namespace ALM_NS
         ConstraintTypeRelate(const unsigned int index_in,
                              const std::vector<double> &alpha_in,
                              const std::vector<unsigned int> &p_index_in) :
-            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in)
-        {
-        }
+            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in) { }
     };
 
     inline bool equal_within_eps12(const std::vector<double> &a,
@@ -103,7 +94,7 @@ namespace ALM_NS
         void setup(ALM *alm);
 
         int constraint_mode;
-        int P;
+        int number_of_constraints;
         std::string fc2_file, fc3_file;
         bool fix_harmonic, fix_cubic;
         int constraint_algebraic;
@@ -115,13 +106,12 @@ namespace ALM_NS
         bool exist_constraint;
         bool extra_constraint_from_symmetry;
         std::string rotation_axis;
-        std::vector<ConstraintClass> *const_symmetry;
 
+        std::vector<ConstraintClass> *const_symmetry;
         std::vector<ConstraintTypeFix> *const_fix;
         std::vector<ConstraintTypeRelate> *const_relate;
         std::vector<ConstraintTypeRelate> *const_relate_rotation;
         boost::bimap<int, int> *index_bimap;
-
 
         void get_mapping_constraint(const int,
                                     std::vector<int> *,
@@ -151,10 +141,8 @@ namespace ALM_NS
                                             std::vector<ConstraintClass> *,
                                             std::vector<ConstraintClass> *);
 
-        void calc_constraint_matrix(System *,
-                                    Symmetry *,
-                                    Interaction *,
-                                    Fcs *,
+        void calc_constraint_matrix(const int,
+                                    std::vector<int> *,
                                     const int,
                                     int &);
 

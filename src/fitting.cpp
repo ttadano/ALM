@@ -74,7 +74,7 @@ void Fitting::fitmain(ALM *alm)
  //   int nend = alm->system->nend;
     int N, M, N_new;
     int maxorder = alm->interaction->maxorder;
-    int P = alm->constraint->P;
+    int P = alm->constraint->number_of_constraints;
     int ndata_used = nend - nstart + 1;
 
     double **u, **f;
