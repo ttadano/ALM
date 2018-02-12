@@ -29,7 +29,9 @@ namespace ALM_NS
         FcProperty();
 
         FcProperty(const FcProperty &obj) :
-            sign(obj.sign), mother(obj.mother), elems(obj.elems) { }
+            sign(obj.sign), mother(obj.mother), elems(obj.elems)
+        {
+        }
 
         FcProperty(const int n, const double c, const int *arr, const int m)
         {
@@ -80,10 +82,12 @@ namespace ALM_NS
         std::vector<FcProperty> *fc_zeros; // zero force constants (due to space group symm.)
 
         void get_xyzcomponent(int, int **);
+
         bool is_inprim(const int,
                        const int *,
                        const int,
                        int **);
+
         int get_minimum_index_in_primitive(const int,
                                            const int *,
                                            const int,
@@ -105,7 +109,6 @@ namespace ALM_NS
 
         void get_constraint_symmetry(const int,
                                      Symmetry *,
-                                     Fcs *,
                                      const int,
                                      const std::set<IntList> &,
                                      const std::string,
@@ -120,7 +123,13 @@ namespace ALM_NS
         bool is_ascending(const int, const int *);
         bool is_inprim(const int, const int, int **);
         bool is_allzero(const std::vector<double> &, const double, int &);
-        void get_available_symmop(const int, Symmetry *, const std::string, int &, int**, double ***, const bool);
+        void get_available_symmop(const int,
+                                  Symmetry *,
+                                  const std::string,
+                                  int &,
+                                  int **,
+                                  double ***,
+                                  const bool);
     };
 }
 

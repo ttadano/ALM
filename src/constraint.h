@@ -28,9 +28,13 @@ namespace ALM_NS
 
         ConstraintClass();
 
-        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const) { }
+        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const)
+        {
+        }
 
-        ConstraintClass(const std::vector<double> &vec) : w_const(vec) { }
+        ConstraintClass(const std::vector<double> &vec) : w_const(vec)
+        {
+        }
 
         ConstraintClass(const int n, const double *arr, const int nshift = 0)
         {
@@ -53,7 +57,9 @@ namespace ALM_NS
         double val_to_fix;
 
         ConstraintTypeFix(const unsigned int index_in, const double val_in) :
-            p_index_target(index_in), val_to_fix(val_in) { }
+            p_index_target(index_in), val_to_fix(val_in)
+        {
+        }
     };
 
     class ConstraintTypeRelate
@@ -66,7 +72,9 @@ namespace ALM_NS
         ConstraintTypeRelate(const unsigned int index_in,
                              const std::vector<double> alpha_in,
                              const std::vector<unsigned int> p_index_in) :
-            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in) { }
+            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in)
+        {
+        }
     };
 
     inline bool equal_within_eps12(const std::vector<double> &a,
@@ -140,7 +148,7 @@ namespace ALM_NS
 
         int levi_civita(const int, const int, const int);
 
-        void rotational_invariance(System *, Symmetry *, Interaction *, Fcs *, std::vector<ConstraintClass> *,
+        void generate_rotational_constraint(System *, Symmetry *, Interaction *, Fcs *, std::vector<ConstraintClass> *,
                                    std::vector<ConstraintClass> *);
         void calc_constraint_matrix(System *, Symmetry *, Interaction *, Fcs *, const int, int &);
 
@@ -151,12 +159,14 @@ namespace ALM_NS
 
         void remove_redundant_rows(const int, std::vector<ConstraintClass> &,
                                    const double tolerance = eps12);
-  
 
-        void generate_symmetry_constraint_in_cartesian(System *, Symmetry *,
+
+        void generate_symmetry_constraint_in_cartesian(const int,
+                                                       Symmetry *,
                                                        Interaction *,
                                                        Fcs *,
                                                        std::vector<ConstraintClass> *);
+
         void generate_translational_constraint(System *,
                                                Symmetry *,
                                                Interaction *,

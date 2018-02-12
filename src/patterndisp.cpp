@@ -91,7 +91,6 @@ void Displace::gen_displacement_pattern(ALM *alm)
 
         alm->fcs->get_constraint_symmetry(alm->system->supercell.number_of_atoms,
                                           alm->symmetry,
-                                          alm->fcs,
                                           order,
                                           alm->interaction->cluster_list[order],
                                           preferred_basis,
@@ -99,6 +98,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
                                           nequiv[order].size(),
                                           alm->constraint->tolerance_constraint,
                                           const_tmp);
+
         for (auto &it : const_tmp) {
             constsym[order].emplace_back(ConstraintClass(it));
         }

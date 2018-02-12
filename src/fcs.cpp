@@ -329,7 +329,6 @@ void Fcs::generate_force_constant_table(const int order,
 
 void Fcs::get_constraint_symmetry(const int nat,
                                   Symmetry *symmetry,
-                                  Fcs *fcs,
                                   const int order,
                                   const std::set<IntList> &pairs,
                                   const std::string basis,
@@ -379,6 +378,8 @@ void Fcs::get_constraint_symmetry(const int nat,
                          rotation,
                          use_compatible);
 
+    std::cout << "nsym_in_use = " << nsym_in_use << std::endl;
+
     // Generate temporary list of parameters
     list_found.clear();
     for (const auto &p : fc_table) {
@@ -427,7 +428,7 @@ void Fcs::get_constraint_symmetry(const int nat,
 
                 for (i = 0; i < order + 2; ++i)
                     atm_index_symm[i] = map_sym[atm_index[i]][isym];
-                if (!fcs->is_inprim(order + 2, atm_index_symm, natmin, symmetry->map_p2s)) continue;
+                if (!is_inprim(order + 2, atm_index_symm, natmin, symmetry->map_p2s)) continue;
 
                 for (i = 0; i < nparams; ++i) const_now_omp[i] = 0.0;
 
@@ -437,13 +438,13 @@ void Fcs::get_constraint_symmetry(const int nat,
                     for (i = 0; i < order + 2; ++i)
                         ind[i] = 3 * atm_index_symm[i] + xyzcomponent[ixyz][i];
 
-                    i_prim = fcs->get_minimum_index_in_primitive(order + 2, ind, nat, natmin, symmetry->map_p2s);
+                    i_prim = get_minimum_index_in_primitive(order + 2, ind, nat, natmin, symmetry->map_p2s);
                     std::swap(ind[0], ind[i_prim]);
                     sort_tail(order + 2, ind);
 
                     iter_found = list_found.find(FcProperty(order + 2, 1.0, ind, 1));
                     if (iter_found != list_found.end()) {
-                        c_tmp = fcs->coef_sym(order + 2, rotation[isym], xyz_index, xyzcomponent[ixyz]);
+                        c_tmp = coef_sym(order + 2, rotation[isym], xyz_index, xyzcomponent[ixyz]);
                         const_now_omp[(*iter_found).mother] += (*iter_found).sign * c_tmp;
                     }
                 }
@@ -476,7 +477,6 @@ void Fcs::get_constraint_symmetry(const int nat,
     } // close openmp region
 
     deallocate(xyzcomponent);
-    deallocate(arr_constraint);
     deallocate(index_tmp);
     deallocate(rotation);
     deallocate(map_sym);

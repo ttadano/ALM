@@ -153,7 +153,8 @@ void Constraint::setup(ALM *alm)
         deallocate(const_symmetry);
     }
     allocate(const_symmetry, alm->interaction->maxorder);
-    generate_symmetry_constraint_in_cartesian(alm->system, alm->symmetry,
+    generate_symmetry_constraint_in_cartesian(alm->system->supercell.number_of_atoms,
+                                              alm->symmetry,
                                               alm->interaction,
                                               alm->fcs,
                                               const_symmetry);
@@ -191,17 +192,19 @@ void Constraint::setup(ALM *alm)
 
         if (impose_inv_T) {
             generate_translational_constraint(alm->system,
-                                              alm->symmetry, alm->interaction,
+                                              alm->symmetry,
+                                              alm->interaction,
                                               alm->fcs,
                                               const_translation);
         }
+
         if (impose_inv_R) {
-            rotational_invariance(alm->system,
-                                  alm->symmetry,
-                                  alm->interaction,
-                                  alm->fcs,
-                                  const_rotation_self,
-                                  const_rotation_cross);
+            generate_rotational_constraint(alm->system,
+                                           alm->symmetry,
+                                           alm->interaction,
+                                           alm->fcs,
+                                           const_rotation_self,
+                                           const_rotation_cross);
         }
 
         if (impose_inv_T || impose_inv_R) {
@@ -244,7 +247,7 @@ void Constraint::setup(ALM *alm)
                 for (i = 0; i < nparam; ++i) {
                     arr_tmp[i] = e.w_const[i];
                 }
-                const_self[order].push_back(ConstraintClass(nparam, arr_tmp));
+                const_self[order].emplace_back(ConstraintClass(nparam, arr_tmp));
             }
 
             if (!const_rotation_self[order].empty()) {
@@ -252,7 +255,7 @@ void Constraint::setup(ALM *alm)
                     for (i = 0; i < nparam; ++i) {
                         arr_tmp[i] = e.w_const[i];
                     }
-                    const_self[order].push_back(ConstraintClass(nparam, arr_tmp));
+                    const_self[order].emplace_back(ConstraintClass(nparam, arr_tmp));
                 }
                 remove_redundant_rows(nparam, const_self[order], eps8);
             }
@@ -262,7 +265,7 @@ void Constraint::setup(ALM *alm)
                     for (i = 0; i < nparam; ++i) {
                         arr_tmp[i] = e.w_const[i];
                     }
-                    const_self[order].push_back(ConstraintClass(nparam, arr_tmp));
+                    const_self[order].emplace_back(ConstraintClass(nparam, arr_tmp));
                 }
                 remove_redundant_rows(nparam, const_self[order], eps8);
             }
@@ -643,7 +646,8 @@ void Constraint::get_mapping_constraint(System *system, Symmetry *symmetry, Fcs 
     deallocate(file_forceconstant);
 }
 
-void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symmetry *symmetry,
+void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
+                                                           Symmetry *symmetry,
                                                            Interaction *interaction,
                                                            Fcs *fcs,
                                                            std::vector<ConstraintClass> *const_out)
@@ -652,32 +656,39 @@ void Constraint::generate_symmetry_constraint_in_cartesian(System *system, Symme
     // Create constraint matrices arising from the crystal symmetry.
 
     unsigned int isym;
-    int order;
     int maxorder = interaction->maxorder;
     bool has_constraint_from_symm = false;
     std::vector<std::vector<double>> const_tmp;
 
-    for (isym = 0; isym < symmetry->nsym; ++isym) {
-        if (symmetry->SymmData[isym].compatible_with_cartesian) continue;
-        has_constraint_from_symm = true;
+    for (int isym = 0; isym < symmetry->nsym; ++isym) {
+        if (!symmetry->SymmData[isym].compatible_with_cartesian) {
+            has_constraint_from_symm = true;
+            break;
+        }
     }
 
     if (has_constraint_from_symm) {
         std::cout << "  Generating constraints from crystal symmetry ..." << std::endl;
     }
 
-    for (order = 0; order < maxorder; ++order) {
+    for (int order = 0; order < maxorder; ++order) {
         if (has_constraint_from_symm) {
             std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
         }
-        fcs->get_constraint_symmetry(system->supercell.number_of_atoms, symmetry, fcs,
-                                     order, interaction->cluster_list[order], "Cartesian",
-                                     fcs->fc_table[order], fcs->nequiv[order].size(),
+        fcs->get_constraint_symmetry(nat,
+                                     symmetry,
+                                     order,
+                                     interaction->cluster_list[order],
+                                     "Cartesian",
+                                     fcs->fc_table[order],
+                                     fcs->nequiv[order].size(),
                                      tolerance_constraint,
                                      const_tmp);
+
         for (auto &it : const_tmp) {
             const_out[order].emplace_back(ConstraintClass(it));
         }
+
         if (has_constraint_from_symm) {
             std::cout << " done." << std::endl;
         }
@@ -995,12 +1006,12 @@ void Constraint::get_constraint_translation(System *system,
 }
 
 
-void Constraint::rotational_invariance(System *system,
-                                       Symmetry *symmetry,
-                                       Interaction *interaction,
-                                       Fcs *fcs,
-                                       std::vector<ConstraintClass> *const_rotation_self,
-                                       std::vector<ConstraintClass> *const_rotation_cross)
+void Constraint::generate_rotational_constraint(System *system,
+                                                Symmetry *symmetry,
+                                                Interaction *interaction,
+                                                Fcs *fcs,
+                                                std::vector<ConstraintClass> *const_rotation_self,
+                                                std::vector<ConstraintClass> *const_rotation_cross)
 {
     // Create constraints for the rotational invariance
 
@@ -1136,7 +1147,7 @@ void Constraint::rotational_invariance(System *system,
                                     InteractionCluster(atom_tmp, cell_dummy));
 
                                 if (iter_cluster == interaction->interaction_cluster[order][i].end()) {
-                                    exit("rotational_invariance",
+                                    exit("generate_rotational_constraint",
                                          "interaction not found ...");
                                 } else {
                                     for (j = 0; j < 3; ++j) vec_for_rot[j] = 0.0;
@@ -1278,7 +1289,7 @@ void Constraint::rotational_invariance(System *system,
                                                 }
 
                                                 if (iloc == -1) {
-                                                    exit("rotational_invariance", "This cannot happen.");
+                                                    exit("generate_rotational_constraint", "This cannot happen.");
                                                 }
 
                                                 for (j = 0; j < 3; ++j) vec_for_rot[j] = 0.0;
