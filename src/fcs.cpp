@@ -11,7 +11,6 @@
 #include "fcs.h"
 #include "alm.h"
 #include "constants.h"
-#include "constraint.h"
 #include "error.h"
 #include "interaction.h"
 #include "mathfunctions.h"
@@ -27,6 +26,7 @@
 #include "../external/combination.hpp"
 #include <boost/lexical_cast.hpp>
 #include <unordered_set>
+#include <boost/algorithm/string/case_conv.hpp>
 
 using namespace ALM_NS;
 
@@ -145,55 +145,21 @@ void Fcs::generate_force_constant_table(const int order,
     bool *is_searched;
     int **map_sym;
     double ***rotation;
+    bool use_compatible = true;
 
     if (order < 0) return;
 
     allocate(rotation, nsym, 3, 3);
     allocate(map_sym, nat, nsym);
     int nsym_in_use = 0;
-    int counter = 0;
 
-    if (basis == "Cartesian") {
-
-        for (auto it = symm_in->SymmData.begin(); it != symm_in->SymmData.end(); ++it) {
-            if ((*it).compatible_with_cartesian) {
-                for (i = 0; i < 3; ++i) {
-                    for (j = 0; j < 3; ++j) {
-                        rotation[nsym_in_use][i][j] = (*it).rotation_cart[i][j];
-                    }
-                }
-                for (i = 0; i < nat; ++i) {
-                    map_sym[i][nsym_in_use] = symm_in->map_sym[i][counter];
-                }
-                ++nsym_in_use;
-            }
-            ++counter;
-        }
-
-    } else if (basis == "Lattice") {
-
-        for (auto it = symm_in->SymmData.begin(); it != symm_in->SymmData.end(); ++it) {
-            if ((*it).compatible_with_lattice) {
-                for (i = 0; i < 3; ++i) {
-                    for (j = 0; j < 3; ++j) {
-                        rotation[nsym_in_use][i][j]
-                            = static_cast<double>((*it).rotation[i][j]);
-                    }
-                }
-                for (i = 0; i < nat; ++i) {
-                    map_sym[i][nsym_in_use] = symm_in->map_sym[i][counter];
-                }
-                ++nsym_in_use;
-            }
-            ++counter;
-        }
-
-
-    } else {
-        deallocate(rotation);
-        deallocate(map_sym);
-        exit("generate_force_constant_table", "Invalid basis inpout");
-    }
+    get_available_symmop(nat,
+                         symm_in,
+                         basis,
+                         nsym_in_use,
+                         map_sym,
+                         rotation,
+                         use_compatible);
 
     allocate(atmn, order + 2);
     allocate(atmn_mapped, order + 2);
@@ -215,9 +181,9 @@ void Fcs::generate_force_constant_table(const int order,
 
     std::unordered_set<IntList> list_found;
 
-    for (auto iter = pairs.begin(); iter != pairs.end(); ++iter) {
+    for (const auto &pair : pairs) {
 
-        for (i = 0; i < order + 2; ++i) atmn[i] = (*iter).iarray[i];
+        for (i = 0; i < order + 2; ++i) atmn[i] = pair.iarray[i];
 
         for (i1 = 0; i1 < nxyz; ++i1) {
             for (i = 0; i < order + 2; ++i) ind[i] = 3 * atmn[i] + xyzcomponent[i1][i];
@@ -379,10 +345,8 @@ void Fcs::get_constraint_symmetry(const int nat,
     int ixyz, nxyz;
     int *index_tmp;
     int **xyzcomponent;
-    int counter;
     int nsym_in_use;
     double *arr_constraint;
-    bool has_constraint_from_symm = false;
     std::unordered_set<FcProperty> list_found;
 
     int **map_sym;
@@ -392,70 +356,35 @@ void Fcs::get_constraint_symmetry(const int nat,
 
     int nsym = symmetry->SymmData.size();
     int natmin = symmetry->nat_prim;
+    int nfcs = fc_table.size();
+    bool use_compatible = false;
 
     if (nparams == 0) return;
 
     allocate(rotation, nsym, 3, 3);
     allocate(map_sym, nat, nsym);
     allocate(index_tmp, order + 2);
+
     nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 2));
     allocate(xyzcomponent, nxyz, order + 2);
-    fcs->get_xyzcomponent(order + 2, xyzcomponent);
-    nsym_in_use = 0;
-    counter = 0;
+    get_xyzcomponent(order + 2, xyzcomponent);
+
     const_out.clear();
-    int nfcs = fc_table.size();
 
-    if (basis == "Cartesian") {
-
-        for (auto it = symmetry->SymmData.begin(); it != symmetry->SymmData.end(); ++it) {
-
-            if (!(*it).compatible_with_cartesian) {
-
-                for (i = 0; i < 3; ++i) {
-                    for (j = 0; j < 3; ++j) {
-                        rotation[nsym_in_use][i][j] = (*it).rotation_cart[i][j];
-                    }
-                }
-                for (i = 0; i < nat; ++i) {
-                    map_sym[i][nsym_in_use] = symmetry->map_sym[i][counter];
-                }
-                ++nsym_in_use;
-            }
-            ++counter;
-        }
-
-    } else if (basis == "Lattice") {
-
-        for (auto it = symmetry->SymmData.begin(); it != symmetry->SymmData.end(); ++it) {
-            if (!(*it).compatible_with_lattice) {
-                for (i = 0; i < 3; ++i) {
-                    for (j = 0; j < 3; ++j) {
-                        rotation[nsym_in_use][i][j]
-                            = static_cast<double>((*it).rotation[i][j]);
-                    }
-                }
-                for (i = 0; i < nat; ++i) {
-                    map_sym[i][nsym_in_use] = symmetry->map_sym[i][counter];
-                }
-                ++nsym_in_use;
-            }
-            ++counter;
-        }
-
-
-    } else {
-        deallocate(rotation);
-        deallocate(map_sym);
-        exit("get_constraint_symmetry", "Invalid basis input");
-    }
+    get_available_symmop(nat,
+                         symmetry,
+                         basis,
+                         nsym_in_use,
+                         map_sym,
+                         rotation,
+                         use_compatible);
 
     // Generate temporary list of parameters
     list_found.clear();
-    for (auto p = fc_table.cbegin(); p != fc_table.cend(); ++p) {
-        for (i = 0; i < order + 2; ++i) index_tmp[i] = (*p).elems[i];
-        list_found.insert(FcProperty(order + 2, (*p).sign,
-                                     index_tmp, (*p).mother));
+    for (const auto &p : fc_table) {
+        for (i = 0; i < order + 2; ++i) index_tmp[i] = p.elems[i];
+        list_found.insert(FcProperty(order + 2, p.sign,
+                                     index_tmp, p.mother));
     }
 
 
@@ -539,8 +468,8 @@ void Fcs::get_constraint_symmetry(const int nat,
 
 #pragma omp critical
         {
-            for (auto it = const_omp.begin(); it != const_omp.end(); ++it) {
-                const_out.push_back(*it);
+            for (auto &it : const_omp) {
+                const_out.push_back(it);
             }
         }
         const_omp.clear();
@@ -552,9 +481,73 @@ void Fcs::get_constraint_symmetry(const int nat,
     deallocate(rotation);
     deallocate(map_sym);
 
-     remove_redundant_rows(nparams, const_out, tolerance);
+    remove_redundant_rows(nparams, const_out, tolerance);
 }
 
+
+void Fcs::get_available_symmop(const int nat,
+                               Symmetry *symmetry,
+                               const std::string basis,
+                               int &nsym_avail,
+                               int **mapping_symm,
+                               double ***rotation,
+                               const bool use_compatible)
+{
+    // Return mapping information of atoms and the rotation matrices of symmetry operations 
+    // that are (compatible, incompatible) with the given lattice basis (Cartesian or Lattice).
+
+    // use_compatible == true returns the compatible space group (for creating fc_table)
+    // use_compatible == false returnes the incompatible supace group (for creating constraint)
+
+    int i, j;
+    int counter = 0;
+
+    nsym_avail = 0;
+
+    if (basis == "Cartesian") {
+
+        for (auto it = symmetry->SymmData.begin(); it != symmetry->SymmData.end(); ++it) {
+
+            if ((*it).compatible_with_cartesian == use_compatible) {
+
+                for (i = 0; i < 3; ++i) {
+                    for (j = 0; j < 3; ++j) {
+                        rotation[nsym_avail][i][j] = (*it).rotation_cart[i][j];
+                    }
+                }
+                for (i = 0; i < nat; ++i) {
+                    mapping_symm[i][nsym_avail] = symmetry->map_sym[i][counter];
+                }
+                ++nsym_avail;
+            }
+            ++counter;
+        }
+
+    } else if (basis == "Lattice") {
+
+        for (auto it = symmetry->SymmData.begin(); it != symmetry->SymmData.end(); ++it) {
+            if ((*it).compatible_with_lattice == use_compatible) {
+                for (i = 0; i < 3; ++i) {
+                    for (j = 0; j < 3; ++j) {
+                        rotation[nsym_avail][i][j]
+                            = static_cast<double>((*it).rotation[i][j]);
+                    }
+                }
+                for (i = 0; i < nat; ++i) {
+                    mapping_symm[i][nsym_avail] = symmetry->map_sym[i][counter];
+                }
+                ++nsym_avail;
+            }
+            ++counter;
+        }
+
+
+    } else {
+        deallocate(rotation);
+        deallocate(mapping_symm);
+        exit("get_available_symmop", "Invalid basis input");
+    }
+}
 
 double Fcs::coef_sym(const int n,
                      double **rot,

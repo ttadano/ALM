@@ -120,6 +120,7 @@ namespace ALM_NS
         bool is_ascending(const int, const int *);
         bool is_inprim(const int, const int, int **);
         bool is_allzero(const std::vector<double> &, const double, int &);
+        void get_available_symmop(const int, Symmetry *, const std::string, int &, int**, double ***, const bool);
     };
 }
 
