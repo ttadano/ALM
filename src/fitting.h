@@ -10,11 +10,8 @@
 
 #pragma once
 
-//#include "pointers.h"
-#include <vector>
-#include <set>
-#include <string>
 #include "alm.h"
+#include <vector>
 #ifdef _VSL
 #include "mkl_vsl.h"
 #endif
@@ -52,8 +49,12 @@ namespace ALM_NS
                              double **f,
                              const int nat,
                              const int ndata_used,
-                             const int nmulti,
                              Symmetry *);
+        void data_multiplier(const std::vector<std::vector<double>> &,
+                             std::vector<std::vector<double>> &,
+                             const int,
+                             Symmetry *);
+
         int inprim_index(const int, Symmetry *);
         void fit_without_constraints(int, int, double **, double *, double *);
         void fit_algebraic_constraints(int, int, double **, double *,
@@ -63,10 +64,21 @@ namespace ALM_NS
         void fit_with_constraints(int, int, int, double **, double *,
                                   double *, double **, double *);
 
-        void calc_matrix_elements(const int, const int, const int,
+        void calc_matrix_elements(const int, const int,
                                   const int, const int, const int, const int,
                                   double **, double **, double **, double *,
                                   Symmetry *, Fcs *);
+
+
+        void get_matrix_elements(const int,
+                                 const int,
+                                 const std::vector<std::vector<double>> &,
+                                 const std::vector<std::vector<double>> &,
+                                 std::vector<std::vector<double>> &,
+                                 std::vector<double> &,
+                                 Symmetry *,
+                                 Fcs *);
+
 
         int factorial(const int);
         int rankSVD(const int, const int, double *, const double);
@@ -74,24 +86,23 @@ namespace ALM_NS
         int rankSVD2(const int, const int, double **, const double);
     };
 
-    extern "C"
-    {
-        void dgelss_(int *m, int *n, int *nrhs, double *a, int *lda,
-                     double *b, int *ldb, double *s, double *rcond, int *rank,
-                     double *work, int *lwork, int *info);
+    extern "C" {
+    void dgelss_(int *m, int *n, int *nrhs, double *a, int *lda,
+                 double *b, int *ldb, double *s, double *rcond, int *rank,
+                 double *work, int *lwork, int *info);
 
-        void dgglse_(int *m, int *n, int *p, double *a, int *lda,
-                     double *b, int *ldb, double *c, double *d, double *x,
-                     double *work, int *lwork, int *info);
+    void dgglse_(int *m, int *n, int *p, double *a, int *lda,
+                 double *b, int *ldb, double *c, double *d, double *x,
+                 double *work, int *lwork, int *info);
 
-        void dgesdd_(const char *jobz, int *m, int *n, double *a, int *lda,
-                     double *s, double *u, int *ldu, double *vt, int *ldvt, double *work,
-                     int *lwork, int *iwork, int *info);
+    void dgesdd_(const char *jobz, int *m, int *n, double *a, int *lda,
+                 double *s, double *u, int *ldu, double *vt, int *ldvt, double *work,
+                 int *lwork, int *iwork, int *info);
 
-        void dgeqrf_(int *m, int *n, double *a, int *lda, double *tau,
-                     double *work, int *lwork, int *info);
+    void dgeqrf_(int *m, int *n, double *a, int *lda, double *tau,
+                 double *work, int *lwork, int *info);
 
-        void dgeqp3_(int *m, int *n, double *a, int *lda, int *jpvt,
-                     double *tau, double *work, int *lwork, int *info);
+    void dgeqp3_(int *m, int *n, double *a, int *lda, int *jpvt,
+                 double *tau, double *work, int *lwork, int *info);
     }
 }
