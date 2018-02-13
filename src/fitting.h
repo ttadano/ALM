@@ -79,6 +79,21 @@ namespace ALM_NS
                                  Symmetry *,
                                  Fcs *);
 
+        void get_matrix_elements_algebraic_constraint(const int,
+                                                      const int,
+                                                      const std::vector<std::vector<double>> &,
+                                                      const std::vector<std::vector<double>> &,
+                                                      std::vector<std::vector<double>> &,
+                                                      std::vector<double> &, double &,
+                                                      Symmetry *,
+                                                      Fcs *,
+                                                      Constraint *);
+
+        void recover_original_forceconstants(const int,
+                                             const std::vector<double> &,
+                                             std::vector<double> &,
+                                             Fcs *,
+                                             Constraint *);
 
         int factorial(const int);
         int rankSVD(const int, const int, double *, const double);
