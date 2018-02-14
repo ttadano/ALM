@@ -25,6 +25,7 @@ if compile_with_sources:
                'interaction.cpp',
                'main.cpp',
                'patterndisp.cpp',
+               'rref.cpp',
                'symmetry.cpp',
                'system.cpp',
                'timer.cpp',
@@ -55,7 +56,7 @@ extension = Extension('alm._alm',
                       sources=sources)
 
 setup(name='alm',
-      version='1.0.1',
+      version='1.0.2',
       description='Force constants generator',
       setup_requires=['numpy', 'setuptools>=18.0'],
       author='Terumasa Tadano',

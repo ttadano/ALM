@@ -48,6 +48,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
             ${PROJECT_SOURCE_DIR}/src/fitting.cpp
             ${PROJECT_SOURCE_DIR}/src/interaction.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
+            ${PROJECT_SOURCE_DIR}/src/rref.cpp
             ${PROJECT_SOURCE_DIR}/src/symmetry.cpp
             ${PROJECT_SOURCE_DIR}/src/system.cpp
             ${PROJECT_SOURCE_DIR}/src/timer.cpp
