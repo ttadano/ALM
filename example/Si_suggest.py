@@ -82,6 +82,7 @@ kd = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
 with ALM(lavec, xcoord, kd, 1) as alm:
+    alm.set_cutoff_radii([-1])
     alm.run_suggest()
     print(alm.get_atom_mapping_by_pure_translations())
     print(alm.get_displacement_patterns(1))

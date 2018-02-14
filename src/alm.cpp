@@ -144,12 +144,12 @@ const void ALM::set_cell(const int nat,
                          const int kd[],
                          const std::string kdname[])
 {
-    int i, j, nkd;
+    int i, j;
     std::vector<int> nkd_vals(nat);
     bool kd_exist;
 
     nkd_vals[0] = kd[0];
-    nkd = 1;
+    int nkd = 1;
     for (i = 1; i < nat; ++i) {
         kd_exist = false;
         for (j = 0; j < nkd; ++j) {
@@ -177,6 +177,13 @@ const void ALM::set_cell(const int nat,
     }
     allocate(system->kd, nat);
 
+    for (i = 0; i < nat; ++i) {
+        system->kd[i] = kd[i];
+        for (j = 0; j < 3; ++j) {
+            system->xcoord[i][j] = xcoord[i][j];
+        }
+    }
+
     if (system->kdname) {
         deallocate(system->kdname);
     }
@@ -195,17 +202,21 @@ const void ALM::set_cell(const int nat,
             system->lavec[i][j] = lavec[i][j];
         }
     }
-    for (i = 0; i < nat; ++i) {
-        system->kd[i] = kd[i];
-        for (j = 0; j < 3; ++j) {
-            system->xcoord[i][j] = xcoord[i][j];
-        }
-    }
+
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
             system->magmom[i][j] = 0.0;
         }
     }
+
+         // Generate the information of the supercell
+    system->set_cell(system->lavec, 
+    system->nat, 
+    system->nkd, 
+    system->kd, 
+    system->xcoord, 
+    system->supercell);
+
 }
 
 const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
@@ -328,6 +339,7 @@ const void ALM::set_cutoff_radii(const double *rcs)
     int i, j, k, nkd, maxorder, count;
 
     nkd = system->supercell.number_of_elems;
+
     maxorder = interaction->maxorder;
     if (maxorder > 0) {
         if (interaction->rcs) {
@@ -413,16 +425,14 @@ const int ALM::get_displacement_patterns(int *atom_indices,
 
 const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
 {
-    int id, order, num_unique_elems, num_equiv_elems;
-    Fcs *fcs;
+    int num_equiv_elems;
+    int order = fc_order - 1;
 
-    fcs = fcs;
-    id = 0;
-    order = fc_order - 1;
-    if (this->fcs->nequiv[order].empty()) { return 0; }
-    num_unique_elems = this->fcs->nequiv[order].size();
+    if (fcs->nequiv[order].empty()) { return 0; }
+    int id = 0;
+    int num_unique_elems = fcs->nequiv[order].size();
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
-        num_equiv_elems = this->fcs->nequiv[order][iuniq];
+        num_equiv_elems = fcs->nequiv[order][iuniq];
         id += num_equiv_elems;
     }
     return id;
@@ -435,15 +445,12 @@ const void ALM::get_fc(double *fc_values,
     int j, k, ip, id;
     int order, num_unique_elems, num_equiv_elems, maxorder;
     double fc_elem, coef;
-    Fcs *fcs;
-    Fitting *fitting;
 
-    fcs = fcs;
-    fitting = fitting;
     maxorder = interaction->maxorder;
     ip = 0;
+
     for (order = 0; order < fc_order; ++order) {
-        if (fcs->nequiv[order].size() < 1) { continue; }
+        if (fcs->nequiv[order].empty()) { continue; }
         id = 0;
         num_unique_elems = fcs->nequiv[order].size();
         for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {

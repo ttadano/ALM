@@ -10,7 +10,6 @@
 
 #include <string>
 #include "input_setter.h"
-//#include "alm.h"
 #include "memory.h"
 #include "files.h"
 #include "interaction.h"

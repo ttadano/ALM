@@ -101,11 +101,12 @@ class ALM:
     def get_fc(self, fc_order): # harmonic: fc_order=1
         if self._id is None:
             self._show_error_message()
-
+        
         fc_length = self._get_number_of_fc_elements(fc_order)
         fc_values = np.zeros(fc_length, dtype='double')
         elem_indices = np.zeros((fc_length, fc_order + 1),
                                 dtype='intc', order='C')
+
         alm.get_fc(self._id, fc_values, elem_indices)
         return fc_values, elem_indices
     
