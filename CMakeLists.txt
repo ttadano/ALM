@@ -76,7 +76,7 @@ set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
 # Shared library
 add_library(almcxx SHARED ${SOURCES})
 #target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
-target_link_libraries(almcxx ${LAPACK_LIBRARIES})
+target_link_libraries(almcxx ${LAPACK_LIBRARIES} ${spglib})
 set_property(TARGET almcxx PROPERTY VERSION ${serial})
 set_property(TARGET almcxx PROPERTY SOVERSION ${soserial})
 set_property(TARGET almcxx PROPERTY CXX_STANDARD 11)
