@@ -67,7 +67,7 @@ namespace ALM_NS
         ~Writer();
 
         void writeall(ALM *);
-        void write_input_vars(ALM *);
+        void write_input_vars(const ALM *);
         void write_displacement_pattern(ALM *);
 
     private:

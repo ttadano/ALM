@@ -38,7 +38,7 @@ Writer::~Writer()
 {
 }
 
-void Writer::write_input_vars(ALM *alm)
+void Writer::write_input_vars(const ALM *alm)
 {
 	unsigned int i;
 
@@ -358,7 +358,7 @@ void Writer::write_misc_xml(ALM *alm)
 		prop_tmp.atom = alm->symmetry->map_s2p[i].atom_num + 1;
 		prop_tmp.tran = alm->symmetry->map_s2p[i].tran_num + 1;
 
-		system_structure.atoms.push_back(AtomProperty(prop_tmp));
+		system_structure.atoms.emplace_back(AtomProperty(prop_tmp));
 	}
 
 	using boost::property_tree::ptree;
@@ -562,20 +562,6 @@ void Writer::write_misc_xml(ALM *alm)
         else {
             exit("write_misc_xml", "This cannot happen.");
         }
-
-		//j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
-		//for (auto it2 = alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].begin();
-		//     it2 != alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].end(); ++it2) {
-		//	ptree &child = pt.add("Data.ForceConstants.HARMONIC.FC2",
-		//	                      double2string(alm->fitting->params[ip] * fctmp.sign
-		//		                      / static_cast<double>(alm->interaction->mindist_pairs[pair_tmp[0]][pair_tmp[1]].size())));
-
-		//	child.put("<xmlattr>.pair1", std::to_string(j + 1)
-		//	          + " " + std::to_string(fctmp.elems[0] % 3 + 1));
-		//	child.put("<xmlattr>.pair2", std::to_string(pair_tmp[1] + 1)
-		//	          + " " + std::to_string(fctmp.elems[1] % 3 + 1)
-		//	          + " " + std::to_string((*it2).cell + 1));
-		//}
 	}
 
 	ishift = alm->fcs->nequiv[0].size();
