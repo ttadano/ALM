@@ -40,6 +40,16 @@ namespace ALM_NS
                                                        const int, const int, const int, const int,
                                                        double **, double **, double **, double *, double *,
                                                        Symmetry *, Fcs *, Constraint *);
+
+                void get_matrix_elements(const int,
+                                  const int,
+                                  const int,
+                                  double *,
+                                  double *,
+                                  Symmetry *,
+                                  Fcs *);
+
+
         double gamma(const int, const int *);
 
     private:
@@ -78,6 +88,8 @@ namespace ALM_NS
                                  std::vector<double> &,
                                  Symmetry *,
                                  Fcs *);
+
+
 
         void get_matrix_elements_algebraic_constraint(const int,
                                                       const int,

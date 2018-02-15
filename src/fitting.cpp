@@ -767,6 +767,98 @@ void Fitting::get_matrix_elements(const int maxorder,
     f_multi.clear();
 }
 
+void Fitting::get_matrix_elements(const int maxorder,
+                                  const int ndata_fit,
+                                  const int nat,
+                                  double *amat,
+                                  double *bvec,
+                                  Symmetry *symmetry,
+                                  Fcs *fcs)
+{
+    // amat: flattened array of a MxN real matrix (signal matrix). Row major
+    // bvec: real 1D array of atomic forces
+    //   M : 3 * natmin * ndata_fit * symmetry->ntran
+    //   N : number of irreducible force constants
+
+    int i, j;
+    int irow;
+
+    int natmin = symmetry->nat_prim;
+    int nrows = 3 * natmin * ndata_fit * symmetry->ntran;
+    int ncols = 0;
+
+    for (i = 0; i < maxorder; ++i) ncols += fcs->nequiv[i].size();
+
+    int ncycle = ndata_fit * symmetry->ntran;
+
+    double **u_multi, **f_multi;
+
+    allocate(u_multi, ncycle, 3 * nat);
+    allocate(f_multi, ncycle, 3 * nat);
+    data_multiplier(u_multi, f_multi, nat, ndata_fit, symmetry);
+
+
+    for (i = 0; i < nrows * ncols; ++i) amat[i] = 0.0;
+    for (i = 0; i < nrows; ++i) bvec[i] = 0.0;
+
+#ifdef _OPENMP
+#pragma omp parallel private(irow, i, j)
+#endif
+    {
+        int *ind;
+        int mm, order, iat, k;
+        int im, idata, iparam;
+        double amat_tmp;
+
+        allocate(ind, maxorder + 1);
+
+#ifdef _OPENMP
+#pragma omp for schedule(guided)
+#endif
+        for (irow = 0; irow < ncycle; ++irow) {
+
+            // generate r.h.s vector B
+            for (i = 0; i < natmin; ++i) {
+                iat = symmetry->map_p2s[i][0];
+                for (j = 0; j < 3; ++j) {
+                    im = 3 * i + j + 3 * natmin * irow;
+                    bvec[im] = f_multi[irow][3 * iat + j];
+                }
+            }
+
+            // generate l.h.s. matrix A
+
+            idata = 3 * natmin * irow;
+            iparam = 0;
+
+            for (order = 0; order < maxorder; ++order) {
+
+                mm = 0;
+
+                for (auto iter = fcs->nequiv[order].begin(); iter != fcs->nequiv[order].end(); ++iter) {
+                    for (i = 0; i < *iter; ++i) {
+                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        k = idata + inprim_index(fcs->fc_table[order][mm].elems[0], symmetry);
+                        amat_tmp = 1.0;
+                        for (j = 1; j < order + 2; ++j) {
+                            ind[j] = fcs->fc_table[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                        }
+                        amat[k * ncols + iparam] -= gamma(order + 2, ind) * fcs->fc_table[order][mm].sign * amat_tmp;
+                        ++mm;
+                    }
+                    ++iparam;
+                }
+            }
+        }
+
+        deallocate(ind);
+    }
+
+    deallocate(u_multi);
+    deallocate(f_multi);
+}
+
 
 void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
                                                         const int N,

@@ -431,11 +431,18 @@ const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
     if (fcs->nequiv[order].empty()) { return 0; }
     int id = 0;
     int num_unique_elems = fcs->nequiv[order].size();
+ 
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
         num_equiv_elems = fcs->nequiv[order][iuniq];
         id += num_equiv_elems;
     }
     return id;
+}
+
+const int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
+{
+    int order = fc_order - 1;
+    return fcs->nequiv[order].size();
 }
 
 const void ALM::get_fc(double *fc_values,
@@ -470,6 +477,43 @@ const void ALM::get_fc(double *fc_values,
             }
             ++ip;
         }
+    }
+}
+
+
+const void ALM::get_matrix_elements(const int nat, 
+                                   const int ndata_used,
+                                   double *amat, 
+                                   double *bvec)
+    {
+
+        int maxorder = interaction->maxorder;
+        fitting->get_matrix_elements(maxorder, 
+                                     ndata_used, 
+                                     nat, 
+                                     amat, 
+                                     bvec, 
+                                     symmetry, 
+                                     fcs);
+    }
+
+
+const void ALM::compute()
+{
+    if (!verbose) {
+        ofs_alm = new std::ofstream("alm.log", std::ofstream::out);
+        coutbuf = std::cout.rdbuf();
+        std::cout.rdbuf(ofs_alm->rdbuf());
+    }
+
+    initialize(this);
+
+    if (!verbose) {
+        ofs_alm->close();
+        delete ofs_alm;
+        ofs_alm = nullptr;
+        std::cout.rdbuf(coutbuf);
+        coutbuf = nullptr;
     }
 }
 

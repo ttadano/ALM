@@ -60,6 +60,13 @@ extern "C" {
                     double *fc_value,
                     int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
                     const int fc_order);
+
+    void alm_get_matrix_elements(const int id,
+                                const int nat,
+                                 const int ndata_used,
+                                 double *amat,
+                                 double *bvec);
+                                 
     void alm_run_suggest(const int id);
     void alm_run_fitting(const int id);
 

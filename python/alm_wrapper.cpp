@@ -203,6 +203,15 @@ extern "C" {
         alm[id]->get_fc(fc_values, elem_indices, fc_order);
     }
 
+    void alm_get_matrix_elements(const int id,
+                                 const int nat,
+                                 const int ndata_used,
+                                 double *amat,
+                                 double *bvec)
+    {
+        alm[id]->get_matrix_elements(nat, ndata_used, amat, bvec);
+    }
+
     void alm_run_suggest(const int id)
     {
         alm[id]->set_run_mode("suggest");
