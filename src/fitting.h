@@ -27,7 +27,7 @@ namespace ALM_NS
         void fitmain(ALM *);
 
         int ndata, nstart, nend;
-
+        
         double *params;
         double **u_in;
         double **f_in;
@@ -49,10 +49,13 @@ namespace ALM_NS
                                   Symmetry *,
                                   Fcs *);
 
-
+        const int get_ndata_used();
         double gamma(const int, const int *);
 
     private:
+        
+        int ndata_used;
+
         void set_default_variables();
         void deallocate_variables();
         void data_multiplier(double **u,

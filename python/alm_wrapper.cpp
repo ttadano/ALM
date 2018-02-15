@@ -132,6 +132,11 @@ extern "C" {
         alm[id]->set_displacement_and_force(u_in, f_in, nat, ndata_used);
     }
 
+    int alm_get_ndata_used(const int id)
+    {
+        return alm[id]->get_ndata_used();
+    }
+
     void alm_set_fitting_constraint_type(const int id,
                                          const int constraint_flag) // ICONST
     {
@@ -195,6 +200,12 @@ extern "C" {
         return alm[id]->get_number_of_fc_elements(fc_order);
     }
 
+    int alm_get_number_of_irred_fc_elements(const int id,
+                                            const int fc_order)
+    {
+        return alm[id]->get_number_of_irred_fc_elements(fc_order);
+    }
+
     void alm_get_fc(const int id,
                     double *fc_values,
                     int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
@@ -222,5 +233,11 @@ extern "C" {
     {
         alm[id]->set_run_mode("fitting");
         alm[id]->run();
+    }
+
+    void alm_compute(const int id) 
+    {
+        alm[id]->set_run_mode("fitting");
+        alm[id]->compute();
     }
 }

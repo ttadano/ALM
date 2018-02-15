@@ -48,6 +48,7 @@ void Fitting::set_default_variables()
     ndata = 0;
     nstart = 1;
     nend = 0;
+    ndata_used = 0;
 }
 
 void Fitting::deallocate_variables()
@@ -280,8 +281,10 @@ void Fitting::fitmain(ALM *alm)
 void Fitting::set_displacement_and_force(const double * const *disp_in,
                                          const double * const *force_in,
                                          const int nat,
-                                         const int ndata_used)
+                                         const int ndata_used_in)
 {
+    ndata_used = ndata_used_in;
+
     if (u_in) {
         deallocate(u_in);
     }
@@ -298,6 +301,11 @@ void Fitting::set_displacement_and_force(const double * const *disp_in,
             f_in[i][j] = force_in[i][j];
         }
     }
+}
+
+const int Fitting::get_ndata_used()
+{
+    return ndata_used;
 }
 
 void Fitting::fit_without_constraints(int N,
@@ -796,7 +804,6 @@ void Fitting::get_matrix_elements(const int maxorder,
     allocate(u_multi, ncycle, 3 * nat);
     allocate(f_multi, ncycle, 3 * nat);
     data_multiplier(u_multi, f_multi, nat, ndata_fit, symmetry);
-
 
     for (i = 0; i < nrows * ncols; ++i) amat[i] = 0.0;
     for (i = 0; i < nrows; ++i) bvec[i] = 0.0;

@@ -272,6 +272,11 @@ const void ALM::set_displacement_and_force(const double *u_in,
     deallocate(f);
 }
 
+const int ALM::get_ndata_used()
+{   
+    return fitting->get_ndata_used();
+}
+
 const void ALM::set_fitting_constraint_type(const int constraint_flag) // ICONST
 {
     constraint->constraint_mode = constraint_flag;
@@ -482,19 +487,19 @@ const void ALM::get_fc(double *fc_values,
 
 
 const void ALM::get_matrix_elements(const int nat, 
-                                   const int ndata_used,
-                                   double *amat, 
-                                   double *bvec)
+                                    const int ndata_used,
+                                    double *amat, 
+                                    double *bvec)
     {
-
         int maxorder = interaction->maxorder;
+        
         fitting->get_matrix_elements(maxorder, 
                                      ndata_used, 
                                      nat, 
                                      amat, 
                                      bvec, 
                                      symmetry, 
-                                     fcs);
+                                     fcs);                                 
     }
 
 
