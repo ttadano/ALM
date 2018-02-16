@@ -8,12 +8,8 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-/* Declaration of pointers used in the whole program. */
 
 #pragma once
-
-#include "alm.h"
-#include "timer.h"
 
 namespace ALM_NS
 {

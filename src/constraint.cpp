@@ -519,7 +519,7 @@ void Constraint::calc_constraint_matrix(const int maxorder,
         }
 
         irow += const_fix[0].size();
-        icol += const_fix[0].size();;
+        icol += const_fix[0].size();
         ishift += const_fix[0].size();
     }
 

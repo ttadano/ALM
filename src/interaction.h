@@ -217,25 +217,25 @@ namespace ALM_NS
 
         void init(ALM *);
 
-        bool satisfy_nbody_rule(const int,
+        bool satisfy_nbody_rule(int,
                                 const int *,
-                                const int);
+                                int);
 
-        bool is_incutoff(const int,
+        bool is_incutoff(int,
                          int *,
-                         const int,
-                         const std::vector<int>);
+                         int,
+                         std::vector<int>);
 
-        void generate_interaction_information_by_cutoff(const int,
-                                                        const int,
+        void generate_interaction_information_by_cutoff(int,
+                                                        int,
                                                         const std::vector<int> &,
                                                         int **,
                                                         double **,
                                                         std::vector<int> *);
 
-        void set_interaction_by_cutoff(const unsigned int,
+        void set_interaction_by_cutoff(unsigned int,
                                        const std::vector<int> &,
-                                       const unsigned int,
+                                       unsigned int,
                                        int **,
                                        double ***,
                                        std::vector<int> **);
@@ -253,13 +253,13 @@ namespace ALM_NS
                                            double ***,
                                            int *);
 
-        void print_neighborlist(const int,
-                                const int,
+        void print_neighborlist(int,
+                                int,
                                 int **,
                                 const std::vector<int> &,
                                 std::string *);
 
-        void print_interaction_information(const int,
+        void print_interaction_information(int,
                                            int **,
                                            const std::vector<int> &,
                                            std::string *,
@@ -267,9 +267,9 @@ namespace ALM_NS
 
         void set_ordername();
         double distance(double *, double *);
-        int nbody(const int, const int *);
+        int nbody(int, const int *);
 
-        void calc_interaction_clusters(const int,
+        void calc_interaction_clusters(int,
                                        const std::vector<int> &,
                                        int **,
                                        std::vector<int> **,
@@ -277,8 +277,8 @@ namespace ALM_NS
                                        int *,
                                        std::set<InteractionCluster> **);
 
-        void set_interaction_cluster(const int,
-                                     const int,
+        void set_interaction_cluster(int,
+                                     int,
                                      const std::vector<int> &,
                                      int **,
                                      std::vector<int> *,
@@ -290,7 +290,7 @@ namespace ALM_NS
                               int, std::vector<int>,
                               std::vector<std::vector<int>> &);
 
-        void generate_pairs(const int,
+        void generate_pairs(int,
                             int **,
                             std::set<IntList> *,
                             std::set<InteractionCluster> **);

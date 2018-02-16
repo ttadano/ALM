@@ -8,15 +8,14 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include "alm_cui.h"
+#include "alm.h"
+#include "input_parser.h"
+#include "timer.h"
+#include "version.h"
+#include "writer.h"
 #include <iostream>
 #include <iomanip>
-#include "alm.h"
-//#include "alm.h"
-#include "alm_cui.h"
-#include "input_parser.h"
-#include "writer.h"
-#include "version.h"
-#include "timer.h"
 
 #ifdef _OPENMP
 #include <omp.h>

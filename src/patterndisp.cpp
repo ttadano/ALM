@@ -461,9 +461,8 @@ void Displace::find_unique_sign_pairs(const int N, const int nat, Symmetry *symm
         // else, add the current sign pairs to the return variable.
         if (std::find(sign_found.begin(), sign_found.end(), (*it)) != sign_found.end()) {
             continue;
-        } else {
-            sign_out.push_back(*it);
         }
+        sign_out.push_back(*it);
 
         for (i = 0; i < nat; ++i) {
             for (j = 0; j < 3; ++j) {

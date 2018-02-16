@@ -420,11 +420,11 @@ const int ALM::get_displacement_patterns(int *atom_indices,
     // 0:Cartesian or 1:Fractional. -1 means something wrong.
     if (displace->disp_basis[0] == 'C') {
         return 0;
-    } else if (displace->disp_basis[0] == 'F') {
-        return 1;
-    } else {
-        return -1;
     }
+    if (displace->disp_basis[0] == 'F') {
+        return 1;
+    }
+    return -1;
 }
 
 const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...

@@ -577,26 +577,22 @@ int Fcs::get_minimum_index_in_primitive(const int n,
                                         int **map_p2s)
 {
     int i, j, atmnum;
-    int minloc;
-    int *ind;
 
-    allocate(ind, n);
+    std::vector<int> ind(n, 3 * nat);
 
     for (i = 0; i < n; ++i) {
 
-        ind[i] = 3 * nat;
         atmnum = arr[i] / 3;
 
         for (j = 0; j < natmin; ++j) {
             if (map_p2s[j][0] == atmnum) {
                 ind[i] = arr[i];
-                continue;
             }
         }
     }
 
     int minval = ind[0];
-    minloc = 0;
+    int minloc = 0;
 
     for (i = 0; i < n; ++i) {
         if (ind[i] < minval) {
@@ -605,7 +601,6 @@ int Fcs::get_minimum_index_in_primitive(const int n,
         }
     }
 
-    deallocate(ind);
     return minloc;
 }
 

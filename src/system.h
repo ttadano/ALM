@@ -71,8 +71,11 @@ namespace ALM_NS
                       double **,
                       Cell &);
 
-        void set_spin_variable(const bool, const int, const int,
-                               const unsigned int, double **);
+        void set_spin_variable(bool,
+                               int,
+                               int,
+                               unsigned int,
+                               double **);
 
         Cell primitivecell, supercell;
         Spin spin;
@@ -107,9 +110,12 @@ namespace ALM_NS
         double volume(const double [3][3], LatticeType);
         void set_atomtype_group();
 
-        void generate_coordinate_of_periodic_images(System *, const unsigned int,
+        void generate_coordinate_of_periodic_images(System *,
+                                                    unsigned int,
                                                     const std::vector<std::vector<double>> &,
-                                                    const int [3], double ***, int *);
+                                                    const int [3],
+                                                    double ***,
+                                                    int *);
         void print_structure_stdout(const Cell &);
         void print_magmom_stdout();
     };

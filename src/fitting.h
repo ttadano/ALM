@@ -34,23 +34,23 @@ namespace ALM_NS
 
         void set_displacement_and_force(const double * const *u_in,
                                         const double * const *f_in,
-                                        const int nat,
-                                        const int ndata_used);
-        void calc_matrix_elements_algebraic_constraint(const int, const int, const int, const int,
-                                                       const int, const int, const int, const int,
+                                        int nat,
+                                        int ndata_used);
+        void calc_matrix_elements_algebraic_constraint(int, int, int, int,
+                                                       int, int, int, int,
                                                        double **, double **, double **, double *, double *,
                                                        Symmetry *, Fcs *, Constraint *);
 
-        void get_matrix_elements(const int,
-                                 const int,
-                                 const int,
+        void get_matrix_elements(int,
+                                 int,
+                                 int,
                                  double *,
                                  double *,
                                  Symmetry *,
                                  Fcs *);
 
         const int get_ndata_used();
-        double gamma(const int, const int *);
+        double gamma(int, const int *);
 
     private:
 
@@ -60,31 +60,31 @@ namespace ALM_NS
         void deallocate_variables();
         void data_multiplier(double **u,
                              double **f,
-                             const int nat,
-                             const int ndata_used,
+                             int nat,
+                             int ndata_used,
                              Symmetry *);
         void data_multiplier(const std::vector<std::vector<double>> &,
                              std::vector<std::vector<double>> &,
-                             const int,
+                             int,
                              Symmetry *);
 
-        int inprim_index(const int, Symmetry *);
+        int inprim_index(int, Symmetry *);
         void fit_without_constraints(int, int, double **, double *, double *);
         void fit_algebraic_constraints(int, int, double **, double *,
-                                       double *, double *, const int,
+                                       double *, double *, int,
                                        Fcs *, Constraint *);
 
         void fit_with_constraints(int, int, int, double **, double *,
                                   double *, double **, double *);
 
-        void calc_matrix_elements(const int, const int,
-                                  const int, const int, const int, const int,
+        void calc_matrix_elements(int, int,
+                                  int, int, int, int,
                                   double **, double **, double **, double *,
                                   Symmetry *, Fcs *);
 
 
-        void get_matrix_elements(const int,
-                                 const int,
+        void get_matrix_elements(int,
+                                 int,
                                  const std::vector<std::vector<double>> &,
                                  const std::vector<std::vector<double>> &,
                                  std::vector<std::vector<double>> &,
@@ -93,8 +93,8 @@ namespace ALM_NS
                                  Fcs *);
 
 
-        void get_matrix_elements_algebraic_constraint(const int,
-                                                      const int,
+        void get_matrix_elements_algebraic_constraint(int,
+                                                      int,
                                                       const std::vector<std::vector<double>> &,
                                                       const std::vector<std::vector<double>> &,
                                                       std::vector<std::vector<double>> &,
@@ -103,16 +103,16 @@ namespace ALM_NS
                                                       Fcs *,
                                                       Constraint *);
 
-        void recover_original_forceconstants(const int,
+        void recover_original_forceconstants(int,
                                              const std::vector<double> &,
                                              std::vector<double> &,
                                              Fcs *,
                                              Constraint *);
 
-        int factorial(const int);
-        int rankSVD(const int, const int, double *, const double);
-        int rankQRD(const int, const int, double *, const double);
-        int rankSVD2(const int, const int, double **, const double);
+        int factorial(int);
+        int rankSVD(int, int, double *, double);
+        int rankQRD(int, int, double *, double);
+        int rankSVD2(int, int, double **, double);
     };
 
     extern "C" {
