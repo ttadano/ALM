@@ -108,13 +108,15 @@ extern "C" {
                 ++nkd;
             }
         }
-        std::string kdname[nkd];
+        std::string *kdname = new std::string[nkd];
+        //std::string kdname[nkd];
         for (int i = 0; i < nkd; i++) {
             kdname[i] = atom_name[abs(nkd_vals[i]) % 118];
         }
 
 
         alm[id]->set_cell(nat, lavec, xcoord, kd_new, kdname);
+        delete [] kdname;
     }
 
     // void set_magnetic_params(const double* magmom,
