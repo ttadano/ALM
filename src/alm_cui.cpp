@@ -24,13 +24,9 @@
 
 using namespace ALM_NS;
 
-ALMCUI::ALMCUI()
-{
-}
+ALMCUI::ALMCUI() {}
 
-ALMCUI::~ALMCUI()
-{
-}
+ALMCUI::~ALMCUI() {}
 
 void ALMCUI::run(int narg, char **arg)
 {

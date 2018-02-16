@@ -25,9 +25,7 @@ namespace ALM_NS
 
 
     public:
-        CombinationWithRepetition()
-        {
-        };
+        CombinationWithRepetition() { };
 
         template <class InputIter>
         CombinationWithRepetition(InputIter begin,

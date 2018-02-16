@@ -82,10 +82,10 @@ namespace ALM_NS
                           int *elem_indices, // (len(fc_value), fc_order) is flatten.
                           const int fc_order); // harmonic=2, ...
 
-        const void get_matrix_elements(const int nat, 
-                                     const int ndata_used, 
-                                     double *amat, 
-                                     double *bvec);
+        const void get_matrix_elements(const int nat,
+                                       const int ndata_used,
+                                       double *amat,
+                                       double *bvec);
         const void run();
         const void compute();
 

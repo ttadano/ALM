@@ -209,14 +209,13 @@ const void ALM::set_cell(const int nat,
         }
     }
 
-         // Generate the information of the supercell
-    system->set_cell(system->lavec, 
-    system->nat, 
-    system->nkd, 
-    system->kd, 
-    system->xcoord, 
-    system->supercell);
-
+    // Generate the information of the supercell
+    system->set_cell(system->lavec,
+                     system->nat,
+                     system->nkd,
+                     system->kd,
+                     system->xcoord,
+                     system->supercell);
 }
 
 const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
@@ -273,7 +272,7 @@ const void ALM::set_displacement_and_force(const double *u_in,
 }
 
 const int ALM::get_ndata_used()
-{   
+{
     return fitting->get_ndata_used();
 }
 
@@ -436,7 +435,7 @@ const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
     if (fcs->nequiv[order].empty()) { return 0; }
     int id = 0;
     int num_unique_elems = fcs->nequiv[order].size();
- 
+
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
         num_equiv_elems = fcs->nequiv[order][iuniq];
         id += num_equiv_elems;
@@ -486,21 +485,21 @@ const void ALM::get_fc(double *fc_values,
 }
 
 
-const void ALM::get_matrix_elements(const int nat, 
+const void ALM::get_matrix_elements(const int nat,
                                     const int ndata_used,
-                                    double *amat, 
+                                    double *amat,
                                     double *bvec)
-    {
-        int maxorder = interaction->maxorder;
-        
-        fitting->get_matrix_elements(maxorder, 
-                                     ndata_used, 
-                                     nat, 
-                                     amat, 
-                                     bvec, 
-                                     symmetry, 
-                                     fcs);                                 
-    }
+{
+    int maxorder = interaction->maxorder;
+
+    fitting->get_matrix_elements(maxorder,
+                                 ndata_used,
+                                 nat,
+                                 amat,
+                                 bvec,
+                                 symmetry,
+                                 fcs);
+}
 
 
 const void ALM::compute()

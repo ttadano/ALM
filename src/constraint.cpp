@@ -594,7 +594,7 @@ void Constraint::get_mapping_constraint(const int nmax,
                         p_index_tmp.push_back(i);
                     }
                 }
-                
+
 
                 if (!alpha_tmp.empty()) {
                     const_relate_out[order].emplace_back(p_index_target,

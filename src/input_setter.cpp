@@ -22,13 +22,9 @@
 
 using namespace ALM_NS;
 
-InputSetter::InputSetter()
-{
-}
+InputSetter::InputSetter() {}
 
-InputSetter::~InputSetter()
-{
-}
+InputSetter::~InputSetter() {}
 
 void InputSetter::deallocator(ALM *alm)
 {

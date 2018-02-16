@@ -14,12 +14,10 @@ using namespace ALM_NS;
 
 Files::Files()
 {
-	print_hessian = false;
+    print_hessian = false;
 }
 
-Files::~Files()
-{
-}
+Files::~Files() {}
 
 void Files::init(ALM *alm)
 {

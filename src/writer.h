@@ -23,15 +23,11 @@ namespace ALM_NS
         int kind;
         int atom, tran;
 
-        AtomProperty()
-        {
-        };
+        AtomProperty() { };
 
         AtomProperty(const AtomProperty &other)
             : x(other.x), y(other.y), z(other.z),
-              kind(other.kind), atom(other.atom), tran(other.tran)
-        {
-        };
+              kind(other.kind), atom(other.atom), tran(other.tran) { };
 
         AtomProperty(const double *pos,
                      const int kind_in,
@@ -55,9 +51,7 @@ namespace ALM_NS
         int nat, natmin, ntran;
         int nspecies;
 
-        SystemInfo()
-        {
-        };
+        SystemInfo() { };
     };
 
     class Writer

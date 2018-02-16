@@ -102,9 +102,7 @@ namespace ALM_NS
 
         DistList();
 
-        DistList(const int n, const double dist_tmp) : atom(n), dist(dist_tmp)
-        {
-        };
+        DistList(const int n, const double dist_tmp) : atom(n), dist(dist_tmp) { };
 
         bool operator<(const DistList &a) const
         {

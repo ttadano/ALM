@@ -29,9 +29,7 @@ namespace ALM_NS
         FcProperty();
 
         FcProperty(const FcProperty &obj) :
-            sign(obj.sign), mother(obj.mother), elems(obj.elems)
-        {
-        }
+            sign(obj.sign), mother(obj.mother), elems(obj.elems) { }
 
         FcProperty(const int n, const double c, const int *arr, const int m)
         {
