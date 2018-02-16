@@ -88,6 +88,7 @@ namespace ALM_NS
         int *exist_image;
 
         // Variables for spins
+
         bool lspin;
         int trev_sym_mag;
         int noncollinear;
@@ -95,6 +96,7 @@ namespace ALM_NS
         std::string str_magmom;
 
         // Referenced from input_setter, writer
+
         int nat, nkd;
         int *kd;
         double lavec[3][3];

@@ -116,6 +116,7 @@ namespace ALM_NS
                                      std::vector<std::vector<double>> &);
 
     private:
+        bool store_zeros;
         void set_default_variables();
         void deallocate_variables();
         bool is_ascending(int, const int *);

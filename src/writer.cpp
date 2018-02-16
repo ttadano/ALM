@@ -59,7 +59,6 @@ void Writer::write_input_vars(const ALM *alm)
     std::cout << "  HESSIAN = " << alm->files->print_hessian << std::endl;
     std::cout << std::endl;
 
-
     std::cout << " Interaction:" << std::endl;
     std::cout << "  NORDER = " << alm->interaction->maxorder << std::endl;
     std::cout << "  NBODY = ";
@@ -107,7 +106,7 @@ void Writer::writeall(ALM *alm)
 
 void Writer::write_force_constants(ALM *alm)
 {
-    int order, j, k, l, m;
+    int order, j, l, m;
     unsigned int ui;
     int multiplicity;
     double distmax;
@@ -121,7 +120,7 @@ void Writer::write_force_constants(ALM *alm)
     int maxorder = alm->interaction->maxorder;
 
     ofs_fcs.open(alm->files->file_fcs.c_str(), std::ios::out);
-    if (!ofs_fcs) exit("openfiles", "cannot open fcs file");
+    if (!ofs_fcs) exit("write_force_constants", "cannot open fcs file");
 
     ofs_fcs << " *********************** Force Constants (FCs) ***********************" << std::endl;
     ofs_fcs << " *        Force constants are printed in Rydberg atomic units.       *" << std::endl;
@@ -143,7 +142,7 @@ void Writer::write_force_constants(ALM *alm)
         str_fcs[order] = "*FC" + std::to_string(order + 2);
     }
 
-    k = 0;
+    int k = 0;
 
     for (order = 0; order < maxorder; ++order) {
 
@@ -169,10 +168,7 @@ void Writer::write_force_constants(ALM *alm)
                 iter_cluster = alm->interaction->interaction_cluster[order][j].find(
                     InteractionCluster(atom_tmp, cell_dummy));
 
-                if (iter_cluster != alm->interaction->interaction_cluster[order][j].end()) {
-                    multiplicity = (*iter_cluster).cell.size();
-                    distmax = (*iter_cluster).distmax;
-                } else {
+                if (iter_cluster == alm->interaction->interaction_cluster[order][j].end()) {
                     std::cout << std::setw(5) << j;
                     for (l = 0; l < order + 1; ++l) {
                         std::cout << std::setw(5) << atom_tmp[l];
@@ -181,6 +177,9 @@ void Writer::write_force_constants(ALM *alm)
                     exit("write_force_constants",
                          "This cannot happen.");
                 }
+
+                multiplicity = (*iter_cluster).cell.size();
+                distmax = (*iter_cluster).distmax;
                 ofs_fcs << std::setw(4) << multiplicity;
 
                 for (l = 0; l < order + 2; ++l) {
@@ -205,11 +204,11 @@ void Writer::write_force_constants(ALM *alm)
             int nparam = alm->fcs->nequiv[order].size();
 
 
-            for (std::vector<ConstraintClass>::iterator p = alm->constraint->const_symmetry[order].begin();
+            for (auto p = alm->constraint->const_symmetry[order].begin();
                  p != alm->constraint->const_symmetry[order].end();
                  ++p) {
                 ofs_fcs << "   0 = " << std::scientific << std::setprecision(6);
-                ConstraintClass const_pointer = *p;
+                auto const_pointer = *p;
                 for (j = 0; j < nparam; ++j) {
                     if (std::abs(const_pointer.w_const[j]) > eps8) {
                         str_tmp = " * (FC" + std::to_string(order + 2)
@@ -335,7 +334,8 @@ void Writer::write_misc_xml(ALM *alm)
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
-            system_structure.lattice_vector[i][j] = alm->system->supercell.lattice_vector[i][j];
+            system_structure.lattice_vector[i][j]
+                = alm->system->supercell.lattice_vector[i][j];
         }
     }
 
@@ -458,9 +458,9 @@ void Writer::write_misc_xml(ALM *alm)
         if (iter_cluster == alm->interaction->interaction_cluster[0][j].end()) {
             exit("load_reference_system_xml",
                  "Cubic force constant is not found.");
-        } else {
-            multiplicity = (*iter_cluster).cell.size();
         }
+
+        multiplicity = (*iter_cluster).cell.size();
 
         ptree &child = pt.add("Data.ForceConstants.HarmonicUnique.FC2",
                               double2string(alm->fitting->params[k]));
@@ -495,9 +495,9 @@ void Writer::write_misc_xml(ALM *alm)
             if (iter_cluster == alm->interaction->interaction_cluster[1][j].end()) {
                 exit("load_reference_system_xml",
                      "Cubic force constant is not found.");
-            } else {
-                multiplicity = (*iter_cluster).cell.size();
             }
+            multiplicity = (*iter_cluster).cell.size();
+
 
             ptree &child = pt.add("Data.ForceConstants.CubicUnique.FC3",
                                   double2string(alm->fitting->params[k]));
@@ -511,7 +511,7 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    int ip, ishift;
+    int ip;
     int imult;
     std::string elementname = "Data.ForceConstants.HARMONIC.FC2";
 
@@ -558,7 +558,7 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    ishift = alm->fcs->nequiv[0].size();
+    int ishift = alm->fcs->nequiv[0].size();
 
     // Print anharmonic force constants to the xml file.
 
@@ -763,10 +763,8 @@ void Writer::write_in_QEformat(ALM *alm)
 
 std::string Writer::easyvizint(const int n)
 {
-    int atmn;
-    int crdn;
-    atmn = n / 3 + 1;
-    crdn = n % 3;
+    int atmn = n / 3 + 1;
+    int crdn = n % 3;
     std::string str_crd[3] = {"x", "y", "z"};
     std::string str_tmp = std::to_string(atmn);
     str_tmp += str_crd[crdn];

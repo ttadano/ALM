@@ -56,10 +56,10 @@ ALM::~ALM()
         deallocate(interaction->nbody_include);
     }
     interaction->nbody_include = nullptr;
-    if (interaction->rcs) {
-        deallocate(interaction->rcs);
+    if (interaction->cutoff_radii) {
+        deallocate(interaction->cutoff_radii);
     }
-    interaction->rcs = nullptr;
+    interaction->cutoff_radii = nullptr;
 
     delete files;
     delete system;
@@ -310,15 +310,15 @@ const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
     }
 
     nkd = system->supercell.number_of_elems;
-    if (interaction->rcs) {
-        deallocate(interaction->rcs);
+    if (interaction->cutoff_radii) {
+        deallocate(interaction->cutoff_radii);
     }
-    allocate(interaction->rcs, maxorder, nkd, nkd);
+    allocate(interaction->cutoff_radii, maxorder, nkd, nkd);
 
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                interaction->rcs[i][j][k] = -1.0;
+                interaction->cutoff_radii[i][j][k] = -1.0;
             }
         }
     }
@@ -346,17 +346,17 @@ const void ALM::set_cutoff_radii(const double *rcs)
 
     maxorder = interaction->maxorder;
     if (maxorder > 0) {
-        if (interaction->rcs) {
-            deallocate(interaction->rcs);
+        if (interaction->cutoff_radii) {
+            deallocate(interaction->cutoff_radii);
         }
-        allocate(interaction->rcs, maxorder, nkd, nkd);
+        allocate(interaction->cutoff_radii, maxorder, nkd, nkd);
     }
 
     count = 0;
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                interaction->rcs[i][j][k] = rcs[count];
+                interaction->cutoff_radii[i][j][k] = rcs[count];
                 count++;
             }
         }

@@ -155,8 +155,11 @@ namespace ALM_NS
         bool is_translation(const int [3][3]);
         bool is_proper(const double [3][3]);
 
-        void symop_in_cart(double [3][3], const int [3][3],
-                           const double [3][3], const double [3][3]);
+        void symop_in_cart(double [3][3],
+                           const int [3][3],
+                           const double [3][3],
+                           const double [3][3]);
+
         void print_symminfo_stdout();
 
         template <typename T>
@@ -173,10 +176,14 @@ namespace ALM_NS
                                    const std::vector<RotationMatrix> &,
                                    std::vector<SymmetryOperation> &);
 
-        void set_primitive_lattice(const double [3][3], int,
-                                   const int *, double **,
-                                   double [3][3], unsigned int &,
-                                   int *, double **,
+        void set_primitive_lattice(const double [3][3],
+                                   int,
+                                   const int *,
+                                   double **,
+                                   double [3][3],
+                                   unsigned int &,
+                                   int *,
+                                   double **,
                                    double);
 
         std::string file_sym;

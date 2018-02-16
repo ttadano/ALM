@@ -83,7 +83,7 @@ void Interaction::init(ALM *alm)
                               alm->system->supercell.kind,
                               alm->symmetry->nat_prim,
                               alm->symmetry->map_p2s,
-                              rcs,
+                              cutoff_radii,
                               interaction_pair);
 
     calc_interaction_clusters(alm->symmetry->nat_prim,
@@ -106,10 +106,10 @@ void Interaction::init(ALM *alm)
         std::cout << "  " << std::setw(9) << str_order[i] << std::endl;
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                if (rcs[i][j][k] < 0.0) {
+                if (cutoff_radii[i][j][k] < 0.0) {
                     std::cout << std::setw(9) << "None";
                 } else {
-                    std::cout << std::setw(9) << rcs[i][j][k];
+                    std::cout << std::setw(9) << cutoff_radii[i][j][k];
                 }
             }
             std::cout << std::endl;
@@ -186,7 +186,7 @@ void Interaction::set_default_variables()
 {
     maxorder = 0;
     nbody_include = nullptr;
-    rcs = nullptr;
+    cutoff_radii = nullptr;
     distall = nullptr;
     mindist_pairs = nullptr;
     cluster_list = nullptr;
@@ -513,26 +513,26 @@ void Interaction::print_interaction_information(const int natmin,
 bool Interaction::is_incutoff(const int n,
                               int *atomnumlist,
                               const int order,
-                              const std::vector<int> kd)
+                              const std::vector<int> &kd)
 {
-    int i, j;
     int iat, jat;
     int ikd, jkd;
     double cutoff_tmp;
 
-    for (i = 0; i < n; ++i) {
+    for (int i = 0; i < n; ++i) {
         iat = atomnumlist[i];
         ikd = kd[iat] - 1;
 
-        for (j = i + 1; j < n; ++j) {
+        for (int j = i + 1; j < n; ++j) {
             jat = atomnumlist[j];
             jkd = kd[jat] - 1;
 
-            cutoff_tmp = rcs[order][ikd][jkd];
+            cutoff_tmp = cutoff_radii[order][ikd][jkd];
 
             if (cutoff_tmp >= 0.0 &&
-                (mindist_pairs[iat][jat][0].dist > cutoff_tmp))
+                (mindist_pairs[iat][jat][0].dist > cutoff_tmp)) {
                 return false;
+            }
 
         }
     }
@@ -733,7 +733,7 @@ void Interaction::set_interaction_cluster(const int order,
                     jat = intpair_uniq[j];
                     jkd = kd[jat] - 1;
 
-                    rc_tmp = rcs[order][ikd][jkd];
+                    rc_tmp = cutoff_radii[order][ikd][jkd];
                     cell_vector.clear();
 
                     // Loop over the cell images of atom 'jat' and add to the list 
@@ -779,7 +779,7 @@ void Interaction::set_interaction_cluster(const int order,
                         for (ii = k + 1; ii < cellpair.size(); ++ii) {
                             dist_tmp = distance(x_image[cellpair[k]][data_now[k]],
                                                 x_image[cellpair[ii]][data_now[ii]]);
-                            rc_tmp = rcs[order][kd[data_now[k]] - 1][kd[data_now[ii]] - 1];
+                            rc_tmp = cutoff_radii[order][kd[data_now[k]] - 1][kd[data_now[ii]] - 1];
                             if (rc_tmp >= 0.0 && dist_tmp > rc_tmp) {
                                 isok = false;
                                 break;
@@ -839,8 +839,8 @@ void Interaction::set_interaction_cluster(const int order,
 }
 
 
-void Interaction::cell_combination(std::vector<std::vector<int>> array,
-                                   int i,
+void Interaction::cell_combination(const std::vector<std::vector<int>> &array,
+                                   const int i,
                                    std::vector<int> accum,
                                    std::vector<std::vector<int>> &comb)
 {

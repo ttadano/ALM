@@ -70,15 +70,21 @@ void ALMCUI::run(int narg, char **arg)
     std::cout << std::endl << " Job finished at "
         << alm->timer->DateAndTime() << std::endl;
 
+
     //std::cout << alm->get_number_of_fc_elements(1) << std::endl;
     //std::cout << alm->get_number_of_fc_elements(2) << std::endl;
+    //std::cout << alm->get_number_of_irred_fc_elements(1) << std::endl;
+    //std::cout << alm->get_number_of_irred_fc_elements(2) << std::endl;
 
-    /*
-        std::cout << "FCS: " << alm->timer->get_walltime("fcs") << " " << alm->timer->get_cputime("fcs") << std::endl;
-        std::cout << "CONSTRAINT: " << alm->timer->get_walltime("constraint") << " " << alm->timer->get_cputime("constraint") << std::endl;
-        std::cout << "FITTING: " << alm->timer->get_walltime("fitting") << " " << alm->timer->get_cputime("fitting") << std::endl;
-        std::cout << "SYSTEM: " << alm->timer->get_walltime("system") << std::endl;
-    */
+
+    //std::cout << "FCS: " << alm->timer->get_walltime("fcs")
+    //    << " " << alm->timer->get_cputime("fcs") << std::endl;
+    //std::cout << "CONSTRAINT: " << alm->timer->get_walltime("constraint")
+    //    << " " << alm->timer->get_cputime("constraint") << std::endl;
+    //std::cout << "FITTING: " << alm->timer->get_walltime("fitting")
+    //    << " " << alm->timer->get_cputime("fitting") << std::endl;
+    //std::cout << "SYSTEM: " << alm->timer->get_walltime("system") << std::endl;
+
 
     delete alm;
 }

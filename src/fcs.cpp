@@ -66,7 +66,6 @@ void Fcs::init(ALM *alm)
     }
     allocate(fc_zeros, maxorder);
 
-    bool store_zeros = true;
     // Generate force constants using the information of interacting atom pairs
     for (i = 0; i < maxorder; ++i) {
         generate_force_constant_table(i,
@@ -101,6 +100,7 @@ void Fcs::set_default_variables()
     nequiv = nullptr;
     fc_table = nullptr;
     fc_zeros = nullptr;
+    store_zeros = true;
 }
 
 void Fcs::deallocate_variables()
@@ -345,7 +345,6 @@ void Fcs::get_constraint_symmetry(const int nat,
     int *index_tmp;
     int **xyzcomponent;
     int nsym_in_use;
-    double *arr_constraint;
     std::unordered_set<FcProperty> list_found;
 
     int **map_sym;
@@ -630,20 +629,17 @@ bool Fcs::is_inprim(const int n,
     return false;
 }
 
-void Fcs::get_xyzcomponent(int n, int **xyz)
+void Fcs::get_xyzcomponent(const int n, int **xyz)
 {
     // Return xyz component for the given order using boost algorithm library
 
-    std::vector<int> v;
     int i;
 
-    for (i = 0; i < n; ++i) {
-        v.push_back(0);
-        v.push_back(1);
-        v.push_back(2);
-    }
+    std::vector<int> v(3 * n);
 
-    std::sort(v.begin(), v.end());
+    for (i = 0; i < n; ++i) v[i] = 0;
+    for (i = n; i < 2 * n; ++i) v[i] = 1;
+    for (i = 2 * n; i < 3 * n; ++i) v[i] = 2;
 
     int m = 0;
 

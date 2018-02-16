@@ -48,10 +48,10 @@ void InputSetter::deallocator(ALM *alm)
         deallocate(alm->interaction->nbody_include);
     }
     alm->interaction->nbody_include = nullptr;
-    if (alm->interaction->rcs) {
-        deallocate(alm->interaction->rcs);
+    if (alm->interaction->cutoff_radii) {
+        deallocate(alm->interaction->cutoff_radii);
     }
-    alm->interaction->rcs = nullptr;
+    alm->interaction->cutoff_radii = nullptr;
 }
 
 void InputSetter::set_general_vars(ALM *alm,
@@ -144,12 +144,12 @@ void InputSetter::set_cutoff_radii(ALM *alm,
 {
     int i, j, k;
 
-    allocate(alm->interaction->rcs, maxorder, nkd, nkd);
+    allocate(alm->interaction->cutoff_radii, maxorder, nkd, nkd);
 
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                alm->interaction->rcs[i][j][k] = rcs[i][j][k];
+                alm->interaction->cutoff_radii[i][j][k] = rcs[i][j][k];
             }
         }
     }

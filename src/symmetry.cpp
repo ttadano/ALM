@@ -193,12 +193,12 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
             tran_tmp[i] = 0.0;
         }
 
-        SymmData_out.push_back(SymmetryOperation(rot_tmp,
-                                                 tran_tmp,
-                                                 rot_cart_tmp,
-                                                 true,
-                                                 true,
-                                                 true));
+        SymmData_out.emplace_back(rot_tmp,
+                                  tran_tmp,
+                                  rot_cart_tmp,
+                                  true,
+                                  true,
+                                  true);
 
     } else {
 
@@ -228,12 +228,12 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
             symop_in_cart(rot_cart_tmp, rot_tmp,
                           cell.lattice_vector,
                           cell.reciprocal_lattice_vector);
-            SymmData_out.push_back(SymmetryOperation(rot_tmp,
-                                                     tran_tmp,
-                                                     rot_cart_tmp,
-                                                     is_compatible(rot_tmp),
-                                                     is_compatible(rot_cart_tmp),
-                                                     is_translation(rot_tmp)));
+            SymmData_out.emplace_back(rot_tmp,
+                                      tran_tmp,
+                                      rot_cart_tmp,
+                                      is_compatible(rot_tmp),
+                                      is_compatible(rot_cart_tmp),
+                                      is_translation(rot_tmp));
         }
         ifs_sym.close();
     }
@@ -429,7 +429,6 @@ void Symmetry::find_crystal_symmetry(const Cell &cell,
     bool is_found;
     bool isok;
     bool mag_sym1, mag_sym2;
-
     bool is_identity_matrix;
 
 
@@ -447,12 +446,12 @@ void Symmetry::find_crystal_symmetry(const Cell &cell,
         tran[i] = 0.0;
     }
 
-    CrystalSymmList.push_back(SymmetryOperation(rot_int,
-                                                tran,
-                                                rot_cart,
-                                                is_compatible(rot_int),
-                                                is_compatible(rot_cart),
-                                                is_translation(rot_int)));
+    CrystalSymmList.emplace_back(rot_int,
+                                 tran,
+                                 rot_cart,
+                                 is_compatible(rot_int),
+                                 is_compatible(rot_cart),
+                                 is_translation(rot_int));
 
     for (auto &it_latsym : LatticeSymmList) {
 
@@ -575,12 +574,12 @@ void Symmetry::find_crystal_symmetry(const Cell &cell,
 #ifdef _OPENMP
 #pragma omp critical
 #endif
-                CrystalSymmList.push_back(SymmetryOperation(it_latsym.mat,
-                                                            tran,
-                                                            rot_cart,
-                                                            is_compatible(it_latsym.mat),
-                                                            is_compatible(rot_cart),
-                                                            is_translation(it_latsym.mat)));
+                CrystalSymmList.emplace_back(it_latsym.mat,
+                                             tran,
+                                             rot_cart,
+                                             is_compatible(it_latsym.mat),
+                                             is_compatible(rot_cart),
+                                             is_translation(it_latsym.mat));
             }
         }
 
@@ -653,16 +652,19 @@ void Symmetry::findsym_spglib(const Cell &cell,
     double rot_cartesian[3][3];
 
     for (i = 0; i < nsym; ++i) {
+
         symop_in_cart(rot_cartesian,
                       rotation[i],
                       cell.lattice_vector,
                       cell.reciprocal_lattice_vector);
-        symop_all.push_back(SymmetryOperation(rotation[i],
-                                              translation[i],
-                                              rot_cartesian,
-                                              is_compatible(rotation[i]),
-                                              is_compatible(rot_cartesian),
-                                              is_translation(rotation[i])));
+
+        symop_all.emplace_back(rotation[i],
+                               translation[i],
+                               rot_cartesian,
+                               is_compatible(rotation[i]),
+                               is_compatible(rot_cartesian),
+                               is_translation(rotation[i]));
+
     }
 
     std::cout << "  Space group: " << symbol << " (" << std::setw(3) << spgnum << ")" << std::endl;
@@ -844,9 +846,7 @@ void Symmetry::gen_mapping_information(const Cell &cell,
 
 bool Symmetry::is_translation(const int rot[3][3])
 {
-    bool ret;
-
-    ret =
+    bool ret =
         rot[0][0] == 1 && rot[0][1] == 0 && rot[0][2] == 0 &&
         rot[1][0] == 0 && rot[1][1] == 1 && rot[1][2] == 0 &&
         rot[2][0] == 0 && rot[2][1] == 0 && rot[2][2] == 1;
@@ -854,28 +854,21 @@ bool Symmetry::is_translation(const int rot[3][3])
     return ret;
 }
 
-template
-<
-    typename T>
-
+template <typename T>
 bool Symmetry::is_compatible(const T rot[3][3],
                              const double tolerance_zero)
 {
-    int i, j;
-    int nfinite;
+    int nfinite = 0;
     double rot_double[3][3];
 
-    nfinite = 0;
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
             rot_double[i][j] = static_cast<double>(rot[i][j]);
             if (std::abs(rot_double[i][j]) > tolerance_zero) ++nfinite;
         }
     }
 
-    if (nfinite == 3) return true;
-
-    return false;
+    return (nfinite == 3);
 }
 
 

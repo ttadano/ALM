@@ -31,12 +31,7 @@ namespace ALM_NS
             iarray.clear();
         }
 
-        IntList(const IntList &a)
-        {
-            for (auto p = a.iarray.begin(); p != a.iarray.end(); ++p) {
-                iarray.push_back(*p);
-            }
-        }
+        IntList(const IntList &a) : iarray(a.iarray) {};
 
         IntList(const int n, const int *arr)
         {
@@ -123,14 +118,7 @@ namespace ALM_NS
 
         MinDistList(const std::vector<int> &cell_in,
                     const std::vector<double> &dist_in)
-        {
-            for (auto it = cell_in.begin(); it != cell_in.end(); ++it) {
-                cell.push_back(*it);
-            }
-            for (auto it = dist_in.begin(); it != dist_in.end(); ++it) {
-                dist.push_back(*it);
-            }
-        }
+            : cell(cell_in), dist(dist_in) {};
 
         static bool compare_sum_distance(const MinDistList &a, const MinDistList &b)
         {
@@ -168,29 +156,15 @@ namespace ALM_NS
 
         InteractionCluster();
 
-        InteractionCluster(const std::vector<int> atom_in,
-                           const std::vector<std::vector<int>> cell_in,
+        InteractionCluster(const std::vector<int> &atom_in,
+                           const std::vector<std::vector<int>> &cell_in,
                            const double dist_in)
-        {
-            for (int i = 0; i < atom_in.size(); ++i) {
-                atom.push_back(atom_in[i]);
-            }
-            for (int i = 0; i < cell_in.size(); ++i) {
-                cell.push_back(cell_in[i]);
-            }
-            distmax = dist_in;
-        }
+            : atom(atom_in), cell(cell_in), distmax(dist_in) {};
 
-        InteractionCluster(const std::vector<int> atom_in,
-                           const std::vector<std::vector<int>> cell_in)
-        {
-            for (int i = 0; i < atom_in.size(); ++i) {
-                atom.push_back(atom_in[i]);
-            }
-            for (int i = 0; i < cell_in.size(); ++i) {
-                cell.push_back(cell_in[i]);
-            }
-        }
+        InteractionCluster(const std::vector<int> &atom_in,
+                           const std::vector<std::vector<int>> &cell_in)
+            : atom(atom_in), cell(cell_in), distmax(0.0) {};
+
 
         bool operator<(const InteractionCluster &a) const
         {
@@ -207,7 +181,7 @@ namespace ALM_NS
 
         int maxorder;
         int *nbody_include;
-        double ***rcs;
+        double ***cutoff_radii;
 
         std::vector<std::string> str_order;
         std::set<IntList> *cluster_list;
@@ -224,7 +198,7 @@ namespace ALM_NS
         bool is_incutoff(int,
                          int *,
                          int,
-                         std::vector<int>);
+                         const std::vector<int> &);
 
         void generate_interaction_information_by_cutoff(int,
                                                         int,
@@ -286,7 +260,7 @@ namespace ALM_NS
                                      int *,
                                      std::set<InteractionCluster> *);
 
-        void cell_combination(std::vector<std::vector<int>>,
+        void cell_combination(const std::vector<std::vector<int>> &,
                               int, std::vector<int>,
                               std::vector<std::vector<int>> &);
 
