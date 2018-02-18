@@ -8,26 +8,24 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
+#include "fitting.h"
+#include "constants.h"
+#include "constraint.h"
+#include "error.h"
+#include "fcs.h"
+#include "files.h"
+#include "interaction.h"
+#include "mathfunctions.h"
+#include "memory.h"
+#include "symmetry.h"
+#include "system.h"
+#include "timer.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
 #include <string>
 #include <vector>
 #include <boost/lexical_cast.hpp>
-#include "fitting.h"
-#include "files.h"
-#include "error.h"
-#include "memory.h"
-#include "symmetry.h"
-#include "system.h"
-#include "fcs.h"
-#include "interaction.h"
-#include "timer.h"
-#include "constants.h"
-#include "constraint.h"
-#include "mathfunctions.h"
-#include <time.h>
-
 
 using namespace ALM_NS;
 
@@ -50,6 +48,7 @@ void Fitting::set_default_variables()
     ndata = 0;
     nstart = 1;
     nend = 0;
+    ndata_used = 0;
 }
 
 void Fitting::deallocate_variables()
@@ -70,11 +69,9 @@ void Fitting::fitmain(ALM *alm)
     int i;
     int nat = alm->system->supercell.number_of_atoms;
     int natmin = alm->symmetry->nat_prim;
- //   int nstart = alm->fitting->nstart;
- //   int nend = alm->system->nend;
     int N, M, N_new;
     int maxorder = alm->interaction->maxorder;
-    int P = alm->constraint->P;
+    int P = alm->constraint->number_of_constraints;
     int ndata_used = nend - nstart + 1;
 
     double **u, **f;
@@ -104,6 +101,32 @@ void Fitting::fitmain(ALM *alm)
     std::cout << "  " << ndata_used << " entries will be used for fitting."
         << std::endl << std::endl;
 
+    /*
+    std::vector<std::vector<double>> u_vec, f_vec;
+    std::vector<std::vector<double>> mat_tmp;
+    std::vector<double> vec_tmp;
+
+    u_vec.resize(ndata_used, std::vector<double>(3 * nat));
+    f_vec.resize(ndata_used, std::vector<double>(3 * nat));
+
+    for (i = 0; i < ndata_used; ++i) {
+        for (int j = 0; j < 3*nat; ++j) {
+            u_vec[i][j] = u_in[i][j];
+            f_vec[i][j] = f_in[i][j];
+        }
+    }
+    get_matrix_elements(maxorder, ndata_used,
+                        u_vec, f_vec, mat_tmp, vec_tmp,
+                        alm->symmetry, alm->fcs);
+
+    for (i = 0; i < mat_tmp.size(); ++i) {
+        for (int j = 0; j < mat_tmp[0].size(); ++j) {
+            std::cout << std::setw(15) << mat_tmp[i][j];
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    */
 
     if (nmulti > 0) {
         allocate(u, ndata_used * nmulti, 3 * nat);
@@ -111,7 +134,7 @@ void Fitting::fitmain(ALM *alm)
     } else {
         exit("fitmain", "nmulti has to be larger than 0.");
     }
-    data_multiplier(u, f, nat, ndata_used, nmulti, alm->symmetry);
+    data_multiplier(u, f, nat, ndata_used, alm->symmetry);
 
     N = 0;
     for (i = 0; i < maxorder; ++i) {
@@ -139,13 +162,59 @@ void Fitting::fitmain(ALM *alm)
         calc_matrix_elements_algebraic_constraint(M, N, N_new, nat, natmin, ndata_used,
                                                   nmulti, maxorder, u, f, amat, fsum,
                                                   fsum_orig, alm->symmetry, alm->fcs, alm->constraint);
+
+
+        /*
+  
+
+        std::vector<std::vector<double>> u_vec, f_vec;
+        std::vector<std::vector<double>> mat_tmp;
+        std::vector<double> vec_tmp;
+        double fnorm;
+
+        u_vec.resize(ndata_used, std::vector<double>(3 * nat));
+        f_vec.resize(ndata_used, std::vector<double>(3 * nat));
+
+        for (i = 0; i < ndata_used; ++i) {
+            for (int j = 0; j < 3 * nat; ++j) {
+                u_vec[i][j] = u_in[i][j];
+                f_vec[i][j] = f_in[i][j];
+            }
+        }
+        get_matrix_elements_algebraic_constraint(maxorder,
+                                                 ndata_used,
+                                                 u_vec,
+                                                 f_vec,
+                                                 mat_tmp,
+                                                 vec_tmp,
+                                                 fnorm,
+                                                 alm->symmetry,
+                                                 alm->fcs,
+                                                 alm->constraint);
+
+        for (i = 0; i < mat_tmp.size(); ++i) {
+            for (int j = 0; j < mat_tmp[0].size(); ++j) {
+                std::cout << std::setw(15) << mat_tmp[i][j];
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+        *
+        */
+
     } else {
         allocate(amat, M, N);
         allocate(fsum, M);
 
-        calc_matrix_elements(M, N, nat, natmin, ndata_used,
-                             nmulti, maxorder, u, f, amat, fsum,
+        calc_matrix_elements(M, N,
+                             natmin,
+                             ndata_used,
+                             nmulti,
+                             maxorder, u, f,
+                             amat, fsum,
                              alm->symmetry, alm->fcs);
+
+
     }
 
     deallocate(u);
@@ -154,7 +223,6 @@ void Fitting::fitmain(ALM *alm)
     // Execute fitting
 
     allocate(param_tmp, N);
-
 
     // Fitting with singular value decomposition or QR-Decomposition
 
@@ -213,8 +281,10 @@ void Fitting::fitmain(ALM *alm)
 void Fitting::set_displacement_and_force(const double * const *disp_in,
                                          const double * const *force_in,
                                          const int nat,
-                                         const int ndata_used)
+                                         const int ndata_used_in)
 {
+    ndata_used = ndata_used_in;
+
     if (u_in) {
         deallocate(u_in);
     }
@@ -231,6 +301,11 @@ void Fitting::set_displacement_and_force(const double * const *disp_in,
             f_in[i][j] = force_in[i][j];
         }
     }
+}
+
+const int Fitting::get_ndata_used()
+{
+    return ndata_used;
 }
 
 void Fitting::fit_without_constraints(int N,
@@ -352,7 +427,8 @@ void Fitting::fit_with_constraints(int N,
         std::cout << "  rank = " << nrank << " N = " << N << std::endl << std::endl;
         std::cout << "  This can cause a difficulty in solving the fitting problem properly      " << std::endl;
         std::cout << "  with DGGLSE, especially when the difference is large. Please check if    " << std::endl;
-        std::cout << "  you obtain reliable force constants in the .fcs file.                    " << std::endl << std::endl;
+        std::cout << "  you obtain reliable force constants in the .fcs file.                    " << std::endl << std::
+            endl;
         std::cout << "  You may need to reduce the cutoff radii and/or increase NDATA            " << std::endl;
         std::cout << "  by giving linearly-independent displacement patterns.                    " << std::endl;
         std::cout << " **************************************************************************" << std::endl;
@@ -531,7 +607,6 @@ void Fitting::fit_algebraic_constraints(int N,
 
 void Fitting::calc_matrix_elements(const int M,
                                    const int N,
-                                   const int nat,
                                    const int natmin,
                                    const int ndata_fit,
                                    const int nmulti,
@@ -545,7 +620,6 @@ void Fitting::calc_matrix_elements(const int M,
 {
     int i, j;
     int irow;
-    int ncycle;
 
     std::cout << "  Calculation of matrix elements for direct fitting started ... ";
     for (i = 0; i < M; ++i) {
@@ -555,7 +629,7 @@ void Fitting::calc_matrix_elements(const int M,
         bvec[i] = 0.0;
     }
 
-    ncycle = ndata_fit * nmulti;
+    int ncycle = ndata_fit * nmulti;
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -609,10 +683,187 @@ void Fitting::calc_matrix_elements(const int M,
         }
 
         deallocate(ind);
-
     }
 
     std::cout << "done!" << std::endl << std::endl;
+}
+
+
+void Fitting::get_matrix_elements(const int maxorder,
+                                  const int ndata_fit,
+                                  const std::vector<std::vector<double>> &u,
+                                  const std::vector<std::vector<double>> &f,
+                                  std::vector<std::vector<double>> &amat,
+                                  std::vector<double> &bvec,
+                                  Symmetry *symmetry,
+                                  Fcs *fcs)
+{
+    int i, j;
+    int irow;
+
+    std::vector<std::vector<double>> u_multi, f_multi;
+
+    data_multiplier(u, u_multi, ndata_fit, symmetry);
+    data_multiplier(f, f_multi, ndata_fit, symmetry);
+
+    int natmin = symmetry->nat_prim;
+    int nrows = 3 * natmin * ndata_fit * symmetry->ntran;
+    int ncols = 0;
+
+    for (i = 0; i < maxorder; ++i) ncols += fcs->nequiv[i].size();
+
+    amat.resize(nrows, std::vector<double>(ncols, 0.0));
+    bvec.resize(nrows, 0.0);
+
+    int ncycle = ndata_fit * symmetry->ntran;
+
+#ifdef _OPENMP
+#pragma omp parallel private(irow, i, j)
+#endif
+    {
+        int *ind;
+        int mm, order, iat, k;
+        int im, idata, iparam;
+        double amat_tmp;
+
+        allocate(ind, maxorder + 1);
+
+#ifdef _OPENMP
+#pragma omp for schedule(guided)
+#endif
+        for (irow = 0; irow < ncycle; ++irow) {
+
+            // generate r.h.s vector B
+            for (i = 0; i < natmin; ++i) {
+                iat = symmetry->map_p2s[i][0];
+                for (j = 0; j < 3; ++j) {
+                    im = 3 * i + j + 3 * natmin * irow;
+                    bvec[im] = f_multi[irow][3 * iat + j];
+                }
+            }
+
+            // generate l.h.s. matrix A
+
+            idata = 3 * natmin * irow;
+            iparam = 0;
+
+            for (order = 0; order < maxorder; ++order) {
+
+                mm = 0;
+
+                for (auto iter = fcs->nequiv[order].begin(); iter != fcs->nequiv[order].end(); ++iter) {
+                    for (i = 0; i < *iter; ++i) {
+                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        k = idata + inprim_index(fcs->fc_table[order][mm].elems[0], symmetry);
+                        amat_tmp = 1.0;
+                        for (j = 1; j < order + 2; ++j) {
+                            ind[j] = fcs->fc_table[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                        }
+                        amat[k][iparam] -= gamma(order + 2, ind) * fcs->fc_table[order][mm].sign * amat_tmp;
+                        ++mm;
+                    }
+                    ++iparam;
+                }
+            }
+        }
+
+        deallocate(ind);
+    }
+
+    u_multi.clear();
+    f_multi.clear();
+}
+
+void Fitting::get_matrix_elements(const int maxorder,
+                                  const int ndata_fit,
+                                  const int nat,
+                                  double *amat,
+                                  double *bvec,
+                                  Symmetry *symmetry,
+                                  Fcs *fcs)
+{
+    // amat: flattened array of a MxN real matrix (signal matrix). Row major
+    // bvec: real 1D array of atomic forces
+    //   M : 3 * natmin * ndata_fit * symmetry->ntran
+    //   N : number of irreducible force constants
+
+    int i, j;
+    int irow;
+
+    int natmin = symmetry->nat_prim;
+    int nrows = 3 * natmin * ndata_fit * symmetry->ntran;
+    int ncols = 0;
+
+    for (i = 0; i < maxorder; ++i) ncols += fcs->nequiv[i].size();
+
+    int ncycle = ndata_fit * symmetry->ntran;
+
+    double **u_multi, **f_multi;
+
+    allocate(u_multi, ncycle, 3 * nat);
+    allocate(f_multi, ncycle, 3 * nat);
+    data_multiplier(u_multi, f_multi, nat, ndata_fit, symmetry);
+
+    for (i = 0; i < nrows * ncols; ++i) amat[i] = 0.0;
+    for (i = 0; i < nrows; ++i) bvec[i] = 0.0;
+
+#ifdef _OPENMP
+#pragma omp parallel private(irow, i, j)
+#endif
+    {
+        int *ind;
+        int mm, order, iat, k;
+        int im, idata, iparam;
+        double amat_tmp;
+
+        allocate(ind, maxorder + 1);
+
+#ifdef _OPENMP
+#pragma omp for schedule(guided)
+#endif
+        for (irow = 0; irow < ncycle; ++irow) {
+
+            // generate r.h.s vector B
+            for (i = 0; i < natmin; ++i) {
+                iat = symmetry->map_p2s[i][0];
+                for (j = 0; j < 3; ++j) {
+                    im = 3 * i + j + 3 * natmin * irow;
+                    bvec[im] = f_multi[irow][3 * iat + j];
+                }
+            }
+
+            // generate l.h.s. matrix A
+
+            idata = 3 * natmin * irow;
+            iparam = 0;
+
+            for (order = 0; order < maxorder; ++order) {
+
+                mm = 0;
+
+                for (auto iter = fcs->nequiv[order].begin(); iter != fcs->nequiv[order].end(); ++iter) {
+                    for (i = 0; i < *iter; ++i) {
+                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        k = idata + inprim_index(fcs->fc_table[order][mm].elems[0], symmetry);
+                        amat_tmp = 1.0;
+                        for (j = 1; j < order + 2; ++j) {
+                            ind[j] = fcs->fc_table[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                        }
+                        amat[k * ncols + iparam] -= gamma(order + 2, ind) * fcs->fc_table[order][mm].sign * amat_tmp;
+                        ++mm;
+                    }
+                    ++iparam;
+                }
+            }
+        }
+
+        deallocate(ind);
+    }
+
+    deallocate(u_multi);
+    deallocate(f_multi);
 }
 
 
@@ -750,7 +1001,7 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
                     for (j = 0; j < constraint->const_relate[order][i].alpha.size(); ++j) {
 
                         inew = constraint->index_bimap[order].right.at(
-                                                                 constraint->const_relate[order][i].p_index_orig[j])
+                                constraint->const_relate[order][i].p_index_orig[j])
                             + iparam;
                         for (k = 0; k < 3 * natmin; ++k) {
                             amat_mod[k][inew] -= amat_orig[k][iold] * constraint->const_relate[order][i].alpha[j];
@@ -779,22 +1030,233 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
 }
 
 
+void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
+                                                       const int ndata_fit,
+                                                       const std::vector<std::vector<double>> &u,
+                                                       const std::vector<std::vector<double>> &f,
+                                                       std::vector<std::vector<double>> &amat,
+                                                       std::vector<double> &bvec, double &fnorm,
+                                                       Symmetry *symmetry,
+                                                       Fcs *fcs,
+                                                       Constraint *constraint)
+{
+    int i, j;
+    int irow;
+
+    std::vector<std::vector<double>> u_multi, f_multi;
+
+    data_multiplier(u, u_multi, ndata_fit, symmetry);
+    data_multiplier(f, f_multi, ndata_fit, symmetry);
+
+    int natmin = symmetry->nat_prim;
+    int nrows = 3 * natmin * ndata_fit * symmetry->ntran;
+    int ncols = 0;
+    int ncols_new = 0;
+
+    for (i = 0; i < maxorder; ++i) {
+        ncols += fcs->nequiv[i].size();
+        ncols_new += constraint->index_bimap[i].size();
+    }
+
+    int ncycle = ndata_fit * symmetry->ntran;
+
+    std::vector<double> bvec_orig(nrows, 0.0);
+
+    amat.resize(nrows, std::vector<double>(ncols_new, 0.0));
+    bvec.resize(nrows, 0.0);
+
+#ifdef _OPENMP
+#pragma omp parallel private(irow, i, j)
+#endif
+    {
+        int *ind;
+        int mm, order, iat, k;
+        int im, idata, iparam;
+        int ishift;
+        int iold, inew;
+        double amat_tmp;
+        double **amat_orig_tmp;
+        double **amat_mod_tmp;
+
+        allocate(ind, maxorder + 1);
+        allocate(amat_orig_tmp, 3 * natmin, ncols);
+        allocate(amat_mod_tmp, 3 * natmin, ncols_new);
+
+#ifdef _OPENMP
+#pragma omp for schedule(guided)
+#endif
+        for (irow = 0; irow < ncycle; ++irow) {
+
+            // generate r.h.s vector B
+            for (i = 0; i < natmin; ++i) {
+                iat = symmetry->map_p2s[i][0];
+                for (j = 0; j < 3; ++j) {
+                    im = 3 * i + j + 3 * natmin * irow;
+                    bvec[im] = f_multi[irow][3 * iat + j];
+                    bvec_orig[im] = f_multi[irow][3 * iat + j];
+                }
+            }
+
+            for (i = 0; i < 3 * natmin; ++i) {
+                for (j = 0; j < ncols; ++j) {
+                    amat_orig_tmp[i][j] = 0.0;
+                }
+                for (j = 0; j < ncols_new; ++j) {
+                    amat_mod_tmp[i][j] = 0.0;
+                }
+            }
+
+            // generate l.h.s. matrix A
+
+            idata = 3 * natmin * irow;
+            iparam = 0;
+
+            for (order = 0; order < maxorder; ++order) {
+
+                mm = 0;
+
+                for (auto iter = fcs->nequiv[order].begin(); iter != fcs->nequiv[order].end(); ++iter) {
+                    for (i = 0; i < *iter; ++i) {
+                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        k = inprim_index(ind[0], symmetry);
+
+                        amat_tmp = 1.0;
+                        for (j = 1; j < order + 2; ++j) {
+                            ind[j] = fcs->fc_table[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                        }
+                        amat_orig_tmp[k][iparam] -= gamma(order + 2, ind) * fcs->fc_table[order][mm].sign * amat_tmp;
+                        ++mm;
+                    }
+                    ++iparam;
+                }
+            }
+
+            ishift = 0;
+            iparam = 0;
+
+            for (order = 0; order < maxorder; ++order) {
+
+                for (i = 0; i < constraint->const_fix[order].size(); ++i) {
+
+                    for (j = 0; j < 3 * natmin; ++j) {
+                        bvec[j + idata] -= constraint->const_fix[order][i].val_to_fix
+                            * amat_orig_tmp[j][ishift + constraint->const_fix[order][i].p_index_target];
+                    }
+                }
+
+                for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[order].begin();
+                     it != constraint->index_bimap[order].end(); ++it) {
+                    inew = (*it).left + iparam;
+                    iold = (*it).right + ishift;
+
+                    for (j = 0; j < 3 * natmin; ++j) {
+                        amat_mod_tmp[j][inew] = amat_orig_tmp[j][iold];
+                    }
+                }
+
+                for (i = 0; i < constraint->const_relate[order].size(); ++i) {
+
+                    iold = constraint->const_relate[order][i].p_index_target + ishift;
+
+                    for (j = 0; j < constraint->const_relate[order][i].alpha.size(); ++j) {
+
+                        inew = constraint->index_bimap[order].right.at(
+                                constraint->const_relate[order][i].p_index_orig[j])
+                            + iparam;
+                        for (k = 0; k < 3 * natmin; ++k) {
+                            amat_mod_tmp[k][inew] -= amat_orig_tmp[k][iold] * constraint->const_relate[order][i].alpha[j
+                            ];
+                        }
+                    }
+                }
+
+                ishift += fcs->nequiv[order].size();
+                iparam += constraint->index_bimap[order].size();
+            }
+
+            for (i = 0; i < 3 * natmin; ++i) {
+                for (j = 0; j < ncols_new; ++j) {
+                    amat[i + idata][j] = amat_mod_tmp[i][j];
+                }
+            }
+        }
+
+        deallocate(ind);
+        deallocate(amat_orig_tmp);
+        deallocate(amat_mod_tmp);
+    }
+
+    fnorm = 0.0;
+    for (i = 0; i < bvec_orig.size(); ++i) {
+        fnorm += bvec_orig[i] * bvec_orig[i];
+    }
+    fnorm = std::sqrt(fnorm);
+}
+
+
+void Fitting::recover_original_forceconstants(const int maxorder,
+                                              const std::vector<double> &param_in,
+                                              std::vector<double> &param_out,
+                                              Fcs *fcs,
+                                              Constraint *constraint)
+{
+    int i, j, k;
+    int ishift = 0;
+    int iparam = 0;
+    double tmp;
+    int inew, iold;
+
+    int nparams = 0;
+
+    for (i = 0; i < maxorder; ++i) nparams += fcs->nequiv[i].size();
+    if (nparams == param_in.size()) return;
+
+    param_out.resize(nparams, 0.0);
+
+    for (i = 0; i < maxorder; ++i) {
+        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
+            param_out[constraint->const_fix[i][j].p_index_target + ishift]
+                = constraint->const_fix[i][j].val_to_fix;
+        }
+
+        for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
+             it != constraint->index_bimap[i].end(); ++it) {
+            inew = (*it).left + iparam;
+            iold = (*it).right + ishift;
+
+            param_out[iold] = param_in[inew];
+        }
+
+        for (j = 0; j < constraint->const_relate[i].size(); ++j) {
+            tmp = 0.0;
+
+            for (k = 0; k < constraint->const_relate[i][j].alpha.size(); ++k) {
+                tmp += constraint->const_relate[i][j].alpha[k]
+                    * param_out[constraint->const_relate[i][j].p_index_orig[k] + ishift];
+            }
+            param_out[constraint->const_relate[i][j].p_index_target + ishift] = -tmp;
+        }
+
+        ishift += fcs->nequiv[i].size();
+        iparam += constraint->index_bimap[i].size();
+    }
+}
+
+
 void Fitting::data_multiplier(double **u,
                               double **f,
                               const int nat,
                               const int ndata_used,
-                              const int nmulti,
                               Symmetry *symmetry)
 {
     int i, j, k;
-    int idata, itran, isym;
     int n_mapped;
-    double u_rot[3], f_rot[3];
 
     // Multiply data
-    idata = 0;
+    int idata = 0;
     for (i = 0; i < ndata_used; ++i) {
-        for (itran = 0; itran < symmetry->ntran; ++itran) {
+        for (int itran = 0; itran < symmetry->ntran; ++itran) {
             for (j = 0; j < nat; ++j) {
                 n_mapped = symmetry->map_sym[j][symmetry->symnum_tran[itran]];
                 for (k = 0; k < 3; ++k) {
@@ -807,6 +1269,41 @@ void Fitting::data_multiplier(double **u,
     }
 }
 
+void Fitting::data_multiplier(const std::vector<std::vector<double>> &data_in,
+                              std::vector<std::vector<double>> &data_out,
+                              const int ndata_used,
+                              Symmetry *symmetry)
+{
+    int i, j, k;
+    int n_mapped;
+    int ndata_in = data_in.size();
+
+    if (ndata_in < ndata_used) {
+        exit("data_multiplier", "Number of data sets is insufficient.");
+    }
+
+    int ndata_out = ndata_used * symmetry->ntran;
+    int nat = symmetry->nat_prim * symmetry->ntran;
+
+    //data_out.reserve(ndata_out);
+    //std::vector<double> data_tmp(3 * nat);
+
+    int idata = 0;
+    for (i = 0; i < ndata_used; ++i) {
+        std::vector<double> data_tmp(3 * nat, 0.0);
+
+        for (int itran = 0; itran < symmetry->ntran; ++itran) {
+            for (j = 0; j < nat; ++j) {
+                n_mapped = symmetry->map_sym[j][symmetry->symnum_tran[itran]];
+                for (k = 0; k < 3; ++k) {
+                    data_tmp[3 * n_mapped + k] = data_in[i][3 * j + k];
+                }
+            }
+            data_out.emplace_back(data_tmp);
+            ++idata;
+        }
+    }
+}
 
 int Fitting::inprim_index(const int n, Symmetry *symmetry)
 {
@@ -874,9 +1371,8 @@ int Fitting::factorial(const int n)
 {
     if (n == 1 || n == 0) {
         return 1;
-    } else {
-        return n * factorial(n - 1);
     }
+    return n * factorial(n - 1);
 }
 
 

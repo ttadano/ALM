@@ -10,15 +10,13 @@
 
 #pragma once
 
+#include "alm.h"
+
 #include <fstream>
 #include <string>
 #include <map>
 #include <vector>
-//#include "alm.h"
-#include "alm.h"
-#include "input_setter.h"
-#include "memory.h"
-#include "error.h"
+
 
 namespace ALM_NS
 {
@@ -28,17 +26,19 @@ namespace ALM_NS
         InputParser();
         ~InputParser();
         void run(ALM *alm,
-                 const int narg,
+                 int narg,
                  const char * const *arg);
+
         void parse_displacement_and_force(ALM *alm);
+
         void parse_displacement_and_force_files(double **u,
                                                 double **f,
-                                                const int nat,
-                                                const int ndata,
-                                                const int nstart,
-                                                const int nend,
-                                                const std::string file_disp,
-                                                const std::string file_force);
+                                                int nat,
+                                                int ndata,
+                                                int nstart,
+                                                int nend,
+                                                std::string file_disp,
+                                                std::string file_force);
         std::string str_magmom;
 
     private:
@@ -58,23 +58,23 @@ namespace ALM_NS
         void parse_cutoff_radii(ALM *alm);
         void parse_fitting_vars(ALM *alm);
         int locate_tag(std::string);
-        void split_str_by_space(const std::string,
+        void split_str_by_space(std::string,
                                 std::vector<std::string> &);
         bool is_endof_entry(std::string);
-        void get_var_dict(const std::string,
+        void get_var_dict(std::string,
                           std::map<std::string,
                                    std::string> &);
 
         template <typename T>
         void assign_val(T &,
-                        const std::string,
+                        std::string,
                         std::map<std::string, std::string>);
 
         void set_displacement_and_force(ALM *alm,
                                         const double * const *u,
                                         const double * const *f,
-                                        const int nat,
-                                        const int ndata_used,
-                                        const int nmulti);
+                                        int nat,
+                                        int ndata_used,
+                                        int nmulti);
     };
 }

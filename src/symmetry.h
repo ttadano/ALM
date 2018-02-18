@@ -149,19 +149,22 @@ namespace ALM_NS
         void findsym_spglib(const Cell &,
                             const std::vector<std::vector<unsigned int>> &,
                             const Spin &,
-                            const double,
+                            double,
                             std::vector<SymmetryOperation> &);
 
         bool is_translation(const int [3][3]);
         bool is_proper(const double [3][3]);
 
-        void symop_in_cart(double [3][3], const int [3][3],
-                           const double [3][3], const double [3][3]);
+        void symop_in_cart(double [3][3],
+                           const int [3][3],
+                           const double [3][3],
+                           const double [3][3]);
+
         void print_symminfo_stdout();
 
         template <typename T>
         bool is_compatible(const T [3][3],
-                           const double tolerance_zero = 1.0e-5);
+                           double tolerance_zero = 1.0e-5);
 
         void find_lattice_symmetry(const double [3][3],
                                    std::vector<RotationMatrix> &);
@@ -173,11 +176,15 @@ namespace ALM_NS
                                    const std::vector<RotationMatrix> &,
                                    std::vector<SymmetryOperation> &);
 
-        void set_primitive_lattice(const double [3][3], const int,
-                                   const int *, double **,
-                                   double [3][3], unsigned int &,
-                                   int *, double **,
-                                   const double);
+        void set_primitive_lattice(const double [3][3],
+                                   int,
+                                   const int *,
+                                   double **,
+                                   double [3][3],
+                                   unsigned int &,
+                                   int *,
+                                   double **,
+                                   double);
 
         std::string file_sym;
     };

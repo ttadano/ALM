@@ -29,9 +29,7 @@ namespace ALM_NS
         FcProperty();
 
         FcProperty(const FcProperty &obj) :
-            sign(obj.sign), mother(obj.mother), elems(obj.elems)
-        {
-        }
+            elems(obj.elems), sign(obj.sign), mother(obj.mother) { }
 
         FcProperty(const int n, const double c, const int *arr, const int m)
         {
@@ -83,53 +81,54 @@ namespace ALM_NS
 
         void get_xyzcomponent(int, int **);
 
-        bool is_inprim(const int,
+        bool is_inprim(int,
                        const int *,
-                       const int,
+                       int,
                        int **);
 
-        int get_minimum_index_in_primitive(const int,
+        int get_minimum_index_in_primitive(int,
                                            const int *,
-                                           const int,
-                                           const int,
+                                           int,
+                                           int,
                                            int **);
-        double coef_sym(const int,
+        double coef_sym(int,
                         double **,
                         const int *,
                         const int *);
 
-        void generate_force_constant_table(const int, const int,
+        void generate_force_constant_table(int, int,
                                            const std::set<IntList> &,
                                            Symmetry *,
-                                           const std::string,
+                                           std::string,
                                            std::vector<FcProperty> &,
                                            std::vector<int> &,
                                            std::vector<FcProperty> &,
-                                           const bool);
+                                           bool);
 
-        void get_constraint_symmetry(const int,
+        void get_constraint_symmetry(int,
                                      Symmetry *,
-                                     const int,
+                                     int,
                                      const std::set<IntList> &,
-                                     const std::string,
+                                     std::string,
                                      const std::vector<FcProperty> &,
-                                     const int,
-                                     const double,
+                                     int,
+                                     double,
                                      std::vector<std::vector<double>> &);
 
     private:
+        bool store_zeros;
         void set_default_variables();
         void deallocate_variables();
-        bool is_ascending(const int, const int *);
-        bool is_inprim(const int, const int, int **);
-        bool is_allzero(const std::vector<double> &, const double, int &);
-        void get_available_symmop(const int,
+        bool is_ascending(int, const int *);
+        bool is_inprim(int, int, int **);
+        bool is_allzero(const std::vector<double> &, double, int &);
+        void get_available_symmop(int,
                                   Symmetry *,
-                                  const std::string,
+                                  std::string,
                                   int &,
                                   int **,
                                   double ***,
-                                  const bool);
+                                  bool);
     };
 }
 

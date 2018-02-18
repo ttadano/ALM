@@ -31,6 +31,7 @@ extern "C" {
                                         const double* f_in,
                                         const int nat,
                                         const int ndata_used);
+    int alm_get_ndata_used(const int id);
     void alm_set_fitting_constraint_type(const int id,
                                          const int constraint_flag); // ICONST
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
@@ -56,12 +57,24 @@ extern "C" {
                                       const int fc_order); // harmonic=1,
     int alm_get_number_of_fc_elements(const int id,
                                       const int fc_order); // harmonic=1, ...
+
+    int alm_get_number_of_irred_fc_elements(const int id,
+                                            const int fc_order); // harmonic=1, ...
+
     void alm_get_fc(const int id,
                     double *fc_value,
                     int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
                     const int fc_order);
+
+    void alm_get_matrix_elements(const int id,
+                                const int nat,
+                                 const int ndata_used,
+                                 double *amat,
+                                 double *bvec);
+
     void alm_run_suggest(const int id);
     void alm_run_fitting(const int id);
+    void alm_compute(const int id);
 
 
 #ifdef __cplusplus 

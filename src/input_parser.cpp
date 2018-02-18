@@ -27,13 +27,9 @@
 
 using namespace ALM_NS;
 
-InputParser::InputParser()
-{
-}
+InputParser::InputParser() {}
 
-InputParser::~InputParser()
-{
-}
+InputParser::~InputParser() {}
 
 void InputParser::run(ALM *alm,
                       const int narg,
@@ -220,7 +216,8 @@ void InputParser::parse_general_vars(ALM *alm)
     double tolerance_constraint;
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
-    std::string str_allowed_list = "PREFIX MODE NAT NKD NSYM KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
+    std::string str_allowed_list =
+        "PREFIX MODE NAT NKD NSYM KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
                                    MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST";
     std::string str_no_defaults = "PREFIX MODE NAT NKD KD";
     std::vector<std::string> no_defaults;
@@ -687,11 +684,11 @@ void InputParser::parse_fitting_vars(ALM *alm)
     }
 
     auto fc2_file = fitting_var_dict["FC2XML"];
-	auto fc3_file = fitting_var_dict["FC3XML"];
-	bool fix_harmonic = !fc2_file.empty();
-	bool fix_cubic = !fc3_file.empty();
+    auto fc3_file = fitting_var_dict["FC3XML"];
+    bool fix_harmonic = !fc2_file.empty();
+    bool fix_cubic = !fc3_file.empty();
 
-	if (constraint_flag % 10 >= 2) {
+    if (constraint_flag % 10 >= 2) {
         rotation_axis = fitting_var_dict["ROTAXIS"];
         if (rotation_axis.empty()) {
             exit("parse_fitting_vars",
@@ -1167,7 +1164,7 @@ int InputParser::locate_tag(std::string key)
 
 bool InputParser::is_endof_entry(std::string str)
 {
-	return str[0] == '/';
+    return str[0] == '/';
 }
 
 void InputParser::split_str_by_space(const std::string str,

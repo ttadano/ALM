@@ -12,14 +12,11 @@
 
 #include "alm.h"
 #include "constants.h"
-#include "interaction.h"
 #include "fcs.h"
 #include "system.h"
 #include <boost/bimap.hpp>
 #include <utility>
 #include <vector>
-#include <set>
-#include <iostream>
 #include <string>
 
 namespace ALM_NS
@@ -31,13 +28,9 @@ namespace ALM_NS
 
         ConstraintClass();
 
-        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const)
-        {
-        }
+        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const) { }
 
-        ConstraintClass(std::vector<double> vec) : w_const(std::move(vec))
-        {
-        }
+        ConstraintClass(std::vector<double> vec) : w_const(std::move(vec)) { }
 
         ConstraintClass(const int n, const double *arr, const int nshift = 0)
         {
@@ -60,9 +53,7 @@ namespace ALM_NS
         double val_to_fix;
 
         ConstraintTypeFix(const unsigned int index_in, const double val_in) :
-            p_index_target(index_in), val_to_fix(val_in)
-        {
-        }
+            p_index_target(index_in), val_to_fix(val_in) { }
     };
 
     class ConstraintTypeRelate
@@ -75,9 +66,7 @@ namespace ALM_NS
         ConstraintTypeRelate(const unsigned int index_in,
                              const std::vector<double> &alpha_in,
                              const std::vector<unsigned int> &p_index_in) :
-            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in)
-        {
-        }
+            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in) { }
     };
 
     inline bool equal_within_eps12(const std::vector<double> &a,
@@ -103,7 +92,7 @@ namespace ALM_NS
         void setup(ALM *alm);
 
         int constraint_mode;
-        int P;
+        int number_of_constraints;
         std::string fc2_file, fc3_file;
         bool fix_harmonic, fix_cubic;
         int constraint_algebraic;
@@ -115,15 +104,14 @@ namespace ALM_NS
         bool exist_constraint;
         bool extra_constraint_from_symmetry;
         std::string rotation_axis;
-        std::vector<ConstraintClass> *const_symmetry;
 
+        std::vector<ConstraintClass> *const_symmetry;
         std::vector<ConstraintTypeFix> *const_fix;
         std::vector<ConstraintTypeRelate> *const_relate;
         std::vector<ConstraintTypeRelate> *const_relate_rotation;
         boost::bimap<int, int> *index_bimap;
 
-
-        void get_mapping_constraint(const int,
+        void get_mapping_constraint(int,
                                     std::vector<int> *,
                                     std::vector<ConstraintClass> *,
                                     std::vector<ConstraintTypeFix> *,
@@ -142,7 +130,7 @@ namespace ALM_NS
         void set_default_variables();
         void deallocate_variables();
 
-        int levi_civita(const int, const int, const int);
+        int levi_civita(int, int, int);
 
         void generate_rotational_constraint(System *,
                                             Symmetry *,
@@ -151,24 +139,22 @@ namespace ALM_NS
                                             std::vector<ConstraintClass> *,
                                             std::vector<ConstraintClass> *);
 
-        void calc_constraint_matrix(System *,
-                                    Symmetry *,
-                                    Interaction *,
-                                    Fcs *,
-                                    const int,
+        void calc_constraint_matrix(int,
+                                    std::vector<int> *,
+                                    int,
                                     int &);
 
         void setup_rotation_axis(bool [3][3]);
-        bool is_allzero(const int, const double *, const int nshift = 0);
+        bool is_allzero(int, const double *, int nshift = 0);
         bool is_allzero(const std::vector<int> &, int &);
-        bool is_allzero(const std::vector<double> &, const double, int &);
+        bool is_allzero(const std::vector<double> &, double, int &);
 
-        void remove_redundant_rows(const int,
+        void remove_redundant_rows(int,
                                    std::vector<ConstraintClass> &,
-                                   const double tolerance = eps12);
+                                   double tolerance = eps12);
 
 
-        void generate_symmetry_constraint_in_cartesian(const int,
+        void generate_symmetry_constraint_in_cartesian(int,
                                                        Symmetry *,
                                                        Interaction *,
                                                        Fcs *,
@@ -178,9 +164,9 @@ namespace ALM_NS
                                         Symmetry *,
                                         Interaction *,
                                         Fcs *,
-                                        const int,
+                                        int,
                                         const std::vector<FcProperty> &,
-                                        const int,
+                                        int,
                                         std::vector<ConstraintClass> &);
 
         void generate_translational_constraint(const Cell &,
@@ -189,10 +175,10 @@ namespace ALM_NS
                                                Fcs *,
                                                std::vector<ConstraintClass> *);
 
-        void fix_forceconstants_to_file(const int,
+        void fix_forceconstants_to_file(int,
                                         Symmetry *,
                                         Fcs *,
-                                        const std::string,
+                                        std::string,
                                         std::vector<ConstraintTypeFix> &);
     };
 

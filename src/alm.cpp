@@ -56,10 +56,10 @@ ALM::~ALM()
         deallocate(interaction->nbody_include);
     }
     interaction->nbody_include = nullptr;
-    if (interaction->rcs) {
-        deallocate(interaction->rcs);
+    if (interaction->cutoff_radii) {
+        deallocate(interaction->cutoff_radii);
     }
-    interaction->rcs = nullptr;
+    interaction->cutoff_radii = nullptr;
 
     delete files;
     delete system;
@@ -144,12 +144,12 @@ const void ALM::set_cell(const int nat,
                          const int kd[],
                          const std::string kdname[])
 {
-    int i, j, nkd;
+    int i, j;
     std::vector<int> nkd_vals(nat);
     bool kd_exist;
 
     nkd_vals[0] = kd[0];
-    nkd = 1;
+    int nkd = 1;
     for (i = 1; i < nat; ++i) {
         kd_exist = false;
         for (j = 0; j < nkd; ++j) {
@@ -177,6 +177,13 @@ const void ALM::set_cell(const int nat,
     }
     allocate(system->kd, nat);
 
+    for (i = 0; i < nat; ++i) {
+        system->kd[i] = kd[i];
+        for (j = 0; j < 3; ++j) {
+            system->xcoord[i][j] = xcoord[i][j];
+        }
+    }
+
     if (system->kdname) {
         deallocate(system->kdname);
     }
@@ -195,17 +202,20 @@ const void ALM::set_cell(const int nat,
             system->lavec[i][j] = lavec[i][j];
         }
     }
-    for (i = 0; i < nat; ++i) {
-        system->kd[i] = kd[i];
-        for (j = 0; j < 3; ++j) {
-            system->xcoord[i][j] = xcoord[i][j];
-        }
-    }
+
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
             system->magmom[i][j] = 0.0;
         }
     }
+
+    // Generate the information of the supercell
+    system->set_cell(system->lavec,
+                     system->nat,
+                     system->nkd,
+                     system->kd,
+                     system->xcoord,
+                     system->supercell);
 }
 
 const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
@@ -261,6 +271,11 @@ const void ALM::set_displacement_and_force(const double *u_in,
     deallocate(f);
 }
 
+const int ALM::get_ndata_used()
+{
+    return fitting->get_ndata_used();
+}
+
 const void ALM::set_fitting_constraint_type(const int constraint_flag) // ICONST
 {
     constraint->constraint_mode = constraint_flag;
@@ -295,15 +310,15 @@ const void ALM::set_norder(const int maxorder) // NORDER harmonic=1
     }
 
     nkd = system->supercell.number_of_elems;
-    if (interaction->rcs) {
-        deallocate(interaction->rcs);
+    if (interaction->cutoff_radii) {
+        deallocate(interaction->cutoff_radii);
     }
-    allocate(interaction->rcs, maxorder, nkd, nkd);
+    allocate(interaction->cutoff_radii, maxorder, nkd, nkd);
 
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                interaction->rcs[i][j][k] = -1.0;
+                interaction->cutoff_radii[i][j][k] = -1.0;
             }
         }
     }
@@ -328,19 +343,20 @@ const void ALM::set_cutoff_radii(const double *rcs)
     int i, j, k, nkd, maxorder, count;
 
     nkd = system->supercell.number_of_elems;
+
     maxorder = interaction->maxorder;
     if (maxorder > 0) {
-        if (interaction->rcs) {
-            deallocate(interaction->rcs);
+        if (interaction->cutoff_radii) {
+            deallocate(interaction->cutoff_radii);
         }
-        allocate(interaction->rcs, maxorder, nkd, nkd);
+        allocate(interaction->cutoff_radii, maxorder, nkd, nkd);
     }
 
     count = 0;
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                interaction->rcs[i][j][k] = rcs[count];
+                interaction->cutoff_radii[i][j][k] = rcs[count];
                 count++;
             }
         }
@@ -404,28 +420,33 @@ const int ALM::get_displacement_patterns(int *atom_indices,
     // 0:Cartesian or 1:Fractional. -1 means something wrong.
     if (displace->disp_basis[0] == 'C') {
         return 0;
-    } else if (displace->disp_basis[0] == 'F') {
-        return 1;
-    } else {
-        return -1;
     }
+    if (displace->disp_basis[0] == 'F') {
+        return 1;
+    }
+    return -1;
 }
 
 const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
 {
-    int id, order, num_unique_elems, num_equiv_elems;
-    Fcs *fcs;
+    int num_equiv_elems;
+    int order = fc_order - 1;
 
-    fcs = fcs;
-    id = 0;
-    order = fc_order - 1;
-    if (this->fcs->nequiv[order].empty()) { return 0; }
-    num_unique_elems = this->fcs->nequiv[order].size();
+    if (fcs->nequiv[order].empty()) { return 0; }
+    int id = 0;
+    int num_unique_elems = fcs->nequiv[order].size();
+
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
-        num_equiv_elems = this->fcs->nequiv[order][iuniq];
+        num_equiv_elems = fcs->nequiv[order][iuniq];
         id += num_equiv_elems;
     }
     return id;
+}
+
+const int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
+{
+    int order = fc_order - 1;
+    return fcs->nequiv[order].size();
 }
 
 const void ALM::get_fc(double *fc_values,
@@ -435,15 +456,12 @@ const void ALM::get_fc(double *fc_values,
     int j, k, ip, id;
     int order, num_unique_elems, num_equiv_elems, maxorder;
     double fc_elem, coef;
-    Fcs *fcs;
-    Fitting *fitting;
 
-    fcs = fcs;
-    fitting = fitting;
     maxorder = interaction->maxorder;
     ip = 0;
+
     for (order = 0; order < fc_order; ++order) {
-        if (fcs->nequiv[order].size() < 1) { continue; }
+        if (fcs->nequiv[order].empty()) { continue; }
         id = 0;
         num_unique_elems = fcs->nequiv[order].size();
         for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
@@ -463,6 +481,43 @@ const void ALM::get_fc(double *fc_values,
             }
             ++ip;
         }
+    }
+}
+
+
+const void ALM::get_matrix_elements(const int nat,
+                                    const int ndata_used,
+                                    double *amat,
+                                    double *bvec)
+{
+    int maxorder = interaction->maxorder;
+
+    fitting->get_matrix_elements(maxorder,
+                                 ndata_used,
+                                 nat,
+                                 amat,
+                                 bvec,
+                                 symmetry,
+                                 fcs);
+}
+
+
+const void ALM::compute()
+{
+    if (!verbose) {
+        ofs_alm = new std::ofstream("alm.log", std::ofstream::out);
+        coutbuf = std::cout.rdbuf();
+        std::cout.rdbuf(ofs_alm->rdbuf());
+    }
+
+    initialize(this);
+
+    if (!verbose) {
+        ofs_alm->close();
+        delete ofs_alm;
+        ofs_alm = nullptr;
+        std::cout.rdbuf(coutbuf);
+        coutbuf = nullptr;
     }
 }
 

@@ -1,5 +1,6 @@
 #include "rref.h"
 #include "memory.h"
+#include <cmath>
 #include <vector>
 
 void remove_redundant_rows(const int n,

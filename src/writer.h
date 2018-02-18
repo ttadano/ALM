@@ -23,15 +23,11 @@ namespace ALM_NS
         int kind;
         int atom, tran;
 
-        AtomProperty()
-        {
-        };
+        AtomProperty() { };
 
         AtomProperty(const AtomProperty &other)
             : x(other.x), y(other.y), z(other.z),
-              kind(other.kind), atom(other.atom), tran(other.tran)
-        {
-        };
+              kind(other.kind), atom(other.atom), tran(other.tran) { };
 
         AtomProperty(const double *pos,
                      const int kind_in,
@@ -55,9 +51,7 @@ namespace ALM_NS
         int nat, natmin, ntran;
         int nspecies;
 
-        SystemInfo()
-        {
-        };
+        SystemInfo() { };
     };
 
     class Writer
@@ -67,7 +61,7 @@ namespace ALM_NS
         ~Writer();
 
         void writeall(ALM *);
-        void write_input_vars(ALM *);
+        void write_input_vars(const ALM *);
         void write_displacement_pattern(ALM *);
 
     private:
@@ -75,8 +69,8 @@ namespace ALM_NS
         void write_misc_xml(ALM *);
         void write_hessian(ALM *);
         void write_in_QEformat(ALM *);
-        std::string easyvizint(const int);
+        std::string easyvizint(int);
 
-        std::string double2string(const double, const int nprec = 15);
+        std::string double2string(double, int nprec = 15);
     };
 }

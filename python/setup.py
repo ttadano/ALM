@@ -2,9 +2,13 @@ import os
 from setuptools import setup, Extension
 # from distutils.core import setup, Extension
 import numpy
+
+os.environ["CC"] = "gcc-7"
+os.environ["CXX"] = "g++-7"
+
 include_dirs_numpy = [numpy.get_include()]
 
-compile_with_sources = True
+compile_with_sources = False
 extra_link_args = ['-lstdc++', 
                    '-llapack', 
                    '-L/Users/tadano/src/spglib/lib', '-lsymspg',
@@ -25,6 +29,7 @@ if compile_with_sources:
                'interaction.cpp',
                'main.cpp',
                'patterndisp.cpp',
+               'rref.cpp',
                'symmetry.cpp',
                'system.cpp',
                'timer.cpp',
@@ -50,7 +55,7 @@ else: # compile with library
 extension = Extension('alm._alm',
                       include_dirs=include_dirs_numpy + include_dir_spglib,
                       library_dirs=library_dirs,
-                      extra_compile_args = ['-fopenmp', '-std=c++11'],
+                      extra_compile_args = ['-g', '-fopenmp', '-std=c++11'],
                       extra_link_args=extra_link_args,
                       sources=sources)
 

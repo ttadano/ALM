@@ -47,6 +47,12 @@ class ALM:
             self._show_error_message()
 
         alm.run_fitting(self._id)
+
+    def compute(self):
+        if self._id is None:
+            self._show_error_message()
+        
+        alm.compute(self._id)
     
     def set_displacement_and_force(self, u, f):
         if self._id is None:
@@ -66,6 +72,13 @@ class ALM:
 
         alm.set_cutoff_radii(self._id,
                              np.array(rcs, dtype='double', order='C'))
+
+    def get_ndata_used(self):
+        if self._id is None:
+            self._show_error_message()
+
+        ndata_used = alm.get_ndata_used(self._id)
+        return ndata_used
 
     def get_atom_mapping_by_pure_translations(self):
         if self._id is None:
@@ -101,13 +114,33 @@ class ALM:
     def get_fc(self, fc_order): # harmonic: fc_order=1
         if self._id is None:
             self._show_error_message()
-
+        
         fc_length = self._get_number_of_fc_elements(fc_order)
         fc_values = np.zeros(fc_length, dtype='double')
         elem_indices = np.zeros((fc_length, fc_order + 1),
                                 dtype='intc', order='C')
+
         alm.get_fc(self._id, fc_values, elem_indices)
         return fc_values, elem_indices
+
+    def get_matrix_elements(self):
+        if self._id is None:
+            self._show_error_message()
+
+        norder = self._norder
+        nat = len(self._xcoord)
+        ndata_used = alm.get_ndata_used(self._id)
+
+        fc_length = 0
+        for i in range(norder):
+            fc_length += self._get_number_of_irred_fc_elements(i + 1)
+
+        amat = np.zeros((3 * nat * ndata_used, fc_length),
+                        dtype='double', order='C')
+        bvec = np.zeros(3 * nat * ndata_used)
+        alm.get_matrix_elements(self._id, nat, ndata_used, amat, bvec)
+        return amat, bvec
+
     
     def _set_cell(self):
         if self._id is None:
@@ -136,6 +169,9 @@ class ALM:
     
     def _get_number_of_fc_elements(self, fc_order): # harmonic: fc_order=1
         return alm.get_number_of_fc_elements(self._id, fc_order)
+
+    def _get_number_of_irred_fc_elements(self, fc_order): # harmonic: fc_order=1
+        return alm.get_number_of_irred_fc_elements(self._id, fc_order)
     
     def _show_error_message(self):
         print("This ALM object has to be initialized by ALM::alm_new()")

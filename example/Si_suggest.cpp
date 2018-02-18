@@ -94,8 +94,8 @@ int main()
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);
     alm->set_norder(fc_order);
-    int nbody_include[fc_order] = {2};
-    alm->set_interaction_range(nbody_include);
+    //int nbody_include[fc_order] = {2};
+    //alm->set_interaction_range(nbody_include);
     alm->run();
 
     std::cout << "************ ALM API ************" << std::endl;

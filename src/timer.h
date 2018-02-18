@@ -29,10 +29,10 @@ namespace ALM_NS
         ~Timer();
 
         void print_elapsed();
-        void start_clock(const std::string);
-        void stop_clock(const std::string);
-        double get_walltime(const std::string);
-        double get_cputime(const std::string);
+        void start_clock(std::string);
+        void stop_clock(std::string);
+        double get_walltime(std::string);
+        double get_cputime(std::string);
         static std::string DateAndTime();
 
     private:
