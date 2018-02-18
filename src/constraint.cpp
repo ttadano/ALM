@@ -1597,7 +1597,6 @@ void Constraint::fix_forceconstants_to_file(const int order,
 
     int counter = 0;
 
-
     if (order == 0) {
         BOOST_FOREACH(const ptree::value_type & child_, pt.get_child("Data.ForceConstants.HarmonicUnique")) {
             if (child_.first == "FC2") {
@@ -1626,8 +1625,6 @@ void Constraint::fix_forceconstants_to_file(const int order,
         }
     }
 
-    deallocate(fcs_ref);
-
     int nterms = order + 2;
 
     std::unordered_set<FcProperty> list_found;
@@ -1650,6 +1647,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
         const_out.emplace_back(ConstraintTypeFix((*iter_found).mother, fcs_ref[i]));
     }
     deallocate(intpair_ref);
+    deallocate(fcs_ref);
 
     list_found.clear();
 }
