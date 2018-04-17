@@ -10,6 +10,17 @@ project(alm)
 
 if(WIN32)
     LINK_DIRECTORIES(C:\\lapack)
+	LINK_DIRECTORIES(C:\\spglib)
+    include_directories(C:\\spglib)
+	set(LAPACK_LIBRARIES lapack)
+	set(spglib symspg)
+endif()
+
+if (UNIX)
+    #set( ENV{BLA_VENDOR} "Intel10_64lp")
+	include_directories("/Users/tadano/src/spglib/include")
+    find_package(LAPACK REQUIRED)
+	set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
 endif()
 
 # Add openmp flag if available
@@ -20,15 +31,6 @@ endif()
 
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
-include_directories("/Users/tadano/src/spglib/include")
-
-if (UNIX)
-    #set( ENV{BLA_VENDOR} "Intel10_64lp")
-    find_package(LAPACK REQUIRED)
-endif()
-if (WIN32)
-    set(LAPACK_LIBRARIES lapack)
-endif()
 
 # Version numbers
 file(READ ${PROJECT_SOURCE_DIR}/src/version.h version_file)
@@ -37,7 +39,6 @@ set(alm_version ${CMAKE_MATCH_1})
 MESSAGE("ALM version: ${CMAKE_MATCH_1}")
 set(serial "${alm_version}")
 set(soserial "1")
-set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
 
 # Source code
 include_directories("${PROJECT_SOURCE_DIR}/src")
