@@ -1485,7 +1485,9 @@ void Constraint::generate_rotational_constraint(System *system,
 }
 
 
-int Constraint::levi_civita(const int i, const int j, const int k)
+int Constraint::levi_civita(const int i,
+                            const int j,
+                            const int k)
 {
     return (j - i) * (k - i) * (k - j) / 2;
 }
@@ -1653,7 +1655,9 @@ void Constraint::fix_forceconstants_to_file(const int order,
 }
 
 
-bool Constraint::is_allzero(const int n, const double *arr, const int nshift)
+bool Constraint::is_allzero(const int n,
+                            const double *arr,
+                            const int nshift)
 {
     for (int i = nshift; i < n; ++i) {
         if (std::abs(arr[i]) > eps10) {
@@ -1663,7 +1667,8 @@ bool Constraint::is_allzero(const int n, const double *arr, const int nshift)
     return true;
 }
 
-bool Constraint::is_allzero(const std::vector<int> &vec, int &loc)
+bool Constraint::is_allzero(const std::vector<int> &vec,
+                            int &loc)
 {
     loc = -1;
     for (int i = 0; i < vec.size(); ++i) {
@@ -1675,7 +1680,9 @@ bool Constraint::is_allzero(const std::vector<int> &vec, int &loc)
     return true;
 }
 
-bool Constraint::is_allzero(const std::vector<double> &vec, const double tol, int &loc)
+bool Constraint::is_allzero(const std::vector<double> &vec,
+                            const double tol,
+                            int &loc)
 {
     loc = -1;
     auto n = vec.size();

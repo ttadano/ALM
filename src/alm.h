@@ -33,8 +33,8 @@ namespace ALM_NS
         class Displace *displace;
         class Timer *timer;
 
-        const void set_run_mode(std::string mode);
-        const void set_verbose(bool verbose);
+        const void set_run_mode(std::string mode_in);
+        const void set_verbose(bool verbose_in);
         const void set_output_filename_prefix(std::string prefix);
         const void set_is_print_symmetry(int is_printsymmetry);
         const void set_is_print_hessians(bool print_hessian);
@@ -59,9 +59,7 @@ namespace ALM_NS
                                               int ndata_used);
         const int get_ndata_used();
         const void set_fitting_constraint_type(int constraint_flag);
-        const void set_fitting_constraint_rotation_axis
-        (std::string rotation_axis);
-        const void set_multiplier_option(int multiply_data);
+        const void set_fitting_constraint_rotation_axis(std::string rotation_axis);
         const void set_fitting_filenames(std::string dfile,
                                          std::string ffile);
         const void set_norder(int maxorder);
@@ -79,7 +77,7 @@ namespace ALM_NS
         const int get_number_of_irred_fc_elements(int fc_order); // harmonic=2, ...
 
         const void get_fc(double *fc_value,
-                          int *elem_indices, // (len(fc_value), fc_order) is flatten.
+                          int *elem_indices,  // (len(fc_value), fc_order) is flatten.
                           int fc_order); // harmonic=2, ...
 
         const void get_matrix_elements(int nat,
@@ -96,7 +94,6 @@ namespace ALM_NS
         std::streambuf *coutbuf;
         void create();
         void initialize(ALM *);
-        void finalize();
         const void run_fitting(ALM *);
         const void run_suggest(ALM *);
     };

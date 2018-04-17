@@ -33,7 +33,8 @@ namespace ALM_NS
 
         IntList(const IntList &a) : iarray(a.iarray) {};
 
-        IntList(const int n, const int *arr)
+        IntList(const int n,
+                const int *arr)
         {
             for (int i = 0; i < n; ++i) {
                 iarray.push_back(arr[i]);
@@ -68,7 +69,9 @@ namespace ALM_NS
 
         DistInfo();
 
-        DistInfo(const int n, const double d, const double x[3])
+        DistInfo(const int n,
+                 const double d,
+                 const double x[3])
         {
             cell = n;
             dist = d;
@@ -97,7 +100,8 @@ namespace ALM_NS
 
         DistList();
 
-        DistList(const int n, const double dist_tmp) : atom(n), dist(dist_tmp) { };
+        DistList(const int n,
+                 const double dist_tmp) : atom(n), dist(dist_tmp) { };
 
         bool operator<(const DistList &a) const
         {
@@ -120,7 +124,8 @@ namespace ALM_NS
                     const std::vector<double> &dist_in)
             : cell(cell_in), dist(dist_in) {};
 
-        static bool compare_sum_distance(const MinDistList &a, const MinDistList &b)
+        static bool compare_sum_distance(const MinDistList &a,
+                                         const MinDistList &b)
         {
             double dist_a = 0;
             double dist_b = 0;
@@ -134,7 +139,8 @@ namespace ALM_NS
             return dist_a < dist_b;
         }
 
-        static bool compare_max_distance(const MinDistList &a, const MinDistList &b)
+        static bool compare_max_distance(const MinDistList &a,
+                                         const MinDistList &b)
         {
             // This function works properly when dvec_a.size() > 0 and dvec_b.size() > 0
             std::vector<double> dvec_a, dvec_b;
@@ -240,7 +246,7 @@ namespace ALM_NS
                                            std::vector<int> **);
 
         void set_ordername();
-        double distance(double *, double *);
+        double distance(double *,  double *);
         int nbody(int, const int *);
 
         void calc_interaction_clusters(int,
@@ -261,7 +267,8 @@ namespace ALM_NS
                                      std::set<InteractionCluster> *);
 
         void cell_combination(const std::vector<std::vector<int>> &,
-                              int, std::vector<int>,
+                              int,
+                              std::vector<int>,
                               std::vector<std::vector<int>> &);
 
         void generate_pairs(int,

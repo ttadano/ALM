@@ -629,7 +629,8 @@ bool Fcs::is_inprim(const int n,
     return false;
 }
 
-void Fcs::get_xyzcomponent(const int n, int **xyz)
+void Fcs::get_xyzcomponent(const int n,
+                           int **xyz)
 {
     // Return xyz component for the given order using boost algorithm library
 

@@ -132,8 +132,7 @@ const void ALM::set_displacement_basis(const std::string str_disp_basis) // DBAS
 
 const void ALM::set_periodicity(const int is_periodic[3]) // PERIODIC
 {
-    int i;
-    for (i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         system->is_periodic[i] = is_periodic[i];
     }
 }
@@ -218,15 +217,13 @@ const void ALM::set_cell(const int nat,
                      system->supercell);
 }
 
-const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
-                                    const bool lspin, // MAGMOM
+const void ALM::set_magnetic_params(const double *magmom,  // MAGMOM
+                                    const bool lspin,
                                     const int noncollinear, // NONCOLLINEAR
                                     const int trev_sym_mag, // TREVSYM
                                     const std::string str_magmom) // MAGMOM
 {
-    int i, j, nat;
-
-    nat = system->nat;
+    const auto nat = system->nat;
     system->lspin = lspin;
     system->noncollinear = noncollinear;
     system->str_magmom = str_magmom;
@@ -237,8 +234,8 @@ const void ALM::set_magnetic_params(const double *magmom, // MAGMOM
     }
     allocate(system->magmom, nat, 3);
 
-    for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
+    for (int i = 0; i < nat; ++i) {
+        for (int j = 0; j < 3; ++j) {
             system->magmom[i][j] = magmom[i * 3 + j];
         }
     }
@@ -281,8 +278,7 @@ const void ALM::set_fitting_constraint_type(const int constraint_flag) // ICONST
     constraint->constraint_mode = constraint_flag;
 }
 
-const void ALM::set_fitting_constraint_rotation_axis
-(const std::string rotation_axis) // ROTAXIS
+const void ALM::set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
 {
     constraint->rotation_axis = rotation_axis;
 }
@@ -340,11 +336,9 @@ const void ALM::set_nbody_include(const int *nbody_include) // NBODY
 
 const void ALM::set_cutoff_radii(const double *rcs)
 {
-    int i, j, k, nkd, maxorder, count;
+    const int nkd = system->supercell.number_of_elems;
+    const auto maxorder = interaction->maxorder;
 
-    nkd = system->supercell.number_of_elems;
-
-    maxorder = interaction->maxorder;
     if (maxorder > 0) {
         if (interaction->cutoff_radii) {
             deallocate(interaction->cutoff_radii);
@@ -352,10 +346,10 @@ const void ALM::set_cutoff_radii(const double *rcs)
         allocate(interaction->cutoff_radii, maxorder, nkd, nkd);
     }
 
-    count = 0;
-    for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < nkd; ++j) {
-            for (k = 0; k < nkd; ++k) {
+    auto count = 0;
+    for (int i = 0; i < maxorder; ++i) {
+        for (int j = 0; j < nkd; ++j) {
+            for (int k = 0; k < nkd; ++k) {
                 interaction->cutoff_radii[i][j][k] = rcs[count];
                 count++;
             }
@@ -380,15 +374,14 @@ const int ALM::get_atom_mapping_by_pure_translations(int *map_p2s)
 
 const int ALM::get_number_of_displacement_patterns(const int fc_order) // harmonic=1, ...
 {
-    int order = fc_order - 1;
-
+    const auto order = fc_order - 1;
     return displace->pattern_all[order].size();
 }
 
 const void ALM::get_numbers_of_displacements(int *numbers,
                                              const int fc_order) // harmonic=1, ...
 {
-    int order = fc_order - 1;
+    const auto order = fc_order - 1;
 
     for (int i = 0; i < displace->pattern_all[order].size(); ++i) {
         numbers[i] = displace->pattern_all[order][i].atoms.size();
@@ -399,12 +392,11 @@ const int ALM::get_displacement_patterns(int *atom_indices,
                                          double *disp_patterns,
                                          const int fc_order) // harmonic=1, ...
 {
-    int i_atom, i_disp;
     AtomWithDirection *displacements;
-    int order = fc_order - 1;
+    const auto order = fc_order - 1;
 
-    i_atom = 0;
-    i_disp = 0;
+    auto i_atom = 0;
+    auto i_disp = 0;
     for (int i = 0; i < displace->pattern_all[order].size(); ++i) {
         displacements = &displace->pattern_all[order][i];
         for (int j = 0; j < displacements->atoms.size(); ++j) {
@@ -429,15 +421,14 @@ const int ALM::get_displacement_patterns(int *atom_indices,
 
 const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
 {
-    int num_equiv_elems;
-    int order = fc_order - 1;
+    const auto order = fc_order - 1;
 
     if (fcs->nequiv[order].empty()) { return 0; }
-    int id = 0;
-    int num_unique_elems = fcs->nequiv[order].size();
+    auto id = 0;
+    const int num_unique_elems = fcs->nequiv[order].size();
 
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
-        num_equiv_elems = fcs->nequiv[order][iuniq];
+        const auto num_equiv_elems = fcs->nequiv[order][iuniq];
         id += num_equiv_elems;
     }
     return id;
@@ -445,25 +436,33 @@ const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
 
 const int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
 {
-    int order = fc_order - 1;
+    const auto order = fc_order - 1;
     return fcs->nequiv[order].size();
 }
 
 const void ALM::get_fc(double *fc_values,
-                       int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
+                       int *elem_indices,  // (len(fc_values), fc_order + 1) is flatten.
                        const int fc_order) // harmonic=1, ...
 {
-    int j, k, ip, id;
-    int order, num_unique_elems, num_equiv_elems, maxorder;
+    int j, k;
+    int num_equiv_elems;
     double fc_elem, coef;
 
-    maxorder = interaction->maxorder;
-    ip = 0;
+    const auto maxorder = interaction->maxorder;
+    if (fc_order > maxorder) {
+        std::cout << "fc_order must not be larger than maxorder" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
-    for (order = 0; order < fc_order; ++order) {
+    auto ip = 0;
+
+    for (int order = 0; order < fc_order; ++order) {
+
         if (fcs->nequiv[order].empty()) { continue; }
-        id = 0;
-        num_unique_elems = fcs->nequiv[order].size();
+
+        auto id = 0;
+        const int num_unique_elems = fcs->nequiv[order].size();
+
         for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
             if (order == fc_order - 1) {
                 fc_elem = fitting->params[ip];
@@ -490,7 +489,7 @@ const void ALM::get_matrix_elements(const int nat,
                                     double *amat,
                                     double *bvec)
 {
-    int maxorder = interaction->maxorder;
+    const auto maxorder = interaction->maxorder;
 
     fitting->get_matrix_elements(maxorder,
                                  ndata_used,

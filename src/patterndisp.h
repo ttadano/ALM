@@ -54,7 +54,8 @@ namespace ALM_NS
 
         DispDirectionHarmonic();
 
-        DispDirectionHarmonic(int n, std::vector<DirectionVec> list_in)
+        DispDirectionHarmonic(int n,
+                              std::vector<DirectionVec> list_in)
         {
             atom = n;
             for (auto it = list_in.begin(); it != list_in.end(); ++it) {
@@ -71,7 +72,8 @@ namespace ALM_NS
 
         AtomWithDirection();
 
-        AtomWithDirection(std::vector<int> a, std::vector<double> b)
+        AtomWithDirection(std::vector<int> a,
+                          std::vector<double> b)
         {
             for (unsigned int i = 0; i < a.size(); ++i) {
                 atoms.push_back(a[i]);
@@ -81,7 +83,9 @@ namespace ALM_NS
             }
         }
 
-        AtomWithDirection(int n, int *a, double **b)
+        AtomWithDirection(int n,
+                          int *a,
+                          double **b)
         {
             for (int i = 0; i < n; ++i) {
                 atoms.push_back(a[i]);
@@ -93,7 +97,8 @@ namespace ALM_NS
     };
 
 
-    inline bool operator<(const DispAtomSet &a, const DispAtomSet &b)
+    inline bool operator<(const DispAtomSet &a,
+                          const DispAtomSet &b)
     {
         return std::lexicographical_compare(a.atomset.begin(), a.atomset.end(),
                                             b.atomset.begin(), b.atomset.end());
@@ -107,14 +112,16 @@ namespace ALM_NS
 
         IndexWithSign();
 
-        IndexWithSign(const int ind_in, const int sign_in)
+        IndexWithSign(const int ind_in,
+                      const int sign_in)
         {
             ind = ind_in;
             sign = sign_in;
         }
     };
 
-    inline bool operator<(const IndexWithSign &a, const IndexWithSign &b)
+    inline bool operator<(const IndexWithSign &a,
+                          const IndexWithSign &b)
     {
         return a.ind < b.ind;
     }
@@ -135,7 +142,9 @@ namespace ALM_NS
         std::vector<DispDirectionHarmonic> disp_harm, disp_harm_best;
         void set_default_variables();
         void deallocate_variables();
-        void generate_pattern_all(int, int, double [3][3],
+        void generate_pattern_all(int,
+                                  int,
+                                  double [3][3],
                                   Symmetry *symmetry,
                                   std::vector<AtomWithDirection> *,
                                   std::set<DispAtomSet> *,
@@ -145,7 +154,9 @@ namespace ALM_NS
                                std::vector<std::vector<int>> &,
                                std::vector<int>);
 
-        void find_unique_sign_pairs(int, int, Symmetry *,
+        void find_unique_sign_pairs(int,
+                                    int,
+                                    Symmetry *,
                                     std::vector<std::vector<int>>,
                                     std::vector<int>,
                                     std::vector<std::vector<int>> &,

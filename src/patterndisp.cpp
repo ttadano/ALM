@@ -216,7 +216,9 @@ void Displace::deallocate_variables()
     deallocate(pattern_all);
 }
 
-void Displace::generate_pattern_all(const int N, const int nat, double lavec[3][3],
+void Displace::generate_pattern_all(const int N,
+                                    const int nat,
+                                    double lavec[3][3],
                                     Symmetry *symmetry,
                                     std::vector<AtomWithDirection> *pattern,
                                     std::set<DispAtomSet> *dispset_in,
@@ -336,7 +338,9 @@ void Displace::generate_signvecs(const int N,
     }
 }
 
-void Displace::find_unique_sign_pairs(const int N, const int nat, Symmetry *symmetry,
+void Displace::find_unique_sign_pairs(const int N,
+                                      const int nat,
+                                      Symmetry *symmetry,
                                       std::vector<std::vector<int>> sign_in,
                                       std::vector<int> pair_in,
                                       std::vector<std::vector<int>> &sign_out,

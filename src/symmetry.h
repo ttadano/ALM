@@ -129,15 +129,20 @@ namespace ALM_NS
         void setup_symmetry_operation(const Cell &,
                                       const int [3],
                                       const std::vector<std::vector<unsigned int>> &,
-                                      const Spin &, std::vector<SymmetryOperation> &,
-                                      unsigned int &, unsigned int &, unsigned int &,
+                                      const Spin &,
+                                      std::vector<SymmetryOperation> &,
+                                      unsigned int &,
+                                      unsigned int &,
+                                      unsigned int &,
                                       std::vector<int> &);
 
         void gen_mapping_information(const Cell &,
                                      const std::vector<std::vector<unsigned int>> &,
                                      const std::vector<SymmetryOperation> &,
                                      const std::vector<int> &,
-                                     int **, int **, std::vector<Maps> &);
+                                     int **,
+                                     int **,
+                                     std::vector<Maps> &);
 
         void findsym_alm(const Cell &,
                          const int [3],

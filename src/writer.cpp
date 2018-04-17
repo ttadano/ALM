@@ -694,7 +694,8 @@ void Writer::write_hessian(ALM *alm)
     std::cout << " Complete Hessian matrix                    : " << alm->files->file_hes << std::endl;
 }
 
-std::string Writer::double2string(const double d, const int nprec)
+std::string Writer::double2string(const double d,
+                                  const int nprec)
 {
     std::string rt;
     std::stringstream ss;

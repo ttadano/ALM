@@ -213,7 +213,8 @@ void Interaction::deallocate_variables()
     }
 }
 
-double Interaction::distance(double *x1, double *x2)
+double Interaction::distance(double *x1,
+                             double *x2)
 {
     double dist;
     dist = std::pow(x1[0] - x2[0], 2) + std::pow(x1[1] - x2[1], 2) + std::pow(x1[2] - x2[2], 2);
@@ -550,7 +551,8 @@ void Interaction::set_ordername()
     }
 }
 
-int Interaction::nbody(const int n, const int *arr)
+int Interaction::nbody(const int n,
+                       const int *arr)
 {
     std::vector<int> v(n);
 

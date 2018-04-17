@@ -14,24 +14,30 @@
 #include <cstdlib>
 
 
-inline void warn(const char *file, const char *message)
+inline void warn(const char *file,
+                 const char *message)
 {
     std::cout << " WARNING in " << file << "  MESSAGE: " << message << std::endl;
 }
 
-inline void exit(const char *file, const char *message)
+inline void exit(const char *file,
+                 const char *message)
 {
     std::cout << " ERROR in " << file << "  MESSAGE: " << message << std::endl;
     std::exit(EXIT_FAILURE);
 }
 
-inline void exit(const char *file, const char *message, int info)
+inline void exit(const char *file,
+                 const char *message,
+                 int info)
 {
     std::cout << " ERROR in " << file << "  MESSAGE: " << message << info << std::endl;
     std::exit(EXIT_FAILURE);
 }
 
-inline void exit(const char *file, const char *message, const char *info)
+inline void exit(const char *file,
+                 const char *message,
+                 const char *info)
 {
     std::cout << " ERROR in " << file << "  MESSAGE: " << message << info << std::endl;
     std::exit(EXIT_FAILURE);

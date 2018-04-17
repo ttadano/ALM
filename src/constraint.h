@@ -32,7 +32,9 @@ namespace ALM_NS
 
         ConstraintClass(std::vector<double> vec) : w_const(std::move(vec)) { }
 
-        ConstraintClass(const int n, const double *arr, const int nshift = 0)
+        ConstraintClass(const int n,
+                        const double *arr,
+                        const int nshift = 0)
         {
             for (int i = nshift; i < n; ++i) {
                 w_const.push_back(arr[i]);
@@ -52,7 +54,8 @@ namespace ALM_NS
         unsigned int p_index_target;
         double val_to_fix;
 
-        ConstraintTypeFix(const unsigned int index_in, const double val_in) :
+        ConstraintTypeFix(const unsigned int index_in,
+                          const double val_in) :
             p_index_target(index_in), val_to_fix(val_in) { }
     };
 
@@ -130,7 +133,9 @@ namespace ALM_NS
         void set_default_variables();
         void deallocate_variables();
 
-        int levi_civita(int, int, int);
+        int levi_civita(int,
+                        int,
+                        int);
 
         void generate_rotational_constraint(System *,
                                             Symmetry *,
@@ -145,9 +150,14 @@ namespace ALM_NS
                                     int &);
 
         void setup_rotation_axis(bool [3][3]);
-        bool is_allzero(int, const double *, int nshift = 0);
-        bool is_allzero(const std::vector<int> &, int &);
-        bool is_allzero(const std::vector<double> &, double, int &);
+        bool is_allzero(int,
+                        const double *,
+                        int nshift = 0);
+        bool is_allzero(const std::vector<int> &,
+                        int &);
+        bool is_allzero(const std::vector<double> &,
+                        double,
+                        int &);
 
         void remove_redundant_rows(int,
                                    std::vector<ConstraintClass> &,
@@ -183,6 +193,11 @@ namespace ALM_NS
     };
 
     extern "C" {
-    void dgetrf_(int *m, int *n, double *a, int *lda, int *ipiv, int *info);
+    void dgetrf_(int *m,
+                 int *n,
+                 double *a,
+                 int *lda,
+                 int *ipiv,
+                 int *info);
     }
 }

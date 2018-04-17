@@ -31,7 +31,10 @@ namespace ALM_NS
         FcProperty(const FcProperty &obj) :
             elems(obj.elems), sign(obj.sign), mother(obj.mother) { }
 
-        FcProperty(const int n, const double c, const int *arr, const int m)
+        FcProperty(const int n,
+                   const double c,
+                   const int *arr,
+                   const int m)
         {
             sign = c;
             mother = m;
@@ -96,7 +99,8 @@ namespace ALM_NS
                         const int *,
                         const int *);
 
-        void generate_force_constant_table(int, int,
+        void generate_force_constant_table(int,
+                                           int,
                                            const std::set<IntList> &,
                                            Symmetry *,
                                            std::string,
@@ -120,8 +124,12 @@ namespace ALM_NS
         void set_default_variables();
         void deallocate_variables();
         bool is_ascending(int, const int *);
-        bool is_inprim(int, int, int **);
-        bool is_allzero(const std::vector<double> &, double, int &);
+        bool is_inprim(int,
+                       int,
+                       int **);
+        bool is_allzero(const std::vector<double> &,
+                        double,
+                        int &);
         void get_available_symmop(int,
                                   Symmetry *,
                                   std::string,
