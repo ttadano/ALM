@@ -148,7 +148,7 @@ static PyObject * py_alm_delete(PyObject *self, PyObject *args)
 {
   int id;
   if (!PyArg_ParseTuple(args, "i",
-			&id)) {
+                              &id)) {
     return NULL;
   }
 
@@ -161,7 +161,7 @@ static PyObject * py_run_suggest(PyObject *self, PyObject *args)
 {
   int id;
   if (!PyArg_ParseTuple(args, "i",
-			&id)) {
+                              &id)) {
     return NULL;
   }
 
@@ -174,7 +174,7 @@ static PyObject * py_run_fitting(PyObject *self, PyObject *args)
 {
   int id;
   if (!PyArg_ParseTuple(args, "i",
-			&id)) {
+                              &id)) {
     return NULL;
   }
 
@@ -187,7 +187,7 @@ static PyObject * py_compute(PyObject *self, PyObject *args)
 {
   int id;
   if (!PyArg_ParseTuple(args, "i",
-			&id)) {
+                              &id)) {
     return NULL;
   }
 
@@ -203,10 +203,10 @@ static PyObject * py_set_cell(PyObject *self, PyObject *args)
   PyArrayObject* py_xcoord;
   PyArrayObject* py_kd;
   if (!PyArg_ParseTuple(args, "iOOO",
-			&id,
-			&py_lavec,
-                        &py_xcoord,
-                        &py_kd)) {
+                              &id,
+                              &py_lavec,
+                              &py_xcoord,
+                              &py_kd)) {
     return NULL;
   }
 
@@ -226,9 +226,9 @@ static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args)
   PyArrayObject* py_u;
   PyArrayObject* py_f;
   if (!PyArg_ParseTuple(args, "iOO",
-	                  		&id,
-                        &py_u,
-                        &py_f)) {
+                              &id,
+                              &py_u,
+                              &py_f)) {
     return NULL;
   }
 
@@ -246,8 +246,8 @@ static PyObject * py_set_fitting_constraint_type(PyObject *self, PyObject *args)
 {
   int id, iconst;
   if (!PyArg_ParseTuple(args, "ii",
-			&id,
-                        &iconst)) {
+                              &id,
+                              &iconst)) {
     return NULL;
   }
 
@@ -260,8 +260,8 @@ static PyObject * py_set_norder(PyObject *self, PyObject *args)
 {
   int id, norder;
   if (!PyArg_ParseTuple(args, "ii",
-			&id,
-                        &norder)) {
+                              &id,
+                              &norder)) {
     return NULL;
   }
 
@@ -275,8 +275,8 @@ static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args)
   int id;
   PyArrayObject* py_rcs;
   if (!PyArg_ParseTuple(args, "iO",
-			&id,
-                        &py_rcs)) {
+                              &id,
+                              &py_rcs)) {
     return NULL;
   }
 
@@ -294,8 +294,8 @@ static PyObject * py_get_atom_mapping_by_pure_translations
   PyArrayObject* py_map_p2s;
 
   if (!PyArg_ParseTuple(args, "iO",
-			&id,
-			&py_map_p2s)) {
+                              &id,
+                              &py_map_p2s)) {
     return NULL;
   }
 
@@ -313,8 +313,8 @@ static PyObject * py_get_number_of_displacement_patterns
   int num_patterns;
 
   if (!PyArg_ParseTuple(args, "ii",
-			&id,
-			&fc_order)) {
+                              &id,
+                              &fc_order)) {
     return NULL;
   }
 
@@ -329,9 +329,9 @@ static PyObject * py_get_numbers_of_displacements(PyObject *self, PyObject *args
   PyArrayObject* py_numbers;
 
   if (!PyArg_ParseTuple(args, "iOi",
-			&id,
-			&py_numbers,
-			&fc_order)) {
+                              &id,
+                              &py_numbers,
+                              &fc_order)) {
     return NULL;
   }
 
@@ -349,10 +349,10 @@ static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args)
   PyArrayObject* py_disp_patterns;
 
   if (!PyArg_ParseTuple(args, "iOOi",
-			&id,
-			&py_atom_indices,
-			&py_disp_patterns,
-			&fc_order)) {
+                              &id,
+                              &py_atom_indices,
+                              &py_disp_patterns,
+                              &fc_order)) {
     return NULL;
   }
 
@@ -360,9 +360,9 @@ static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args)
   double (*disp_patterns) = (double(*))PyArray_DATA(py_disp_patterns);
 
   const int disp_basis = alm_get_displacement_patterns(id,
-						       atom_indices,
-						       disp_patterns,
-						       fc_order);
+                                                       atom_indices,
+                                                       disp_patterns,
+                                                       fc_order);
 
   return PyLong_FromLong((long) disp_basis);
 }
@@ -372,8 +372,8 @@ static PyObject * py_get_number_of_fc_elements(PyObject *self, PyObject *args)
   int id, fc_order;
 
   if (!PyArg_ParseTuple(args, "ii",
-			&id,
-			&fc_order)) {
+                              &id,
+                              &fc_order)) {
     return NULL;
   }
 
@@ -387,8 +387,8 @@ static PyObject * py_get_number_of_irred_fc_elements(PyObject *self, PyObject *a
   int id, fc_order;
 
   if (!PyArg_ParseTuple(args, "ii",
-			&id,
-			&fc_order)) {
+                              &id,
+                              &fc_order)) {
     return NULL;
   }
 
@@ -402,7 +402,7 @@ static PyObject * py_get_ndata_used(PyObject *self, PyObject *args)
   int id;
 
   if (!PyArg_ParseTuple(args, "i",
-			&id)) {
+                              &id)) {
     return NULL;
   }
   const int ndata_used = alm_get_ndata_used(id);
@@ -418,9 +418,9 @@ static PyObject * py_get_fc(PyObject *self, PyObject *args)
   PyArrayObject* py_elem_indices;
 
   if (!PyArg_ParseTuple(args, "iOO",
-			&id,
-			&py_fc_values,
-			&py_elem_indices)) {
+                              &id,
+                              &py_fc_values,
+                              &py_elem_indices)) {
     return NULL;
   }
 
@@ -442,11 +442,11 @@ static PyObject * py_get_matrix_elements(PyObject *self, PyObject *args)
   PyArrayObject* py_bvec;
 
   if (!PyArg_ParseTuple(args, "iiiOO",
-			&id,
-      &nat,
-      &ndata_used,
-			&py_amat,
-			&py_bvec)) {
+                              &id,
+                              &nat,
+                              &ndata_used,
+                              &py_amat,
+                              &py_bvec)) {
     return NULL;
   }
 

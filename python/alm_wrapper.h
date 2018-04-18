@@ -67,7 +67,7 @@ extern "C" {
                     const int fc_order);
 
     void alm_get_matrix_elements(const int id,
-                                const int nat,
+                                 const int nat,
                                  const int ndata_used,
                                  double *amat,
                                  double *bvec);
