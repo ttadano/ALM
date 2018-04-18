@@ -88,12 +88,13 @@ namespace ALM_NS
                                      double *,
                                      double *,
                                      double *);
+
         void fit_algebraic_constraints(int,
                                        int,
                                        double *,
                                        double *,
-                                       double *,
-                                       double *,
+                                       std::vector<double> &,
+                                       double,
                                        int,
                                        Fcs *,
                                        Constraint *);
