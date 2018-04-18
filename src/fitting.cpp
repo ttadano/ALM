@@ -21,7 +21,6 @@
 #include "system.h"
 #include "timer.h"
 #include <iostream>
-#include <iomanip>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -66,17 +65,15 @@ void Fitting::deallocate_variables()
 
 void Fitting::fitmain(ALM *alm)
 {
+    alm->timer->start_clock("fitting");
+
     int i;
     const int nat = alm->system->supercell.number_of_atoms;
     const int natmin = alm->symmetry->nat_prim;
-    int N_new;
     const int maxorder = alm->interaction->maxorder;
     const int nconsts = alm->constraint->number_of_constraints;
     const int ndata_used = nend - nstart + 1;
-
     const int ntran = alm->symmetry->ntran;
-
-    alm->timer->start_clock("fitting");
 
     std::cout << " FITTING" << std::endl;
     std::cout << " =======" << std::endl << std::endl;
@@ -100,15 +97,12 @@ void Fitting::fitmain(ALM *alm)
     std::cout << "  Total Number of Parameters : " << N
         << std::endl << std::endl;
 
-
-    std::vector<double> mat_tmp;
-    std::vector<double> vec_tmp;
-
+    std::vector<double> amat;
+    std::vector<double> bvec;
     std::vector<std::vector<double>> u_vec, f_vec;
     std::vector<double> param_tmp(N);
 
-    double fnorm;
-
+    // Copy displacement and force data sets from u_in & f_in.
     u_vec.resize(ndata_used, std::vector<double>(3 * nat));
     f_vec.resize(ndata_used, std::vector<double>(3 * nat));
 
@@ -120,7 +114,7 @@ void Fitting::fitmain(ALM *alm)
     }
 
     if (alm->constraint->constraint_algebraic) {
-        N_new = 0;
+        int N_new = 0;
         for (i = 0; i < maxorder; ++i) {
             N_new += alm->constraint->index_bimap[i].size();
         }
@@ -129,12 +123,14 @@ void Fitting::fitmain(ALM *alm)
 
         // Calculate matrix elements for fitting
 
+        double fnorm;
+
         get_matrix_elements_algebraic_constraint(maxorder,
                                                  ndata_used,
                                                  u_vec,
                                                  f_vec,
-                                                 mat_tmp,
-                                                 vec_tmp,
+                                                 amat,
+                                                 bvec,
                                                  fnorm,
                                                  alm->symmetry,
                                                  alm->fcs,
@@ -142,11 +138,11 @@ void Fitting::fitmain(ALM *alm)
 
         // Perform fitting with SVD
 
-        assert(!mat_tmp.empty());
-        assert(!vec_tmp.empty());
+        assert(!amat.empty());
+        assert(!bvec.empty());
 
         fit_algebraic_constraints(N_new, M,
-                                  &mat_tmp[0], &vec_tmp[0],
+                                  &amat[0], &bvec[0],
                                   param_tmp,
                                   fnorm, maxorder,
                                   alm->fcs,
@@ -160,26 +156,26 @@ void Fitting::fitmain(ALM *alm)
                             ndata_used,
                             u_vec,
                             f_vec,
-                            mat_tmp,
-                            vec_tmp,
+                            amat,
+                            bvec,
                             alm->symmetry,
                             alm->fcs);
 
 
         // Perform fitting with SVD or QRD
 
-        assert(!mat_tmp.empty());
-        assert(!vec_tmp.empty());
+        assert(!amat.empty());
+        assert(!bvec.empty());
 
         if (alm->constraint->exist_constraint) {
             fit_with_constraints(N, M, nconsts,
-                                 &mat_tmp[0], &vec_tmp[0],
+                                 &amat[0], &bvec[0],
                                  &param_tmp[0],
                                  alm->constraint->const_mat,
                                  alm->constraint->const_rhs);
         } else {
             fit_without_constraints(N, M,
-                                    &mat_tmp[0], &vec_tmp[0],
+                                    &amat[0], &bvec[0],
                                     &param_tmp[0]);
         }
     }
