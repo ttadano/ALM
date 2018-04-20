@@ -436,7 +436,7 @@ void Constraint::calc_constraint_matrix(const int maxorder,
 
         if (const_fix[order].empty()) {
 
-            for (i = 0; i < nelems; ++i) arr_tmp[i] = 0.0;
+            for (i = 0; i < nparams; ++i) arr_tmp[i] = 0.0;
 
             for (auto &p : const_self[order]) {
                 for (i = 0; i < nelems; ++i) {
@@ -447,6 +447,7 @@ void Constraint::calc_constraint_matrix(const int maxorder,
         }
         nshift += nelems;
     }
+
 
     auto nconst1 = const_total.size();
 
@@ -506,9 +507,7 @@ void Constraint::calc_constraint_matrix(const int maxorder,
 
     int irow = 0;
     int icol = 0;
-
     int ishift = 0;
-
 
     if (fix_harmonic) {
 
