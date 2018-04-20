@@ -9,44 +9,20 @@
 */
 
 #include "files.h"
-#include "error.h"
-#include "memory.h"
-#include "interaction.h"
-#include <boost/lexical_cast.hpp>
 
 using namespace ALM_NS;
 
-Files::Files(ALMCore *alm): Pointers(alm)
+Files::Files()
 {
-    file_disp_pattern = nullptr;
     print_hessian = false;
 }
 
-Files::~Files()
-{
-    if (file_disp_pattern) {
-        deallocate(file_disp_pattern);
-    }
-}
+Files::~Files() {}
 
-void Files::init()
+void Files::init(ALM *alm)
 {
     int i;
 
     file_fcs = job_title + ".fcs";
     file_hes = job_title + ".hessian";
-
-    if (alm->mode == "suggest") {
-
-        allocate(file_disp_pattern, interaction->maxorder);
-
-        for (i = 0; i < interaction->maxorder; ++i) {
-            if (i == 0) {
-                file_disp_pattern[i] = job_title + ".pattern_HARMONIC";
-            } else {
-                file_disp_pattern[i] = job_title + ".pattern_ANHARM"
-                    + boost::lexical_cast<std::string>(i + 2);
-            }
-        }
-    }
 }

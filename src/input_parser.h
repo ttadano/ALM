@@ -10,14 +10,13 @@
 
 #pragma once
 
+#include "alm.h"
+
 #include <fstream>
 #include <string>
 #include <map>
 #include <vector>
-#include "alm_core.h"
-#include "input_setter.h"
-#include "memory.h"
-#include "error.h"
+
 
 namespace ALM_NS
 {
@@ -26,19 +25,20 @@ namespace ALM_NS
     public:
         InputParser();
         ~InputParser();
-        void run(ALMCore *alm,
-                 const int narg,
+        void run(ALM *alm,
+                 int narg,
                  const char * const *arg);
-        void parse_displacement_and_force(ALMCore *alm);
-        void parse_displacement_and_force_files(Error *error,
-                                                double **u,
+
+        void parse_displacement_and_force(ALM *alm);
+
+        void parse_displacement_and_force_files(double **u,
                                                 double **f,
-                                                const int nat,
-                                                const int ndata,
-                                                const int nstart,
-                                                const int nend,
-                                                const std::string file_disp,
-                                                const std::string file_force);
+                                                int nat,
+                                                int ndata,
+                                                int nstart,
+                                                int nend,
+                                                std::string file_disp,
+                                                std::string file_force);
         std::string str_magmom;
 
     private:
@@ -50,31 +50,31 @@ namespace ALM_NS
         int nat;
         int nkd;
 
-        void parse_input(ALMCore *alm);
-        void parse_general_vars(ALMCore *alm);
-        void parse_cell_parameter(ALMCore *alm);
-        void parse_atomic_positions(ALMCore *alm);
-        void parse_interaction_vars(ALMCore *alm);
-        void parse_cutoff_radii(ALMCore *alm);
-        void parse_fitting_vars(ALMCore *alm);
+        void parse_input(ALM *alm);
+        void parse_general_vars(ALM *alm);
+        void parse_cell_parameter(ALM *alm);
+        void parse_atomic_positions(ALM *alm);
+        void parse_interaction_vars(ALM *alm);
+        void parse_cutoff_radii(ALM *alm);
+        void parse_fitting_vars(ALM *alm);
         int locate_tag(std::string);
-        void split_str_by_space(const std::string, std::vector<std::string> &);
+        void split_str_by_space(std::string,
+                                std::vector<std::string> &);
         bool is_endof_entry(std::string);
-        void get_var_dict(const std::string,
+        void get_var_dict(std::string,
                           std::map<std::string,
-                                   std::string> &,
-                          Error *);
+                                   std::string> &);
 
         template <typename T>
         void assign_val(T &,
-                        const std::string,
-                        std::map<std::string, std::string>,
-                        Error *);
-        void set_displacement_and_force(ALMCore *alm,
+                        std::string,
+                        std::map<std::string, std::string>);
+
+        void set_displacement_and_force(ALM *alm,
                                         const double * const *u,
                                         const double * const *f,
-                                        const int nat,
-                                        const int ndata_used,
-                                        const int nmulti);
+                                        int nat,
+                                        int ndata_used,
+                                        int nmulti);
     };
 }

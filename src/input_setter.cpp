@@ -10,7 +10,6 @@
 
 #include <string>
 #include "input_setter.h"
-#include "alm_core.h"
 #include "memory.h"
 #include "files.h"
 #include "interaction.h"
@@ -19,46 +18,43 @@
 #include "fitting.h"
 #include "constraint.h"
 #include "patterndisp.h"
+#include "alm.h"
 
 using namespace ALM_NS;
 
-InputSetter::InputSetter()
+InputSetter::InputSetter() {}
+
+InputSetter::~InputSetter() {}
+
+void InputSetter::deallocator(ALM *alm)
 {
+    if (alm->system->kdname) {
+        deallocate(alm->system->kdname);
+    }
+    alm->system->kdname = nullptr;
+    if (alm->system->xcoord) {
+        deallocate(alm->system->xcoord);
+    }
+    alm->system->xcoord = nullptr;
+    if (alm->system->kd) {
+        deallocate(alm->system->kd);
+    }
+    alm->system->kd = nullptr;
+    if (alm->system->magmom) {
+        deallocate(alm->system->magmom);
+    }
+    alm->system->magmom = nullptr;
+    if (alm->interaction->nbody_include) {
+        deallocate(alm->interaction->nbody_include);
+    }
+    alm->interaction->nbody_include = nullptr;
+    if (alm->interaction->cutoff_radii) {
+        deallocate(alm->interaction->cutoff_radii);
+    }
+    alm->interaction->cutoff_radii = nullptr;
 }
 
-InputSetter::~InputSetter()
-{
-}
-
-void InputSetter::deallocator(ALMCore *alm_core)
-{
-    if (alm_core->system->kdname) {
-        deallocate(alm_core->system->kdname);
-    }
-    alm_core->system->kdname = nullptr;
-    if (alm_core->system->xcoord) {
-        deallocate(alm_core->system->xcoord);
-    }
-    alm_core->system->xcoord = nullptr;
-    if (alm_core->system->kd) {
-        deallocate(alm_core->system->kd);
-    }
-    alm_core->system->kd = nullptr;
-    if (alm_core->system->magmom) {
-        deallocate(alm_core->system->magmom);
-    }
-    alm_core->system->magmom = nullptr;
-    if (alm_core->interaction->nbody_include) {
-        deallocate(alm_core->interaction->nbody_include);
-    }
-    alm_core->interaction->nbody_include = nullptr;
-    if (alm_core->interaction->rcs) {
-        deallocate(alm_core->interaction->rcs);
-    }
-    alm_core->interaction->rcs = nullptr;
-}
-
-void InputSetter::set_general_vars(ALMCore *alm_core,
+void InputSetter::set_general_vars(ALM *alm,
                                    const std::string prefix,
                                    const std::string mode,
                                    const std::string str_disp_basis,
@@ -80,41 +76,41 @@ void InputSetter::set_general_vars(ALMCore *alm_core,
 {
     int i, j;
 
-    alm_core->files->job_title = prefix;
-    alm_core->mode = mode;
-    alm_core->system->nat = nat;
-    alm_core->system->nkd = nkd;
-    alm_core->system->str_magmom = str_magmom;
-    alm_core->symmetry->nsym = nsym;
-    alm_core->symmetry->printsymmetry = printsymmetry;
-    alm_core->symmetry->tolerance = tolerance;
-    allocate(alm_core->system->kdname, nkd);
-    allocate(alm_core->system->magmom, nat, 3);
+    alm->files->job_title = prefix;
+    alm->mode = mode;
+    alm->system->nat = nat;
+    alm->system->nkd = nkd;
+    alm->system->str_magmom = str_magmom;
+    alm->symmetry->nsym = nsym;
+    alm->symmetry->printsymmetry = printsymmetry;
+    alm->symmetry->tolerance = tolerance;
+    allocate(alm->system->kdname, nkd);
+    allocate(alm->system->magmom, nat, 3);
 
     for (i = 0; i < nkd; ++i) {
-        alm_core->system->kdname[i] = kdname[i];
+        alm->system->kdname[i] = kdname[i];
     }
     for (i = 0; i < 3; ++i) {
-        alm_core->interaction->is_periodic[i] = is_periodic[i];
+        alm->system->is_periodic[i] = is_periodic[i];
     }
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
-            alm_core->system->magmom[i][j] = magmom[i][j];
+            alm->system->magmom[i][j] = magmom[i][j];
         }
     }
-    alm_core->system->lspin = lspin;
-    alm_core->system->noncollinear = noncollinear;
-    alm_core->symmetry->trev_sym_mag = trevsym;
-    alm_core->files->print_hessian = print_hessian;
-    alm_core->constraint->tolerance_constraint = tolerance_constraint;
+    alm->system->lspin = lspin;
+    alm->system->noncollinear = noncollinear;
+    alm->system->trev_sym_mag = trevsym;
+    alm->files->print_hessian = print_hessian;
+    alm->constraint->tolerance_constraint = tolerance_constraint;
 
     if (mode == "suggest") {
-        alm_core->displace->disp_basis = str_disp_basis;
-        alm_core->displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
+        alm->displace->disp_basis = str_disp_basis;
+        alm->displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
     }
 }
 
-void InputSetter::set_cell_parameter(ALMCore *alm_core,
+void InputSetter::set_cell_parameter(ALM *alm,
                                      const double a,
                                      const double lavec_tmp[3][3])
 {
@@ -122,44 +118,44 @@ void InputSetter::set_cell_parameter(ALMCore *alm_core,
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
-            alm_core->system->lavec[i][j] = a * lavec_tmp[i][j];
+            alm->system->lavec[i][j] = a * lavec_tmp[i][j];
         }
     }
 }
 
-void InputSetter::set_interaction_vars(ALMCore *alm_core,
+void InputSetter::set_interaction_vars(ALM *alm,
                                        const int maxorder,
                                        const int *nbody_include)
 {
     int i;
 
-    alm_core->interaction->maxorder = maxorder;
-    allocate(alm_core->interaction->nbody_include, maxorder);
+    alm->interaction->maxorder = maxorder;
+    allocate(alm->interaction->nbody_include, maxorder);
 
     for (i = 0; i < maxorder; ++i) {
-        alm_core->interaction->nbody_include[i] = nbody_include[i];
+        alm->interaction->nbody_include[i] = nbody_include[i];
     }
 }
 
-void InputSetter::set_cutoff_radii(ALMCore *alm_core,
+void InputSetter::set_cutoff_radii(ALM *alm,
                                    const int maxorder,
                                    const int nkd,
                                    const double * const * const *rcs)
 {
     int i, j, k;
 
-    allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
+    allocate(alm->interaction->cutoff_radii, maxorder, nkd, nkd);
 
     for (i = 0; i < maxorder; ++i) {
         for (j = 0; j < nkd; ++j) {
             for (k = 0; k < nkd; ++k) {
-                alm_core->interaction->rcs[i][j][k] = rcs[i][j][k];
+                alm->interaction->cutoff_radii[i][j][k] = rcs[i][j][k];
             }
         }
     }
 }
 
-void InputSetter::set_fitting_vars(ALMCore *alm_core,
+void InputSetter::set_fitting_vars(ALM *alm,
                                    const int ndata,
                                    const int nstart,
                                    const int nend,
@@ -172,36 +168,36 @@ void InputSetter::set_fitting_vars(ALMCore *alm_core,
                                    const bool fix_harmonic,
                                    const bool fix_cubic)
 {
-    alm_core->system->ndata = ndata;
-    alm_core->system->nstart = nstart;
-    alm_core->system->nend = nend;
+    alm->fitting->ndata = ndata;
+    alm->fitting->nstart = nstart;
+    alm->fitting->nend = nend;
 
-    alm_core->files->file_disp = dfile;
-    alm_core->files->file_force = ffile;
-    alm_core->constraint->constraint_mode = constraint_flag;
-    alm_core->constraint->rotation_axis = rotation_axis;
-    alm_core->constraint->fc2_file = fc2_file;
-    alm_core->constraint->fix_harmonic = fix_harmonic;
-    alm_core->constraint->fc3_file = fc3_file;
-    alm_core->constraint->fix_cubic = fix_cubic;
+    alm->files->file_disp = dfile;
+    alm->files->file_force = ffile;
+    alm->constraint->constraint_mode = constraint_flag;
+    alm->constraint->rotation_axis = rotation_axis;
+    alm->constraint->fc2_file = fc2_file;
+    alm->constraint->fix_harmonic = fix_harmonic;
+    alm->constraint->fc3_file = fc3_file;
+    alm->constraint->fix_cubic = fix_cubic;
 }
 
-void InputSetter::set_atomic_positions(ALMCore *alm_core,
+void InputSetter::set_atomic_positions(ALM *alm,
                                        const int nat,
                                        const int *kd,
                                        const double * const *xeq)
 {
     int i, j;
 
-    allocate(alm_core->system->xcoord, nat, 3);
-    allocate(alm_core->system->kd, nat);
+    allocate(alm->system->xcoord, nat, 3);
+    allocate(alm->system->kd, nat);
 
     for (i = 0; i < nat; ++i) {
 
-        alm_core->system->kd[i] = kd[i];
+        alm->system->kd[i] = kd[i];
 
         for (j = 0; j < 3; ++j) {
-            alm_core->system->xcoord[i][j] = xeq[i][j];
+            alm->system->xcoord[i][j] = xeq[i][j];
         }
     }
 }

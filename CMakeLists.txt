@@ -10,6 +10,17 @@ project(alm)
 
 if(WIN32)
     LINK_DIRECTORIES(C:\\lapack)
+	LINK_DIRECTORIES(C:\\spglib)
+    include_directories(C:\\spglib)
+	set(LAPACK_LIBRARIES lapack)
+	set(spglib symspg)
+endif()
+
+if (UNIX)
+    #set( ENV{BLA_VENDOR} "Intel10_64lp")
+	include_directories("/Users/tadano/src/spglib/include")
+    find_package(LAPACK REQUIRED)
+	set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
 endif()
 
 # Add openmp flag if available
@@ -20,15 +31,6 @@ endif()
 
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
-include_directories("/Users/tadano/src/spglib/include")
-
-if (UNIX)
-    #set( ENV{BLA_VENDOR} "Intel10_64lp")
-    find_package(LAPACK REQUIRED)
-endif()
-if (WIN32)
-    set(LAPACK_LIBRARIES lapack)
-endif()
 
 # Version numbers
 file(READ ${PROJECT_SOURCE_DIR}/src/version.h version_file)
@@ -37,19 +39,17 @@ set(alm_version ${CMAKE_MATCH_1})
 MESSAGE("ALM version: ${CMAKE_MATCH_1}")
 set(serial "${alm_version}")
 set(soserial "1")
-set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
 
 # Source code
 include_directories("${PROJECT_SOURCE_DIR}/src")
 set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
-            ${PROJECT_SOURCE_DIR}/src/alm_core.cpp
             ${PROJECT_SOURCE_DIR}/src/constraint.cpp
-            ${PROJECT_SOURCE_DIR}/src/error.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
             ${PROJECT_SOURCE_DIR}/src/fitting.cpp
             ${PROJECT_SOURCE_DIR}/src/interaction.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
+            ${PROJECT_SOURCE_DIR}/src/rref.cpp
             ${PROJECT_SOURCE_DIR}/src/symmetry.cpp
             ${PROJECT_SOURCE_DIR}/src/system.cpp
             ${PROJECT_SOURCE_DIR}/src/timer.cpp
@@ -76,7 +76,8 @@ set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
 # Shared library
 add_library(almcxx SHARED ${SOURCES})
 #target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
-target_link_libraries(almcxx ${LAPACK_LIBRARIES})
+target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib})
+#target_link_libraries(almcxx ${LAPACK_LIBRARIES})
 set_property(TARGET almcxx PROPERTY VERSION ${serial})
 set_property(TARGET almcxx PROPERTY SOVERSION ${soserial})
 set_property(TARGET almcxx PROPERTY CXX_STANDARD 11)

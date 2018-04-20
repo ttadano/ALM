@@ -19,3 +19,4 @@ alm.VC.VC.opendb
 src/alm.vcxproj.user
 *.filters
 /src/alm.vcxproj.user
+*.TMP

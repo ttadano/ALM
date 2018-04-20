@@ -12,22 +12,24 @@
 
 #include <string>
 #include <fstream>
-#include "pointers.h"
+#include "alm.h"
+
+//#include "pointers.h"
 
 namespace ALM_NS
 {
-    class Files : protected Pointers
+    class Files
     {
     public:
-        Files(class ALMCore *);
+        Files();
         ~Files();
 
-        void init();
+        void init(ALM *);
 
         bool print_hessian;
         std::string job_title;
         std::string file_fcs, file_hes;
         std::string file_disp, file_force;
-        std::string *file_disp_pattern;
+        //     std::string *file_disp_pattern;
     };
 }

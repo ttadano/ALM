@@ -1,7 +1,7 @@
 /*
  error.h
 
- Copyright (c) 2014 Terumasa Tadano
+ Copyright (c) 2014-2018 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
  Please see the file 'LICENCE.txt' in the root directory 
@@ -10,20 +10,35 @@
 
 #pragma once
 
-#include <string>
-#include "pointers.h"
+#include <iostream>
+#include <cstdlib>
 
-namespace ALM_NS
+
+inline void warn(const char *file,
+                 const char *message)
 {
-    class Error : protected Pointers
-    {
-    public:
-        Error(class ALMCore *);
-        ~Error();
+    std::cout << " WARNING in " << file << "  MESSAGE: " << message << std::endl;
+}
 
-        void exit(const char *, const char *);
-        void warn(const char *, const char *);
-        void exit(const char *, const char *, int);
-        void exit(const char *, const char *, const char *);
-    };
+inline void exit(const char *file,
+                 const char *message)
+{
+    std::cout << " ERROR in " << file << "  MESSAGE: " << message << std::endl;
+    std::exit(EXIT_FAILURE);
+}
+
+inline void exit(const char *file,
+                 const char *message,
+                 int info)
+{
+    std::cout << " ERROR in " << file << "  MESSAGE: " << message << info << std::endl;
+    std::exit(EXIT_FAILURE);
+}
+
+inline void exit(const char *file,
+                 const char *message,
+                 const char *info)
+{
+    std::cout << " ERROR in " << file << "  MESSAGE: " << message << info << std::endl;
+    std::exit(EXIT_FAILURE);
 }

@@ -11,12 +11,11 @@
 
 #pragma once
 
-#include "pointers.h"
+#include "alm.h"
+#include "interaction.h"
 #include <vector>
 #include <set>
 #include <algorithm>
-#include "symmetry.h"
-#include "interaction.h"
 
 namespace ALM_NS
 {
@@ -30,11 +29,12 @@ namespace ALM_NS
         FcProperty();
 
         FcProperty(const FcProperty &obj) :
-            sign(obj.sign), mother(obj.mother), elems(obj.elems)
-        {
-        }
+            elems(obj.elems), sign(obj.sign), mother(obj.mother) { }
 
-        FcProperty(const int n, const double c, const int *arr, const int m)
+        FcProperty(const int n,
+                   const double c,
+                   const int *arr,
+                   const int m)
         {
             sign = c;
             mother = m;
@@ -49,7 +49,7 @@ namespace ALM_NS
                                                 a.elems.begin(), a.elems.end());
         }
 
-        bool operator==(const FcProperty &a) const 
+        bool operator==(const FcProperty &a) const
         {
             int n = elems.size();
             int n_ = a.elems.size();
@@ -70,41 +70,73 @@ namespace ALM_NS
         ForceConstantTable();
     };
 
-    class Fcs: protected Pointers
+    class Fcs
     {
     public:
-        Fcs(class ALMCore *);
+        Fcs();
         ~Fcs();
 
-        void init();
+        void init(ALM *);
 
         std::vector<int> *nequiv; // stores duplicate number of irreducible force constants
         std::vector<FcProperty> *fc_table; // all force constants
-        std::vector<FcProperty> *fc_zeros;
+        std::vector<FcProperty> *fc_zeros; // zero force constants (due to space group symm.)
 
-        std::string easyvizint(const int);
         void get_xyzcomponent(int, int **);
-        void sort_tail(const int, int *);
 
-        bool is_inprim(const int, const int *);
-        bool is_inprim(const int);
-        int min_inprim(const int, const int *);
-        double coef_sym(const int, const int, const int *, const int *);
-        double coef_sym(const int, double **, const int *, const int *);
+        bool is_inprim(int,
+                       const int *,
+                       int,
+                       int **);
 
-        void generate_force_constant_table(const int,
-                                           const std::set<IntList>,
-                                           const std::vector<SymmetryOperation>,
+        int get_minimum_index_in_primitive(int,
+                                           const int *,
+                                           int,
+                                           int,
+                                           int **);
+        double coef_sym(int,
+                        double **,
+                        const int *,
+                        const int *);
+
+        void generate_force_constant_table(int,
+                                           int,
+                                           const std::set<IntList> &,
+                                           Symmetry *,
                                            std::string,
                                            std::vector<FcProperty> &,
                                            std::vector<int> &,
                                            std::vector<FcProperty> &,
-                                           const bool);
+                                           bool);
+
+        void get_constraint_symmetry(int,
+                                     Symmetry *,
+                                     int,
+                                     const std::set<IntList> &,
+                                     std::string,
+                                     const std::vector<FcProperty> &,
+                                     int,
+                                     double,
+                                     std::vector<std::vector<double>> &);
 
     private:
+        bool store_zeros;
         void set_default_variables();
         void deallocate_variables();
-        bool is_ascending(const int, const int *);
+        bool is_ascending(int, const int *);
+        bool is_inprim(int,
+                       int,
+                       int **);
+        bool is_allzero(const std::vector<double> &,
+                        double,
+                        int &);
+        void get_available_symmop(int,
+                                  Symmetry *,
+                                  std::string,
+                                  int &,
+                                  int **,
+                                  double ***,
+                                  bool);
     };
 }
 
@@ -115,7 +147,7 @@ namespace std
     template <>
     struct hash<ALM_NS::FcProperty>
     {
-        std::size_t operator () (ALM_NS::FcProperty const &obj) const
+        std::size_t operator ()(ALM_NS::FcProperty const &obj) const
         {
             hash<int> hasher;
             size_t seed = 0;

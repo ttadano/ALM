@@ -2,12 +2,11 @@ import numpy as np
 from . import _alm as alm
 
 class ALM:
-    def __init__(self, lavec, xcoord, kd, norder):
+    def __init__(self, lavec, xcoord, kd):
         self._id = None
         self._lavec = np.array(lavec, dtype='double', order='C')
         self._xcoord = np.array(xcoord, dtype='double', order='C')
         self._kd = np.array(kd, dtype='intc', order='C')
-        self._norder = norder
 
     def __enter__(self):
         self.alm_new()
@@ -23,7 +22,6 @@ class ALM:
                 print("Too many ALM objects")
                 raise
             self._set_cell()
-            self._set_norder()
         else:
             print("This ALM object is already initialized.")
             raise
@@ -42,11 +40,12 @@ class ALM:
 
         alm.run_suggest(self._id)
     
-    def run_fitting(self):
+    def optimize(self):
         if self._id is None:
             self._show_error_message()
 
-        alm.run_fitting(self._id)
+        info = alm.optimize(self._id)
+        return info
     
     def set_displacement_and_force(self, u, f):
         if self._id is None:
@@ -57,15 +56,44 @@ class ALM:
             np.array(u, dtype='double', order='C'),
             np.array(f, dtype='double', order='C'))
 
-    def set_fitting_constraint_type(self, iconst):
-        alm.set_fitting_constraint_type(self._id, iconst)
-    
+    def find_force_constant(self, norder, rcs, nbody = []):
+        # TODO: support nbody option
+        if self._id is None:
+            self._show_error_message()
+
+        self._norder = norder
+        self._set_norder()
+        alm.set_cutoff_radii(self._id,
+                             np.array(rcs, dtype='double', order='C'))
+
+        alm.generate_force_constant(self._id)
+
+
+    def set_constraint(self, translation=True, rotation=False):
+        if rotation is True:
+            print("Rotational invariance is not supported in API.")
+            raise
+
+        iconst = 0
+        if translation is True:
+            iconst = 11
+        
+        alm.set_constraint_type(self._id, iconst)
+
+
     def set_cutoff_radii(self, rcs):
         if self._id is None:
             self._show_error_message()
 
         alm.set_cutoff_radii(self._id,
                              np.array(rcs, dtype='double', order='C'))
+
+    def get_ndata_used(self):
+        if self._id is None:
+            self._show_error_message()
+
+        ndata_used = alm.get_ndata_used(self._id)
+        return ndata_used
 
     def get_atom_mapping_by_pure_translations(self):
         if self._id is None:
@@ -101,13 +129,33 @@ class ALM:
     def get_fc(self, fc_order): # harmonic: fc_order=1
         if self._id is None:
             self._show_error_message()
-
+        
         fc_length = self._get_number_of_fc_elements(fc_order)
         fc_values = np.zeros(fc_length, dtype='double')
         elem_indices = np.zeros((fc_length, fc_order + 1),
                                 dtype='intc', order='C')
+
         alm.get_fc(self._id, fc_values, elem_indices)
         return fc_values, elem_indices
+
+    def get_matrix_elements(self):
+        if self._id is None:
+            self._show_error_message()
+
+        norder = self._norder
+        nat = len(self._xcoord)
+        ndata_used = alm.get_ndata_used(self._id)
+
+        fc_length = 0
+        for i in range(norder):
+            fc_length += self._get_number_of_irred_fc_elements(i + 1)
+
+        amat = np.zeros((3 * nat * ndata_used, fc_length),
+                        dtype='double', order='C')
+        bvec = np.zeros(3 * nat * ndata_used)
+        alm.get_matrix_elements(self._id, nat, ndata_used, amat, bvec)
+        return amat, bvec
+
     
     def _set_cell(self):
         if self._id is None:
@@ -136,6 +184,9 @@ class ALM:
     
     def _get_number_of_fc_elements(self, fc_order): # harmonic: fc_order=1
         return alm.get_number_of_fc_elements(self._id, fc_order)
+
+    def _get_number_of_irred_fc_elements(self, fc_order): # harmonic: fc_order=1
+        return alm.get_number_of_irred_fc_elements(self._id, fc_order)
     
     def _show_error_message(self):
         print("This ALM object has to be initialized by ALM::alm_new()")

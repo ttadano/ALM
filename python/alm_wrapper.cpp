@@ -108,13 +108,15 @@ extern "C" {
                 ++nkd;
             }
         }
-        std::string kdname[nkd];
+        std::string *kdname = new std::string[nkd];
+        //std::string kdname[nkd];
         for (int i = 0; i < nkd; i++) {
             kdname[i] = atom_name[abs(nkd_vals[i]) % 118];
         }
 
 
         alm[id]->set_cell(nat, lavec, xcoord, kd_new, kdname);
+        delete [] kdname;
     }
 
     // void set_magnetic_params(const double* magmom,
@@ -132,10 +134,15 @@ extern "C" {
         alm[id]->set_displacement_and_force(u_in, f_in, nat, ndata_used);
     }
 
-    void alm_set_fitting_constraint_type(const int id,
+    int alm_get_ndata_used(const int id)
+    {
+        return alm[id]->get_ndata_used();
+    }
+
+    void alm_set_constraint_type(const int id,
                                          const int constraint_flag) // ICONST
     {
-        alm[id]->set_fitting_constraint_type(constraint_flag);
+        alm[id]->set_constraint_type(constraint_flag);
     }
 
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
@@ -158,6 +165,11 @@ extern "C" {
                               const double * rcs)
     {
         alm[id]->set_cutoff_radii(rcs);
+    }
+
+    void alm_generate_force_constant(const int id)
+    {
+        alm[id]->generate_force_constant();
     }
 
     int alm_get_atom_mapping_by_pure_translations(const int id,
@@ -195,6 +207,12 @@ extern "C" {
         return alm[id]->get_number_of_fc_elements(fc_order);
     }
 
+    int alm_get_number_of_irred_fc_elements(const int id,
+                                            const int fc_order)
+    {
+        return alm[id]->get_number_of_irred_fc_elements(fc_order);
+    }
+
     void alm_get_fc(const int id,
                     double *fc_values,
                     int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
@@ -203,15 +221,25 @@ extern "C" {
         alm[id]->get_fc(fc_values, elem_indices, fc_order);
     }
 
+    void alm_get_matrix_elements(const int id,
+                                 const int nat,
+                                 const int ndata_used,
+                                 double *amat,
+                                 double *bvec)
+    {
+        alm[id]->get_matrix_elements(nat, ndata_used, amat, bvec);
+    }
+
     void alm_run_suggest(const int id)
     {
         alm[id]->set_run_mode("suggest");
-        alm[id]->run();
+        alm[id]->run_suggest();
     }
 
-    void alm_run_fitting(const int id)
+    int alm_optimize(const int id)
     {
         alm[id]->set_run_mode("fitting");
-        alm[id]->run();
+        int info = alm[id]->optimize();
+        return info;
     }
 }

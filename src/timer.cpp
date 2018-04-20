@@ -11,7 +11,6 @@
 #include "timer.h"
 #include <string>
 #include <iostream>
-#include <iomanip>
 #include <ctime>
 
 using namespace ALM_NS;
@@ -144,7 +143,7 @@ void Timer::stop_clock(const std::string str_tag)
         std::cout << "Error: cannot stop clock because it's not initialized." << std::endl;
         exit(1);
     }
-    // Initialize the counter if the key is new
+
     auto it = walltime.find(str_tag);
 
     if (it == walltime.end()) {

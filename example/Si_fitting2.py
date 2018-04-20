@@ -75,19 +75,16 @@ xcoord = [[ 0.0000000000000000, 0.0000000000000000, 0.0000000000000000],
           [ 0.8750000000000000, 0.8750000000000000, 0.1250000000000000],
           [ 0.8750000000000000, 0.8750000000000000, 0.6250000000000000]]
 
-kd = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
-      14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
-      14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
-      14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14];
+kd = [14] * 64 
 
 force = np.loadtxt("force.dat").reshape((-1, 64, 3))[:22]
 disp = np.loadtxt("disp.dat").reshape((-1, 64, 3))[:22]
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
-with ALM(lavec, xcoord, kd, 2) as alm:
-    alm.set_cutoff_radii([-1, 7.3])
+with ALM(lavec, xcoord, kd) as alm:
+    alm.find_force_constant(2, [-1, 7.3])
     alm.set_displacement_and_force(disp, force)
-    alm.run_fitting()
+    info = alm.optimize()
 
     c = "xyz"
     fc_values, elem_indices = alm.get_fc(1) # harmonic fc
