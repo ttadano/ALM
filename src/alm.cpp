@@ -29,6 +29,8 @@ ALM::ALM()
 {
     create();
     verbose = true;
+    structure_initialized = false;
+    ready_to_fit = false;
     ofs_alm = nullptr;
     coutbuf = nullptr;
     mode = "suggest";
@@ -273,12 +275,12 @@ const int ALM::get_ndata_used()
     return fitting->get_ndata_used();
 }
 
-const void ALM::set_fitting_constraint_type(const int constraint_flag) // ICONST
+const void ALM::set_constraint_type(const int constraint_flag) // ICONST
 {
     constraint->constraint_mode = constraint_flag;
 }
 
-const void ALM::set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
+const void ALM::set_rotation_axis(const std::string rotation_axis) // ROTAXIS
 {
     constraint->rotation_axis = rotation_axis;
 }
@@ -501,23 +503,10 @@ const void ALM::get_matrix_elements(const int nat,
 }
 
 
-const void ALM::compute()
+const void ALM::generate_force_constant()
 {
-    if (!verbose) {
-        ofs_alm = new std::ofstream("alm.log", std::ofstream::out);
-        coutbuf = std::cout.rdbuf();
-        std::cout.rdbuf(ofs_alm->rdbuf());
-    }
-
-    initialize(this);
-
-    if (!verbose) {
-        ofs_alm->close();
-        delete ofs_alm;
-        ofs_alm = nullptr;
-        std::cout.rdbuf(coutbuf);
-        coutbuf = nullptr;
-    }
+    initialize_structure(this);
+    initialize_interaction(this);
 }
 
 const void ALM::run()
@@ -528,12 +517,12 @@ const void ALM::run()
         std::cout.rdbuf(ofs_alm->rdbuf());
     }
 
-    initialize(this);
+    generate_force_constant();
 
     if (mode == "fitting") {
-        run_fitting(this);
+        optimize();
     } else if (mode == "suggest") {
-        run_suggest(this);
+        run_suggest();
     }
 
     if (!verbose) {
@@ -545,23 +534,45 @@ const void ALM::run()
     }
 }
 
-const void ALM::run_fitting(ALM *alm)
+const int ALM::optimize()
 {
-    constraint->setup(alm);
-    fitting->fitmain(alm);
+    if (!structure_initialized) {
+        std::cout << "initialize_structure must be called beforehand." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    if (!ready_to_fit) {
+        constraint->setup(this);
+        ready_to_fit = true;
+    }
+    int info = fitting->fitmain(this);
+    return info;
 }
 
-const void ALM::run_suggest(ALM *alm)
+const void ALM::run_suggest()
 {
-    displace->gen_displacement_pattern(alm);
+    displace->gen_displacement_pattern(this);
 }
 
 
-void ALM::initialize(ALM *alm)
+void ALM::initialize_structure(ALM *alm)
 {
+    // Initialization of structure information.
+    // Perform initialization only once.
+
+    if (structure_initialized) return;
     system->init(alm);
     files->init(alm);
     symmetry->init(alm);
+    structure_initialized = true;
+}
+
+void ALM::initialize_interaction(ALM *alm)
+{
+    // Build interaction & force constant table
     interaction->init(alm);
     fcs->init(alm);
+
+    // Switch off the ready flag because the force constants are updated
+    // but corresponding constranits are not.
+    ready_to_fit = false;
 }

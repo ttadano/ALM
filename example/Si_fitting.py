@@ -81,10 +81,10 @@ force = np.loadtxt("force.dat").reshape((-1, 64, 3))[[0]]
 disp = np.loadtxt("disp.dat").reshape((-1, 64, 3))[[0]]
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
-with ALM(lavec, xcoord, kd, 1) as alm:
-    alm.set_cutoff_radii([-1])
+with ALM(lavec, xcoord, kd) as alm:
+    alm.find_force_constant(1, [-1])
     alm.set_displacement_and_force(disp, force)
-    alm.run_fitting()
+    info = alm.optimize()
     fc_values, elem_indices = alm.get_fc(1)
     c = "xyz"
     for (fc, elem) in zip(fc_values, elem_indices):

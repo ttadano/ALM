@@ -63,7 +63,7 @@ void Fitting::deallocate_variables()
     }
 }
 
-void Fitting::fitmain(ALM *alm)
+int Fitting::fitmain(ALM *alm)
 {
     alm->timer->start_clock("fitting");
 
@@ -74,6 +74,7 @@ void Fitting::fitmain(ALM *alm)
     const int nconsts = alm->constraint->number_of_constraints;
     const int ndata_used = nend - nstart + 1;
     const int ntran = alm->symmetry->ntran;
+    int info_fitting;
 
     std::cout << " FITTING" << std::endl;
     std::cout << " =======" << std::endl << std::endl;
@@ -141,16 +142,16 @@ void Fitting::fitmain(ALM *alm)
         assert(!amat.empty());
         assert(!bvec.empty());
 
-        fit_algebraic_constraints(N_new, M,
-                                  &amat[0], &bvec[0],
-                                  param_tmp,
-                                  fnorm, maxorder,
-                                  alm->fcs,
-                                  alm->constraint);
+        info_fitting 
+        = fit_algebraic_constraints(N_new, M,
+                                    &amat[0], &bvec[0],
+                                    param_tmp,
+                                    fnorm, maxorder,
+                                    alm->fcs,
+                                    alm->constraint);
     } else {
 
         // Calculate matrix elements for fitting
-
 
         get_matrix_elements(maxorder,
                             ndata_used,
@@ -161,22 +162,23 @@ void Fitting::fitmain(ALM *alm)
                             alm->symmetry,
                             alm->fcs);
 
-
         // Perform fitting with SVD or QRD
 
         assert(!amat.empty());
         assert(!bvec.empty());
 
         if (alm->constraint->exist_constraint) {
-            fit_with_constraints(N, M, nconsts,
-                                 &amat[0], &bvec[0],
-                                 &param_tmp[0],
-                                 alm->constraint->const_mat,
-                                 alm->constraint->const_rhs);
+            info_fitting 
+            = fit_with_constraints(N, M, nconsts,
+                                   &amat[0], &bvec[0],
+                                   &param_tmp[0],
+                                   alm->constraint->const_mat,
+                                   alm->constraint->const_rhs);
         } else {
-            fit_without_constraints(N, M,
-                                    &amat[0], &bvec[0],
-                                    &param_tmp[0]);
+            info_fitting
+            = fit_without_constraints(N, M,
+                                      &amat[0], &bvec[0],
+                                      &param_tmp[0]);
         }
     }
 
@@ -194,6 +196,8 @@ void Fitting::fitmain(ALM *alm)
     std::cout << std::endl;
 
     alm->timer->stop_clock("fitting");
+
+    return info_fitting;
 }
 
 void Fitting::set_displacement_and_force(const double * const *disp_in,
@@ -226,11 +230,11 @@ const int Fitting::get_ndata_used()
     return ndata_used;
 }
 
-void Fitting::fit_without_constraints(int N,
-                                      int M,
-                                      double *amat,
-                                      double *bvec,
-                                      double *param_out)
+int Fitting::fit_without_constraints(int N,
+                                     int M,
+                                     double *amat,
+                                     double *bvec,
+                                     double *param_out)
 {
     int i, j;
     int nrhs = 1, nrank, INFO;
@@ -289,9 +293,11 @@ void Fitting::fit_without_constraints(int N,
     deallocate(WORK);
     deallocate(S);
     deallocate(fsum2);
+
+    return INFO;
 }
 
-void Fitting::fit_with_constraints(int N,
+int Fitting::fit_with_constraints(int N,
                                    int M,
                                    int P,
                                    double *amat,
@@ -390,17 +396,19 @@ void Fitting::fit_with_constraints(int N,
     deallocate(WORK);
     deallocate(x);
     deallocate(fsum2);
+
+    return INFO;
 }
 
-void Fitting::fit_algebraic_constraints(int N,
-                                        int M,
-                                        double *amat,
-                                        double *bvec,
-                                        std::vector<double> &param_out,
-                                        const double fnorm,
-                                        const int maxorder,
-                                        Fcs *fcs,
-                                        Constraint *constraint)
+int Fitting::fit_algebraic_constraints(int N,
+                                       int M,
+                                       double *amat,
+                                       double *bvec,
+                                       std::vector<double> &param_out,
+                                       const double fnorm,
+                                       const int maxorder,
+                                       Fcs *fcs,
+                                       Constraint *constraint)
 {
     int i, j;
     unsigned long k;
@@ -465,6 +473,8 @@ void Fitting::fit_algebraic_constraints(int N,
                                     param_out,
                                     fcs->nequiv,
                                     constraint);
+
+    return INFO;
 }
 
 

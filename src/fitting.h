@@ -24,7 +24,7 @@ namespace ALM_NS
         Fitting();
         ~Fitting();
 
-        void fitmain(ALM *);
+        int fitmain(ALM *);
 
         int ndata, nstart, nend;
 
@@ -83,30 +83,30 @@ namespace ALM_NS
 
         int inprim_index(int, Symmetry *);
 
-        void fit_without_constraints(int,
-                                     int,
-                                     double *,
-                                     double *,
-                                     double *);
+        int fit_without_constraints(int,
+                                    int,
+                                    double *,
+                                    double *,
+                                    double *);
 
-        void fit_algebraic_constraints(int,
-                                       int,
-                                       double *,
-                                       double *,
-                                       std::vector<double> &,
-                                       double,
-                                       int,
-                                       Fcs *,
-                                       Constraint *);
+        int fit_algebraic_constraints(int,
+                                      int,
+                                      double *,
+                                      double *,
+                                      std::vector<double> &,
+                                      double,
+                                      int,
+                                      Fcs *,
+                                      Constraint *);
 
-        void fit_with_constraints(int,
-                                  int,
-                                  int,
-                                  double *,
-                                  double *,
-                                  double *,
-                                  double **,
-                                  double *);
+        int fit_with_constraints(int,
+                                 int,
+                                 int,
+                                 double *,
+                                 double *,
+                                 double *,
+                                 double **,
+                                 double *);
 
         void calc_matrix_elements(int,
                                   int,

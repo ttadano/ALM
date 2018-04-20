@@ -58,8 +58,8 @@ namespace ALM_NS
                                               int nat,
                                               int ndata_used);
         const int get_ndata_used();
-        const void set_fitting_constraint_type(int constraint_flag);
-        const void set_fitting_constraint_rotation_axis(std::string rotation_axis);
+        const void set_constraint_type(int constraint_flag);
+        const void set_rotation_axis(std::string rotation_axis);
         const void set_fitting_filenames(std::string dfile,
                                          std::string ffile);
         const void set_norder(int maxorder);
@@ -84,17 +84,20 @@ namespace ALM_NS
                                        int ndata_used,
                                        double *amat,
                                        double *bvec);
+        const void generate_force_constant();
+        const int optimize();
+        const void run_suggest();
         const void run();
-        const void compute();
 
     private:
 
         bool verbose;
+        bool structure_initialized;
+        bool ready_to_fit;
         std::ofstream *ofs_alm;
         std::streambuf *coutbuf;
         void create();
-        void initialize(ALM *);
-        const void run_fitting(ALM *);
-        const void run_suggest(ALM *);
+        void initialize_structure(ALM *);
+        void initialize_interaction(ALM *alm);
     };
 }

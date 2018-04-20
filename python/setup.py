@@ -13,6 +13,9 @@ extra_link_args = ['-lstdc++',
                    '-llapack', 
                    '-L/Users/tadano/src/spglib/lib', '-lsymspg',
                    '-fopenmp', '-Wl,-rpath,/usr/local/opt/gcc/lib/gcc/7,-rpath,/Users/tadano/src/spglib/lib']
+#                   '/Users/tadano/src/spglib/lib/libsymspg.a',
+#                   '/usr/local/opt/gcc/lib/gcc/7/libgomp.a']
+
 
 include_dir_spglib=['/Users/tadano/src/spglib/include']
 
@@ -55,7 +58,7 @@ else: # compile with library
 extension = Extension('alm._alm',
                       include_dirs=include_dirs_numpy + include_dir_spglib,
                       library_dirs=library_dirs,
-                      extra_compile_args = ['-g', '-fopenmp', '-std=c++11'],
+                      extra_compile_args = ['-fopenmp', '-std=c++11'],
                       extra_link_args=extra_link_args,
                       sources=sources)
 

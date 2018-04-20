@@ -2,12 +2,11 @@ import numpy as np
 from . import _alm as alm
 
 class ALM:
-    def __init__(self, lavec, xcoord, kd, norder):
+    def __init__(self, lavec, xcoord, kd):
         self._id = None
         self._lavec = np.array(lavec, dtype='double', order='C')
         self._xcoord = np.array(xcoord, dtype='double', order='C')
         self._kd = np.array(kd, dtype='intc', order='C')
-        self._norder = norder
 
     def __enter__(self):
         self.alm_new()
@@ -23,7 +22,6 @@ class ALM:
                 print("Too many ALM objects")
                 raise
             self._set_cell()
-            self._set_norder()
         else:
             print("This ALM object is already initialized.")
             raise
@@ -42,17 +40,12 @@ class ALM:
 
         alm.run_suggest(self._id)
     
-    def run_fitting(self):
+    def optimize(self):
         if self._id is None:
             self._show_error_message()
 
-        alm.run_fitting(self._id)
-
-    def compute(self):
-        if self._id is None:
-            self._show_error_message()
-        
-        alm.compute(self._id)
+        info = alm.optimize(self._id)
+        return info
     
     def set_displacement_and_force(self, u, f):
         if self._id is None:
@@ -63,9 +56,31 @@ class ALM:
             np.array(u, dtype='double', order='C'),
             np.array(f, dtype='double', order='C'))
 
-    def set_fitting_constraint_type(self, iconst):
-        alm.set_fitting_constraint_type(self._id, iconst)
-    
+    def find_force_constant(self, norder, rcs, nbody = []):
+        # TODO: support nbody option
+        if self._id is None:
+            self._show_error_message()
+
+        self._norder = norder
+        self._set_norder()
+        alm.set_cutoff_radii(self._id,
+                             np.array(rcs, dtype='double', order='C'))
+
+        alm.generate_force_constant(self._id)
+
+
+    def set_constraint(self, translation=True, rotation=False):
+        if rotation is True:
+            print("Rotational invariance is not supported in API.")
+            raise
+
+        iconst = 0
+        if translation is True:
+            iconst = 11
+        
+        alm.set_constraint_type(self._id, iconst)
+
+
     def set_cutoff_radii(self, rcs):
         if self._id is None:
             self._show_error_message()

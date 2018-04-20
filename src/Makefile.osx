@@ -12,7 +12,7 @@ CXXFLAGS = -O2 -fopenmp
 INCLUDE = -I../include -I$(HOME)/src/spglib/include
 
 CXXL = ${CXX}
-LDFLAGS = -lgomp -L$(HOME)/src/spglib/lib -lsymspg
+LDFLAGS = -lgomp $(HOME)/src/spglib/lib/libsymspg.a
 
 LAPACK = -llapack
 LIBS = ${LAPACK}

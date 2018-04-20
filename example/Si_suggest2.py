@@ -75,14 +75,11 @@ xcoord = [[ 0.0000000000000000, 0.0000000000000000, 0.0000000000000000],
           [ 0.8750000000000000, 0.8750000000000000, 0.1250000000000000],
           [ 0.8750000000000000, 0.8750000000000000, 0.6250000000000000]]
 
-kd = [14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
-      14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
-      14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
-      14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14];
+kd = [14] * 64
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
-with ALM(lavec, xcoord, kd, 2) as alm:
-    alm.set_cutoff_radii([-1, 7.3])
+with ALM(lavec, xcoord, kd) as alm:
+    alm.find_force_constant(2, [-1, 7.3])
     alm.run_suggest()
     print(alm.get_atom_mapping_by_pure_translations())
     for fc_order in (1, 2):

@@ -139,10 +139,10 @@ extern "C" {
         return alm[id]->get_ndata_used();
     }
 
-    void alm_set_fitting_constraint_type(const int id,
+    void alm_set_constraint_type(const int id,
                                          const int constraint_flag) // ICONST
     {
-        alm[id]->set_fitting_constraint_type(constraint_flag);
+        alm[id]->set_constraint_type(constraint_flag);
     }
 
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
@@ -165,6 +165,11 @@ extern "C" {
                               const double * rcs)
     {
         alm[id]->set_cutoff_radii(rcs);
+    }
+
+    void alm_generate_force_constant(const int id)
+    {
+        alm[id]->generate_force_constant();
     }
 
     int alm_get_atom_mapping_by_pure_translations(const int id,
@@ -228,18 +233,13 @@ extern "C" {
     void alm_run_suggest(const int id)
     {
         alm[id]->set_run_mode("suggest");
-        alm[id]->run();
+        alm[id]->run_suggest();
     }
 
-    void alm_run_fitting(const int id)
+    int alm_optimize(const int id)
     {
         alm[id]->set_run_mode("fitting");
-        alm[id]->run();
-    }
-
-    void alm_compute(const int id) 
-    {
-        alm[id]->set_run_mode("fitting");
-        alm[id]->compute();
+        int info = alm[id]->optimize();
+        return info;
     }
 }
