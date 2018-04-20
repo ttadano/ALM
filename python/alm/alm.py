@@ -7,6 +7,7 @@ class ALM:
         self._lavec = np.array(lavec, dtype='double', order='C')
         self._xcoord = np.array(xcoord, dtype='double', order='C')
         self._kd = np.array(kd, dtype='intc', order='C')
+        self._iconst = 11
 
     def __enter__(self):
         self.alm_new()
@@ -74,11 +75,13 @@ class ALM:
             print("Rotational invariance is not supported in API.")
             raise
 
-        iconst = 0
         if translation is True:
             iconst = 11
-        
-        alm.set_constraint_type(self._id, iconst)
+        else:
+            iconst = 0
+
+        self._iconst = iconst
+        alm.set_constraint_type(self._id, self._iconst)
 
 
     def set_cutoff_radii(self, rcs):

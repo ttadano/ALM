@@ -439,7 +439,11 @@ const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
 const int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
 {
     const auto order = fc_order - 1;
-    return fcs->nequiv[order].size();
+    if (!ready_to_fit) {
+        constraint->setup(this);
+        ready_to_fit = true;
+    }
+    return constraint->index_bimap[order].size();
 }
 
 const void ALM::get_fc(double *fc_values,
@@ -498,8 +502,8 @@ const void ALM::get_matrix_elements(const int nat,
                                  nat,
                                  amat,
                                  bvec,
-                                 symmetry,
-                                 fcs);
+                                 this->symmetry,
+                                 this->fcs);
 }
 
 
