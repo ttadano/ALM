@@ -219,10 +219,13 @@ const void ALM::set_cell(const int nat,
                      system->supercell);
 }
 
-const void ALM::set_magnetic_params(const double *magmom,  // MAGMOM
+const void ALM::set_magnetic_params(const double *magmom,
+                                    // MAGMOM
                                     const bool lspin,
-                                    const int noncollinear, // NONCOLLINEAR
-                                    const int trev_sym_mag, // TREVSYM
+                                    const int noncollinear,
+                                    // NONCOLLINEAR
+                                    const int trev_sym_mag,
+                                    // TREVSYM
                                     const std::string str_magmom) // MAGMOM
 {
     const auto nat = system->nat;
@@ -286,7 +289,8 @@ const void ALM::set_rotation_axis(const std::string rotation_axis) // ROTAXIS
 }
 
 
-const void ALM::set_fitting_filenames(const std::string dfile, // DFILE
+const void ALM::set_fitting_filenames(const std::string dfile,
+                                      // DFILE
                                       const std::string ffile) // FFILE
 {
     files->file_disp = dfile;
@@ -452,12 +456,14 @@ const int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1
 }
 
 const void ALM::get_fc_origin(double *fc_values,
-                       int *elem_indices,  // (len(fc_values), fc_order + 1) is flatten.
-                       const int fc_order) // harmonic=1, ...
+                              int *elem_indices,
+                              // (len(fc_values), fc_order + 1) is flatten.
+                              const int fc_order) // harmonic=1, ...
 {
-    int j, k;
-    int num_equiv_elems;
-    double fc_elem, coef;
+    // Return a set of force constants Phi(i,j,k,...) where i is an atom
+    // inside the primitive cell at origin.
+
+    int i;
 
     const auto maxorder = interaction->maxorder;
     if (fc_order > maxorder) {
@@ -465,43 +471,40 @@ const void ALM::get_fc_origin(double *fc_values,
         exit(EXIT_FAILURE);
     }
 
-    auto ip = 0;
+    auto ishift = 0;
+    int ip;
 
     for (int order = 0; order < fc_order; ++order) {
 
         if (fcs->nequiv[order].empty()) { continue; }
 
         auto id = 0;
-        const int num_unique_elems = fcs->nequiv[order].size();
 
-        for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
-            if (order == fc_order - 1) {
-                fc_elem = fitting->params[ip];
-                num_equiv_elems = fcs->nequiv[order][iuniq];
-                for (j = 0; j < num_equiv_elems; ++j) {
-                    // sign is normally 1 or -1.
-                    coef = fcs->fc_table[order][id].sign;
-                    fc_values[id] = fc_elem * coef;
-                    for (k = 0; k < fc_order + 1; ++k) {
-                        elem_indices[id * (fc_order + 1) + k] =
-                            fcs->fc_table[order][id].elems[k];
-                    }
-                    ++id;
+        if (order == fc_order - 1) {
+            for (const auto &it : fcs->fc_table[order]) {
+
+                ip = it.mother + ishift;
+                fc_values[id] = fitting->params[ip] * it.sign;
+                for (i = 0; i < fc_order + 1; ++i) {
+                    elem_indices[id * (fc_order + 1) + i] = it.elems[i];
                 }
+                ++id;
             }
-            ++ip;
         }
+        ishift += fcs->nequiv[order].size();
     }
 }
 
 
 const void ALM::get_fc_irreducible(double *fc_values,
-                       int *elem_indices,  // (len(fc_values), fc_order + 1) is flatten.
-                       const int fc_order) // harmonic=1, ...
+                                   int *elem_indices,
+                                   // (len(fc_values), fc_order + 1) is flatten.
+                                   const int fc_order) // harmonic=1, ...
 {
-    int j, k;
-    int num_equiv_elems;
-    double fc_elem, coef;
+    // Return an irreducible set of force constants. 
+
+    int i;
+    double fc_elem;
 
     const auto maxorder = interaction->maxorder;
     if (fc_order > maxorder) {
@@ -521,8 +524,6 @@ const void ALM::get_fc_irreducible(double *fc_values,
 
         if (constraint->index_bimap[order].empty()) { continue; }
 
-        const int num_unique_elems = constraint->index_bimap[order].size();
-
         if (order == fc_order - 1) {
             for (const auto &it : constraint->index_bimap[order]) {
                 inew = it.left;
@@ -530,25 +531,24 @@ const void ALM::get_fc_irreducible(double *fc_values,
 
                 fc_elem = fitting->params[iold];
                 fc_values[inew] = fc_elem;
-                for (k = 0; k < fc_order + 1; ++k) {
-                    elem_indices[inew * (fc_order + 1) + k] =
-                        fcs->fc_table[order][it.right].elems[k];
+                for (i = 0; i < fc_order + 1; ++i) {
+                    elem_indices[inew * (fc_order + 1) + i] =
+                        fcs->fc_table[order][it.right].elems[i];
                 }
             }
         }
-
         ishift += fcs->nequiv[order].size();
     }
 }
 
 
 const void ALM::get_fc_all(double *fc_values,
-                       int *elem_indices,  // (len(fc_values), fc_order + 1) is flatten.
-                       const int fc_order) // harmonic=1, ...
+                           int *elem_indices,
+                           // (len(fc_values), fc_order + 1) is flatten.
+                           const int fc_order) // harmonic=1, ...
 {
-    int i, j, k;
-    int num_equiv_elems;
-    double fc_elem, coef;
+    int i;
+    double fc_elem;
     const int ntran = symmetry->ntran;
 
     const auto maxorder = interaction->maxorder;
@@ -568,7 +568,6 @@ const void ALM::get_fc_all(double *fc_values,
         if (fcs->nequiv[order].empty()) { continue; }
 
         auto id = 0;
-        const int num_unique_elems = fcs->nequiv[order].size();
 
         if (order == fc_order - 1) {
             for (const auto &it : fcs->fc_table[order]) {
@@ -576,7 +575,7 @@ const void ALM::get_fc_all(double *fc_values,
                 ip = it.mother + ishift;
                 fc_elem = fitting->params[ip] * it.sign;
 
-                for (i = 0; i < fc_order + 1; ++i)  {
+                for (i = 0; i < fc_order + 1; ++i) {
                     pair_tmp[i] = it.elems[i] / 3;
                     xyz_tmp[i] = it.elems[i] % 3;
                 }
@@ -588,7 +587,7 @@ const void ALM::get_fc_all(double *fc_values,
                     fc_values[id] = fc_elem;
                     for (i = 0; i < fc_order + 1; ++i) {
                         elem_indices[id * (fc_order + 1) + i] =
-                        3 * pair_tran[i] + xyz_tmp[i];
+                            3 * pair_tran[i] + xyz_tmp[i];
                     }
                     ++id;
                 }

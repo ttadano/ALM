@@ -246,7 +246,7 @@ namespace ALM_NS
                                            std::vector<int> **);
 
         void set_ordername();
-        double distance(double *,  double *);
+        double distance(double *, double *);
         int nbody(int, const int *);
 
         void calc_interaction_clusters(int,
