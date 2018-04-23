@@ -36,45 +36,26 @@ namespace ALM_NS
                                         const double * const *f_in,
                                         int nat,
                                         int ndata_used);
-        void calc_matrix_elements_algebraic_constraint(int,
-                                                       int,
-                                                       int,
-                                                       int,
-                                                       int,
-                                                       int,
-                                                       int,
-                                                       int,
-                                                       double **,
-                                                       double **,
-                                                       double *,
-                                                       double *,
-                                                       double *,
-                                                       Symmetry *,
-                                                       Fcs *,
-                                                       Constraint *);
 
-        void get_matrix_elements(int,
-                                 int,
-                                 int,
-                                 double *,
-                                 double *,
-                                 Symmetry *,
-                                 Fcs *);
 
         void get_matrix_elements_algebraic_constraint(int,
-                                                    int,
-                                                    double *,
-                                                    double *,
-                                                    double &,
-                                                    Symmetry *,
-                                                    Fcs *,
-                                                    Constraint *);
-        
-        void set_fcs_values(const int, double *, std::vector<int> *, Constraint *);
+                                                      int,
+                                                      double *,
+                                                      double *,
+                                                      double &,
+                                                      Symmetry *,
+                                                      Fcs *,
+                                                      Constraint *);
+
+        void set_fcs_values(const int,
+                            double *,
+                            std::vector<int> *,
+                            Constraint *);
 
 
         const int get_ndata_used();
-        double gamma(int, const int *);
+        double gamma(int,
+                     const int *);
 
     private:
 
@@ -82,18 +63,14 @@ namespace ALM_NS
 
         void set_default_variables();
         void deallocate_variables();
-        void data_multiplier(double **u,
-                             double **f,
-                             int nat,
-                             int ndata_used,
-                             Symmetry *);
 
         void data_multiplier(double **,
                              std::vector<std::vector<double>> &,
                              int,
                              Symmetry *);
 
-        int inprim_index(int, Symmetry *);
+        int inprim_index(int,
+                         Symmetry *);
 
         int fit_without_constraints(int,
                                     int,
@@ -120,19 +97,6 @@ namespace ALM_NS
                                  double **,
                                  double *);
 
-        void calc_matrix_elements(int,
-                                  int,
-                                  int,
-                                  int,
-                                  int,
-                                  int,
-                                  double **,
-                                  double **,
-                                  double *,
-                                  double *,
-                                  Symmetry *,
-                                  Fcs *);
-
 
         void get_matrix_elements(int,
                                  int,
@@ -141,8 +105,6 @@ namespace ALM_NS
                                  Symmetry *,
                                  Fcs *);
 
-
-    
 
         void recover_original_forceconstants(int,
                                              const std::vector<double> &,
