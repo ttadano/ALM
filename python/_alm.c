@@ -494,7 +494,7 @@ static PyObject * py_set_fc(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  double (*fc_in) = (double(*))PyArray_DATA(py_fc_in);
+  double *fc_in = (double(*))PyArray_DATA(py_fc_in);
 
   alm_set_fc(id, fc_in);
 

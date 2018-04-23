@@ -243,13 +243,13 @@ void Fitting::set_fcs_values(const int maxorder,
     for (i = 0; i < Nirred; ++i) {
         param_in[i] = fc_in[i];
     }
-    recover_original_forceconstants(maxorder, param_in, param_out, nequiv, constraint);
-
+    recover_original_forceconstants(maxorder, 
+                                    param_in, param_out, 
+                                    nequiv, constraint);
     if (params) {
         deallocate(params);
     }
     allocate(params, N);
-
     for (i = 0; i < N; ++i) {
         params[i] = param_out[i];
     }
@@ -796,7 +796,6 @@ void Fitting::recover_original_forceconstants(const int maxorder,
     unsigned int nparams = 0;
 
     for (i = 0; i < maxorder; ++i) nparams += nequiv[i].size();
-    if (nparams == param_in.size()) return;
 
     param_out.resize(nparams, 0.0);
 

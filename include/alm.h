@@ -77,18 +77,21 @@ namespace ALM_NS
         const int get_number_of_irred_fc_elements(int fc_order); // harmonic=2, ...
 
         const void get_fc_origin(double *fc_value,
-                          int *elem_indices,  // (len(fc_value), fc_order) is flatten.
-                          int fc_order); // harmonic=2, ...
+                                 int *elem_indices,
+                                 // (len(fc_value), fc_order) is flatten.
+                                 int fc_order); // harmonic=2, ...
 
-        
+
         const void get_fc_irreducible(double *fc_value,
-                          int *elem_indices,  // (len(fc_value), fc_order) is flatten.
-                          int fc_order); // harmonic=2, ...
+                                      int *elem_indices,
+                                      // (len(fc_value), fc_order) is flatten.
+                                      int fc_order); // harmonic=2, ...
 
 
         const void get_fc_all(double *fc_value,
-                          int *elem_indices,  // (len(fc_value), fc_order) is flatten.
-                          int fc_order); // harmonic=2, ...
+                              int *elem_indices,
+                              // (len(fc_value), fc_order) is flatten.
+                              int fc_order); // harmonic=2, ...
 
         const void set_fc(double *fc_in);
 

@@ -182,7 +182,7 @@ class ALM:
             print("The size of the given force constant array is incorrect.")
             exit(1)
 
-        alm.set_fc(self._id, fc_in)
+        alm.set_fc(self._id, np.array(fc_in, dtype='double', order='C'))
 
 
     def get_matrix_elements(self):
