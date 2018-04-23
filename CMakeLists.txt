@@ -55,6 +55,19 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
             ${PROJECT_SOURCE_DIR}/src/timer.cpp
             ${PROJECT_SOURCE_DIR}/src/writer.cpp)
 
+set(HEADERS ${PROJECT_SOURCE_DIR}/src/alm.h
+            ${PROJECT_SOURCE_DIR}/src/constraint.h
+            ${PROJECT_SOURCE_DIR}/src/fcs.h
+            ${PROJECT_SOURCE_DIR}/src/files.h
+            ${PROJECT_SOURCE_DIR}/src/fitting.h
+            ${PROJECT_SOURCE_DIR}/src/interaction.h
+            ${PROJECT_SOURCE_DIR}/src/patterndisp.h
+            ${PROJECT_SOURCE_DIR}/src/rref.h
+            ${PROJECT_SOURCE_DIR}/src/symmetry.h
+            ${PROJECT_SOURCE_DIR}/src/system.h
+            ${PROJECT_SOURCE_DIR}/src/timer.h
+            ${PROJECT_SOURCE_DIR}/src/writer.h)
+
 # # Trick to use gcc to compile *.cpp: This doesn't work because of boost
 # SET_SOURCE_FILES_PROPERTIES(${SOURCES} PROPERTIES LANGUAGE C)
 # set(CMAKE_C_COMPILER "gcc")
@@ -64,7 +77,7 @@ add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
                    ${PROJECT_SOURCE_DIR}/src/alm_cui.cpp
 		   ${PROJECT_SOURCE_DIR}/src/input_parser.cpp
 		   ${PROJECT_SOURCE_DIR}/src/input_setter.cpp
-		   ${SOURCES})
+		   ${SOURCES} ${HEADERS})
 target_link_libraries(alm ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib})
 target_link_libraries(alm ${LAPACK_LIBRARIES})
 set_property(TARGET alm PROPERTY CXX_STANDARD 11)
