@@ -100,19 +100,7 @@ int Fitting::fitmain(ALM *alm)
 
     std::vector<double> amat;
     std::vector<double> bvec;
-    std::vector<std::vector<double>> u_vec, f_vec;
     std::vector<double> param_tmp(N);
-
-    // Copy displacement and force data sets from u_in & f_in.
-    u_vec.resize(ndata_used, std::vector<double>(3 * nat));
-    f_vec.resize(ndata_used, std::vector<double>(3 * nat));
-
-    for (i = 0; i < ndata_used; ++i) {
-        for (int j = 0; j < 3 * nat; ++j) {
-            u_vec[i][j] = u_in[i][j];
-            f_vec[i][j] = f_in[i][j];
-        }
-    }
 
     if (alm->constraint->constraint_algebraic) {
         int N_new = 0;
@@ -125,13 +113,16 @@ int Fitting::fitmain(ALM *alm)
         // Calculate matrix elements for fitting
 
         double fnorm;
+        const int nrows = 3 * natmin * ndata_used * ntran;
+        const int ncols = N_new;
+
+        amat.resize(nrows * ncols, 0.0);
+        bvec.resize(nrows, 0.0);
 
         get_matrix_elements_algebraic_constraint(maxorder,
                                                  ndata_used,
-                                                 u_vec,
-                                                 f_vec,
-                                                 amat,
-                                                 bvec,
+                                                 &amat[0],
+                                                 &bvec[0],
                                                  fnorm,
                                                  alm->symmetry,
                                                  alm->fcs,
@@ -153,12 +144,16 @@ int Fitting::fitmain(ALM *alm)
 
         // Calculate matrix elements for fitting
 
+        const int nrows = 3 * natmin * ndata_used * ntran;
+        const int ncols = N;
+
+        amat.resize(nrows * ncols, 0.0);
+        bvec.resize(nrows, 0.0);
+
         get_matrix_elements(maxorder,
                             ndata_used,
-                            u_vec,
-                            f_vec,
-                            amat,
-                            bvec,
+                            &amat[0],
+                            &bvec[0],
                             alm->symmetry,
                             alm->fcs);
 
@@ -222,6 +217,41 @@ void Fitting::set_displacement_and_force(const double * const *disp_in,
             u_in[i][j] = disp_in[i][j];
             f_in[i][j] = force_in[i][j];
         }
+    }
+}
+
+void Fitting::set_fcs_values(const int maxorder, 
+                             double *fc_in,
+                             std::vector<int> *nequiv,
+                             Constraint *constraint)
+{
+    // fc_in: irreducible set of force constants
+    // fc_length: dimension of params (can differ from that of fc_in)
+
+    int i;
+
+    int N = 0;
+    int Nirred = 0;
+    for (i = 0; i < maxorder; ++i) {
+        N += nequiv[i].size();
+        Nirred += constraint->index_bimap[i].size();
+    }
+
+    std::vector<double> param_in(Nirred, 0.0);
+    std::vector<double> param_out(N, 0.0);
+
+    for (i = 0; i < Nirred; ++i) {
+        param_in[i] = fc_in[i];
+    }
+    recover_original_forceconstants(maxorder, param_in, param_out, nequiv, constraint);
+
+    if (params) {
+        deallocate(params);
+    }
+    allocate(params, N);
+
+    for (i = 0; i < N; ++i) {
+        params[i] = param_out[i];
     }
 }
 
@@ -580,10 +610,8 @@ void Fitting::calc_matrix_elements(const int M,
 
 void Fitting::get_matrix_elements(const int maxorder,
                                   const int ndata_fit,
-                                  const std::vector<std::vector<double>> &u,
-                                  const std::vector<std::vector<double>> &f,
-                                  std::vector<double> &amat,
-                                  std::vector<double> &bvec,
+                                  double *amat,
+                                  double *bvec,
                                   Symmetry *symmetry,
                                   Fcs *fcs)
 {
@@ -592,8 +620,8 @@ void Fitting::get_matrix_elements(const int maxorder,
 
     std::vector<std::vector<double>> u_multi, f_multi;
 
-    data_multiplier(u, u_multi, ndata_fit, symmetry);
-    data_multiplier(f, f_multi, ndata_fit, symmetry);
+    data_multiplier(u_in, u_multi, ndata_fit, symmetry);
+    data_multiplier(f_in, f_multi, ndata_fit, symmetry);
 
     const int natmin = symmetry->nat_prim;
     const int natmin3 = 3 * natmin;
@@ -601,9 +629,6 @@ void Fitting::get_matrix_elements(const int maxorder,
     auto ncols = 0;
 
     for (i = 0; i < maxorder; ++i) ncols += fcs->nequiv[i].size();
-
-    amat.resize(nrows * ncols, 0.0);
-    bvec.resize(nrows, 0.0);
 
     const int ncycle = ndata_fit * symmetry->ntran;
 
@@ -936,10 +961,8 @@ void Fitting::calc_matrix_elements_algebraic_constraint(const int M,
 
 void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                                                        const int ndata_fit,
-                                                       const std::vector<std::vector<double>> &u,
-                                                       const std::vector<std::vector<double>> &f,
-                                                       std::vector<double> &amat,
-                                                       std::vector<double> &bvec,
+                                                       double *amat,
+                                                       double *bvec,
                                                        double &fnorm,
                                                        Symmetry *symmetry,
                                                        Fcs *fcs,
@@ -950,8 +973,8 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
     std::vector<std::vector<double>> u_multi, f_multi;
 
-    data_multiplier(u, u_multi, ndata_fit, symmetry);
-    data_multiplier(f, f_multi, ndata_fit, symmetry);
+    data_multiplier(u_in, u_multi, ndata_fit, symmetry);
+    data_multiplier(f_in, f_multi, ndata_fit, symmetry);
 
     const int natmin = symmetry->nat_prim;
     const int natmin3 = 3 * natmin;
@@ -968,8 +991,8 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
     std::vector<double> bvec_orig(nrows, 0.0);
 
-    amat.resize(nrows * ncols_new, 0.0);
-    bvec.resize(nrows, 0.0);
+    // amat.resize(nrows * ncols_new, 0.0);
+    // bvec.resize(nrows, 0.0);
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -1183,20 +1206,14 @@ void Fitting::data_multiplier(double **u,
     }
 }
 
-void Fitting::data_multiplier(const std::vector<std::vector<double>> &data_in,
+void Fitting::data_multiplier(double **data_in,
                               std::vector<std::vector<double>> &data_out,
                               const int ndata_used,
                               Symmetry *symmetry)
 {
     int i, j, k;
     int n_mapped;
-    const int ndata_in = data_in.size();
 
-    if (ndata_in < ndata_used) {
-        exit("data_multiplier", "Number of data sets is insufficient.");
-    }
-
-    int ndata_out = ndata_used * symmetry->ntran;
     const int nat = symmetry->nat_prim * symmetry->ntran;
 
     auto idata = 0;

@@ -146,9 +146,9 @@ extern "C" {
     }
 
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
-    // void set_multiplier_option(const int multiply_data);
     // void set_fitting_filenames(const std::string dfile,
     //   			 const std::string ffile);
+
     void alm_set_norder(const int id,
                         const int maxorder)
     {
@@ -213,12 +213,33 @@ extern "C" {
         return alm[id]->get_number_of_irred_fc_elements(fc_order);
     }
 
-    void alm_get_fc(const int id,
+    void alm_get_fc_origin(const int id,
                     double *fc_values,
                     int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
                     const int fc_order)
     {
-        alm[id]->get_fc(fc_values, elem_indices, fc_order);
+        alm[id]->get_fc_origin(fc_values, elem_indices, fc_order);
+    }
+
+    void alm_get_fc_irreducible(const int id,
+                    double *fc_values,
+                    int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
+                    const int fc_order)
+    {
+        alm[id]->get_fc_irreducible(fc_values, elem_indices, fc_order);
+    }
+
+    void alm_get_fc_all(const int id,
+                        double *fc_values,
+                        int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
+                       const int fc_order)
+    {
+        alm[id]->get_fc_all(fc_values, elem_indices, fc_order);
+    }
+
+    void alm_set_fc(const int id, double *fc_in)
+    {
+        alm[id]->set_fc(fc_in);
     }
 
     void alm_get_matrix_elements(const int id,

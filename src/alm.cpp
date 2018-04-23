@@ -438,6 +438,11 @@ const int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
 
 const int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
 {
+    // Returns the number of irreducible force constants for the given order.
+    // The irreducible force constant means a set of independent force constants 
+    // reduced by using all available symmetry operations and 
+    // constraints for translational invariance. Rotational invariance is not considered.
+
     const auto order = fc_order - 1;
     if (!ready_to_fit) {
         constraint->setup(this);
@@ -446,7 +451,7 @@ const int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1
     return constraint->index_bimap[order].size();
 }
 
-const void ALM::get_fc(double *fc_values,
+const void ALM::get_fc_origin(double *fc_values,
                        int *elem_indices,  // (len(fc_values), fc_order + 1) is flatten.
                        const int fc_order) // harmonic=1, ...
 {
@@ -490,20 +495,134 @@ const void ALM::get_fc(double *fc_values,
 }
 
 
+const void ALM::get_fc_irreducible(double *fc_values,
+                       int *elem_indices,  // (len(fc_values), fc_order + 1) is flatten.
+                       const int fc_order) // harmonic=1, ...
+{
+    int j, k;
+    int num_equiv_elems;
+    double fc_elem, coef;
+
+    const auto maxorder = interaction->maxorder;
+    if (fc_order > maxorder) {
+        std::cout << "fc_order must not be larger than maxorder" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if (!ready_to_fit) {
+        constraint->setup(this);
+        ready_to_fit = true;
+    }
+
+    auto ishift = 0;
+    int inew, iold;
+
+    for (int order = 0; order < fc_order; ++order) {
+
+        if (constraint->index_bimap[order].empty()) { continue; }
+
+        const int num_unique_elems = constraint->index_bimap[order].size();
+
+        if (order == fc_order - 1) {
+            for (const auto &it : constraint->index_bimap[order]) {
+                inew = it.left;
+                iold = it.right + ishift;
+
+                fc_elem = fitting->params[iold];
+                fc_values[inew] = fc_elem;
+                for (k = 0; k < fc_order + 1; ++k) {
+                    elem_indices[inew * (fc_order + 1) + k] =
+                        fcs->fc_table[order][it.right].elems[k];
+                }
+            }
+        }
+
+        ishift += fcs->nequiv[order].size();
+    }
+}
+
+
+const void ALM::get_fc_all(double *fc_values,
+                       int *elem_indices,  // (len(fc_values), fc_order + 1) is flatten.
+                       const int fc_order) // harmonic=1, ...
+{
+    int i, j, k;
+    int num_equiv_elems;
+    double fc_elem, coef;
+    const int ntran = symmetry->ntran;
+
+    const auto maxorder = interaction->maxorder;
+    if (fc_order > maxorder) {
+        std::cout << "fc_order must not be larger than maxorder" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    auto ishift = 0;
+    int ip;
+    std::vector<int> pair_tmp(fc_order + 1);
+    std::vector<int> pair_tran(fc_order + 1);
+    std::vector<int> xyz_tmp(fc_order + 1);
+
+    for (int order = 0; order < fc_order; ++order) {
+
+        if (fcs->nequiv[order].empty()) { continue; }
+
+        auto id = 0;
+        const int num_unique_elems = fcs->nequiv[order].size();
+
+        if (order == fc_order - 1) {
+            for (const auto &it : fcs->fc_table[order]) {
+
+                ip = it.mother + ishift;
+                fc_elem = fitting->params[ip] * it.sign;
+
+                for (i = 0; i < fc_order + 1; ++i)  {
+                    pair_tmp[i] = it.elems[i] / 3;
+                    xyz_tmp[i] = it.elems[i] % 3;
+                }
+
+                for (int itran = 0; itran < ntran; ++itran) {
+                    for (i = 0; i < fc_order + 1; ++i) {
+                        pair_tran[i] = symmetry->map_sym[pair_tmp[i]][symmetry->symnum_tran[itran]];
+                    }
+                    fc_values[id] = fc_elem;
+                    for (i = 0; i < fc_order + 1; ++i) {
+                        elem_indices[id * (fc_order + 1) + i] =
+                        3 * pair_tran[i] + xyz_tmp[i];
+                    }
+                    ++id;
+                }
+            }
+        }
+
+        ishift += fcs->nequiv[order].size();
+    }
+}
+
+const void ALM::set_fc(double *fc_in)
+{
+    fitting->set_fcs_values(this->interaction->maxorder,
+                            fc_in,
+                            this->fcs->nequiv,
+                            this->constraint);
+}
+
 const void ALM::get_matrix_elements(const int nat,
                                     const int ndata_used,
                                     double *amat,
                                     double *bvec)
 {
     const auto maxorder = interaction->maxorder;
+    double fnorm;
 
-    fitting->get_matrix_elements(maxorder,
-                                 ndata_used,
-                                 nat,
-                                 amat,
-                                 bvec,
-                                 this->symmetry,
-                                 this->fcs);
+    fitting->get_matrix_elements_algebraic_constraint(maxorder,
+                                                      ndata_used,
+                                                      amat,
+                                                      bvec,
+                                                      fnorm,
+                                                      this->symmetry,
+                                                      this->fcs,
+                                                      this->constraint);
 }
 
 

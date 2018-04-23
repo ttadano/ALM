@@ -61,6 +61,18 @@ namespace ALM_NS
                                  Symmetry *,
                                  Fcs *);
 
+        void get_matrix_elements_algebraic_constraint(int,
+                                                    int,
+                                                    double *,
+                                                    double *,
+                                                    double &,
+                                                    Symmetry *,
+                                                    Fcs *,
+                                                    Constraint *);
+        
+        void set_fcs_values(const int, double *, std::vector<int> *, Constraint *);
+
+
         const int get_ndata_used();
         double gamma(int, const int *);
 
@@ -76,7 +88,7 @@ namespace ALM_NS
                              int ndata_used,
                              Symmetry *);
 
-        void data_multiplier(const std::vector<std::vector<double>> &,
+        void data_multiplier(double **,
                              std::vector<std::vector<double>> &,
                              int,
                              Symmetry *);
@@ -124,24 +136,13 @@ namespace ALM_NS
 
         void get_matrix_elements(int,
                                  int,
-                                 const std::vector<std::vector<double>> &,
-                                 const std::vector<std::vector<double>> &,
-                                 std::vector<double> &,
-                                 std::vector<double> &,
+                                 double *,
+                                 double *,
                                  Symmetry *,
                                  Fcs *);
 
 
-        void get_matrix_elements_algebraic_constraint(int,
-                                                      int,
-                                                      const std::vector<std::vector<double>> &,
-                                                      const std::vector<std::vector<double>> &,
-                                                      std::vector<double> &,
-                                                      std::vector<double> &,
-                                                      double &,
-                                                      Symmetry *,
-                                                      Fcs *,
-                                                      Constraint *);
+    
 
         void recover_original_forceconstants(int,
                                              const std::vector<double> &,

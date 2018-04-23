@@ -35,7 +35,6 @@ extern "C" {
     void alm_set_constraint_type(const int id,
                                  const int constraint_flag); // ICONST
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
-    // void set_multiplier_option(const int multiply_data);
     // void set_fitting_filenames(const std::string dfile,
     //   			 const std::string ffile);
     void alm_set_norder(const int id,
@@ -62,10 +61,22 @@ extern "C" {
     int alm_get_number_of_irred_fc_elements(const int id,
                                             const int fc_order); // harmonic=1, ...
 
-    void alm_get_fc(const int id,
+    void alm_get_fc_origin(const int id,
                     double *fc_value,
                     int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
                     const int fc_order);
+
+    void alm_get_fc_irreducible(const int id,
+                    double *fc_value,
+                    int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
+                    const int fc_order);
+
+    void alm_get_fc_all(const int id,
+                    double *fc_value,
+                    int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
+                    const int fc_order);
+
+    void alm_set_fc(const int id, double *fc_in);
 
     void alm_get_matrix_elements(const int id,
                                  const int nat,
