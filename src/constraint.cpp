@@ -248,50 +248,16 @@ void Constraint::setup(ALM *alm)
                                  const_symmetry[order].end());
 
         remove_redundant_rows(nparam, const_self[order], eps8);
-
-        //allocate(arr_tmp, nparam);
-
-        //for (const auto &e : const_translation[order]) {
-        //    for (int i = 0; i < nparam; ++i) {
-        //        arr_tmp[i] = e.w_const[i];
-        //    }
-        //    const_self[order].emplace_back(nparam, arr_tmp);
-        //}
-
-        //if (!const_rotation_self[order].empty()) {
-        //    for (const auto &e : const_rotation_self[order]) {
-        //        for (int i = 0; i < nparam; ++i) {
-        //            arr_tmp[i] = e.w_const[i];
-        //        }
-        //        const_self[order].emplace_back(nparam, arr_tmp);
-        //    }
-        //    remove_redundant_rows(nparam, const_self[order], eps8);
-        //}
-
-        //if (!const_symmetry[order].empty()) {
-        //    for (const auto &e : const_symmetry[order]) {
-        //        for (int i = 0; i < nparam; ++i) {
-        //            arr_tmp[i] = e.w_const[i];
-        //        }
-        //        const_self[order].emplace_back(nparam, arr_tmp);
-        //    }
-        //    remove_redundant_rows(nparam, const_self[order], eps8);
-        //}
-
-        //deallocate(arr_tmp);
     }
 
-    if (constraint_algebraic) {
+    get_mapping_constraint(maxorder,
+                           alm->fcs->nequiv,
+                           const_self,
+                           const_fix,
+                           const_relate,
+                           index_bimap);
 
-        get_mapping_constraint(maxorder,
-                               alm->fcs->nequiv,
-                               const_self,
-                               const_fix,
-                               const_relate,
-                               index_bimap);
-
-
-    } else {
+    if (!constraint_algebraic) {
 
         int Pmax = 0;
         int nparams = 0;
@@ -481,22 +447,6 @@ void Constraint::calc_constraint_matrix(const int maxorder,
 
     if (fix_harmonic) nconst += nequiv[0].size();
     if (fix_cubic) nconst += nequiv[1].size();
-
-    /*  if (fix_harmonic) {
-          std::cout << "  Harmonic force constants will be fixed to the values " << std::endl;
-          std::cout << "  of the reference " << fc2_file << std::endl;
-          std::cout << "  Constraint for HARMONIC IFCs will be updated accordingly."
-              << std::endl << std::endl;
-          nconst += nequiv[0].size();
-      }
-  
-      if (fix_cubic) {
-          std::cout << "  Cubic force constants will be fixed to the values " << std::endl;
-          std::cout << "  of the reference " << fc3_file << std::endl;
-          std::cout << "  Constraint for ANHARM3 IFCs will be updated accordingly."
-              << std::endl << std::endl;
-          nconst += nequiv[1].size();
-      }*/
 
     for (i = 0; i < nconst; ++i) {
         for (j = 0; j < nparams; ++j) {
