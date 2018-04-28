@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "alm_core.h"
+#include "alm.h"
 
 namespace ALM_NS
 {

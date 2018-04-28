@@ -1,11 +1,12 @@
 #
-#  Si_fitting2.py
-#
+#  Si_fitting_external.py 
+# 
 #  This is an example to run ALM in the fitting mode.
+#  Compare internal optimizer and the numpy routine for fitting
 #
 
-from alm import ALM
-import numpy as np
+from alm import ALM 
+import numpy as np 
 
 lavec = [[20.406, 0, 0],
          [0, 20.406, 0],
@@ -16,7 +17,7 @@ xcoord = [[ 0.0000000000000000, 0.0000000000000000, 0.0000000000000000],
           [ 0.0000000000000000, 0.2500000000000000, 0.7500000000000000],
           [ 0.0000000000000000, 0.5000000000000000, 0.0000000000000000],
           [ 0.0000000000000000, 0.5000000000000000, 0.5000000000000000],
-          [ 0.0000000000000000, 0.7500000000000000, 0.2500000000000000],
+          [ 0.0000000000000000, 0.7500000000000000, 0.2500000000000000], 
           [ 0.0000000000000000, 0.7500000000000000, 0.7500000000000000],
           [ 0.1250000000000000, 0.1250000000000000, 0.1250000000000000],
           [ 0.1250000000000000, 0.1250000000000000, 0.6250000000000000],
@@ -75,35 +76,47 @@ xcoord = [[ 0.0000000000000000, 0.0000000000000000, 0.0000000000000000],
           [ 0.8750000000000000, 0.8750000000000000, 0.1250000000000000],
           [ 0.8750000000000000, 0.8750000000000000, 0.6250000000000000]]
 
-kd = [14] * 64 
+kd = [14] * 64
 
 force = np.loadtxt("force.dat").reshape((-1, 64, 3))[:22]
 disp = np.loadtxt("disp.dat").reshape((-1, 64, 3))[:22]
 
-# alm.alm_new() and alm.alm_delete() are done by 'with' statement
-with ALM(lavec, xcoord, kd) as alm:
-    alm.find_force_constant(2, [-1, 7.3])
-    alm.set_displacement_and_force(disp, force)
-    info = alm.optimize()
+# Initialize object
+alm = ALM(lavec, xcoord, kd)
+alm.alm_new()
 
-    c = "xyz"
-    fc_values, elem_indices = alm.get_fc(1) # harmonic fc
-    for (fc, elem) in zip(fc_values, elem_indices):
-        v1 = elem[0] // 3
-        c1 = elem[0] % 3
-        v2 = elem[1] // 3
-        c2 = elem[1] % 3
-        print("%f %d%s %d%s" % ((fc, v1 + 1, c[c1], v2 + 1, c[c2])))
+# Set displacement and force data
+alm.set_displacement_and_force(disp, force)
 
-    fc_values, elem_indices = alm.get_fc(2) # cubic fc
-    for (fc, elem) in zip(fc_values, elem_indices):
-        v1 = elem[0] // 3
-        c1 = elem[0] % 3
-        v2 = elem[1] // 3
-        c2 = elem[1] % 3
-        v3 = elem[2] // 3
-        c3 = elem[2] % 3
-        print("%f %d%s %d%s %d%s" % ((fc,
-                                      v1 + 1, c[c1],
-                                      v2 + 1, c[c2],
-                                      v3 + 1, c[c3])))
+# Define the taylor expansion model and find force constants
+alm.find_force_constant(2, [-1, 7.3])
+
+# Set up options for translational invariance
+alm.set_constraint(translation=True)
+
+# Run fitting by internal function
+alm.optimize()
+fc_values1, elem_indices1 = alm.get_fc(2)
+
+# Run fitting by numpy function
+## First, get matrix elements for fitting
+amat, bvec = alm.get_matrix_elements()
+## Perform fitting
+fc = np.linalg.lstsq(amat, bvec, rcond=1.0e-15)
+## Copy the solution values to alm object
+## This is necessary to use get_fc function
+alm.set_fc(fc[0])
+fc_values2, elem_indices2 = alm.get_fc(2)
+
+c = "xyz"
+
+for (fc, fc_ext, elem) in zip(fc_values1, fc_values2, elem_indices2):
+     v1 = elem[0] // 3
+     c1 = elem[0] % 3
+     v2 = elem[1] // 3
+     c2 = elem[1] % 3
+     print("%15.7f %15.7f %15.6e %d%s %d%s" % ((fc, fc_ext, fc - fc_ext, v1 + 1, c[c1], v2 + 1, c[c2])))
+
+
+# Finalize object
+alm.alm_delete()

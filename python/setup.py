@@ -2,23 +2,28 @@ import os
 from setuptools import setup, Extension
 # from distutils.core import setup, Extension
 import numpy
+
+os.environ["CC"] = "gcc-7"
+os.environ["CXX"] = "g++-7"
+
 include_dirs_numpy = [numpy.get_include()]
 
-compile_with_sources = True
+compile_with_sources = False
 extra_link_args = ['-lstdc++', 
                    '-llapack', 
                    '-L/Users/tadano/src/spglib/lib', '-lsymspg',
                    '-fopenmp', '-Wl,-rpath,/usr/local/opt/gcc/lib/gcc/7,-rpath,/Users/tadano/src/spglib/lib']
+#                   '/Users/tadano/src/spglib/lib/libsymspg.a',
+#                   '/usr/local/opt/gcc/lib/gcc/7/libgomp.a']
+
 
 include_dir_spglib=['/Users/tadano/src/spglib/include']
 
 library_dirs = []
 if compile_with_sources:
     sources = ['alm.cpp',
-               'alm_core.cpp',
                'alm_cui.cpp',
                'constraint.cpp',
-               'error.cpp',
                'fcs.cpp',
                'files.cpp',
                'fitting.cpp',
@@ -27,6 +32,7 @@ if compile_with_sources:
                'interaction.cpp',
                'main.cpp',
                'patterndisp.cpp',
+               'rref.cpp',
                'symmetry.cpp',
                'system.cpp',
                'timer.cpp',
@@ -57,7 +63,7 @@ extension = Extension('alm._alm',
                       sources=sources)
 
 setup(name='alm',
-      version='1.0.1',
+      version='1.0.2',
       description='Force constants generator',
       setup_requires=['numpy', 'setuptools>=18.0'],
       author='Terumasa Tadano',

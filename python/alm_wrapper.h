@@ -31,10 +31,10 @@ extern "C" {
                                         const double* f_in,
                                         const int nat,
                                         const int ndata_used);
-    void alm_set_fitting_constraint_type(const int id,
-                                         const int constraint_flag); // ICONST
+    int alm_get_ndata_used(const int id);
+    void alm_set_constraint_type(const int id,
+                                 const int constraint_flag); // ICONST
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
-    // void set_multiplier_option(const int multiply_data);
     // void set_fitting_filenames(const std::string dfile,
     //   			 const std::string ffile);
     void alm_set_norder(const int id,
@@ -43,6 +43,7 @@ extern "C" {
 			       const int *nbody_include);
     void alm_set_cutoff_radii(const int id,
                               const double * rcs);
+    void alm_generate_force_constant(const int id);
     int alm_get_atom_mapping_by_pure_translations(const int id,
                                                   int *map_p2s);
     int alm_get_number_of_displacement_patterns(const int id,
@@ -56,13 +57,35 @@ extern "C" {
                                       const int fc_order); // harmonic=1,
     int alm_get_number_of_fc_elements(const int id,
                                       const int fc_order); // harmonic=1, ...
-    void alm_get_fc(const int id,
+
+    int alm_get_number_of_irred_fc_elements(const int id,
+                                            const int fc_order); // harmonic=1, ...
+
+    void alm_get_fc_origin(const int id,
                     double *fc_value,
                     int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
                     const int fc_order);
-    void alm_run_suggest(const int id);
-    void alm_run_fitting(const int id);
 
+    void alm_get_fc_irreducible(const int id,
+                    double *fc_value,
+                    int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
+                    const int fc_order);
+
+    void alm_get_fc_all(const int id,
+                    double *fc_value,
+                    int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
+                    const int fc_order);
+
+    void alm_set_fc(const int id, double *fc_in);
+
+    void alm_get_matrix_elements(const int id,
+                                 const int nat,
+                                 const int ndata_used,
+                                 double *amat,
+                                 double *bvec);
+
+    void alm_run_suggest(const int id);
+    int alm_optimize(const int id);
 
 #ifdef __cplusplus 
 }

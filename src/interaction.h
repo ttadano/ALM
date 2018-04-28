@@ -10,13 +10,13 @@
 
 #pragma once
 
+#include "alm.h"
+#include "constants.h"
 #include <string>
 #include <vector>
 #include <set>
 #include <iterator>
 #include <algorithm>
-#include "pointers.h"
-#include "constants.h"
 
 
 namespace ALM_NS
@@ -31,14 +31,10 @@ namespace ALM_NS
             iarray.clear();
         }
 
-        IntList(const IntList &a)
-        {
-            for (std::vector<int>::const_iterator p = a.iarray.begin(); p != a.iarray.end(); ++p) {
-                iarray.push_back(*p);
-            }
-        }
+        IntList(const IntList &a) : iarray(a.iarray) {};
 
-        IntList(const int n, const int *arr)
+        IntList(const int n,
+                const int *arr)
         {
             for (int i = 0; i < n; ++i) {
                 iarray.push_back(arr[i]);
@@ -50,26 +46,16 @@ namespace ALM_NS
             return std::lexicographical_compare(iarray.begin(), iarray.end(),
                                                 a.iarray.begin(), a.iarray.end());
         }
-    };
 
-    class InteractionCluster
-    {
-    public:
-        std::vector<double> x;
-
-        InteractionCluster();
-
-        InteractionCluster(const double *arr)
+        bool operator==(const IntList &a) const
         {
-            for (int i = 0; i < 3; ++i) {
-                x.push_back(arr[i]);
+            int n = iarray.size();
+            int n_ = a.iarray.size();
+            if (n != n_) return false;
+            for (int i = 0; i < n; ++i) {
+                if (iarray[i] != a.iarray[i]) return false;
             }
-        }
-
-        bool operator<(const InteractionCluster &a) const
-        {
-            return std::lexicographical_compare(x.begin(), x.end(),
-                                                a.x.begin(), a.x.end());
+            return true;
         }
     };
 
@@ -83,7 +69,9 @@ namespace ALM_NS
 
         DistInfo();
 
-        DistInfo(const int n, const double d, const double x[3])
+        DistInfo(const int n,
+                 const double d,
+                 const double x[3])
         {
             cell = n;
             dist = d;
@@ -104,6 +92,7 @@ namespace ALM_NS
     };
 
     class DistList
+        // This class is used only in print_neighborlist. Can be replaced by a more generalic function.
     {
     public:
         int atom;
@@ -111,19 +100,15 @@ namespace ALM_NS
 
         DistList();
 
-        DistList(int n, double dist_tmp)
-        {
-            atom = n;
-            dist = dist_tmp;
-        }
+        DistList(const int n,
+                 const double dist_tmp) : atom(n), dist(dist_tmp) { };
 
         bool operator<(const DistList &a) const
         {
             if (std::abs(dist - a.dist) > eps8) {
                 return dist < a.dist;
-            } else {
-                return atom < a.atom;
             }
+            return atom < a.atom;
         }
     };
 
@@ -135,18 +120,12 @@ namespace ALM_NS
 
         MinDistList();
 
-        MinDistList(const std::vector<int> cell_in,
-                    const std::vector<double> dist_in)
-        {
-            for (std::vector<int>::const_iterator it = cell_in.begin(); it != cell_in.end(); ++it) {
-                cell.push_back(*it);
-            }
-            for (std::vector<double>::const_iterator it = dist_in.begin(); it != dist_in.end(); ++it) {
-                dist.push_back(*it);
-            }
-        }
+        MinDistList(const std::vector<int> &cell_in,
+                    const std::vector<double> &dist_in)
+            : cell(cell_in), dist(dist_in) {};
 
-        static bool compare_sum_distance(const MinDistList &a, const MinDistList &b)
+        static bool compare_sum_distance(const MinDistList &a,
+                                         const MinDistList &b)
         {
             double dist_a = 0;
             double dist_b = 0;
@@ -160,7 +139,8 @@ namespace ALM_NS
             return dist_a < dist_b;
         }
 
-        static bool compare_max_distance(const MinDistList &a, const MinDistList &b)
+        static bool compare_max_distance(const MinDistList &a,
+                                         const MinDistList &b)
         {
             // This function works properly when dvec_a.size() > 0 and dvec_b.size() > 0
             std::vector<double> dvec_a, dvec_b;
@@ -173,118 +153,144 @@ namespace ALM_NS
         }
     };
 
-    class MinimumDistanceCluster
+    class InteractionCluster
     {
     public:
         std::vector<int> atom;
         std::vector<std::vector<int>> cell;
         double distmax;
 
-        MinimumDistanceCluster();
+        InteractionCluster();
 
-        MinimumDistanceCluster(const std::vector<int> atom_in,
-                               const std::vector<std::vector<int>> cell_in,
-                               const double dist_in)
-        {
-            for (int i = 0; i < atom_in.size(); ++i) {
-                atom.push_back(atom_in[i]);
-            }
-            for (int i = 0; i < cell_in.size(); ++i) {
-                cell.push_back(cell_in[i]);
-            }
-            distmax = dist_in;
-        }
+        InteractionCluster(const std::vector<int> &atom_in,
+                           const std::vector<std::vector<int>> &cell_in,
+                           const double dist_in)
+            : atom(atom_in), cell(cell_in), distmax(dist_in) {};
 
-        MinimumDistanceCluster(const std::vector<int> atom_in,
-                               const std::vector<std::vector<int>> cell_in)
-        {
-            for (int i = 0; i < atom_in.size(); ++i) {
-                atom.push_back(atom_in[i]);
-            }
-            for (int i = 0; i < cell_in.size(); ++i) {
-                cell.push_back(cell_in[i]);
-            }
-        }
+        InteractionCluster(const std::vector<int> &atom_in,
+                           const std::vector<std::vector<int>> &cell_in)
+            : atom(atom_in), cell(cell_in), distmax(0.0) {};
 
-        bool operator<(const MinimumDistanceCluster &a) const
+
+        bool operator<(const InteractionCluster &a) const
         {
             return lexicographical_compare(atom.begin(), atom.end(),
                                            a.atom.begin(), a.atom.end());
         }
     };
 
-    class Interaction: protected Pointers
+    class Interaction
     {
     public:
-        Interaction(class ALMCore *);
+        Interaction();
         ~Interaction();
 
-        int is_periodic[3];
-        int nneib;
         int maxorder;
-
         int *nbody_include;
+        double ***cutoff_radii;
 
-        double ***rcs;
-        double ***x_image;
-        int *exist_image;
+        std::vector<std::string> str_order;
+        std::set<IntList> *cluster_list;
+        std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
+        std::set<InteractionCluster> **interaction_cluster;
+        // Interaction many-body clusters with mirrow image information
 
-        std::string *str_order;
-        std::vector<DistInfo> **distall;
-        std::vector<DistInfo> **mindist_pairs;
-        std::set<IntList> *pairs;
-        std::vector<int> **interaction_pair;
-        std::set<MinimumDistanceCluster> **mindist_cluster;
+        void init(ALM *);
 
-        void init();
-        double distance(double *, double *);
-        int nbody(const int, const int *);
-        bool is_incutoff(const int, int *, const int);
-        bool is_incutoff2(const int, int *, const int);
+        bool satisfy_nbody_rule(int,
+                                const int *,
+                                int);
 
-        template <typename T>
-        void insort(int n, T *arr)
-        {
-            int i, j;
-            T tmp;
+        bool is_incutoff(int,
+                         int *,
+                         int,
+                         const std::vector<int> &);
 
-            for (i = 1; i < n; ++i) {
-                tmp = arr[i];
-                for (j = i - 1; j >= 0 && arr[j] > tmp; --j) {
-                    arr[j + 1] = arr[j];
-                }
-                arr[j + 1] = tmp;
-            }
-        }
+        void generate_interaction_information_by_cutoff(int,
+                                                        int,
+                                                        const std::vector<int> &,
+                                                        int **,
+                                                        double **,
+                                                        std::vector<int> *);
+
+        void set_interaction_by_cutoff(unsigned int,
+                                       const std::vector<int> &,
+                                       unsigned int,
+                                       int **,
+                                       double ***,
+                                       std::vector<int> **);
+
 
     private:
+
+        std::vector<DistInfo> **distall; // Distance of all pairs (i,j) under the PBC
+        std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
+
         void set_default_variables();
         void deallocate_variables();
-        void generate_coordinate_of_periodic_images(const unsigned int, double **,
-                                                    const int [3], double ***, int *);
 
-        void get_pairs_of_minimum_distance(int, double ***, int *,
-                                           std::vector<DistInfo> **,
-                                           std::vector<DistInfo> **);
+        void get_pairs_of_minimum_distance(int,
+                                           double ***,
+                                           int *);
 
-        void print_neighborlist(std::vector<DistInfo> **);
-        void search_interactions(std::vector<int> **, std::set<IntList> *);
+        void print_neighborlist(int,
+                                int,
+                                int **,
+                                const std::vector<int> &,
+                                std::string *);
+
+        void print_interaction_information(int,
+                                           int **,
+                                           const std::vector<int> &,
+                                           std::string *,
+                                           std::vector<int> **);
+
         void set_ordername();
+        double distance(double *, double *);
+        int nbody(int, const int *);
 
-        void calc_mindist_clusters(std::vector<int> **,
-                                   std::vector<DistInfo> **,
-                                   std::vector<DistInfo> **,
-                                   int *, std::set<MinimumDistanceCluster> **);
+        void calc_interaction_clusters(int,
+                                       const std::vector<int> &,
+                                       int **,
+                                       std::vector<int> **,
+                                       double ***,
+                                       int *,
+                                       std::set<InteractionCluster> **);
 
-        void calc_mindist_clusters2(std::vector<int> **,
-                                    std::vector<DistInfo> **,
-                                    std::vector<DistInfo> **,
-                                    int *, std::set<MinimumDistanceCluster> **);
+        void set_interaction_cluster(int,
+                                     int,
+                                     const std::vector<int> &,
+                                     int **,
+                                     std::vector<int> *,
+                                     double ***,
+                                     int *,
+                                     std::set<InteractionCluster> *);
 
-        void cell_combination(std::vector<std::vector<int>>,
-                              int, std::vector<int>,
+        void cell_combination(const std::vector<std::vector<int>> &,
+                              int,
+                              std::vector<int>,
                               std::vector<std::vector<int>> &);
 
-        void generate_pairs(std::set<IntList> *, std::set<MinimumDistanceCluster> **);
+        void generate_pairs(int,
+                            int **,
+                            std::set<IntList> *,
+                            std::set<InteractionCluster> **);
+    };
+}
+
+namespace std
+{
+    template <>
+    struct hash<ALM_NS::IntList>
+    {
+        std::size_t operator ()(ALM_NS::IntList const &obj) const
+        {
+            hash<int> hasher;
+            size_t seed = 0;
+            for (auto i : obj.iarray) {
+                seed ^= hasher(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            }
+            return seed;
+        }
     };
 }

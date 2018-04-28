@@ -10,19 +10,11 @@
 
 #pragma once
 
-#include "pointers.h"
+#include "alm.h"
+#include "system.h"
 #include <string>
-#include <fstream>
 #include <vector>
 
-extern "C"
-{
-#include "spglib.h"
-}
-
-#ifdef _USE_EIGEN
-#include <Eigen/Core>
-#endif
 
 namespace ALM_NS
 {
@@ -103,27 +95,23 @@ namespace ALM_NS
         }
     };
 
-    class Symmetry: protected Pointers
+    class Symmetry
     {
     public:
-        Symmetry(class ALMCore *);
+        Symmetry();
         ~Symmetry();
 
-        void init();
+        void init(ALM *);
 
         unsigned int nsym, ntran, nat_prim;
-        int printsymmetry;
-        int *symnum_tran;
+        std::vector<int> symnum_tran;
 
         double tolerance;
+        bool use_internal_symm_finder;
+        int printsymmetry;
 
         int **map_sym;
         int **map_p2s;
-
-        double lavec_prim[3][3], rlavec_prim[3][3];
-        double **xcoord_prim;
-        int *kd_prim;
-        SpglibDataset *SymmData_spg;
 
         class Maps
         {
@@ -132,53 +120,76 @@ namespace ALM_NS
             int tran_num;
         };
 
-        Maps *map_s2p;
-
-        int trev_sym_mag;
-
+        std::vector<Maps> map_s2p;
         std::vector<SymmetryOperation> SymmData;
 
     private:
         void set_default_variables();
         void deallocate_variables();
-        void setup_symmetry_operation(int, unsigned int &,
-                                      double [3][3], double [3][3],
-                                      double **, int *);
-        void genmaps(int, double **,
-                     int **, int **,
-                     class Symmetry::Maps *);
+        void setup_symmetry_operation(const Cell &,
+                                      const int [3],
+                                      const std::vector<std::vector<unsigned int>> &,
+                                      const Spin &,
+                                      std::vector<SymmetryOperation> &,
+                                      unsigned int &,
+                                      unsigned int &,
+                                      unsigned int &,
+                                      std::vector<int> &);
 
-        void findsym(int, double [3][3], double **,
-                     std::vector<SymmetryOperation> &);
+        void gen_mapping_information(const Cell &,
+                                     const std::vector<std::vector<unsigned int>> &,
+                                     const std::vector<SymmetryOperation> &,
+                                     const std::vector<int> &,
+                                     int **,
+                                     int **,
+                                     std::vector<Maps> &);
 
-        void findsym_spglib(const int, double [3][3], double **,
-                            const int *, std::vector<SymmetryOperation> &, const double);
+        void findsym_alm(const Cell &,
+                         const int [3],
+                         const std::vector<std::vector<unsigned int>> &,
+                         const Spin &,
+                         std::vector<SymmetryOperation> &);
+
+
+        void findsym_spglib(const Cell &,
+                            const std::vector<std::vector<unsigned int>> &,
+                            const Spin &,
+                            double,
+                            std::vector<SymmetryOperation> &);
 
         bool is_translation(const int [3][3]);
         bool is_proper(const double [3][3]);
 
-        void symop_in_cart(double [3][3], const int [3][3],
-                           const double [3][3], const double [3][3]);
-        void pure_translations();
-        void print_symmetrized_coordinate(double **);
+        void symop_in_cart(double [3][3],
+                           const int [3][3],
+                           const double [3][3],
+                           const double [3][3]);
+
+        void print_symminfo_stdout();
 
         template <typename T>
-        bool is_compatible(const T [3][3], const double tolerance_zero = 1.0e-5);
+        bool is_compatible(const T [3][3],
+                           double tolerance_zero = 1.0e-5);
 
-        void symop_availability_check(double ***, bool *, const int, int &);
+        void find_lattice_symmetry(const double [3][3],
+                                   std::vector<RotationMatrix> &);
 
-        void find_lattice_symmetry(double [3][3], std::vector<RotationMatrix> &);
-
-        void find_crystal_symmetry(int, int,
-                                   std::vector<unsigned int> *, double **,
-                                   std::vector<RotationMatrix>,
+        void find_crystal_symmetry(const Cell &,
+                                   const std::vector<std::vector<unsigned int>> &,
+                                   const int [3],
+                                   const Spin &,
+                                   const std::vector<RotationMatrix> &,
                                    std::vector<SymmetryOperation> &);
 
-        void set_primitive_lattice(const double [3][3], const int,
-                                   int *, double **,
-                                   double [3][3], unsigned int &,
-                                   int *, double **,
-                                   const double);
+        void set_primitive_lattice(const double [3][3],
+                                   int,
+                                   const int *,
+                                   double **,
+                                   double [3][3],
+                                   unsigned int &,
+                                   int *,
+                                   double **,
+                                   double);
 
         std::string file_sym;
     };
