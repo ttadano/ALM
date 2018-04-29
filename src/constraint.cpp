@@ -45,7 +45,7 @@ Constraint::~Constraint()
 
 void Constraint::set_default_variables()
 {
-    constraint_mode = 1;
+    constraint_mode = 11; 
     rotation_axis = "";
     fix_harmonic = false;
     fix_cubic = false;
