@@ -26,8 +26,12 @@
 #include <vector>
 #include <boost/lexical_cast.hpp>
 
-using namespace ALM_NS;
+//#ifdef USE_SPARSE_SOLVER
+#include <Eigen/SparseCore>
+#include <Eigen/SparseQR>
+//#endif
 
+using namespace ALM_NS;
 
 Fitting::Fitting()
 {
@@ -48,6 +52,7 @@ void Fitting::set_default_variables()
     nstart = 1;
     nend = 0;
     ndata_used = 0;
+    use_sparse_solver = true;
 }
 
 void Fitting::deallocate_variables()
@@ -118,30 +123,59 @@ int Fitting::fitmain(ALM *alm)
          
         const unsigned long ncols = static_cast<long>(N_new);
 
-        amat.resize(nrows * ncols, 0.0);
-        bvec.resize(nrows, 0.0);
+//#ifdef USE_SPARSE_SOLVER
+        if (use_sparse_solver) {
 
-        get_matrix_elements_algebraic_constraint(maxorder,
-                                                 ndata_used,
-                                                 &amat[0],
-                                                 &bvec[0],
-                                                 fnorm,
-                                                 alm->symmetry,
-                                                 alm->fcs,
-                                                 alm->constraint);
+            Eigen::SparseMatrix<double> sp_amat(nrows, ncols);
+            Eigen::VectorXd sp_bvec(nrows);
 
-        // Perform fitting with SVD
+            get_matrix_elements_in_sparse_form(maxorder, 
+                                               ndata_used, 
+                                               sp_amat, 
+                                               sp_bvec,
+                                               fnorm,
+                                               alm->symmetry,
+                                               alm->fcs,
+                                               alm->constraint);
 
-        assert(!amat.empty());
-        assert(!bvec.empty());
+            run_eigen_sparseQR(sp_amat, 
+                               sp_bvec, 
+                               param_tmp, 
+                               fnorm, 
+                               maxorder, 
+                               alm->fcs, 
+                               alm->constraint);
 
-        info_fitting
-            = fit_algebraic_constraints(N_new, M,
-                                        &amat[0], &bvec[0],
-                                        param_tmp,
-                                        fnorm, maxorder,
-                                        alm->fcs,
-                                        alm->constraint);
+        } else {
+//#endif
+            amat.resize(nrows * ncols, 0.0);
+            bvec.resize(nrows, 0.0);
+
+            get_matrix_elements_algebraic_constraint(maxorder,
+                                                    ndata_used,
+                                                    &amat[0],
+                                                    &bvec[0],
+                                                    fnorm,
+                                                    alm->symmetry,
+                                                    alm->fcs,
+                                                    alm->constraint);
+
+            // Perform fitting with SVD
+
+            assert(!amat.empty());
+            assert(!bvec.empty());
+
+            info_fitting
+                = fit_algebraic_constraints(N_new, M,
+                                            &amat[0], &bvec[0],
+                                            param_tmp,
+                                            fnorm, maxorder,
+                                            alm->fcs,
+                                            alm->constraint);
+//#ifdef USE_SPARSE_SOLVER                                            
+        }
+//#endif
+
     } else {
 
         // Calculate matrix elements for fitting
@@ -782,6 +816,189 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 }
 
 
+void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
+                                                 const int ndata_fit,
+                                                 Eigen::SparseMatrix<double> &sp_amat,
+                                                 Eigen::VectorXd &sp_bvec,
+                                                 double &fnorm,
+                                                 Symmetry *symmetry,
+                                                 Fcs *fcs,
+                                                 Constraint *constraint)
+{
+    int i, j;
+    long irow;
+    typedef Eigen::Triplet<double> T;
+    std::vector<T> nonzero_entries;
+    std::vector<std::vector<double>> u_multi, f_multi;
+
+    data_multiplier(u_in, u_multi, ndata_fit, symmetry);
+    data_multiplier(f_in, f_multi, ndata_fit, symmetry);
+
+    const int natmin = symmetry->nat_prim;
+    const int natmin3 = 3 * natmin;
+    const int nrows = natmin3 * ndata_fit * symmetry->ntran;
+    auto ncols = 0;
+    auto ncols_new = 0;
+
+    for (i = 0; i < maxorder; ++i) {
+        ncols += fcs->nequiv[i].size();
+        ncols_new += constraint->index_bimap[i].size();
+    }
+
+    const long ncycle = static_cast<long>(ndata_fit) * symmetry->ntran;
+
+    std::vector<double> bvec_orig(nrows, 0.0);
+
+
+#ifdef _OPENMP
+#pragma omp parallel private(irow, i, j)
+#endif
+    {
+        int *ind;
+        int mm, order, iat, k;
+        int im, iparam;
+        long idata;
+        int ishift;
+        int iold, inew;
+        double amat_tmp;
+        double **amat_orig_tmp;
+        double **amat_mod_tmp;
+
+        std::vector<T> nonzero_omp;
+
+        allocate(ind, maxorder + 1);
+        allocate(amat_orig_tmp, natmin3, ncols);
+        allocate(amat_mod_tmp, natmin3, ncols_new);
+
+#ifdef _OPENMP
+#pragma omp for schedule(guided)
+#endif
+        for (irow = 0; irow < ncycle; ++irow) {
+
+            // generate r.h.s vector B
+            for (i = 0; i < natmin; ++i) {
+                iat = symmetry->map_p2s[i][0];
+                for (j = 0; j < 3; ++j) {
+                    im = 3 * i + j + natmin3 * irow;
+                    sp_bvec(im) = f_multi[irow][3 * iat + j];
+                    bvec_orig[im] = f_multi[irow][3 * iat + j];
+                }
+            }
+
+            for (i = 0; i < natmin3; ++i) {
+                for (j = 0; j < ncols; ++j) {
+                    amat_orig_tmp[i][j] = 0.0;
+                }
+                for (j = 0; j < ncols_new; ++j) {
+                    amat_mod_tmp[i][j] = 0.0;
+                }
+            }
+
+            // generate l.h.s. matrix A
+
+            idata = natmin3 * irow;
+            iparam = 0;
+
+            for (order = 0; order < maxorder; ++order) {
+
+                mm = 0;
+
+                for (const auto &iter : fcs->nequiv[order]) {
+                    for (i = 0; i < iter; ++i) {
+                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        k = inprim_index(ind[0], symmetry);
+
+                        amat_tmp = 1.0;
+                        for (j = 1; j < order + 2; ++j) {
+                            ind[j] = fcs->fc_table[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                        }
+                        amat_orig_tmp[k][iparam] -= gamma(order + 2, ind)
+                            * fcs->fc_table[order][mm].sign * amat_tmp;
+                        ++mm;
+                    }
+                    ++iparam;
+                }
+            }
+
+            // Convert the full matrix and vector into a smaller irreducible form
+            // by using constraint information.
+
+            ishift = 0;
+            iparam = 0;
+
+            for (order = 0; order < maxorder; ++order) {
+
+                for (i = 0; i < constraint->const_fix[order].size(); ++i) {
+
+                    for (j = 0; j < natmin3; ++j) {
+                        sp_bvec(j + idata) -= constraint->const_fix[order][i].val_to_fix
+                            * amat_orig_tmp[j][ishift + constraint->const_fix[order][i].p_index_target];
+                    }
+                }
+
+                for (const auto &it : constraint->index_bimap[order]) {
+                    inew = it.left + iparam;
+                    iold = it.right + ishift;
+
+                    for (j = 0; j < natmin3; ++j) {
+                        amat_mod_tmp[j][inew] = amat_orig_tmp[j][iold];
+                    }
+                }
+
+                for (i = 0; i < constraint->const_relate[order].size(); ++i) {
+
+                    iold = constraint->const_relate[order][i].p_index_target + ishift;
+
+                    for (j = 0; j < constraint->const_relate[order][i].alpha.size(); ++j) {
+
+                        inew = constraint->index_bimap[order].right.at(
+                                constraint->const_relate[order][i].p_index_orig[j]) +
+                            iparam;
+
+                        for (k = 0; k < natmin3; ++k) {
+                            amat_mod_tmp[k][inew] -= amat_orig_tmp[k][iold]
+                                * constraint->const_relate[order][i].alpha[j];
+                        }
+                    }
+                }
+
+                ishift += fcs->nequiv[order].size();
+                iparam += constraint->index_bimap[order].size();
+            }
+
+            for (i = 0; i < natmin3; ++i) {
+                for (j = 0; j < ncols_new; ++j) {
+                   if (std::abs(amat_mod_tmp[i][j]) > eps) {
+                       nonzero_omp.emplace_back(T(idata + i,j,amat_mod_tmp[i][j]));
+                   }
+                }
+            }
+        }
+
+        deallocate(ind);
+        deallocate(amat_orig_tmp);
+        deallocate(amat_mod_tmp);
+
+#pragma omp critical
+        {
+            for (const auto &it : nonzero_omp) {
+                nonzero_entries.emplace_back(it);
+            }
+        }
+    }
+
+    fnorm = 0.0;
+    for (i = 0; i < bvec_orig.size(); ++i) {
+        fnorm += bvec_orig[i] * bvec_orig[i];
+    }
+    fnorm = std::sqrt(fnorm);
+    sp_amat.setFromTriplets(nonzero_entries.begin(), nonzero_entries.end());
+    sp_amat.makeCompressed();
+}
+
+
+
 void Fitting::recover_original_forceconstants(const int maxorder,
                                               const std::vector<double> &param_in,
                                               std::vector<double> &param_out,
@@ -1076,4 +1293,39 @@ int Fitting::rankSVD2(const int m_in,
     deallocate(arr);
 
     return rank;
+}
+
+
+void Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
+                                 const Eigen::VectorXd &sp_bvec,
+                                std::vector<double> &param_out, 
+                                const double fnorm,
+                                const int maxorder,
+                                Fcs *fcs,
+                                Constraint *constraint)
+{
+    Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
+    solver.compute(sp_mat);
+    Eigen::VectorXd x = solver.solve(sp_bvec);
+    Eigen::VectorXd res = sp_bvec - sp_mat * x;
+    auto res2norm = res.squaredNorm();
+    auto nparams = x.size();
+    std::vector<double> param_irred(nparams);
+
+    for (auto i = 0; i < nparams; ++i) {
+        param_irred[i] = x(i);
+    }
+
+    // Recover reducible set of force constants
+
+    recover_original_forceconstants(maxorder,
+                                    param_irred,
+                                    param_out,
+                                    fcs->nequiv,
+                                    constraint);
+
+    std::cout << "  Residual sum of squares for the solution: "
+              << sqrt(res2norm) << std::endl;
+        std::cout << "  Fitting error (%) : "
+            << sqrt(res2norm / (fnorm * fnorm)) * 100.0 << std::endl;
 }

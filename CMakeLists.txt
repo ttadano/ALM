@@ -7,6 +7,7 @@ set(CMAKE_BUILD_TYPE RELEASE)
 
 project(alm)
 #set(CMAKE_CXX_COMPILER "g++")
+option(WITH_SPARSE_SOLVER "Use sparse solver option" ON)
 
 if(WIN32)
     LINK_DIRECTORIES(C:\\lapack)
@@ -36,6 +37,11 @@ endif()
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
+if (WITH_SPARSE_SOLVER)
+    add_definitions(-DUSE_SPARSE_SOLVER)
+    find_package(Eigen3 REQUIRED)
+    include_directories(${EIGEN3_INCLUDE_DIR})
+endif()
 # Version numbers
 file(READ ${PROJECT_SOURCE_DIR}/src/version.h version_file)
 string(REGEX MATCH "ALAMODE_VERSION = \"([0-9]+\\.[0-9]+\\.[0-9]+)\"" alm_version ${version_file})
