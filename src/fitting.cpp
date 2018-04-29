@@ -1304,7 +1304,9 @@ void Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
                                 Fcs *fcs,
                                 Constraint *constraint)
 {
+    std::cout << "  Solve least-squares problem by sparseQR." << std::endl;
     Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
+//    solver.setPivotThreshold(0.0);
     solver.compute(sp_mat);
     Eigen::VectorXd x = solver.solve(sp_bvec);
     Eigen::VectorXd res = sp_bvec - sp_mat * x;
