@@ -49,7 +49,7 @@ void Constraint::set_default_variables()
     rotation_axis = "";
     fix_harmonic = false;
     fix_cubic = false;
-    constraint_algebraic = 0;
+    constraint_algebraic = 1;
     fc2_file = "";
     fc3_file = "";
     exist_constraint = false;
