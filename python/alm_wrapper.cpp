@@ -140,7 +140,7 @@ extern "C" {
     }
 
     void alm_set_constraint_type(const int id,
-                                         const int constraint_flag) // ICONST
+                                 const int constraint_flag) // ICONST
     {
         alm[id]->set_constraint_type(constraint_flag);
     }
