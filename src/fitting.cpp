@@ -67,7 +67,6 @@ int Fitting::fitmain(ALM *alm)
 {
     alm->timer->start_clock("fitting");
 
-    int i;
     const int nat = alm->system->supercell.number_of_atoms;
     const int natmin = alm->symmetry->nat_prim;
     const int maxorder = alm->interaction->maxorder;
@@ -90,10 +89,10 @@ int Fitting::fitmain(ALM *alm)
 
 
     int N = 0;
-    for (i = 0; i < maxorder; ++i) {
+    for (auto i = 0; i < maxorder; ++i) {
         N += alm->fcs->nequiv[i].size();
     }
-    int M = 3 * natmin * ndata_used * ntran;
+    int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
 
     std::cout << "  Total Number of Parameters : " << N
         << std::endl << std::endl;
@@ -104,7 +103,7 @@ int Fitting::fitmain(ALM *alm)
 
     if (alm->constraint->constraint_algebraic) {
         int N_new = 0;
-        for (i = 0; i < maxorder; ++i) {
+        for (auto i = 0; i < maxorder; ++i) {
             N_new += alm->constraint->index_bimap[i].size();
         }
         std::cout << "  Total Number of Free Parameters : "
@@ -113,8 +112,11 @@ int Fitting::fitmain(ALM *alm)
         // Calculate matrix elements for fitting
 
         double fnorm;
-        const int nrows = 3 * natmin * ndata_used * ntran;
-        const int ncols = N_new;
+        const unsigned long nrows = 3 * static_cast<long>(natmin) 
+                                      * static_cast<long>(ndata_used) 
+                                      * static_cast<long>(ntran);
+         
+        const unsigned long ncols = static_cast<long>(N_new);
 
         amat.resize(nrows * ncols, 0.0);
         bvec.resize(nrows, 0.0);
@@ -144,8 +146,11 @@ int Fitting::fitmain(ALM *alm)
 
         // Calculate matrix elements for fitting
 
-        const int nrows = 3 * natmin * ndata_used * ntran;
-        const int ncols = N;
+        const unsigned long nrows = 3 * static_cast<long>(natmin) 
+                                      * static_cast<long>(ndata_used) 
+                                      * static_cast<long>(ntran);
+         
+        const unsigned long ncols = static_cast<long>(N);
 
         amat.resize(nrows * ncols, 0.0);
         bvec.resize(nrows, 0.0);
@@ -183,7 +188,7 @@ int Fitting::fitmain(ALM *alm)
         deallocate(params);
     }
     allocate(params, N);
-    for (i = 0; i < N; ++i) params[i] = param_tmp[i];
+    for (auto i = 0; i < N; ++i) params[i] = param_tmp[i];
 
     std::cout << std::endl;
     alm->timer->print_elapsed();
@@ -516,7 +521,7 @@ void Fitting::get_matrix_elements(const int maxorder,
                                   Fcs *fcs)
 {
     int i, j;
-    int irow;
+    long irow;
 
     std::vector<std::vector<double>> u_multi, f_multi;
 
@@ -530,7 +535,7 @@ void Fitting::get_matrix_elements(const int maxorder,
 
     for (i = 0; i < maxorder; ++i) ncols += fcs->nequiv[i].size();
 
-    const int ncycle = ndata_fit * symmetry->ntran;
+    const long ncycle = static_cast<long>(ndata_fit) * symmetry->ntran;
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -538,7 +543,8 @@ void Fitting::get_matrix_elements(const int maxorder,
     {
         int *ind;
         int mm, order, iat, k;
-        int im, idata, iparam;
+        int im, iparam;
+        long idata;
         double amat_tmp;
         double **amat_orig_tmp;
 
@@ -617,7 +623,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                                                        Constraint *constraint)
 {
     int i, j;
-    int irow;
+    long irow;
 
     std::vector<std::vector<double>> u_multi, f_multi;
 
@@ -635,12 +641,10 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
         ncols_new += constraint->index_bimap[i].size();
     }
 
-    const int ncycle = ndata_fit * symmetry->ntran;
+    const long ncycle = static_cast<long>(ndata_fit) * symmetry->ntran;
 
     std::vector<double> bvec_orig(nrows, 0.0);
 
-    // amat.resize(nrows * ncols_new, 0.0);
-    // bvec.resize(nrows, 0.0);
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -648,7 +652,8 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
     {
         int *ind;
         int mm, order, iat, k;
-        int im, idata, iparam;
+        int im, iparam;
+        long idata;
         int ishift;
         int iold, inew;
         double amat_tmp;
@@ -759,7 +764,6 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
             for (i = 0; i < natmin3; ++i) {
                 for (j = 0; j < ncols_new; ++j) {
                     // Transpose here for later use of lapack without transpose
-                    // amat[i + idata][j] = amat_mod_tmp[i][j];
                     amat[natmin3 * ncycle * j + i + idata] = amat_mod_tmp[i][j];
                 }
             }
