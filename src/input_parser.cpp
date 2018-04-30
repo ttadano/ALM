@@ -214,11 +214,12 @@ void InputParser::parse_general_vars(ALM *alm)
     double **magmom, magmag;
     double tolerance;
     double tolerance_constraint;
+    int verbosity;
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
     std::string str_allowed_list =
         "PREFIX MODE NAT NKD NSYM KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
-                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST";
+                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST VERBOSITY";
     std::string str_no_defaults = "PREFIX MODE NAT NKD KD";
     std::vector<std::string> no_defaults;
     std::map<std::string, std::string> general_var_dict;
@@ -251,6 +252,12 @@ void InputParser::parse_general_vars(ALM *alm)
 
     assign_val(nat, "NAT", general_var_dict);
     assign_val(nkd, "NKD", general_var_dict);
+
+    if (general_var_dict["VERBOSITY"].empty()) {
+        verbosity = 1;
+    } else {
+        assign_val(verbosity, "VERBOSITY", general_var_dict);
+    }
 
     if (general_var_dict["NSYM"].empty()) {
         nsym = 0;
@@ -433,6 +440,7 @@ void InputParser::parse_general_vars(ALM *alm)
     input_setter->set_general_vars(alm,
                                    prefix,
                                    mode,
+                                   verbosity,
                                    str_disp_basis,
                                    general_var_dict["MAGMOM"],
                                    nat,

@@ -26,6 +26,7 @@ namespace ALM_NS
         void set_general_vars(ALM *alm,
                               std::string prefix,
                               std::string mode,
+                              int verbosity,
                               std::string str_disp_basis,
                               std::string str_magmom,
                               int nat,

@@ -28,7 +28,7 @@ using namespace ALM_NS;
 ALM::ALM()
 {
     create();
-    verbose = true;
+    verbosity = 1;
     structure_initialized = false;
     ready_to_fit = false;
     ofs_alm = nullptr;
@@ -94,7 +94,7 @@ const void ALM::set_run_mode(const std::string mode_in)
 
 const void ALM::set_verbose(const bool verbose_in)
 {
-    verbose = verbose_in;
+    verbosity = verbose_in;
 }
 
 const void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
@@ -637,11 +637,12 @@ const void ALM::generate_force_constant()
 
 const void ALM::run()
 {
-    if (!verbose) {
-        ofs_alm = new std::ofstream("alm.log", std::ofstream::out);
-        coutbuf = std::cout.rdbuf();
-        std::cout.rdbuf(ofs_alm->rdbuf());
-    }
+    
+    //if (!verbosity) {
+    //    ofs_alm = new std::ofstream("alm.log", std::ofstream::out);
+    //    coutbuf = std::cout.rdbuf();
+    //    std::cout.rdbuf(ofs_alm->rdbuf());
+    //}
 
     generate_force_constant();
 
@@ -651,13 +652,13 @@ const void ALM::run()
         run_suggest();
     }
 
-    if (!verbose) {
-        ofs_alm->close();
-        delete ofs_alm;
-        ofs_alm = nullptr;
-        std::cout.rdbuf(coutbuf);
-        coutbuf = nullptr;
-    }
+    //if (!verbosity) {
+    //    ofs_alm->close();
+    //    delete ofs_alm;
+    //    ofs_alm = nullptr;
+    //    std::cout.rdbuf(coutbuf);
+    //    coutbuf = nullptr;
+    //}
 }
 
 const int ALM::optimize()

@@ -47,9 +47,10 @@ void Fcs::init(ALM *alm)
 
     alm->timer->start_clock("fcs");
 
-    std::cout << " FORCE CONSTANT" << std::endl;
-    std::cout << " ==============" << std::endl << std::endl;
-
+    if (alm->verbosity > 0) {
+        std::cout << " FORCE CONSTANT" << std::endl;
+        std::cout << " ==============" << std::endl << std::endl;
+    }
 
     if (fc_table) {
         deallocate(fc_table);
@@ -79,19 +80,22 @@ void Fcs::init(ALM *alm)
                                       store_zeros);
     }
 
-    std::cout << std::endl;
-    for (i = 0; i < maxorder; ++i) {
-        std::cout << "  Number of " << std::setw(9)
-            << alm->interaction->str_order[i]
-            << " FCs : " << nequiv[i].size();
+    if (alm->verbosity > 0) {
+        std::cout << std::endl;
+        for (i = 0; i < maxorder; ++i) {
+            std::cout << "  Number of " << std::setw(9)
+                << alm->interaction->str_order[i]
+                << " FCs : " << nequiv[i].size();
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+
+
+        alm->timer->print_elapsed();
+        std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
-    std::cout << std::endl;
 
-
-    alm->timer->print_elapsed();
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << std::endl;
     alm->timer->stop_clock("fcs");
 }
 

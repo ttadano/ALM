@@ -57,6 +57,7 @@ void InputSetter::deallocator(ALM *alm)
 void InputSetter::set_general_vars(ALM *alm,
                                    const std::string prefix,
                                    const std::string mode,
+                                   const int verbosity,
                                    const std::string str_disp_basis,
                                    const std::string str_magmom,
                                    const int nat,
@@ -78,6 +79,7 @@ void InputSetter::set_general_vars(ALM *alm,
 
     alm->files->job_title = prefix;
     alm->mode = mode;
+    alm->set_verbose(verbosity);
     alm->system->nat = nat;
     alm->system->nkd = nkd;
     alm->system->str_magmom = str_magmom;

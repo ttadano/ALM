@@ -94,13 +94,14 @@ void Writer::writeall(ALM *alm)
 {
     alm->timer->start_clock("writer");
 
-    std::cout << " The following files are created:" << std::endl << std::endl;
+    if (alm->verbosity > 0)
+        std::cout << " The following files are created:" << std::endl << std::endl;
+
     write_force_constants(alm);
     // write_misc_xml breaks data in fcs.
     write_misc_xml(alm);
     if (alm->files->print_hessian) write_hessian(alm);
     //   write_in_QEformat(alm);
-    std::cout << std::endl;
 
     alm->timer->stop_clock("writer");
 }
@@ -272,8 +273,10 @@ void Writer::write_force_constants(ALM *alm)
     deallocate(str_fcs);
     ofs_fcs.close();
 
-    std::cout << " Force constants in a human-readable format : "
-        << alm->files->file_fcs << std::endl;
+    if (alm->verbosity > 0) {
+        std::cout << " Force constants in a human-readable format : "
+            << alm->files->file_fcs << std::endl;
+    }
 }
 
 void Writer::write_displacement_pattern(ALM *alm)
@@ -283,7 +286,8 @@ void Writer::write_displacement_pattern(ALM *alm)
     std::ofstream ofs_pattern;
     std::string file_disp_pattern;
 
-    std::cout << " Suggested displacement patterns are printed in the following files: " << std::endl;
+    if (alm->verbosity > 0)
+        std::cout << " Suggested displacement patterns are printed in the following files: " << std::endl;
 
     for (int order = 0; order < maxorder; ++order) {
 
@@ -320,10 +324,13 @@ void Writer::write_displacement_pattern(ALM *alm)
 
         ofs_pattern.close();
 
-        std::cout << "  " << alm->interaction->str_order[order]
-            << " : " << file_disp_pattern << std::endl;
+        if (alm->verbosity > 0) {
+            std::cout << "  " << alm->interaction->str_order[order]
+                << " : " << file_disp_pattern << std::endl;
+        }
+
     }
-    std::cout << std::endl;
+    if (alm->verbosity > 0) std::cout << std::endl;
 }
 
 
@@ -637,7 +644,9 @@ void Writer::write_misc_xml(ALM *alm)
 
     deallocate(pair_tmp);
 
-    std::cout << " Input data for the phonon code ANPHON      : " << file_xml << std::endl;
+    if (alm->verbosity > 0) {
+        std::cout << " Input data for the phonon code ANPHON      : " << file_xml << std::endl;
+    }
 }
 
 void Writer::write_hessian(ALM *alm)
@@ -692,7 +701,9 @@ void Writer::write_hessian(ALM *alm)
     ofs_hes.close();
     deallocate(hessian);
 
-    std::cout << " Complete Hessian matrix                    : " << alm->files->file_hes << std::endl;
+    if (alm->verbosity) {
+        std::cout << " Complete Hessian matrix                    : " << alm->files->file_hes << std::endl;
+    }
 }
 
 std::string Writer::double2string(const double d,

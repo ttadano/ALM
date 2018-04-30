@@ -81,7 +81,8 @@ namespace ALM_NS
                                     int,
                                     double *,
                                     double *,
-                                    double *);
+                                    double *,
+                                    int);
 
         int fit_algebraic_constraints(int,
                                       int,
@@ -91,7 +92,8 @@ namespace ALM_NS
                                       double,
                                       int,
                                       Fcs *,
-                                      Constraint *);
+                                      Constraint *,
+                                      int);
 
         int fit_with_constraints(int,
                                  int,
@@ -100,7 +102,8 @@ namespace ALM_NS
                                  double *,
                                  double *,
                                  double **,
-                                 double *);
+                                 double *,
+                                 int);
 
 
         void get_matrix_elements(int,
@@ -126,7 +129,8 @@ namespace ALM_NS
                                double,
                                int,
                                Fcs *,
-                               Constraint *);                          
+                               Constraint *,
+                               int);                          
 #endif
 
         void recover_original_forceconstants(int,

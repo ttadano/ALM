@@ -21,6 +21,7 @@ namespace ALM_NS
         ~ALM();
 
         std::string mode;
+        int verbosity;
 
         class InputSetter *input;
         class System *system;
@@ -107,7 +108,6 @@ namespace ALM_NS
 
     private:
 
-        bool verbose;
         bool structure_initialized;
         bool ready_to_fit;
         std::ofstream *ofs_alm;
