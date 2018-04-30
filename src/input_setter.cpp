@@ -166,11 +166,13 @@ void InputSetter::set_fitting_vars(ALM *alm,
                                    const std::string fc2_file,
                                    const std::string fc3_file,
                                    const bool fix_harmonic,
-                                   const bool fix_cubic)
+                                   const bool fix_cubic,
+                                   const int flag_sparse)
 {
     alm->fitting->ndata = ndata;
     alm->fitting->nstart = nstart;
     alm->fitting->nend = nend;
+    alm->fitting->use_sparseQR = flag_sparse;
 
     alm->files->file_disp = dfile;
     alm->files->file_force = ffile;

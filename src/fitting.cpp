@@ -26,10 +26,10 @@
 #include <vector>
 #include <boost/lexical_cast.hpp>
 
-//#ifdef USE_SPARSE_SOLVER
+#ifdef WITH_SPARSE_SOLVER
 #include <Eigen/SparseCore>
 #include <Eigen/SparseQR>
-//#endif
+#endif
 
 using namespace ALM_NS;
 
@@ -52,7 +52,7 @@ void Fitting::set_default_variables()
     nstart = 1;
     nend = 0;
     ndata_used = 0;
-    use_sparse_solver = true;
+    use_sparseQR = 0;
 }
 
 void Fitting::deallocate_variables()
@@ -107,6 +107,10 @@ int Fitting::fitmain(ALM *alm)
     std::vector<double> param_tmp(N);
 
     if (alm->constraint->constraint_algebraic) {
+
+        // Apply constraints algebraically. (ICONST = 2, 3 is not supported.)
+        // SPARSE = 1 is used only when the constraints are considered algebraically.
+
         int N_new = 0;
         for (auto i = 0; i < maxorder; ++i) {
             N_new += alm->constraint->index_bimap[i].size();
@@ -123,9 +127,11 @@ int Fitting::fitmain(ALM *alm)
          
         const unsigned long ncols = static_cast<long>(N_new);
 
-//#ifdef USE_SPARSE_SOLVER
-        if (use_sparse_solver) {
+        if (use_sparseQR) {
 
+            // Use a solver for sparse matrix (Requires less memory for sparse inputs.)
+
+#ifdef WITH_SPARSE_SOLVER
             Eigen::SparseMatrix<double> sp_amat(nrows, ncols);
             Eigen::VectorXd sp_bvec(nrows);
 
@@ -145,9 +151,15 @@ int Fitting::fitmain(ALM *alm)
                                maxorder, 
                                alm->fcs, 
                                alm->constraint);
+#else
+            std::cout << " Please recompile the code with -DWITH_SPARSE_SOLVER" << std::endl;
+            exit("fitmain", "Sparse solver not supported.");
+#endif
 
         } else {
-//#endif
+
+            // Use a direct solver for a dense matrix
+
             amat.resize(nrows * ncols, 0.0);
             bvec.resize(nrows, 0.0);
 
@@ -162,9 +174,6 @@ int Fitting::fitmain(ALM *alm)
 
             // Perform fitting with SVD
 
-            assert(!amat.empty());
-            assert(!bvec.empty());
-
             info_fitting
                 = fit_algebraic_constraints(N_new, M,
                                             &amat[0], &bvec[0],
@@ -172,11 +181,16 @@ int Fitting::fitmain(ALM *alm)
                                             fnorm, maxorder,
                                             alm->fcs,
                                             alm->constraint);
-//#ifdef USE_SPARSE_SOLVER                                            
         }
-//#endif
 
-    } else {
+    } else { 
+        
+        // Apply constraints numerically (ICONST=2 is supported)
+
+        if (use_sparseQR) {
+            std::cout << "  WARNING: SPARSE = 1 works only with ICONST = 10 or ICONST = 11." << std::endl;
+            std::cout << "  Use a solver for dense matrix." << std::endl;
+        } 
 
         // Calculate matrix elements for fitting
 
@@ -215,7 +229,6 @@ int Fitting::fitmain(ALM *alm)
                                           &param_tmp[0]);
         }
     }
-
 
     // Copy force constants to public variable "params"
     if (params) {
@@ -815,7 +828,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
     fnorm = std::sqrt(fnorm);
 }
 
-
+#ifdef WITH_SPARSE_SOLVER
 void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
                                                  const int ndata_fit,
                                                  Eigen::SparseMatrix<double> &sp_amat,
@@ -996,7 +1009,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
     sp_amat.setFromTriplets(nonzero_entries.begin(), nonzero_entries.end());
     sp_amat.makeCompressed();
 }
-
+#endif
 
 
 void Fitting::recover_original_forceconstants(const int maxorder,
@@ -1295,7 +1308,7 @@ int Fitting::rankSVD2(const int m_in,
     return rank;
 }
 
-
+#ifdef WITH_SPARSE_SOLVER
 void Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
                                  const Eigen::VectorXd &sp_bvec,
                                 std::vector<double> &param_out, 
@@ -1306,7 +1319,6 @@ void Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
 {
     std::cout << "  Solve least-squares problem by sparseQR." << std::endl;
     Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
-//    solver.setPivotThreshold(0.0);
     solver.compute(sp_mat);
     Eigen::VectorXd x = solver.solve(sp_bvec);
     Eigen::VectorXd res = sp_bvec - sp_mat * x;
@@ -1331,3 +1343,5 @@ void Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
         std::cout << "  Fitting error (%) : "
             << sqrt(res2norm / (fnorm * fnorm)) * 100.0 << std::endl;
 }
+
+#endif

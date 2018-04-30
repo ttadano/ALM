@@ -16,9 +16,9 @@
 #include "mkl_vsl.h"
 #endif
 
-//#ifdef USE_SPARSE_SOLVER
+#ifdef WITH_SPARSE_SOLVER
 #include <Eigen/SparseCore>
-//#endif
+#endif
 
 namespace ALM_NS
 {
@@ -35,7 +35,7 @@ namespace ALM_NS
         double *params;
         double **u_in;
         double **f_in;
-        bool use_sparse_solver;
+        int use_sparseQR;
 
         void set_displacement_and_force(const double * const *u_in,
                                         const double * const *f_in,
@@ -110,7 +110,7 @@ namespace ALM_NS
                                  Symmetry *,
                                  Fcs *);
 
-//#ifdef USE_SPARSE_SOLVER
+#ifdef WITH_SPARSE_SOLVER
         void get_matrix_elements_in_sparse_form(int,
                                                 int,
                                                 Eigen::SparseMatrix<double> &,
@@ -127,7 +127,7 @@ namespace ALM_NS
                                 int,
                                 Fcs *,
                                 Constraint *);                          
-//#endif
+#endif
 
         void recover_original_forceconstants(int,
                                              const std::vector<double> &,
