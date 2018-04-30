@@ -1340,9 +1340,12 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
                                 const double fnorm,
                                 const int maxorder,
                                 Fcs *fcs,
-                                Constraint *constraint)
+                                Constraint *constraint,
+                                const int verbosity)
 {
-    std::cout << "  Solve least-squares problem by sparseQR." << std::endl;
+    if (verbosity > 0) {
+        std::cout << "  Solve least-squares problem by sparseQR." << std::endl;
+    }
     Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
     solver.compute(sp_mat);
     Eigen::VectorXd x = solver.solve(sp_bvec);
@@ -1364,11 +1367,13 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
                                         fcs->nequiv,
                                         constraint);
 
-        std::cout << "  Residual sum of squares for the solution: "
+        if (verbosity > 0) {
+            std::cout << "  Residual sum of squares for the solution: "
                 << sqrt(res2norm) << std::endl;
             std::cout << "  Fitting error (%) : "
                 << sqrt(res2norm / (fnorm * fnorm)) * 100.0 << std::endl;
-
+        }
+    
         return 0;
 
     } else {

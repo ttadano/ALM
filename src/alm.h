@@ -35,7 +35,7 @@ namespace ALM_NS
         class Timer *timer;
 
         const void set_run_mode(std::string mode_in);
-        const void set_verbose(bool verbose_in);
+        const void set_verbosity(int verbosity_in);
         const void set_output_filename_prefix(std::string prefix);
         const void set_is_print_symmetry(int is_printsymmetry);
         const void set_is_print_hessians(bool print_hessian);

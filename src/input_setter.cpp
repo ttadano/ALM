@@ -78,7 +78,7 @@ void InputSetter::set_general_vars(ALM *alm,
 
     alm->files->job_title = prefix;
     alm->mode = mode;
-    alm->set_verbose(verbosity);
+    alm->set_verbosity(verbosity);
     alm->system->nat = nat;
     alm->system->nkd = nkd;
     alm->system->str_magmom = str_magmom;

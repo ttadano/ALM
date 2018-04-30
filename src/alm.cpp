@@ -92,9 +92,9 @@ const void ALM::set_run_mode(const std::string mode_in)
     mode = mode_in;
 }
 
-const void ALM::set_verbose(const bool verbose_in)
+const void ALM::set_verbosity(const int verbosity_in)
 {
-    verbosity = verbose_in;
+    verbosity = verbosity_in;
 }
 
 const void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
