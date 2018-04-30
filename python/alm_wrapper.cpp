@@ -265,7 +265,8 @@ extern "C" {
         int info;
 
         if (str_solver == "dense") {
-
+            
+            alm[id]->set_sparse_mode(0);
             info = alm[id]->optimize();
 
         } else if (str_solver == "sparseQR") {
