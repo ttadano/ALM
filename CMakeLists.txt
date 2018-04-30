@@ -38,7 +38,7 @@ find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 if (WITH_SPARSE_SOLVER)
-    add_definitions(-DUSE_SPARSE_SOLVER)
+    add_definitions(-DWITH_SPARSE_SOLVER)
     find_package(Eigen3 REQUIRED)
     include_directories(${EIGEN3_INCLUDE_DIR})
 endif()

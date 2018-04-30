@@ -60,6 +60,7 @@ namespace ALM_NS
         const int get_ndata_used();
         const void set_constraint_type(int constraint_flag);
         const void set_rotation_axis(std::string rotation_axis);
+        const void set_sparse_mode(int sparse_mode);
         const void set_fitting_filenames(std::string dfile,
                                          std::string ffile);
         const void set_norder(int maxorder);

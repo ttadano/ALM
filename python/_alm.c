@@ -179,12 +179,14 @@ static PyObject * py_run_suggest(PyObject *self, PyObject *args)
 static PyObject * py_optimize(PyObject *self, PyObject *args)
 {
   int id, info;
-  if (!PyArg_ParseTuple(args, "i",
-                              &id)) {
+  const char *solver;
+  if (!PyArg_ParseTuple(args, "is",
+                              &id,
+                              &solver)) {
     return NULL;
   }
 
-  info = alm_optimize(id);
+  info = alm_optimize(id, solver);
 
   return PyLong_FromLong((long) info);
 }

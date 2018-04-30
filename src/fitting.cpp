@@ -144,13 +144,13 @@ int Fitting::fitmain(ALM *alm)
                                                alm->fcs,
                                                alm->constraint);
 
-            run_eigen_sparseQR(sp_amat, 
-                               sp_bvec, 
-                               param_tmp, 
-                               fnorm, 
-                               maxorder, 
-                               alm->fcs, 
-                               alm->constraint);
+            info_fitting = run_eigen_sparseQR(sp_amat, 
+                                              sp_bvec, 
+                                              param_tmp, 
+                                              fnorm, 
+                                              maxorder, 
+                                              alm->fcs, 
+                                              alm->constraint);
 #else
             std::cout << " Please recompile the code with -DWITH_SPARSE_SOLVER" << std::endl;
             exit("fitmain", "Sparse solver not supported.");
@@ -1309,8 +1309,8 @@ int Fitting::rankSVD2(const int m_in,
 }
 
 #ifdef WITH_SPARSE_SOLVER
-void Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
-                                 const Eigen::VectorXd &sp_bvec,
+int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
+                                const Eigen::VectorXd &sp_bvec,
                                 std::vector<double> &param_out, 
                                 const double fnorm,
                                 const int maxorder,
@@ -1330,18 +1330,30 @@ void Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
         param_irred[i] = x(i);
     }
 
+    if (solver.info() == Eigen::Success) {
     // Recover reducible set of force constants
 
-    recover_original_forceconstants(maxorder,
-                                    param_irred,
-                                    param_out,
-                                    fcs->nequiv,
-                                    constraint);
+        recover_original_forceconstants(maxorder,
+                                        param_irred,
+                                        param_out,
+                                        fcs->nequiv,
+                                        constraint);
 
-    std::cout << "  Residual sum of squares for the solution: "
-              << sqrt(res2norm) << std::endl;
-        std::cout << "  Fitting error (%) : "
-            << sqrt(res2norm / (fnorm * fnorm)) * 100.0 << std::endl;
+        std::cout << "  Residual sum of squares for the solution: "
+                << sqrt(res2norm) << std::endl;
+            std::cout << "  Fitting error (%) : "
+                << sqrt(res2norm / (fnorm * fnorm)) * 100.0 << std::endl;
+
+        return 0;
+
+    } else {
+
+        std::cerr << "  Fitting by sparseQR failed." << std::endl;
+        std::cerr << solver.info() << std::endl;
+
+        return 1;
+    }
+
 }
 
 #endif

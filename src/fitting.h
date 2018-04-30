@@ -120,13 +120,13 @@ namespace ALM_NS
                                                 Fcs *,
                                                 Constraint *);
 
-        void run_eigen_sparseQR(const Eigen::SparseMatrix<double> &,
-                                const Eigen::VectorXd &,
-                                std::vector<double> &, 
-                                double,
-                                int,
-                                Fcs *,
-                                Constraint *);                          
+        int run_eigen_sparseQR(const Eigen::SparseMatrix<double> &,
+                               const Eigen::VectorXd &,
+                               std::vector<double> &, 
+                               double,
+                               int,
+                               Fcs *,
+                               Constraint *);                          
 #endif
 
         void recover_original_forceconstants(int,

@@ -257,10 +257,26 @@ extern "C" {
         alm[id]->run_suggest();
     }
 
-    int alm_optimize(const int id)
+    int alm_optimize(const int id, const char *solver)
     {
         alm[id]->set_run_mode("fitting");
-        int info = alm[id]->optimize();
+        std::string str_solver = std::string(solver);
+
+        int info;
+
+        if (str_solver == "dense") {
+
+            info = alm[id]->optimize();
+
+        } else if (str_solver == "sparseQR") {
+
+            alm[id]->set_sparse_mode(1);
+            info = alm[id]->optimize();
+
+        } else {
+            std::cerr << " Unsupported solver type : " << str_solver << std::endl;
+            return EXIT_FAILURE;
+        }
         return info;
     }
 }

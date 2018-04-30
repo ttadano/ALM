@@ -85,7 +85,8 @@ extern "C" {
                                  double *bvec);
 
     void alm_run_suggest(const int id);
-    int alm_optimize(const int id);
+    int alm_optimize(const int id, 
+                     const char *solver);
 
 #ifdef __cplusplus 
 }
