@@ -47,7 +47,7 @@ void Writer::write_input_vars(const ALM *alm)
     std::cout << "  PREFIX = " << alm->files->job_title << std::endl;
     std::cout << "  MODE = " << alm->mode << std::endl;
     std::cout << "  NAT = " << alm->system->nat << "; NKD = " << alm->system->nkd << std::endl;
-    std::cout << "  NSYM = " << alm->symmetry->nsym << "; PRINTSYM = " << alm->symmetry->printsymmetry
+    std::cout << "  PRINTSYM = " << alm->symmetry->printsymmetry
         << "; TOLERANCE = " << alm->symmetry->tolerance << std::endl;
     std::cout << "  KD = ";
     for (i = 0; i < alm->system->nkd; ++i) std::cout << std::setw(4) << alm->system->kdname[i];

@@ -62,7 +62,6 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const std::string str_magmom,
                                    const int nat,
                                    const int nkd,
-                                   const int nsym,
                                    const int printsymmetry,
                                    const int is_periodic[3],
                                    const bool trim_dispsign_for_evenfunc,
@@ -83,7 +82,6 @@ void InputSetter::set_general_vars(ALM *alm,
     alm->system->nat = nat;
     alm->system->nkd = nkd;
     alm->system->str_magmom = str_magmom;
-    alm->symmetry->nsym = nsym;
     alm->symmetry->printsymmetry = printsymmetry;
     alm->symmetry->tolerance = tolerance;
     allocate(alm->system->kdname, nkd);

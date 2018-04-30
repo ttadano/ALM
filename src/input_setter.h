@@ -31,7 +31,6 @@ namespace ALM_NS
                               std::string str_magmom,
                               int nat,
                               int nkd,
-                              int nsym,
                               int is_printsymmetry,
                               const int is_periodic[3],
                               bool trim_dispsign_for_evenfunc,

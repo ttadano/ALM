@@ -204,7 +204,6 @@ void InputParser::parse_general_vars(ALM *alm)
 {
     int i, j;
     std::string prefix, str_tmp, str_disp_basis;
-    int nsym;
     int printsymmetry, is_periodic[3];
     int icount, ncount;
     bool trim_dispsign_for_evenfunc = true;
@@ -218,7 +217,7 @@ void InputParser::parse_general_vars(ALM *alm)
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
     std::string str_allowed_list =
-        "PREFIX MODE NAT NKD NSYM KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
+        "PREFIX MODE NAT NKD KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
                                    MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST VERBOSITY";
     std::string str_no_defaults = "PREFIX MODE NAT NKD KD";
     std::vector<std::string> no_defaults;
@@ -257,12 +256,6 @@ void InputParser::parse_general_vars(ALM *alm)
         verbosity = 1;
     } else {
         assign_val(verbosity, "VERBOSITY", general_var_dict);
-    }
-
-    if (general_var_dict["NSYM"].empty()) {
-        nsym = 0;
-    } else {
-        assign_val(nsym, "NSYM", general_var_dict);
     }
 
     if (general_var_dict["PRINTSYM"].empty()) {
@@ -445,7 +438,6 @@ void InputParser::parse_general_vars(ALM *alm)
                                    general_var_dict["MAGMOM"],
                                    nat,
                                    nkd,
-                                   nsym,
                                    printsymmetry,
                                    is_periodic,
                                    trim_dispsign_for_evenfunc,
