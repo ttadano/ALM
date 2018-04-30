@@ -16,6 +16,10 @@
 #include "mkl_vsl.h"
 #endif
 
+#ifdef WITH_SPARSE_SOLVER
+#include <Eigen/SparseCore>
+#endif
+
 namespace ALM_NS
 {
     class Fitting
@@ -31,6 +35,7 @@ namespace ALM_NS
         double *params;
         double **u_in;
         double **f_in;
+        int use_sparseQR;
 
         void set_displacement_and_force(const double * const *u_in,
                                         const double * const *f_in,
@@ -105,6 +110,24 @@ namespace ALM_NS
                                  Symmetry *,
                                  Fcs *);
 
+#ifdef WITH_SPARSE_SOLVER
+        void get_matrix_elements_in_sparse_form(int,
+                                                int,
+                                                Eigen::SparseMatrix<double> &,
+                                                Eigen::VectorXd &,
+                                                double &,
+                                                Symmetry *,
+                                                Fcs *,
+                                                Constraint *);
+
+        int run_eigen_sparseQR(const Eigen::SparseMatrix<double> &,
+                               const Eigen::VectorXd &,
+                               std::vector<double> &, 
+                               double,
+                               int,
+                               Fcs *,
+                               Constraint *);                          
+#endif
 
         void recover_original_forceconstants(int,
                                              const std::vector<double> &,

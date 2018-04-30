@@ -288,6 +288,10 @@ const void ALM::set_rotation_axis(const std::string rotation_axis) // ROTAXIS
     constraint->rotation_axis = rotation_axis;
 }
 
+const void ALM::set_sparse_mode(const int sparse_mode) // SPARSE
+{
+    fitting->use_sparseQR = sparse_mode;
+}
 
 const void ALM::set_fitting_filenames(const std::string dfile,
                                       // DFILE

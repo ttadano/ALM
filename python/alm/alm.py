@@ -41,11 +41,17 @@ class ALM:
 
         alm.run_suggest(self._id)
     
-    def optimize(self):
+    def optimize(self, solver='dense'):
         if self._id is None:
             self._show_error_message()
 
-        info = alm.optimize(self._id)
+        if solver not in ['dense', 'sparseQR']:
+            print("The given solver option is not supported.")
+            print("Available options are 'dense' and 'sparseQR'.")
+            raise
+
+        info = alm.optimize(self._id, solver)
+
         return info
     
     def set_displacement_and_force(self, u, f):

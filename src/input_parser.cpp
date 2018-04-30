@@ -631,8 +631,9 @@ void InputParser::parse_fitting_vars(ALM *alm)
 {
     int ndata, nstart, nend;
     int constraint_flag;
+    int flag_sparse = 0;
     std::string rotation_axis;
-    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML";
+    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML SPARSE";
     std::string str_no_defaults = "NDATA DFILE FFILE";
     std::vector<std::string> no_defaults;
     std::map<std::string, std::string> fitting_var_dict;
@@ -696,6 +697,10 @@ void InputParser::parse_fitting_vars(ALM *alm)
         }
     }
 
+    if (!fitting_var_dict["SPARSE"].empty()) {
+        assign_val(flag_sparse, "SPARSE", fitting_var_dict);
+    }
+
     InputSetter *input_setter = new InputSetter();
     input_setter->set_fitting_vars(alm,
                                    ndata,
@@ -708,7 +713,8 @@ void InputParser::parse_fitting_vars(ALM *alm)
                                    fc2_file,
                                    fc3_file,
                                    fix_harmonic,
-                                   fix_cubic);
+                                   fix_cubic,
+                                   flag_sparse);
     delete input_setter;
 
     fitting_var_dict.clear();

@@ -63,7 +63,8 @@ namespace ALM_NS
                               std::string fc2_file,
                               std::string fc3_file,
                               bool fix_harmonic,
-                              bool fix_cubic);
+                              bool fix_cubic,
+                              int flag_sparse);
         void set_atomic_positions(ALM *alm,
                                   int nat,
                                   const int *kd,

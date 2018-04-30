@@ -82,6 +82,7 @@ void Writer::write_input_vars(const ALM *alm)
         std::cout << "  ROTAXIS = " << alm->constraint->rotation_axis << std::endl;
         std::cout << "  FC2XML = " << alm->constraint->fc2_file << std::endl;
         std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
+        std::cout << "  SPARSE = " << alm->fitting->use_sparseQR << std::endl;
         std::cout << std::endl;
     }
     std::cout << " -------------------------------------------------------------------" << std::endl;
