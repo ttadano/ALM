@@ -255,15 +255,20 @@ void Constraint::setup(ALM *alm)
                                  const_translation[order].begin(),
                                  const_translation[order].end());
 
-        const_self[order].insert(const_self[order].end(),
-                                 const_rotation_self[order].begin(),
-                                 const_rotation_self[order].end());
+        if (const_symmetry[order].size() > 0) {
+            const_self[order].insert(const_self[order].end(),
+                                     const_symmetry[order].begin(),
+                                     const_symmetry[order].end());
+            remove_redundant_rows(nparam, const_self[order], eps8);
+        }
 
-        const_self[order].insert(const_self[order].end(),
-                                 const_symmetry[order].begin(),
-                                 const_symmetry[order].end());
-
-        remove_redundant_rows(nparam, const_self[order], eps8);
+        if (const_rotation_self[order].size() > 0) {
+            const_self[order].insert(const_self[order].end(),
+                                     const_rotation_self[order].begin(),
+                                     const_rotation_self[order].end());
+            remove_redundant_rows(nparam, const_self[order], eps8);
+        }
+        
     }
 
     get_mapping_constraint(maxorder,
@@ -742,7 +747,6 @@ void Constraint::get_constraint_translation(const Cell &supercell,
     std::vector<FcProperty> list_vec;
     std::vector<int> const_now;
     std::vector<std::vector<int>> const_mat;
-
 
     if (order < 0) return;
 
