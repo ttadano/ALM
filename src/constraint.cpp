@@ -31,6 +31,9 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <Eigen/SparseCore>
+#include <Eigen/SparseQR>
+
 using namespace ALM_NS;
 
 Constraint::Constraint()
@@ -697,7 +700,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
             continue;
         }
 
-        get_constraint_translation(supercell,
+        get_constraint_translation2(supercell,
                                    symmetry,
                                    interaction,
                                    fcs,
@@ -973,6 +976,339 @@ void Constraint::get_constraint_translation(const Cell &supercell,
     remove_redundant_rows(nparams, const_out, eps8);
 }
 
+
+
+void Constraint::get_constraint_translation2(const Cell &supercell,
+                                            Symmetry *symmetry,
+                                            Interaction *interaction,
+                                            Fcs *fcs,
+                                            const int order,
+                                            const std::vector<FcProperty> &fc_table,
+                                            const int nparams,
+                                            std::vector<ConstraintClass> &const_out)
+{
+    // Generate equality constraint for the acoustic sum rule.
+
+    int i, j;
+    int iat, jat, icrd, jcrd;
+    int idata;
+    int loc_nonzero;
+
+    int *ind;
+    int *intarr, *intarr_copy;
+    int **xyzcomponent;
+
+    int ixyz, nxyz;
+    int natmin = symmetry->nat_prim;
+    int nat = supercell.number_of_atoms;
+
+    unsigned int isize;
+    double *arr_constraint;
+
+    std::vector<int> data;
+    std::unordered_set<FcProperty> list_found;
+    std::unordered_set<FcProperty>::iterator iter_found;
+    std::vector<std::vector<int>> data_vec;
+    std::vector<FcProperty> list_vec;
+    std::vector<int> const_now;
+    std::vector<std::vector<int>> const_mat;
+
+    typedef std::vector<ConstraintIntegerElement> ConstEntry;
+
+
+    std::vector<ConstEntry> constraint_all;
+    ConstEntry const_tmp;
+
+    if (order < 0) return;
+
+    const_mat.clear();
+
+    if (nparams == 0) return;
+
+    allocate(ind, order + 2);
+
+    // Create force constant table for search
+
+    list_found.clear();
+
+    for (const auto &p : fc_table) {
+        for (i = 0; i < order + 2; ++i) {
+            ind[i] = p.elems[i];
+        }
+        if (list_found.find(FcProperty(order + 2, p.sign,
+                                       ind, p.mother)) != list_found.end()) {
+            exit("get_constraint_translation", "Duplicate interaction list found");
+        }
+        list_found.insert(FcProperty(order + 2, p.sign,
+                                     ind, p.mother));
+    }
+
+    deallocate(ind);
+
+    // Generate xyz component for each order
+
+    nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 1));
+    allocate(xyzcomponent, nxyz, order + 1);
+    fcs->get_xyzcomponent(order + 1, xyzcomponent);
+
+    allocate(intarr, order + 2);
+    allocate(intarr_copy, order + 2);
+
+    const_now.resize(nparams);
+
+    for (i = 0; i < natmin; ++i) {
+
+        iat = symmetry->map_p2s[i][0];
+
+        // Generate atom pairs for each order
+
+        if (order == 0) {
+
+
+            for (icrd = 0; icrd < 3; ++icrd) {
+
+                intarr[0] = 3 * iat + icrd;
+
+                for (jcrd = 0; jcrd < 3; ++jcrd) {
+
+                    // Reset the temporary array for another constraint
+                    for (j = 0; j < nparams; ++j) const_now[j] = 0;
+
+                    for (jat = 0; jat < 3 * nat; jat += 3) {
+                        intarr[1] = jat + jcrd;
+
+                        iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                                intarr, 1));
+
+                        //  If found an IFC
+                        if (iter_found != list_found.end()) {
+                            // Round the coefficient to integer
+                            const_now[(*iter_found).mother] += nint((*iter_found).sign);
+                        }
+
+                    }
+                    // Add to the constraint list
+                    if (!is_allzero(const_now, loc_nonzero)) {
+                        if (const_now[loc_nonzero] < 0) {
+                            for (j = 0; j < nparams; ++j) const_now[j] *= -1;
+                        }
+                        const_tmp.clear();
+                        for (j = 0; j < nparams; ++j) {
+                            if (std::abs(const_now[j]) > 0) {
+                                const_tmp.emplace_back(j, const_now[j]);
+                            }
+                        }
+                        constraint_all.emplace_back(const_tmp);
+                    }
+                }
+            }
+
+        } else {
+
+            // Anharmonic cases
+
+            std::vector<int> intlist(interaction->interaction_pair[order][i]);
+            std::sort(intlist.begin(), intlist.end());
+
+            data_vec.clear();
+            // Generate data_vec that contains possible interaction clusters.
+            // Each cluster contains (order + 1) atoms, and the last atom index
+            // will be treated seperately below.
+            CombinationWithRepetition<int> g2(intlist.begin(), intlist.end(), order);
+            do {
+                data = g2.now();
+
+                intarr[0] = iat;
+
+                for (isize = 0; isize < data.size(); ++isize) {
+                    intarr[isize + 1] = data[isize];
+                }
+
+                if (interaction->satisfy_nbody_rule(order + 1, intarr, order)) {
+                    if (interaction->is_incutoff(order + 1, intarr, order, supercell.kind)) {
+                        // Add to list if the atoms interact with each other.
+                        data_vec.push_back(data);
+                    }
+                }
+
+            } while (g2.next());
+
+            int ndata = data_vec.size();
+
+            // Use openmp for acceleration if possible
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+            {
+                int *intarr_omp, *intarr_copy_omp;
+
+                allocate(intarr_omp, order + 2);
+                allocate(intarr_copy_omp, order + 2);
+
+                std::vector<int> data_omp;
+                std::vector<int> const_now_omp;
+
+                ConstEntry const_tmp_omp;
+                std::vector<ConstEntry> constraint_list_omp;
+
+                const_now_omp.resize(nparams);
+#ifdef _OPENMP
+#pragma omp for private(isize, ixyz, jcrd, j, jat, iter_found, loc_nonzero), schedule(guided), nowait
+#endif
+                for (idata = 0; idata < ndata; ++idata) {
+
+                    data_omp = data_vec[idata];
+
+                    intarr_omp[0] = iat;
+                    for (isize = 0; isize < data_omp.size(); ++isize) {
+                        intarr_omp[isize + 1] = data_omp[isize];
+                    }
+
+                    // Loop for xyz component
+                    for (ixyz = 0; ixyz < nxyz; ++ixyz) {
+                        // Loop for the xyz index of the last atom
+                        for (jcrd = 0; jcrd < 3; ++jcrd) {
+
+                            // Reset the temporary array for another constraint
+                            for (j = 0; j < nparams; ++j) const_now_omp[j] = 0;
+
+                            // Loop for the last atom index
+                            for (jat = 0; jat < 3 * nat; jat += 3) {
+                                intarr_omp[order + 1] = jat / 3;
+
+                                if (interaction->satisfy_nbody_rule(order + 2, intarr_omp, order)) {
+                                    for (j = 0; j < order + 1; ++j) {
+                                        intarr_copy_omp[j] = 3 * intarr_omp[j] + xyzcomponent[ixyz][j];
+                                    }
+                                    intarr_copy_omp[order + 1] = jat + jcrd;
+
+                                    sort_tail(order + 2, intarr_copy_omp);
+
+                                    iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                                            intarr_copy_omp, 1));
+                                    if (iter_found != list_found.end()) {
+                                        const_now_omp[(*iter_found).mother] += nint((*iter_found).sign);
+                                    }
+
+                                }
+                            } // close loop jat
+
+                            // Add the constraint to the private array
+                            if (!is_allzero(const_now_omp, loc_nonzero)) {
+                                if (const_now_omp[loc_nonzero] < 0) {
+                                    for (j = 0; j < nparams; ++j) const_now_omp[j] *= -1;
+                                }
+                            
+                                const_tmp_omp.clear();
+                                for (j = 0; j < nparams; ++j) {
+                                    if (std::abs(const_now_omp[j]) > 0) {
+                                        const_tmp_omp.emplace_back(j, const_now_omp[j]);
+                                    }
+                                }
+                                if (const_tmp_omp.empty()) {
+                                    std::cout << "This cannot happen" << std::endl;
+                                }
+                                constraint_list_omp.emplace_back(const_tmp_omp);
+                             }
+                        }
+                    }
+
+                } // close idata (openmp main loop)
+
+                deallocate(intarr_omp);
+                deallocate(intarr_copy_omp);
+
+                    // Merge vectors
+#pragma omp critical
+                    {
+                        for (const auto &it : constraint_list_omp) {
+                            constraint_all.emplace_back(it);
+                        }
+                    }
+                    constraint_list_omp.clear();
+
+            } // close openmp
+
+            intlist.clear();
+        } // close if
+
+        std::cout << constraint_all.size() << std::endl;
+    } // close loop i
+
+    deallocate(xyzcomponent);
+    deallocate(intarr);
+    deallocate(intarr_copy);
+
+    // for (const auto &it : constraint_all) {
+    //     for (const auto &it2 : it) {
+    //         std::cout << "(" << std::setw(5) << it2.col << std::setw(5) << it2.val << "), ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    std::cout << "Original size = " <<  constraint_all.size() << std::endl;
+    std::sort(constraint_all.begin(), constraint_all.end());
+
+    // std::cout << "AFTER SORT" << std::endl;
+
+    // for (const auto &it : constraint_all) {
+    //     for (const auto &it2 : it) {
+    //         std::cout << "(" << std::setw(5) << it2.col << std::setw(5) << it2.val << "), ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+
+    constraint_all.erase(std::unique(constraint_all.begin(), constraint_all.end()), constraint_all.end());
+    // std::cout << "AFTER SORT & UNIQUE" << std::endl;
+
+    // for (const auto &it : constraint_all) {
+    //     for (const auto &it2 : it) {
+    //         std::cout << "(" << std::setw(5) << it2.col << std::setw(5) << it2.val << "), ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+    std::cout << "Reduced size = " <<  constraint_all.size() << std::endl;
+
+
+    int nrows = constraint_all.size();
+    int ncols = nparams;
+
+    Eigen::SparseMatrix<double, Eigen::RowMajor> mat(nrows, ncols);
+    int nonzeros = 0;
+    for (i = 0; i < nrows; ++i) {
+        for (const auto &it : constraint_all[i]) {
+            mat.insert(i, it.col) = static_cast<double>(it.val);
+            ++nonzeros;
+        }
+    }
+
+    std::cout << "Number of nonzero elements : " << nonzeros << std::endl;
+    std::cout << "Sart compression" << std::endl;
+    mat.makeCompressed();
+    std::cout << "SparseQR start" << std::endl;
+    Eigen::SparseQR<Eigen::SparseMatrix<double, Eigen::RowMajor>, Eigen::COLAMDOrdering<int>> qr(mat);
+//    solver.compute(mat);
+
+    std::cout << "nrank = " << qr.rank() << std::endl;
+
+
+
+    const_out.clear();
+    allocate(arr_constraint, nparams);
+    for (auto it = const_mat.rbegin(); it != const_mat.rend(); ++it) {
+        for (i = 0; i < (*it).size(); ++i) {
+            arr_constraint[i] = static_cast<double>((*it)[i]);
+        }
+        const_out.emplace_back(ConstraintClass(nparams,
+                                               arr_constraint));
+    }
+    deallocate(arr_constraint);
+    const_mat.clear();
+
+    // Transform the matrix into the reduced row echelon form
+    remove_redundant_rows(nparams, const_out, eps8);
+}
 
 void Constraint::generate_rotational_constraint(System *system,
                                                 Symmetry *symmetry,
