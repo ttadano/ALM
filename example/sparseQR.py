@@ -2,8 +2,7 @@
 #  Si_fitting_external.py 
 # 
 #  This is an example to run ALM in the fitting mode.
-#  Compare internal optimizer and the numpy routine for fitting
-#
+#  Compare internal optimizer and the numpy routine for fitting #
 
 from alm import ALM 
 import numpy as np 

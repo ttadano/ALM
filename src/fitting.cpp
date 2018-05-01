@@ -80,27 +80,28 @@ int Fitting::fitmain(ALM *alm)
     const int ntran = alm->symmetry->ntran;
     int info_fitting;
 
-    std::cout << " FITTING" << std::endl;
-    std::cout << " =======" << std::endl << std::endl;
-
-    std::cout << "  Reference files" << std::endl;
-    std::cout << "   Displacement: " << alm->files->file_disp << std::endl;
-    std::cout << "   Force       : " << alm->files->file_force << std::endl;
-    std::cout << std::endl;
-
-    std::cout << "  NSTART = " << nstart << "; NEND = " << nend << std::endl;
-    std::cout << "  " << ndata_used << " entries will be used for fitting."
-        << std::endl << std::endl;
-
-
     int N = 0;
     for (auto i = 0; i < maxorder; ++i) {
         N += alm->fcs->nequiv[i].size();
     }
     int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
 
-    std::cout << "  Total Number of Parameters : " << N
-        << std::endl << std::endl;
+    if (alm->verbosity > 0) {
+        std::cout << " FITTING" << std::endl;
+        std::cout << " =======" << std::endl << std::endl;
+
+        std::cout << "  Reference files" << std::endl;
+        std::cout << "   Displacement: " << alm->files->file_disp << std::endl;
+        std::cout << "   Force       : " << alm->files->file_force << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "  NSTART = " << nstart << "; NEND = " << nend << std::endl;
+        std::cout << "  " << ndata_used << " entries will be used for fitting."
+            << std::endl << std::endl;
+
+        std::cout << "  Total Number of Parameters : " << N
+            << std::endl << std::endl;
+    }
 
     std::vector<double> amat;
     std::vector<double> bvec;
@@ -115,16 +116,18 @@ int Fitting::fitmain(ALM *alm)
         for (auto i = 0; i < maxorder; ++i) {
             N_new += alm->constraint->index_bimap[i].size();
         }
-        std::cout << "  Total Number of Free Parameters : "
-            << N_new << std::endl << std::endl;
+        if (alm->verbosity > 0) {
+            std::cout << "  Total Number of Free Parameters : "
+                << N_new << std::endl << std::endl;
+        }
 
         // Calculate matrix elements for fitting
 
         double fnorm;
-        const unsigned long nrows = 3 * static_cast<long>(natmin) 
-                                      * static_cast<long>(ndata_used) 
-                                      * static_cast<long>(ntran);
-         
+        const unsigned long nrows = 3 * static_cast<long>(natmin)
+            * static_cast<long>(ndata_used)
+            * static_cast<long>(ntran);
+
         const unsigned long ncols = static_cast<long>(N_new);
 
         if (use_sparseQR) {
@@ -150,7 +153,8 @@ int Fitting::fitmain(ALM *alm)
                                               fnorm, 
                                               maxorder, 
                                               alm->fcs, 
-                                              alm->constraint);
+                                              alm->constraint,
+                                              alm->verbosity);
 #else
             std::cout << " Please recompile the code with -DWITH_SPARSE_SOLVER" << std::endl;
             exit("fitmain", "Sparse solver not supported.");
@@ -164,13 +168,13 @@ int Fitting::fitmain(ALM *alm)
             bvec.resize(nrows, 0.0);
 
             get_matrix_elements_algebraic_constraint(maxorder,
-                                                    ndata_used,
-                                                    &amat[0],
-                                                    &bvec[0],
-                                                    fnorm,
-                                                    alm->symmetry,
-                                                    alm->fcs,
-                                                    alm->constraint);
+                                                     ndata_used,
+                                                     &amat[0],
+                                                     &bvec[0],
+                                                     fnorm,
+                                                     alm->symmetry,
+                                                     alm->fcs,
+                                                     alm->constraint);
 
             // Perform fitting with SVD
 
@@ -180,24 +184,25 @@ int Fitting::fitmain(ALM *alm)
                                             param_tmp,
                                             fnorm, maxorder,
                                             alm->fcs,
-                                            alm->constraint);
+                                            alm->constraint,
+                                            alm->verbosity);
         }
 
-    } else { 
-        
+    } else {
+
         // Apply constraints numerically (ICONST=2 is supported)
 
         if (use_sparseQR) {
             std::cout << "  WARNING: SPARSE = 1 works only with ICONST = 10 or ICONST = 11." << std::endl;
             std::cout << "  Use a solver for dense matrix." << std::endl;
-        } 
+        }
 
         // Calculate matrix elements for fitting
 
-        const unsigned long nrows = 3 * static_cast<long>(natmin) 
-                                      * static_cast<long>(ndata_used) 
-                                      * static_cast<long>(ntran);
-         
+        const unsigned long nrows = 3 * static_cast<long>(natmin)
+            * static_cast<long>(ndata_used)
+            * static_cast<long>(ntran);
+
         const unsigned long ncols = static_cast<long>(N);
 
         amat.resize(nrows * ncols, 0.0);
@@ -221,12 +226,14 @@ int Fitting::fitmain(ALM *alm)
                                        &amat[0], &bvec[0],
                                        &param_tmp[0],
                                        alm->constraint->const_mat,
-                                       alm->constraint->const_rhs);
+                                       alm->constraint->const_rhs,
+                                       alm->verbosity);
         } else {
             info_fitting
                 = fit_without_constraints(N, M,
                                           &amat[0], &bvec[0],
-                                          &param_tmp[0]);
+                                          &param_tmp[0],
+                                          alm->verbosity);
         }
     }
 
@@ -237,10 +244,12 @@ int Fitting::fitmain(ALM *alm)
     allocate(params, N);
     for (auto i = 0; i < N; ++i) params[i] = param_tmp[i];
 
-    std::cout << std::endl;
-    alm->timer->print_elapsed();
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << std::endl;
+    if (alm->verbosity > 0) {
+        std::cout << std::endl;
+        alm->timer->print_elapsed();
+        std::cout << " -------------------------------------------------------------------" << std::endl;
+        std::cout << std::endl;
+    }
 
     alm->timer->stop_clock("fitting");
 
@@ -295,8 +304,8 @@ void Fitting::set_fcs_values(const int maxorder,
     for (i = 0; i < Nirred; ++i) {
         param_in[i] = fc_in[i];
     }
-    recover_original_forceconstants(maxorder, 
-                                    param_in, param_out, 
+    recover_original_forceconstants(maxorder,
+                                    param_in, param_out,
                                     nequiv, constraint);
     if (params) {
         deallocate(params);
@@ -316,7 +325,8 @@ int Fitting::fit_without_constraints(int N,
                                      int M,
                                      double *amat,
                                      double *bvec,
-                                     double *param_out)
+                                     double *param_out,
+                                     const int verbosity)
 {
     int i, j;
     int nrhs = 1, nrank, INFO;
@@ -324,13 +334,16 @@ int Fitting::fit_without_constraints(int N,
     auto f_square = 0.0;
     double *WORK, *S, *fsum2;
 
-    std::cout << "  Entering fitting routine: SVD without constraints" << std::endl;
 
     auto LMIN = std::min<int>(M, N);
     auto LMAX = std::max<int>(M, N);
 
     int LWORK = 3 * LMIN + std::max<int>(2 * LMIN, LMAX);
     LWORK = 2 * LWORK;
+
+    if (verbosity > 0)
+        std::cout << "  Entering fitting routine: SVD without constraints" << std::endl;
+
 
     allocate(WORK, LWORK);
     allocate(S, LMIN);
@@ -344,20 +357,22 @@ int Fitting::fit_without_constraints(int N,
     }
     for (i = M; i < LMAX; ++i) fsum2[i] = 0.0;
 
-    std::cout << "  SVD has started ... ";
+    if (verbosity > 0) std::cout << "  SVD has started ... ";
 
     // Fitting with singular value decomposition
     dgelss_(&M, &N, &nrhs, amat, &M, fsum2, &LMAX,
             S, &rcond, &nrank, WORK, &LWORK, &INFO);
 
-    std::cout << "finished !" << std::endl << std::endl;
+    if (verbosity > 0) {
+        std::cout << "finished !" << std::endl << std::endl;
+        std::cout << "  RANK of the matrix = " << nrank << std::endl;
+    }
 
-    std::cout << "  RANK of the matrix = " << nrank << std::endl;
     if (nrank < N)
         warn("fit_without_constraints",
              "Matrix is rank-deficient. Force constants could not be determined uniquely :(");
 
-    if (nrank == N) {
+    if (nrank == N && verbosity > 0) {
         auto f_residual = 0.0;
         for (i = N; i < M; ++i) {
             f_residual += std::pow(fsum2[i], 2);
@@ -386,13 +401,15 @@ int Fitting::fit_with_constraints(int N,
                                   double *bvec,
                                   double *param_out,
                                   double **cmat,
-                                  double *dvec)
+                                  double *dvec,
+                                  const int verbosity)
 {
     int i, j;
     double *fsum2;
     double *mat_tmp;
 
-    std::cout << "  Entering fitting routine: QRD with constraints" << std::endl;
+    if (verbosity > 0)
+        std::cout << "  Entering fitting routine: QRD with constraints" << std::endl;
 
     allocate(fsum2, M);
     allocate(mat_tmp, (M + P) * N);
@@ -435,7 +452,7 @@ int Fitting::fit_with_constraints(int N,
         fsum2[i] = bvec[i];
         f_square += std::pow(bvec[i], 2);
     }
-    std::cout << "  QR-Decomposition has started ...";
+    if (verbosity > 0) std::cout << "  QR-Decomposition has started ...";
 
     double *cmat_mod;
     allocate(cmat_mod, P * N);
@@ -458,16 +475,19 @@ int Fitting::fit_with_constraints(int N,
     dgglse_(&M, &N, &P, amat, &M, cmat_mod, &P,
             fsum2, dvec, x, WORK, &LWORK, &INFO);
 
-    std::cout << " finished. " << std::endl;
+    if (verbosity > 0) std::cout << " finished. " << std::endl;
 
     double f_residual = 0.0;
     for (i = N - P; i < M; ++i) {
         f_residual += std::pow(fsum2[i], 2);
     }
-    std::cout << std::endl << "  Residual sum of squares for the solution: "
-        << sqrt(f_residual) << std::endl;
-    std::cout << "  Fitting error (%) : "
-        << std::sqrt(f_residual / f_square) * 100.0 << std::endl;
+
+    if (verbosity > 0) {
+        std::cout << std::endl << "  Residual sum of squares for the solution: "
+            << sqrt(f_residual) << std::endl;
+        std::cout << "  Fitting error (%) : "
+            << std::sqrt(f_residual / f_square) * 100.0 << std::endl;
+    }
 
     // copy fcs to bvec
     for (i = 0; i < N; ++i) {
@@ -490,7 +510,8 @@ int Fitting::fit_algebraic_constraints(int N,
                                        const double fnorm,
                                        const int maxorder,
                                        Fcs *fcs,
-                                       Constraint *constraint)
+                                       Constraint *constraint,
+    const int verbosity)
 {
     int i, j;
     unsigned long k;
@@ -499,6 +520,7 @@ int Fitting::fit_algebraic_constraints(int N,
     double rcond = -1.0;
     double *WORK, *S, *fsum2;
 
+    if (verbosity > 0)
     std::cout << "  Entering fitting routine: SVD with constraints considered algebraically." << std::endl;
 
     LMIN = std::min<int>(M, N);
@@ -516,7 +538,7 @@ int Fitting::fit_algebraic_constraints(int N,
     }
     for (i = M; i < LMAX; ++i) fsum2[i] = 0.0;
 
-    std::cout << "  SVD has started ... ";
+    if (verbosity > 0) std::cout << "  SVD has started ... ";
 
     // Fitting with singular value decomposition
     dgelss_(&M, &N, &nrhs, amat, &M, fsum2, &LMAX,
@@ -525,14 +547,17 @@ int Fitting::fit_algebraic_constraints(int N,
     deallocate(WORK);
     deallocate(S);
 
-    std::cout << "finished !" << std::endl << std::endl;
-    std::cout << "  RANK of the matrix = " << nrank << std::endl;
+    if (verbosity > 0) {
+        std::cout << "finished !" << std::endl << std::endl;
+        std::cout << "  RANK of the matrix = " << nrank << std::endl;
+    }
+
     if (nrank < N) {
         warn("fit_without_constraints",
              "Matrix is rank-deficient. Force constants could not be determined uniquely :(");
     }
 
-    if (nrank == N) {
+    if (nrank == N && verbosity > 0) {
         double f_residual = 0.0;
         for (i = N; i < M; ++i) {
             f_residual += std::pow(fsum2[i], 2);
@@ -1315,9 +1340,12 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
                                 const double fnorm,
                                 const int maxorder,
                                 Fcs *fcs,
-                                Constraint *constraint)
+                                Constraint *constraint,
+                                const int verbosity)
 {
-    std::cout << "  Solve least-squares problem by sparseQR." << std::endl;
+    if (verbosity > 0) {
+        std::cout << "  Solve least-squares problem by sparseQR." << std::endl;
+    }
     Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
     solver.compute(sp_mat);
     Eigen::VectorXd x = solver.solve(sp_bvec);
@@ -1339,11 +1367,13 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
                                         fcs->nequiv,
                                         constraint);
 
-        std::cout << "  Residual sum of squares for the solution: "
+        if (verbosity > 0) {
+            std::cout << "  Residual sum of squares for the solution: "
                 << sqrt(res2norm) << std::endl;
             std::cout << "  Fitting error (%) : "
                 << sqrt(res2norm / (fnorm * fnorm)) * 100.0 << std::endl;
-
+        }
+    
         return 0;
 
     } else {

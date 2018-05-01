@@ -42,20 +42,23 @@ void Symmetry::init(ALM *alm)
 {
     alm->timer->start_clock("symmetry");
 
-    std::cout << " SYMMETRY" << std::endl;
-    std::cout << " ========" << std::endl << std::endl;
+    if (alm->verbosity > 0) {
+        std::cout << " SYMMETRY" << std::endl;
+        std::cout << " ========" << std::endl << std::endl;
+    }
+
 
     setup_symmetry_operation(alm->system->supercell,
                              alm->system->is_periodic,
                              alm->system->atomtype_group,
                              alm->system->spin,
+                             alm->verbosity,
                              SymmData,
                              nsym,
                              nat_prim,
                              ntran,
                              symnum_tran);
 
-    std::cout << "  Number of symmetry operations = " << SymmData.size() << std::endl;
 
     // set_primitive_lattice(system->lavec, system->supercell.number_of_atoms,
     //                       system->kd, system->xcoord,
@@ -81,10 +84,13 @@ void Symmetry::init(ALM *alm)
                             symnum_tran,
                             map_sym, map_p2s, map_s2p);
 
-    print_symminfo_stdout();
-    alm->timer->print_elapsed();
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << std::endl;
+    if (alm->verbosity > 0) {
+        print_symminfo_stdout();
+        alm->timer->print_elapsed();
+        std::cout << " -------------------------------------------------------------------" << std::endl;
+        std::cout << std::endl;
+    }
+
 
     alm->timer->stop_clock("symmetry");
 }
@@ -118,6 +124,7 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
                                         const int is_periodic[3],
                                         const std::vector<std::vector<unsigned int>> &atomtype_group,
                                         const Spin &spin,
+                                        const int verbosity,
                                         std::vector<SymmetryOperation> &SymmData_out,
                                         unsigned int &nsym_out,
                                         unsigned int &nat_prim_out,
@@ -128,114 +135,48 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
 
     SymmData_out.clear();
 
-    if (nsym_out == 0) {
+    if (use_internal_symm_finder) {
+        findsym_alm(cell, is_periodic, atomtype_group, spin, SymmData_out);
+    } else {
+        int spgnum;
+        std::string spgsymbol;
+        findsym_spglib(cell, atomtype_group, spin, tolerance, SymmData_out, spgnum, spgsymbol);
 
-        // Automatically find symmetries.
-
-        std::cout << "  NSYM = 0 : Automatic detection of the space group." << std::endl;
-        std::cout << "             This can take a while for a large supercell." << std::endl << std::endl;
-
-        if (use_internal_symm_finder) {
-            findsym_alm(cell, is_periodic, atomtype_group, spin, SymmData_out);
-        } else {
-            findsym_spglib(cell, atomtype_group, spin, tolerance, SymmData_out);
+        if (verbosity > 0) {
+            std::cout << "  Space group: " << spgsymbol << " (" << std::setw(3) << spgnum << ")" << std::endl;
         }
 
-        // The order in SymmData_out changes for each run because it was generated
-        // with OpenMP. Therefore, we sort the list here to have the same result. 
-        std::sort(SymmData_out.begin() + 1, SymmData_out.end());
-        nsym_out = SymmData_out.size();
+    }
 
-        if (printsymmetry) {
-            std::ofstream ofs_sym;
+    // The order in SymmData_out changes for each run because it was generated
+    // with OpenMP. Therefore, we sort the list here to have the same result. 
+    std::sort(SymmData_out.begin() + 1, SymmData_out.end());
+    nsym_out = SymmData_out.size();
+
+    if (printsymmetry) {
+        std::ofstream ofs_sym;
+        if (verbosity > 0) {
             std::cout << "  PRINTSYM = 1: Symmetry information will be stored in SYMM_INFO file."
                 << std::endl << std::endl;
-            ofs_sym.open(file_sym.c_str(), std::ios::out);
-            ofs_sym << nsym << std::endl;
-
-            for (auto &p : SymmData_out) {
-                for (i = 0; i < 3; ++i) {
-                    for (j = 0; j < 3; ++j) {
-                        ofs_sym << std::setw(4) << p.rotation[i][j];
-                    }
-                }
-                ofs_sym << "  ";
-                for (i = 0; i < 3; ++i) {
-                    ofs_sym << std::setprecision(15) << std::setw(21) << p.tran[i];
-                }
-                ofs_sym << std::endl;
-            }
-
-            ofs_sym.close();
         }
 
-    } else if (nsym_out == 1) {
+        ofs_sym.open(file_sym.c_str(), std::ios::out);
+        ofs_sym << nsym << std::endl;
 
-        // Identity operation only !
-
-        std::cout << "  NSYM = 1 : Only the identity matrix will be considered."
-            << std::endl << std::endl;
-
-        int rot_tmp[3][3];
-        double rot_cart_tmp[3][3];
-        double tran_tmp[3];
-
-        for (i = 0; i < 3; ++i) {
-            for (j = 0; j < 3; ++j) {
-                if (i == j) {
-                    rot_tmp[i][j] = 1;
-                    rot_cart_tmp[i][j] = 1.0;
-                } else {
-                    rot_tmp[i][j] = 0;
-                    rot_cart_tmp[i][j] = 0.0;
+        for (auto &p : SymmData_out) {
+            for (i = 0; i < 3; ++i) {
+                for (j = 0; j < 3; ++j) {
+                    ofs_sym << std::setw(4) << p.rotation[i][j];
                 }
             }
-            tran_tmp[i] = 0.0;
+            ofs_sym << "  ";
+            for (i = 0; i < 3; ++i) {
+                ofs_sym << std::setprecision(15) << std::setw(21) << p.tran[i];
+            }
+            ofs_sym << std::endl;
         }
 
-        SymmData_out.emplace_back(rot_tmp,
-                                  tran_tmp,
-                                  rot_cart_tmp,
-                                  true,
-                                  true,
-                                  true);
-
-    } else {
-
-        std::cout << "  NSYM > 1 : Symmetry operations will be read from SYMM_INFO file"
-            << std::endl << std::endl;
-
-        int nsym2;
-        int rot_tmp[3][3];
-        double rot_cart_tmp[3][3];
-        double tran_tmp[3];
-        std::ifstream ifs_sym;
-
-        ifs_sym.open(file_sym.c_str(), std::ios::in);
-        ifs_sym >> nsym2;
-
-        if (nsym_out != nsym2)
-            exit("setup_symmetry_operations",
-                 "nsym in the given file and the input file are not consistent.");
-
-        for (i = 0; i < nsym_out; ++i) {
-            ifs_sym
-                >> rot_tmp[0][0] >> rot_tmp[0][1] >> rot_tmp[0][2]
-                >> rot_tmp[1][0] >> rot_tmp[1][1] >> rot_tmp[1][2]
-                >> rot_tmp[2][0] >> rot_tmp[2][1] >> rot_tmp[2][2]
-                >> tran_tmp[0] >> tran_tmp[1] >> tran_tmp[2];
-
-            symop_in_cart(rot_cart_tmp, rot_tmp,
-                          cell.lattice_vector,
-                          cell.reciprocal_lattice_vector);
-            SymmData_out.emplace_back(rot_tmp,
-                                      tran_tmp,
-                                      rot_cart_tmp,
-                                      is_compatible(rot_tmp),
-                                      is_compatible(rot_cart_tmp),
-                                      is_translation(rot_tmp));
-        }
-        ifs_sym.close();
+        ofs_sym.close();
     }
 
     ntran_out = 0;
@@ -590,7 +531,9 @@ void Symmetry::findsym_spglib(const Cell &cell,
                               const std::vector<std::vector<unsigned int>> &atomtype_group,
                               const Spin &spin,
                               const double symprec,
-                              std::vector<SymmetryOperation> &symop_all)
+                              std::vector<SymmetryOperation> &symop_all,
+                              int &spgnum,
+                              std::string &spgsymbol)
 {
     int i, j;
     double (*position)[3];
@@ -645,7 +588,8 @@ void Symmetry::findsym_spglib(const Cell &cell,
     nsym = spg_get_symmetry(rotation, translation, nsym,
                             aa_tmp, position, types_tmp, nat, symprec);
 
-    auto spgnum = spg_get_international(symbol, aa_tmp, position, types_tmp, nat, symprec);
+    spgnum = spg_get_international(symbol, aa_tmp, position, types_tmp, nat, symprec);
+    spgsymbol = std::string(symbol);
 
     // Copy symmetry information
     symop_all.clear();
@@ -667,7 +611,6 @@ void Symmetry::findsym_spglib(const Cell &cell,
 
     }
 
-    std::cout << "  Space group: " << symbol << " (" << std::setw(3) << spgnum << ")" << std::endl;
 
     deallocate(rotation);
     deallocate(translation);
@@ -705,6 +648,7 @@ void Symmetry::print_symminfo_stdout()
 {
     int i;
 
+    std::cout << "  Number of symmetry operations = " << SymmData.size() << std::endl;
     std::cout << std::endl;
     if (ntran > 1) {
         std::cout << "  Given system is not a primitive cell." << std::endl;

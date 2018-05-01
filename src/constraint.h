@@ -141,6 +141,7 @@ namespace ALM_NS
                                             Symmetry *,
                                             Interaction *,
                                             Fcs *,
+                                            const int,
                                             std::vector<ConstraintClass> *,
                                             std::vector<ConstraintClass> *);
 
@@ -168,6 +169,7 @@ namespace ALM_NS
                                                        Symmetry *,
                                                        Interaction *,
                                                        Fcs *,
+                                                       const int,
                                                        std::vector<ConstraintClass> *);
 
         void get_constraint_translation(const Cell &,
@@ -183,6 +185,7 @@ namespace ALM_NS
                                                Symmetry *,
                                                Interaction *,
                                                Fcs *,
+                                               const int,
                                                std::vector<ConstraintClass> *);
 
         void fix_forceconstants_to_file(int,

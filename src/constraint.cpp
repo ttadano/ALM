@@ -45,7 +45,7 @@ Constraint::~Constraint()
 
 void Constraint::set_default_variables()
 {
-    constraint_mode = 11; 
+    constraint_mode = 11;
     rotation_axis = "";
     fix_harmonic = false;
     fix_cubic = false;
@@ -93,8 +93,12 @@ void Constraint::deallocate_variables()
 void Constraint::setup(ALM *alm)
 {
     alm->timer->start_clock("constraint");
-    std::cout << " CONSTRAINT" << std::endl;
-    std::cout << " ==========" << std::endl << std::endl;
+
+    if (alm->verbosity > 0) {
+        std::cout << " CONSTRAINT" << std::endl;
+        std::cout << " ==========" << std::endl << std::endl;
+    }
+
 
     constraint_algebraic = constraint_mode / 10;
     constraint_mode = constraint_mode % 10;
@@ -104,37 +108,44 @@ void Constraint::setup(ALM *alm)
     case 0: // do nothing
         impose_inv_T = false;
         impose_inv_R = false;
-        std::cout << "  ICONST = 0: Constraint for translational/rotational invariance" << std::endl;
-        std::cout << "              will NOT be considered." << std::endl;
+        if (alm->verbosity > 0) {
+            std::cout << "  ICONST = 0: Constraint for translational/rotational invariance" << std::endl;
+            std::cout << "              will NOT be considered." << std::endl;
+        }
         break;
     case 1:
         impose_inv_T = true;
         impose_inv_R = false;
-        std::cout << "  ICONST = 1: Constraints for translational invariance" << std::endl;
-        std::cout << "              will be considered." << std::endl;
+        if (alm->verbosity > 0) {
+            std::cout << "  ICONST = 1: Constraints for translational invariance" << std::endl;
+            std::cout << "              will be considered." << std::endl;
+        }
         break;
     case 2:
         impose_inv_T = true;
         impose_inv_R = true;
         exclude_last_R = true;
-        std::cout << "  ICONST = 2: Constraints for translational and rotational invariance" << std::endl;
-        std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
-        std::cout << "              Rotational invariance of the maximum order will be neglected" << std::endl;
+        if (alm->verbosity > 0) {
+            std::cout << "  ICONST = 2: Constraints for translational and rotational invariance" << std::endl;
+            std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
+            std::cout << "              Rotational invariance of the maximum order will be neglected" << std::endl;
+        }
         break;
     case 3:
         impose_inv_T = true;
         impose_inv_R = true;
         exclude_last_R = false;
-        std::cout << "  ICONST = 3: Constraints for translational and rotational invariance" << std::endl;
-        std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
+        if (alm->verbosity > 0) {
+            std::cout << "  ICONST = 3: Constraints for translational and rotational invariance" << std::endl;
+            std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
+        }
         break;
     default:
         exit("Constraint::setup", "invalid constraint_mode", constraint_mode);
         break;
     }
 
-    std::cout << std::endl;
-
+    if (alm->verbosity > 0) std::cout << std::endl;
 
     if (const_symmetry) {
         deallocate(const_symmetry);
@@ -168,9 +179,11 @@ void Constraint::setup(ALM *alm)
 
     if (fix_harmonic) {
 
-        std::cout << "  FC2XML is given : Harmonic force constants will be " << std::endl;
-        std::cout << "                    fixed to the values given in " << fc2_file << std::endl;
-        std::cout << std::endl;
+        if (alm->verbosity > 0) {
+            std::cout << "  FC2XML is given : Harmonic force constants will be " << std::endl;
+            std::cout << "                    fixed to the values given in " << fc2_file << std::endl;
+            std::cout << std::endl;
+        }
 
         fix_forceconstants_to_file(0,
                                    alm->symmetry,
@@ -182,9 +195,11 @@ void Constraint::setup(ALM *alm)
     fix_cubic = fix_cubic & (alm->interaction->maxorder > 1);
     if (fix_cubic) {
 
-        std::cout << "  FC3XML is given : Cubic force constants will be " << std::endl;
-        std::cout << "                    fixed to the values given in " << fc3_file << std::endl;
-        std::cout << std::endl;
+        if (alm->verbosity > 0) {
+            std::cout << "  FC3XML is given : Cubic force constants will be " << std::endl;
+            std::cout << "                    fixed to the values given in " << fc3_file << std::endl;
+            std::cout << std::endl;
+        }
 
         fix_forceconstants_to_file(1,
                                    alm->symmetry,
@@ -197,6 +212,7 @@ void Constraint::setup(ALM *alm)
                                               alm->symmetry,
                                               alm->interaction,
                                               alm->fcs,
+                                              alm->verbosity,
                                               const_symmetry);
 
     extra_constraint_from_symmetry = false;
@@ -210,6 +226,7 @@ void Constraint::setup(ALM *alm)
                                           alm->symmetry,
                                           alm->interaction,
                                           alm->fcs,
+                                          alm->verbosity,
                                           const_translation);
     }
 
@@ -218,11 +235,10 @@ void Constraint::setup(ALM *alm)
                                        alm->symmetry,
                                        alm->interaction,
                                        alm->fcs,
+                                       alm->verbosity,
                                        const_rotation_self,
                                        const_rotation_cross);
     }
-
-    // double *arr_tmp;
 
     // Merge intra-order constrants and do reduction 
 
@@ -299,73 +315,79 @@ void Constraint::setup(ALM *alm)
         || fix_cubic
         || extra_constraint_from_symmetry;
 
-    if (exist_constraint) {
+    if (alm->verbosity > 0) {
+        if (exist_constraint) {
 
-        int order;
+            int order;
 
-        if (impose_inv_T || impose_inv_R) {
-            std::cout << "  Number of constraints [T-inv, R-inv (self), R-inv (cross)]:" << std::endl;
+            if (impose_inv_T || impose_inv_R) {
+                std::cout << "  Number of constraints [T-inv, R-inv (self), R-inv (cross)]:" << std::endl;
+                for (order = 0; order < maxorder; ++order) {
+                    std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
+                    std::cout << std::setw(5) << const_translation[order].size();
+                    std::cout << std::setw(5) << const_rotation_self[order].size();
+                    std::cout << std::setw(5) << const_rotation_cross[order].size();
+                    std::cout << std::endl;
+                }
+                std::cout << std::endl;
+            }
+
+            if (extra_constraint_from_symmetry) {
+                std::cout << "  There are constraints from crystal symmetry." << std::endl;
+                std::cout << "  The number of such constraints for each order:" << std::endl;
+                for (order = 0; order < maxorder; ++order) {
+                    std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
+                    std::cout << std::setw(5) << const_symmetry[order].size();
+                    std::cout << std::endl;
+                }
+                std::cout << std::endl;
+            }
+
+            if (extra_constraint_from_symmetry) {
+                std::cout << "  Constraints of T-inv, R-inv (self), and those from crystal symmetry are merged."
+                    << std::endl;
+            } else {
+                std::cout << "  Constraints of T-inv and R-inv (self) are merged." << std::endl;
+            }
+            std::cout << "  If there are redundant constraints, they are removed in this process." << std::endl;
+            std::cout << std::endl;
+            std::cout << "  Number of inequivalent constraints (self, cross) : " << std::endl;
+
             for (order = 0; order < maxorder; ++order) {
                 std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
-                std::cout << std::setw(5) << const_translation[order].size();
-                std::cout << std::setw(5) << const_rotation_self[order].size();
+                std::cout << std::setw(5) << const_self[order].size();
                 std::cout << std::setw(5) << const_rotation_cross[order].size();
                 std::cout << std::endl;
             }
             std::cout << std::endl;
-        }
 
-        if (extra_constraint_from_symmetry) {
-            std::cout << "  There are constraints from crystal symmetry." << std::endl;
-            std::cout << "  The number of such constraints for each order:" << std::endl;
-            for (order = 0; order < maxorder; ++order) {
-                std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
-                std::cout << std::setw(5) << const_symmetry[order].size();
+            if (constraint_algebraic) {
+
+                std::cout << "  ICONST >= 10 : Constraints will be considered algebraically."
+                    << std::endl << std::endl;
+
+                if (impose_inv_R) {
+                    std::cout << "  WARNING : Inter-order constraints for rotational invariance will be neglected."
+                        << std::endl;
+                }
+
+                for (order = 0; order < maxorder; ++order) {
+                    std::cout << "  Number of free" << std::setw(9) << alm->interaction->str_order[order]
+                        << " FCs : " << index_bimap[order].size() << std::endl;
+                }
                 std::cout << std::endl;
-            }
-            std::cout << std::endl;
-        }
 
-        if (extra_constraint_from_symmetry) {
-            std::cout << "  Constraints of T-inv, R-inv (self), and those from crystal symmetry are merged."
-                << std::endl;
-        } else {
-            std::cout << "  Constraints of T-inv and R-inv (self) are merged." << std::endl;
+            } else {
+
+                std::cout << "  Total number of constraints = " << number_of_constraints << std::endl << std::endl;
+
+            }
         }
-        std::cout << "  If there are redundant constraints, they are removed in this process." << std::endl;
+        alm->timer->print_elapsed();
+        std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
-        std::cout << "  Number of inequivalent constraints (self, cross) : " << std::endl;
-
-        for (order = 0; order < maxorder; ++order) {
-            std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
-            std::cout << std::setw(5) << const_self[order].size();
-            std::cout << std::setw(5) << const_rotation_cross[order].size();
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-
-        if (constraint_algebraic) {
-
-            std::cout << "  ICONST >= 10 : Constraints will be considered algebraically."
-                << std::endl << std::endl;
-
-            if (impose_inv_R) {
-                std::cout << "  WARNING : Inter-order constraints for rotational invariance will be neglected."
-                    << std::endl;
-            }
-
-            for (order = 0; order < maxorder; ++order) {
-                std::cout << "  Number of free" << std::setw(9) << alm->interaction->str_order[order]
-                    << " FCs : " << index_bimap[order].size() << std::endl;
-            }
-            std::cout << std::endl;
-
-        } else {
-
-            std::cout << "  Total number of constraints = " << number_of_constraints << std::endl << std::endl;
-
-        }
     }
+
 
     deallocate(const_translation);
     const_translation = nullptr;
@@ -376,9 +398,6 @@ void Constraint::setup(ALM *alm)
     deallocate(const_self);
     const_self = nullptr;
 
-    alm->timer->print_elapsed();
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << std::endl;
     alm->timer->stop_clock("constraint");
 }
 
@@ -597,6 +616,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
                                                            Symmetry *symmetry,
                                                            Interaction *interaction,
                                                            Fcs *fcs,
+                                                           const int verbosity,
                                                            std::vector<ConstraintClass> *const_out)
 
 {
@@ -612,6 +632,8 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
             break;
         }
     }
+
+    has_constraint_from_symm = has_constraint_from_symm & (verbosity > 0);
 
     if (has_constraint_from_symm) {
         std::cout << "  Generating constraints from crystal symmetry ..." << std::endl;
@@ -649,20 +671,24 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
                                                    Symmetry *symmetry,
                                                    Interaction *interaction,
                                                    Fcs *fcs,
+                                                   const int verbosity,
                                                    std::vector<ConstraintClass> *const_out)
 {
     // Create constraint matrix for the translational invariance (aka acoustic sum rule).
 
-    std::cout << "  Generating constraints for translational invariance ..." << std::endl;
+    if (verbosity > 0) {
+        std::cout << "  Generating constraints for translational invariance ..." << std::endl;
+    }
 
     for (int order = 0; order < interaction->maxorder; ++order) {
 
-        std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
+        if (verbosity > 0)
+            std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
 
         int nparams = fcs->nequiv[order].size();
 
         if (nparams == 0) {
-            std::cout << "  No parameters! Skipped." << std::endl;
+            if (verbosity > 0) std::cout << "  No parameters! Skipped." << std::endl;
             continue;
         }
 
@@ -675,11 +701,10 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
                                    fcs->nequiv[order].size(),
                                    const_out[order]);
 
-
-        std::cout << " done." << std::endl;
+        if (verbosity > 0) std::cout << " done." << std::endl;
     }
 
-    std::cout << "  Finished !" << std::endl << std::endl;
+    if (verbosity > 0) std::cout << "  Finished !" << std::endl << std::endl;
 }
 
 
@@ -949,12 +974,14 @@ void Constraint::generate_rotational_constraint(System *system,
                                                 Symmetry *symmetry,
                                                 Interaction *interaction,
                                                 Fcs *fcs,
+                                                const int verbosity,
                                                 std::vector<ConstraintClass> *const_rotation_self,
                                                 std::vector<ConstraintClass> *const_rotation_cross)
 {
     // Create constraints for the rotational invariance
 
-    std::cout << "  Generating constraints for rotational invariance ..." << std::endl;
+    if (verbosity > 0)
+        std::cout << "  Generating constraints for rotational invariance ..." << std::endl;
 
 #ifdef _DEBUG
     std::ofstream ofs_constraint;
@@ -1007,14 +1034,20 @@ void Constraint::generate_rotational_constraint(System *system,
         nparams[order] = fcs->nequiv[order].size();
 
         if (order == 0) {
-            std::cout << "   Constraints between " << std::setw(8)
-                << "1st-order IFCs (which are zero) and "
-                << std::setw(8) << interaction->str_order[order] << " ...";
+            if (verbosity > 0) {
+                std::cout << "   Constraints between " << std::setw(8)
+                    << "1st-order IFCs (which are zero) and "
+                    << std::setw(8) << interaction->str_order[order] << " ...";
+            }
+
             nparam_sub = nparams[order];
         } else {
-            std::cout << "   Constraints between " << std::setw(8)
-                << interaction->str_order[order - 1] << " and "
-                << std::setw(8) << interaction->str_order[order] << " ...";
+            if (verbosity > 0) {
+                std::cout << "   Constraints between " << std::setw(8)
+                    << interaction->str_order[order - 1] << " and "
+                    << std::setw(8) << interaction->str_order[order] << " ...";
+            }
+
             nparam_sub = nparams[order] + nparams[order - 1];
         }
 
@@ -1409,7 +1442,7 @@ void Constraint::generate_rotational_constraint(System *system,
             }
         } // iat
 
-        std::cout << " done." << std::endl;
+        if (verbosity > 0) std::cout << " done." << std::endl;
 
         if (order > 0) {
             deallocate(xyzcomponent);
@@ -1427,7 +1460,7 @@ void Constraint::generate_rotational_constraint(System *system,
         remove_redundant_rows(nparams[order], const_rotation_self[order], eps6);
     }
 
-    std::cout << "  Finished !" << std::endl << std::endl;
+    if (verbosity > 0) std::cout << "  Finished !" << std::endl << std::endl;
 
     deallocate(ind);
     deallocate(nparams);

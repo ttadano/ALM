@@ -8,6 +8,7 @@ class ALM:
         self._xcoord = np.array(xcoord, dtype='double', order='C')
         self._kd = np.array(kd, dtype='intc', order='C')
         self._iconst = 11
+        self._verbosity = 0
 
     def __enter__(self):
         self.alm_new()
@@ -23,6 +24,7 @@ class ALM:
                 print("Too many ALM objects")
                 raise
             self._set_cell()
+            self._set_verbosity()
         else:
             print("This ALM object is already initialized.")
             raise
@@ -84,10 +86,23 @@ class ALM:
         if translation is True:
             iconst = 11
         else:
-            iconst = 0
+            iconst = 10
 
         self._iconst = iconst
         alm.set_constraint_type(self._id, self._iconst)
+
+    def set_verbosity(self, verbosity):
+        if self._id is None:
+            self._show_error_message()
+
+        self._verbosity = verbosity
+        alm.set_verbosity(self._id, self._verbosity)
+
+    def _set_verbosity(self):
+        if self._id is None:
+            self._show_error_message()
+        
+        alm.set_verbosity(self._id, self._verbosity)
 
 
     def set_cutoff_radii(self, rcs):

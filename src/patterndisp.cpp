@@ -56,8 +56,10 @@ void Displace::gen_displacement_pattern(ALM *alm)
     std::vector<ConstraintTypeRelate> *const_relate_tmp;
     boost::bimap<int, int> *index_bimap_tmp;
 
-    std::cout << " DISPLACEMENT PATTERN" << std::endl;
-    std::cout << " ====================" << std::endl << std::endl;
+    if (alm->verbosity > 0) {
+        std::cout << " DISPLACEMENT PATTERN" << std::endl;
+        std::cout << " ====================" << std::endl << std::endl;
+    }
 
     // Decide preferred basis (Cartesian or Lattice)
     int ncompat_cart = 0;
@@ -116,12 +118,15 @@ void Displace::gen_displacement_pattern(ALM *alm)
                                             const_relate_tmp,
                                             index_bimap_tmp);
 
-    for (order = 0; order < maxorder; ++order) {
-        std::cout << "  Number of free" << std::setw(9)
-            << alm->interaction->str_order[order] << " FCs : "
-            << index_bimap_tmp[order].size() << std::endl;
+    if (alm->verbosity > 0) {
+        for (order = 0; order < maxorder; ++order) {
+            std::cout << "  Number of free" << std::setw(9)
+                << alm->interaction->str_order[order] << " FCs : "
+                << index_bimap_tmp[order].size() << std::endl;
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
+
 
     deallocate(constsym);
     deallocate(const_fix_tmp);
@@ -141,13 +146,10 @@ void Displace::gen_displacement_pattern(ALM *alm)
 
     deallocate(index_bimap_tmp);
 
-
-    std::cout << "  Generating displacement patterns in ";
-    //    if (disp_basis[0] == 'C') {
-    std::cout << "Cartesian coordinate... ";
-    //    } else {
-    //        std::cout << "fractional coordinate...";
-    //    }
+    if (alm->verbosity > 0) {
+        std::cout << "  Generating displacement patterns in ";
+        std::cout << "Cartesian coordinate... ";
+    }
 
     allocate(dispset, maxorder);
 
@@ -192,16 +194,17 @@ void Displace::gen_displacement_pattern(ALM *alm)
 
     deallocate(dispset);
 
+    if (alm->verbosity > 0) {
+        std::cout << " done!" << std::endl;
+        std::cout << std::endl;
 
-    std::cout << " done!" << std::endl;
-    std::cout << std::endl;
-
-    for (order = 0; order < maxorder; ++order) {
-        std::cout << "  Number of disp. patterns for " << std::setw(9)
-            << alm->interaction->str_order[order] << " : "
-            << pattern_all[order].size() << std::endl;
+        for (order = 0; order < maxorder; ++order) {
+            std::cout << "  Number of disp. patterns for " << std::setw(9)
+                << alm->interaction->str_order[order] << " : "
+                << pattern_all[order].size() << std::endl;
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 }
 
 void Displace::set_default_variables()

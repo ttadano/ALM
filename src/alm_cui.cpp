@@ -29,29 +29,33 @@ ALMCUI::~ALMCUI() {}
 
 void ALMCUI::run(int narg, char **arg)
 {
-    std::cout << " +-----------------------------------------------------------------+" << std::endl;
-    std::cout << " +                         Program ALM                             +" << std::endl;
-    std::cout << " +                             Ver.";
-    std::cout << std::setw(7) << ALAMODE_VERSION;
-    std::cout << "                         +" << std::endl;
-    std::cout << " +-----------------------------------------------------------------+" << std::endl;
-    std::cout << std::endl;
-
     ALM *alm = new ALM();
 
-#ifdef _OPENMP
-    std::cout << " Number of OpenMP threads = "
-        << omp_get_max_threads() << std::endl << std::endl;
-#endif
-
-    std::cout << " Job started at " << alm->timer->DateAndTime() << std::endl;
     // alm->mode is set herein.
     InputParser *input_parser = new InputParser();
     input_parser->run(alm, narg, arg);
 
-    Writer *writer = new Writer();
-    writer->write_input_vars(alm);
+    if (alm->verbosity > 0) {
+        std::cout << " +-----------------------------------------------------------------+" << std::endl;
+        std::cout << " +                         Program ALM                             +" << std::endl;
+        std::cout << " +                             Ver.";
+        std::cout << std::setw(7) << ALAMODE_VERSION;
+        std::cout << "                         +" << std::endl;
+        std::cout << " +-----------------------------------------------------------------+" << std::endl;
+        std::cout << std::endl;
+#ifdef _OPENMP
+        std::cout << " Number of OpenMP threads = "
+            << omp_get_max_threads() << std::endl << std::endl;
+#endif
 
+        std::cout << " Job started at " << alm->timer->DateAndTime() << std::endl;
+    }
+
+    Writer *writer = new Writer();
+
+    if (alm->verbosity > 0) {
+        writer->write_input_vars(alm);
+    }
 
     if (alm->mode == "fitting") {
         input_parser->parse_displacement_and_force(alm);
@@ -67,15 +71,10 @@ void ALMCUI::run(int narg, char **arg)
     }
     delete writer;
 
-    std::cout << std::endl << " Job finished at "
-        << alm->timer->DateAndTime() << std::endl;
-
-
-    //std::cout << alm->get_number_of_fc_elements(1) << std::endl;
-    //std::cout << alm->get_number_of_fc_elements(2) << std::endl;
-    //std::cout << alm->get_number_of_irred_fc_elements(1) << std::endl;
-    //std::cout << alm->get_number_of_irred_fc_elements(2) << std::endl;
-
+    if (alm->verbosity > 0) {
+        std::cout << std::endl << " Job finished at "
+            << alm->timer->DateAndTime() << std::endl;
+    }
 
     //std::cout << "FCS: " << alm->timer->get_walltime("fcs")
     //    << " " << alm->timer->get_cputime("fcs") << std::endl;

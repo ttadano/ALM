@@ -119,6 +119,11 @@ extern "C" {
         delete [] kdname;
     }
 
+    void alm_set_verbosity(const int id, const int verbosity) 
+    {
+        alm[id]->set_verbosity(verbosity);
+    }
+
     // void set_magnetic_params(const double* magmom,
     //   		       const bool lspin,
     //   		       const int noncollinear,
