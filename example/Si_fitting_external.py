@@ -115,7 +115,9 @@ for (fc, fc_ext, elem) in zip(fc_values1, fc_values2, elem_indices2):
      c1 = elem[0] % 3
      v2 = elem[1] // 3
      c2 = elem[1] % 3
-     print("%15.7f %15.7f %15.6e %d%s %d%s" % ((fc, fc_ext, fc - fc_ext, v1 + 1, c[c1], v2 + 1, c[c2])))
+     v3 = elem[2] // 3
+     c3 = elem[2] % 3
+     print("%15.7f %15.7f %15.6e %d%s %d%s %d%s" % ((fc, fc_ext, fc - fc_ext, v1 + 1, c[c1], v2 + 1, c[c2], v3 + 1, c[c3])))
 
 
 # Finalize object
