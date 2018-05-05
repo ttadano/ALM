@@ -27,8 +27,11 @@
 #include <boost/lexical_cast.hpp>
 
 #ifdef WITH_SPARSE_SOLVER
+#include <Eigen/Dense>
 #include <Eigen/SparseCore>
 #include <Eigen/SparseQR>
+#include <unsupported/Eigen/SparseExtra>
+#include <bench/BenchTimer.h>
 #endif
 
 using namespace ALM_NS;
@@ -1343,12 +1346,61 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
                                 Constraint *constraint,
                                 const int verbosity)
 {
+    Eigen::BenchTimer t;
+
+    typedef Eigen::SparseMatrix<double> SpMat;
+    SpMat AtA;
+    AtA = sp_mat.transpose()*sp_mat;
+//    std::cout << sp_mat.rows() << "x" << sp_mat.cols() << "\n";
+  
+    Eigen::VectorXd AtB, x;
+    AtB = sp_mat.transpose()*sp_bvec;
+ 
     if (verbosity > 0) {
-        std::cout << "  Solve least-squares problem by sparseQR." << std::endl;
+        std::cout << "  Solve least-squares problem by sparse LDLT." << std::endl;
     }
-    Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
-    solver.compute(sp_mat);
-    Eigen::VectorXd x = solver.solve(sp_bvec);
+
+
+    // t.reset(); t.start();    
+    // Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
+    // Eigen::VectorXd x = qr.solve(sp_bvec);
+
+    // t.stop();
+    // std::cout << "sqr   : " << qr.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+
+    t.reset(); t.start();
+    Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
+    x.setZero(); x = ldlt.solve(AtB);
+    t.stop();
+    //std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+  
+  
+    // t.reset(); t.start();
+    // Eigen::ConjugateGradient<SpMat> cg(AtA);
+    // cg.setTolerance(eps10);
+    // cg.setMaxIterations(10000000);
+    // x.setZero(); x = cg.solve(AtB);
+    // t.stop();
+    // std::cout << "cg    : " << cg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+  
+    // t.reset(); t.start();
+    // Eigen::LeastSquaresConjugateGradient<SpMat> lscg(sp_mat);
+    // lscg.setTolerance(eps10);
+    // lscg.setMaxIterations(10000000);
+    // x.setZero(); x = lscg.solve(sp_bvec);
+
+    // t.stop();
+    // std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+  
+    // t.reset(); t.start();
+    // Eigen::BiCGSTAB<SpMat> bicg(AtA);
+    // bicg.setTolerance(eps10);
+    // bicg.setMaxIterations(10000000);
+    // x.setZero(); x = bicg.solve(AtB);
+    // t.stop();
+    // std::cout << "bicg    : " << bicg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+  
+
     Eigen::VectorXd res = sp_bvec - sp_mat * x;
     auto res2norm = res.squaredNorm();
     auto nparams = x.size();
@@ -1358,7 +1410,7 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
         param_irred[i] = x(i);
     }
 
-    if (solver.info() == Eigen::Success) {
+    if (ldlt.info() == Eigen::Success) {
     // Recover reducible set of force constants
 
         recover_original_forceconstants(maxorder,
@@ -1378,8 +1430,8 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
 
     } else {
 
-        std::cerr << "  Fitting by sparseQR failed." << std::endl;
-        std::cerr << solver.info() << std::endl;
+        std::cerr << "  Fitting by LDLT failed." << std::endl;
+        std::cerr << ldlt.info() << std::endl;
 
         return 1;
     }
