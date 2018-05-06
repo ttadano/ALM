@@ -818,9 +818,14 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
                     for (j = 0; j < constraint->const_relate[order][i].alpha.size(); ++j) {
 
+                     //   std::cout << "iold = " << iold;
+
                         inew = constraint->index_bimap[order].right.at(
                                 constraint->const_relate[order][i].p_index_orig[j]) +
                             iparam;
+
+
+//                        std::cout << " inew = " << inew << std::endl;
 
                         for (k = 0; k < natmin3; ++k) {
                             amat_mod_tmp[k][inew] -= amat_orig_tmp[k][iold]
@@ -828,6 +833,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                         }
                     }
                 }
+//                std::cout << "OK" << std::endl;
 
                 ishift += fcs->nequiv[order].size();
                 iparam += constraint->index_bimap[order].size();

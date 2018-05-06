@@ -20,6 +20,9 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
+#include <map>
+
+typedef std::vector<std::map<unsigned int, double>> ConstraintSparseForm;
 
 namespace ALM_NS
 {
@@ -138,6 +141,11 @@ namespace ALM_NS
             return true;
     }
 
+    inline bool operator<(const std::map<unsigned int, double> &obj1, 
+                          const std::map<unsigned int, double> &obj2) {
+                return obj1.begin()->first < obj2.begin()->first;
+    }
+
     class Constraint
     {
     public:
@@ -212,6 +220,7 @@ namespace ALM_NS
                         double,
                         int &);
 
+
         void remove_redundant_rows(int,
                                    std::vector<ConstraintClass> &,
                                    double tolerance = eps12);
@@ -240,7 +249,7 @@ namespace ALM_NS
                                         int,
                                         const std::vector<FcProperty> &,
                                         int,
-                                        std::vector<ConstraintClass> &);
+                                        ConstraintSparseForm &);
 
         void generate_translational_constraint(const Cell &,
                                                Symmetry *,

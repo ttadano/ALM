@@ -26,13 +26,11 @@
 #include <boost/bimap.hpp>
 #include <algorithm>
 #include <unordered_set>
+#include <map>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-
-#include <Eigen/SparseCore>
-#include <Eigen/SparseQR>
 
 using namespace ALM_NS;
 
@@ -700,6 +698,8 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
             continue;
         }
 
+       ConstraintSparseForm const_sparse_tmp;
+
         get_constraint_translation2(supercell,
                                    symmetry,
                                    interaction,
@@ -707,7 +707,18 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
                                    order,
                                    fcs->fc_table[order],
                                    fcs->nequiv[order].size(),
-                                   const_out[order]);
+                                   const_sparse_tmp);
+
+        std::vector<double> arr(nparams);
+        // This is a tentative change. 
+        for (const auto &it : const_sparse_tmp) {
+            for (int i = 0; i < nparams; ++i) arr[i] = 0.0;
+            for (const auto &it2 : it) {
+                arr[it2.first] = it2.second;
+            }
+            const_out[order].emplace_back(arr);
+        }
+        const_sparse_tmp.clear();
 
         if (verbosity > 0) std::cout << " done." << std::endl;
     }
@@ -977,7 +988,6 @@ void Constraint::get_constraint_translation(const Cell &supercell,
 }
 
 
-
 void Constraint::get_constraint_translation2(const Cell &supercell,
                                             Symmetry *symmetry,
                                             Interaction *interaction,
@@ -985,7 +995,7 @@ void Constraint::get_constraint_translation2(const Cell &supercell,
                                             const int order,
                                             const std::vector<FcProperty> &fc_table,
                                             const int nparams,
-                                            std::vector<ConstraintClass> &const_out)
+                                            ConstraintSparseForm &const_out)
 {
     // Generate equality constraint for the acoustic sum rule.
 
@@ -1014,9 +1024,8 @@ void Constraint::get_constraint_translation2(const Cell &supercell,
     std::vector<std::vector<int>> const_mat;
 
     typedef std::vector<ConstraintIntegerElement> ConstEntry;
-
-
     std::vector<ConstEntry> constraint_all;
+
     ConstEntry const_tmp;
 
     if (order < 0) return;
@@ -1231,83 +1240,38 @@ void Constraint::get_constraint_translation2(const Cell &supercell,
 
             intlist.clear();
         } // close if
-
-        std::cout << constraint_all.size() << std::endl;
     } // close loop i
 
     deallocate(xyzcomponent);
     deallocate(intarr);
     deallocate(intarr_copy);
 
-    // for (const auto &it : constraint_all) {
-    //     for (const auto &it2 : it) {
-    //         std::cout << "(" << std::setw(5) << it2.col << std::setw(5) << it2.val << "), ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-    std::cout << "Original size = " <<  constraint_all.size() << std::endl;
     std::sort(constraint_all.begin(), constraint_all.end());
+    constraint_all.erase(std::unique(constraint_all.begin(), 
+                                     constraint_all.end()), 
+                                     constraint_all.end());
 
-    // std::cout << "AFTER SORT" << std::endl;
-
-    // for (const auto &it : constraint_all) {
-    //     for (const auto &it2 : it) {
-    //         std::cout << "(" << std::setw(5) << it2.col << std::setw(5) << it2.val << "), ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-
-
-    constraint_all.erase(std::unique(constraint_all.begin(), constraint_all.end()), constraint_all.end());
-    // std::cout << "AFTER SORT & UNIQUE" << std::endl;
-
-    // for (const auto &it : constraint_all) {
-    //     for (const auto &it2 : it) {
-    //         std::cout << "(" << std::setw(5) << it2.col << std::setw(5) << it2.val << "), ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-
-    std::cout << "Reduced size = " <<  constraint_all.size() << std::endl;
-
-
-    int nrows = constraint_all.size();
-    int ncols = nparams;
-
-    Eigen::SparseMatrix<double, Eigen::RowMajor> mat(nrows, ncols);
-    int nonzeros = 0;
-    for (i = 0; i < nrows; ++i) {
-        for (const auto &it : constraint_all[i]) {
-            mat.insert(i, it.col) = static_cast<double>(it.val);
-            ++nonzeros;
-        }
-    }
-
-    std::cout << "Number of nonzero elements : " << nonzeros << std::endl;
-    std::cout << "Sart compression" << std::endl;
-    mat.makeCompressed();
-    std::cout << "SparseQR start" << std::endl;
-    Eigen::SparseQR<Eigen::SparseMatrix<double, Eigen::RowMajor>, Eigen::COLAMDOrdering<int>> qr(mat);
-//    solver.compute(mat);
-
-    std::cout << "nrank = " << qr.rank() << std::endl;
-
-
-
+    typedef std::map<unsigned int, double> ConstDoubleEntry;
+    ConstDoubleEntry const_tmp2;
+    double division_factor;
+    int counter;
     const_out.clear();
-    allocate(arr_constraint, nparams);
-    for (auto it = const_mat.rbegin(); it != const_mat.rend(); ++it) {
-        for (i = 0; i < (*it).size(); ++i) {
-            arr_constraint[i] = static_cast<double>((*it)[i]);
-        }
-        const_out.emplace_back(ConstraintClass(nparams,
-                                               arr_constraint));
-    }
-    deallocate(arr_constraint);
-    const_mat.clear();
 
-    // Transform the matrix into the reduced row echelon form
-    remove_redundant_rows(nparams, const_out, eps8);
+    for (const auto &it : constraint_all) {
+        const_tmp2.clear();
+        counter = 0;
+        for (const auto &it2 : it) {
+            if (counter == 0) {
+                division_factor = 1.0 / it2.val;
+            }
+            const_tmp2[it2.col] = it2.val * division_factor;
+            ++counter;
+        }
+        const_out.emplace_back(const_tmp2);
+    }
+    constraint_all.clear();
+
+    rref_sparse(nparams, const_out, eps8);
 }
 
 void Constraint::generate_rotational_constraint(System *system,
