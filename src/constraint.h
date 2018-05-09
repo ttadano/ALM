@@ -140,6 +140,56 @@ namespace ALM_NS
             return true;
     }
 
+    class ConstraintDoubleElement
+    {
+        // For sparse representation
+    public:
+        unsigned int col;
+        double val;
+
+        ConstraintDoubleElement(const unsigned int col_in,
+                                const double val_in) : 
+                                 col(col_in), val(val_in) {}
+    };
+    // Operator for sort 
+    inline bool operator<(const std::vector<ConstraintDoubleElement> &obj1, 
+                          const std::vector<ConstraintDoubleElement> &obj2) {
+                
+                const int len1 = obj1.size();
+                const int len2 = obj2.size();
+                const int min = std::min(len1, len2);
+
+                for (int i = 0; i < min; ++i) {
+                    if (obj1[i].col < obj2[i].col) {
+                        return true;
+                    } else if (obj1[i].col > obj2[i].col) {
+                        return false;
+                    } else {
+                        if (obj1[i].val < obj2[i].val) {
+                            return true;
+                        } else if (obj1[i].val > obj2[i].val) {
+                            return false;
+                        }
+                    }
+                }
+                return false;
+    }
+    // Operator for unique
+    inline bool operator==(const std::vector<ConstraintDoubleElement> &obj1, 
+                           const std::vector<ConstraintDoubleElement> &obj2) {
+            
+            const int len1 = obj1.size();
+            const int len2 = obj2.size();
+            if (len1 != len2) return false;
+
+            for (int i = 0; i < len1; ++i) {
+                if (obj1[i].col != obj2[i].col || (std::abs(obj1[i].val - obj2[i].val) < 1.0e-12)) {
+                    return false;
+                } 
+            }
+            return true;
+    }
+
     inline bool operator<(const std::map<unsigned int, double> &obj1, 
                           const std::map<unsigned int, double> &obj2) {
                 return obj1.begin()->first < obj2.begin()->first;

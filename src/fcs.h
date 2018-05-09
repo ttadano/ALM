@@ -15,7 +15,11 @@
 #include "interaction.h"
 #include <vector>
 #include <set>
+#include <map>
 #include <algorithm>
+
+typedef std::vector<std::map<unsigned int, double>> ConstraintSparseForm;
+
 
 namespace ALM_NS
 {
@@ -118,6 +122,16 @@ namespace ALM_NS
                                      int,
                                      double,
                                      std::vector<std::vector<double>> &);
+
+        void get_constraint_symmetry2(int,
+                                     Symmetry *,
+                                     int,
+                                     const std::set<IntList> &,
+                                     std::string,
+                                     const std::vector<FcProperty> &,
+                                     int,
+                                     double,
+                                     ConstraintSparseForm &);
 
     private:
         bool store_zeros;

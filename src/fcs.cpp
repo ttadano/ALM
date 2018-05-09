@@ -11,6 +11,7 @@
 #include "fcs.h"
 #include "alm.h"
 #include "constants.h"
+#include "constraint.h"
 #include "error.h"
 #include "interaction.h"
 #include "mathfunctions.h"
@@ -485,6 +486,211 @@ void Fcs::get_constraint_symmetry(const int nat,
 
     remove_redundant_rows(nparams, const_out, tolerance);
 }
+
+
+void Fcs::get_constraint_symmetry2(const int nat,
+                                  Symmetry *symmetry,
+                                  const int order,
+                                  const std::set<IntList> &pairs,
+                                  const std::string basis,
+                                  const std::vector<FcProperty> &fc_table,
+                                  const int nparams,
+                                  const double tolerance,
+                                  ConstraintSparseForm &const_out)
+{
+    // Create constraint matrices arising from the crystal symmetry.
+    // Necessary for hexagonal systems.
+
+    int i, j;
+    unsigned int isym;
+    int ixyz, nxyz;
+    int *index_tmp;
+    int **xyzcomponent;
+    int nsym_in_use;
+    std::unordered_set<FcProperty> list_found;
+
+    typedef std::vector<ConstraintDoubleElement> ConstEntry;
+    std::vector<ConstEntry> constraint_all;
+    ConstEntry const_tmp;
+
+    int **map_sym;
+    double ***rotation;
+
+    if (order < 0) return;
+
+    int nsym = symmetry->SymmData.size();
+    int natmin = symmetry->nat_prim;
+    int nfcs = fc_table.size();
+    bool use_compatible = false;
+
+    if (nparams == 0) return;
+
+    allocate(rotation, nsym, 3, 3);
+    allocate(map_sym, nat, nsym);
+    allocate(index_tmp, order + 2);
+
+    nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 2));
+    allocate(xyzcomponent, nxyz, order + 2);
+    get_xyzcomponent(order + 2, xyzcomponent);
+
+    const_out.clear();
+
+    get_available_symmop(nat,
+                         symmetry,
+                         basis,
+                         nsym_in_use,
+                         map_sym,
+                         rotation,
+                         use_compatible);
+
+    // Generate temporary list of parameters
+    list_found.clear();
+    for (const auto &p : fc_table) {
+        for (i = 0; i < order + 2; ++i) index_tmp[i] = p.elems[i];
+        list_found.insert(FcProperty(order + 2, p.sign,
+                                     index_tmp, p.mother));
+    }
+
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+    {
+        int j;
+        int i_prim;
+        int loc_nonzero;
+        int *ind;
+        int *atm_index, *atm_index_symm;
+        int *xyz_index;
+        double c_tmp;
+
+        std::unordered_set<FcProperty>::iterator iter_found;
+        std::vector<double> const_now_omp;
+        std::vector<std::vector<double>> const_omp;
+
+        ConstEntry const_tmp_omp;
+        std::vector<ConstEntry> constraint_list_omp;
+
+        allocate(ind, order + 2);
+        allocate(atm_index, order + 2);
+        allocate(atm_index_symm, order + 2);
+        allocate(xyz_index, order + 2);
+
+        const_omp.clear();
+        const_now_omp.resize(nparams);
+
+#ifdef _OPENMP
+#pragma omp for private(i, isym, ixyz), schedule(static)
+#endif
+        for (int ii = 0; ii < nfcs; ++ii) {
+            FcProperty list_tmp = fc_table[ii];
+
+            for (i = 0; i < order + 2; ++i) {
+                atm_index[i] = list_tmp.elems[i] / 3;
+                xyz_index[i] = list_tmp.elems[i] % 3;
+            }
+
+            for (isym = 0; isym < nsym_in_use; ++isym) {
+
+                for (i = 0; i < order + 2; ++i)
+                    atm_index_symm[i] = map_sym[atm_index[i]][isym];
+                if (!is_inprim(order + 2, atm_index_symm, natmin, symmetry->map_p2s)) continue;
+
+                for (i = 0; i < nparams; ++i) const_now_omp[i] = 0.0;
+
+                const_now_omp[list_tmp.mother] = -list_tmp.sign;
+
+                for (ixyz = 0; ixyz < nxyz; ++ixyz) {
+                    for (i = 0; i < order + 2; ++i)
+                        ind[i] = 3 * atm_index_symm[i] + xyzcomponent[ixyz][i];
+
+                    i_prim = get_minimum_index_in_primitive(order + 2, ind, nat, natmin, symmetry->map_p2s);
+                    std::swap(ind[0], ind[i_prim]);
+                    sort_tail(order + 2, ind);
+
+                    iter_found = list_found.find(FcProperty(order + 2, 1.0, ind, 1));
+                    if (iter_found != list_found.end()) {
+                        c_tmp = coef_sym(order + 2, rotation[isym], xyz_index, xyzcomponent[ixyz]);
+                        const_now_omp[(*iter_found).mother] += (*iter_found).sign * c_tmp;
+                    }
+                }
+                // Comment out for debug
+                if (!is_allzero(const_now_omp, eps8, loc_nonzero)) {
+                    if (const_now_omp[loc_nonzero] < 0.0) {
+                        for (j = 0; j < nparams; ++j) const_now_omp[j] *= -1.0;
+                    }
+                    
+                    const_tmp_omp.clear();
+                    for (j = 0; j < nparams; ++j) {
+                        if (std::abs(const_now_omp[j]) > tolerance) {
+                            const_tmp_omp.emplace_back(j, const_now_omp[j]);
+                        }
+                    }
+                    constraint_list_omp.emplace_back(const_tmp_omp);
+
+//                    const_omp.push_back(const_now_omp);
+                }
+
+            } // close isym loop
+
+//            if (const_omp.size() > nparams) rref(const_omp, tolerance);
+
+        } // close ii loop
+
+        deallocate(ind);
+        deallocate(atm_index);
+        deallocate(atm_index_symm);
+        deallocate(xyz_index);
+
+#pragma omp critical
+        {
+            // for (auto &it : const_omp) {
+            //     const_out.push_back(it);
+            // }
+
+            for (const auto &it : constraint_list_omp) {
+                constraint_all.emplace_back(it);
+            }
+        }
+        constraint_list_omp.clear();
+//        const_omp.clear();
+    } // close openmp region
+
+    deallocate(xyzcomponent);
+    deallocate(index_tmp);
+    deallocate(rotation);
+    deallocate(map_sym);
+
+    std::sort(constraint_all.begin(), constraint_all.end());
+    constraint_all.erase(std::unique(constraint_all.begin(), 
+                                     constraint_all.end()), 
+                                     constraint_all.end());
+
+    typedef std::map<unsigned int, double> ConstDoubleEntry;
+    ConstDoubleEntry const_tmp2;
+    double division_factor;
+    int counter;
+    const_out.clear();
+
+    for (const auto &it : constraint_all) {
+        const_tmp2.clear();
+        counter = 0;
+        for (const auto &it2 : it) {
+            if (counter == 0) {
+                division_factor = 1.0 / it2.val;
+            }
+            const_tmp2[it2.col] = it2.val * division_factor;
+            ++counter;
+        }
+        const_out.emplace_back(const_tmp2);
+    }
+    constraint_all.clear();
+
+    rref_sparse(nparams, const_out, eps8);
+
+//    remove_redundant_rows(nparams, const_out, tolerance);
+}
+
 
 
 void Fcs::get_available_symmop(const int nat,
