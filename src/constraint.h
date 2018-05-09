@@ -87,7 +87,6 @@ namespace ALM_NS
         for (int i = 0; i < n; ++i) {
             if (std::abs(a[i] - b[i]) > eps12) return false;
         }
-        //        if (std::sqrt(res)>eps12) return false;
         return true;
     }
 
@@ -102,7 +101,7 @@ namespace ALM_NS
                                  const int val_in) : 
                                  col(col_in), val(val_in) {}
     };
-
+    // Operator for sort 
     inline bool operator<(const std::vector<ConstraintIntegerElement> &obj1, 
                           const std::vector<ConstraintIntegerElement> &obj2) {
                 
@@ -125,9 +124,9 @@ namespace ALM_NS
                 }
                 return false;
     }
-
+    // Operator for unique
     inline bool operator==(const std::vector<ConstraintIntegerElement> &obj1, 
-                        const std::vector<ConstraintIntegerElement> &obj2) {
+                           const std::vector<ConstraintIntegerElement> &obj2) {
             
             const int len1 = obj1.size();
             const int len2 = obj2.size();

@@ -342,6 +342,7 @@ void Fcs::get_constraint_symmetry(const int nat,
                                   std::vector<std::vector<double>> &const_out)
 {
     // Create constraint matrices arising from the crystal symmetry.
+    // Necessary for hexagonal systems.
 
     int i, j;
     unsigned int isym;
