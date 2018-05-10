@@ -30,8 +30,9 @@
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
 #include <Eigen/SparseQR>
-#include <unsupported/Eigen/SparseExtra>
-#include <bench/BenchTimer.h>
+#include <Eigen/SparseCholesky>
+//#include <unsupported/Eigen/SparseExtra>
+//#include <bench/BenchTimer.h>
 #endif
 
 using namespace ALM_NS;
@@ -1346,7 +1347,7 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
                                 Constraint *constraint,
                                 const int verbosity)
 {
-    Eigen::BenchTimer t;
+//    Eigen::BenchTimer t;
 
     typedef Eigen::SparseMatrix<double> SpMat;
     SpMat AtA;
@@ -1368,10 +1369,10 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
     // t.stop();
     // std::cout << "sqr   : " << qr.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
-    t.reset(); t.start();
+//    t.reset(); t.start();
     Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
     x.setZero(); x = ldlt.solve(AtB);
-    t.stop();
+//    t.stop();
     //std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
   
   

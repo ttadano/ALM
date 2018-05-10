@@ -65,15 +65,24 @@ class ALM:
             np.array(u, dtype='double', order='C'),
             np.array(f, dtype='double', order='C'))
 
-    def find_force_constant(self, norder, rcs, nbody = []):
-        # TODO: support nbody option
+    def find_force_constant(self, norder, rcs, nbody = None):
         if self._id is None:
             self._show_error_message()
 
+        if nbody is None:
+            nbody = []
+            for i in range(norder):
+                nbody.append(i + 2)
+        
+        else:
+            if len(nbody) != norder:
+                raise("The size of nbody must be equal to norder.")
+        
         self._norder = norder
         self._set_norder()
         alm.set_cutoff_radii(self._id,
                              np.array(rcs, dtype='double', order='C'))
+        alm.set_nbody_rule(self._id, np.array(nbody, dtype='intc'))
 
         alm.generate_force_constant(self._id)
 

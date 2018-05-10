@@ -20,6 +20,7 @@ static PyObject * py_get_ndata_used(PyObject *self, PyObject *args);
 static PyObject * py_set_constraint_type(PyObject *self, PyObject *args);
 static PyObject * py_set_norder(PyObject *self, PyObject *args);
 static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args);
+static PyObject * py_set_nbody_rule(PyObject *self, PyObject *args);
 static PyObject * py_generate_force_constant(PyObject *self, PyObject *args);
 static PyObject * py_get_atom_mapping_by_pure_translations
 (PyObject *self, PyObject *args);
@@ -65,6 +66,7 @@ static PyMethodDef _alm_methods[] = {
   {"set_constraint_type", py_set_constraint_type, METH_VARARGS, ""},
   {"set_norder", py_set_norder, METH_VARARGS, ""},
   {"set_cutoff_radii", py_set_cutoff_radii, METH_VARARGS, ""},
+  {"set_nbody_rule", py_set_nbody_rule, METH_VARARGS, ""},
   {"generate_force_constant", py_generate_force_constant, METH_VARARGS, ""},
   {"get_atom_mapping_by_pure_translations", py_get_atom_mapping_by_pure_translations,
    METH_VARARGS, ""},
@@ -294,6 +296,23 @@ static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args)
   double *rcs = (double(*))PyArray_DATA(py_rcs);
 
   alm_set_cutoff_radii(id, rcs);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_set_nbody_rule(PyObject *self, PyObject *args)
+{
+  int id;
+  PyArrayObject* py_nbody;
+  if (!PyArg_ParseTuple(args, "iO",
+                              &id,
+                              &py_nbody)) {
+    return NULL;
+  }
+
+  int *nbody = (int(*))PyArray_DATA(py_nbody);
+
+  alm_set_nbody_include(id, nbody);
 
   Py_RETURN_NONE;
 }
