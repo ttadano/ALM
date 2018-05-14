@@ -20,7 +20,6 @@ void remove_redundant_rows(const int n,
     int nrank;
 
     if (nconst > 0) {
-
         allocate(mat_tmp, nconst, nparam);
 
         for (i = 0; i < nconst; ++i) {
@@ -34,20 +33,24 @@ void remove_redundant_rows(const int n,
         constraint_mat.clear();
 
         for (i = 0; i < nrank; ++i) {
-            for (j = 0; j < i; ++j) arr_tmp[j] = 0.0;
-
-            for (j = i; j < nparam; ++j) {
+            for (j = 0; j < nparam; ++j) arr_tmp[j] = 0.0;
+            int iloc = -1;
+            for (j = 0; j < nparam; ++j) {
                 if (std::abs(mat_tmp[i][j]) < tolerance) {
                     arr_tmp[j] = 0.0;
                 } else {
                     arr_tmp[j] = mat_tmp[i][j];
                 }
+
+                if (std::abs(arr_tmp[j]) >= tolerance) {
+                    iloc = j;
+                }
             }
-            constraint_mat.push_back(arr_tmp);
+            if (iloc != -1) {
+                constraint_mat.push_back(arr_tmp);
+            }           
         }
-
         deallocate(mat_tmp);
-
     }
 }
 

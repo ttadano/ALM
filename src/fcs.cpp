@@ -615,14 +615,14 @@ void Fcs::get_constraint_symmetry2(const int nat,
                     }
                 }
                 // Comment out for debug
-                if (!is_allzero(const_now_omp, eps8, loc_nonzero)) {
+                if (!is_allzero(const_now_omp, tolerance, loc_nonzero)) {
                     if (const_now_omp[loc_nonzero] < 0.0) {
                         for (j = 0; j < nparams; ++j) const_now_omp[j] *= -1.0;
                     }
                     
                     const_tmp_omp.clear();
                     for (j = 0; j < nparams; ++j) {
-                        if (std::abs(const_now_omp[j]) > tolerance) {
+                        if (std::abs(const_now_omp[j]) >= tolerance) {
                             const_tmp_omp.emplace_back(j, const_now_omp[j]);
                         }
                     }
@@ -686,9 +686,7 @@ void Fcs::get_constraint_symmetry2(const int nat,
     }
     constraint_all.clear();
 
-    rref_sparse(nparams, const_out, eps8);
-
-//    remove_redundant_rows(nparams, const_out, tolerance);
+    rref_sparse(nparams, const_out, tolerance);
 }
 
 

@@ -282,15 +282,6 @@ namespace ALM_NS
                                                        const int,
                                                        std::vector<ConstraintClass> *);
 
-        void get_constraint_translation(const Cell &,
-                                        Symmetry *,
-                                        Interaction *,
-                                        Fcs *,
-                                        int,
-                                        const std::vector<FcProperty> &,
-                                        int,
-                                        std::vector<ConstraintClass> &);
-
         void get_constraint_translation2(const Cell &,
                                         Symmetry *,
                                         Interaction *,
