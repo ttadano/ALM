@@ -686,7 +686,7 @@ void Fcs::get_constraint_symmetry2(const int nat,
     }
     constraint_all.clear();
 
-    rref_sparse(nparams, const_out, tolerance);
+    rref_sparse2(nparams, const_out, tolerance);
 }
 
 
