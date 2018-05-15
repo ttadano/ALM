@@ -230,7 +230,7 @@ namespace ALM_NS
 
         void get_mapping_constraint(int,
                                     std::vector<int> *,
-                                    std::vector<ConstraintClass> *,
+                                    ConstraintSparseForm *,
                                     std::vector<ConstraintTypeFix> *,
                                     std::vector<ConstraintTypeRelate> *,
                                     boost::bimap<int, int> *);
@@ -242,7 +242,7 @@ namespace ALM_NS
         ConstraintSparseForm *const_translation;
         ConstraintSparseForm *const_rotation_self;
         ConstraintSparseForm *const_rotation_cross;
-        std::vector<ConstraintClass> *const_self;
+        ConstraintSparseForm *const_self;
 
         void set_default_variables();
         void deallocate_variables();

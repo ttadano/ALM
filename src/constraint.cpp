@@ -216,9 +216,9 @@ void Constraint::setup(ALM *alm)
                                               const_symmetry);
 
 
-    for (auto i = 0; i < maxorder; ++i) {
-        print_constraint(const_symmetry[i]);
-    }
+    // for (auto i = 0; i < maxorder; ++i) {
+    //     print_constraint(const_symmetry[i]);
+    // }
 
     extra_constraint_from_symmetry = false;
 
@@ -234,9 +234,9 @@ void Constraint::setup(ALM *alm)
                                           alm->verbosity,
                                           const_translation);
 
-        for (auto i = 0; i < maxorder; ++i) {
-            print_constraint(const_translation[i]);
-        }
+        // for (auto i = 0; i < maxorder; ++i) {
+        //     print_constraint(const_translation[i]);
+        // }
     }
 
     if (impose_inv_R) {
@@ -249,21 +249,21 @@ void Constraint::setup(ALM *alm)
                                        const_rotation_self,
                                        const_rotation_cross);
 
-        std::cout << "CONST ROTATION SELF " << std::endl;
-        for (auto i = 0; i < maxorder; ++i) {
-            print_constraint(const_rotation_self[i]);
-        }
+        // std::cout << "CONST ROTATION SELF " << std::endl;
+        // for (auto i = 0; i < maxorder; ++i) {
+        //     print_constraint(const_rotation_self[i]);
+        // }
 
-        std::cout << "CONST ROTATION CROSS " << std::endl;
-        for (auto i = 0; i < maxorder; ++i) {
-            print_constraint(const_rotation_cross[i]);
-        }
+        // std::cout << "CONST ROTATION CROSS " << std::endl;
+        // for (auto i = 0; i < maxorder; ++i) {
+        //     print_constraint(const_rotation_cross[i]);
+        // }
 
     }
 
     // Merge intra-order constrants and do reduction 
 
-    /*  for (int order = 0; order < maxorder; ++order) {
+      for (int order = 0; order < maxorder; ++order) {
   
           int nparam = alm->fcs->nequiv[order].size();
   
@@ -276,22 +276,22 @@ void Constraint::setup(ALM *alm)
                                    const_translation[order].begin(),
                                    const_translation[order].end());
   
-          if (const_symmetry[order].size() > 0) {
+          if (!const_symmetry[order].empty()) {
               const_self[order].insert(const_self[order].end(),
                                        const_symmetry[order].begin(),
                                        const_symmetry[order].end());
-              std::cout << "const_self.size() = " << const_self[order].size() << std::endl;
-              remove_redundant_rows(nparam, const_self[order], tolerance_constraint);
-              std::cout << "New const_self.size() = " << const_self[order].size() << std::endl;
+              rref_sparse(nparam, const_self[order], tolerance_constraint);
+          //    remove_redundant_rows(nparam, const_self[order], tolerance_constraint);
           }
   
-          if (const_rotation_self[order].size() > 0) {
+          if (!const_rotation_self[order].empty()) {
               const_self[order].insert(const_self[order].end(),
                                        const_rotation_self[order].begin(),
                                        const_rotation_self[order].end());
-              remove_redundant_rows(nparam, const_self[order], tolerance_constraint);
+              rref_sparse(nparam, const_self[order], tolerance_constraint);
+          //    remove_redundant_rows(nparam, const_self[order], tolerance_constraint);
           }
-      }*/
+      }
 
     get_mapping_constraint(maxorder,
                            alm->fcs->nequiv,
@@ -330,10 +330,10 @@ void Constraint::setup(ALM *alm)
         }
         allocate(const_rhs, Pmax);
 
-        //calc_constraint_matrix(maxorder,
-        //                       alm->fcs->nequiv,
-        //                       nparams,
-        //                       number_of_constraints);
+        calc_constraint_matrix(maxorder,
+                              alm->fcs->nequiv,
+                              nparams,
+                              number_of_constraints);
     }
 
     exist_constraint
@@ -428,123 +428,125 @@ void Constraint::setup(ALM *alm)
     alm->timer->stop_clock("constraint");
 }
 
-//void Constraint::calc_constraint_matrix(const int maxorder,
-//                                        std::vector<int> *nequiv,
-//                                        const int nparams,
-//                                        int &nconst)
-//{
-//    int i, j;
-//    int order;
-//    double *arr_tmp;
-//    std::vector<ConstraintClass> const_total;
-//
-//    const_total.clear();
-//    allocate(arr_tmp, nparams);
-//
-//    int nshift = 0;
-//
-//    for (order = 0; order < maxorder; ++order) {
-//        int nelems = nequiv[order].size();
-//
-//        if (const_fix[order].empty()) {
-//
-//            for (i = 0; i < nparams; ++i) arr_tmp[i] = 0.0;
-//
-//            for (auto &p : const_self[order]) {
-//                for (i = 0; i < nelems; ++i) {
-//                    arr_tmp[nshift + i] = p.w_const[i];
-//                }
-//                const_total.emplace_back(nparams, arr_tmp);
-//            }
-//        }
-//        nshift += nelems;
-//    }
-//
-//
-//    auto nconst1 = const_total.size();
-//
-//    // Inter-order constraints
-//    int nshift2 = 0;
-//    for (order = 0; order < maxorder; ++order) {
-//        if (order > 0) {
-//            int nparam2 = nequiv[order - 1].size() + nequiv[order].size();
-//
-//            if (const_fix[order - 1].empty() && const_fix[order].empty()) {
-//
-//                for (i = 0; i < nparams; ++i) arr_tmp[i] = 0.0;
-//
-//                for (auto &p : const_rotation_cross[order]) {
-//                    for (i = 0; i < nparam2; ++i) {
-//                        arr_tmp[nshift2 + i] = p.w_const[i];
-//                    }
-//                    const_total.emplace_back(nparams, arr_tmp);
-//                }
-//            }
-//
-//            nshift2 += nequiv[order - 1].size();
-//        }
-//    }
-//    deallocate(arr_tmp);
-//
-//    if (nconst1 != const_total.size())
-//        remove_redundant_rows(nparams, const_total, tolerance_constraint);
-//
-//    nconst = const_total.size();
-//
-//    if (fix_harmonic) nconst += nequiv[0].size();
-//    if (fix_cubic) nconst += nequiv[1].size();
-//
-//    for (i = 0; i < nconst; ++i) {
-//        for (j = 0; j < nparams; ++j) {
-//            const_mat[i][j] = 0.0;
-//        }
-//        const_rhs[i] = 0.0;
-//    }
-//
-//    int irow = 0;
-//    int icol = 0;
-//    int ishift = 0;
-//
-//    if (fix_harmonic) {
-//
-//        for (const auto &p : const_fix[0]) {
-//            i = p.p_index_target;
-//            const_mat[i][i] = 1.0;
-//            const_rhs[i] = p.val_to_fix;
-//        }
-//
-//        irow += const_fix[0].size();
-//        icol += const_fix[0].size();
-//        ishift += const_fix[0].size();
-//    }
-//
-//    if (fix_cubic && maxorder > 1) {
-//
-//        int ishift2 = nequiv[0].size();
-//
-//        for (const auto &p : const_fix[1]) {
-//            i = p.p_index_target;
-//            const_mat[i + ishift][i + ishift2] = 1.0;
-//            const_rhs[i + ishift] = p.val_to_fix;
-//        }
-//
-//        irow += const_fix[1].size();
-//        icol += const_fix[1].size();
-//    }
-//
-//    for (auto &p : const_total) {
-//        for (i = 0; i < nparams; ++i) {
-//            const_mat[irow][i] = p.w_const[i];
-//        }
-//        ++irow;
-//    }
-//    const_total.clear();
-//}
+void Constraint::calc_constraint_matrix(const int maxorder,
+                                       std::vector<int> *nequiv,
+                                       const int nparams,
+                                       int &nconst)
+{
+   int i, j;
+   int order;
+   double *arr_tmp;
+   std::vector<ConstraintClass> const_total;
+
+   const_total.clear();
+   allocate(arr_tmp, nparams);
+
+   int nshift = 0;
+
+   for (order = 0; order < maxorder; ++order) {
+       int nelems = nequiv[order].size();
+
+       if (const_fix[order].empty()) {
+           for (auto &p : const_self[order]) {
+               for (i = 0; i < nparams; ++i) arr_tmp[i] = 0.0;
+               for (const auto &it : p) {
+                   arr_tmp[nshift + it.first] = it.second;
+               }
+            //    for (i = 0; i < nelems; ++i) {
+            //        arr_tmp[nshift + i] = p.w_const[i];
+            //    }
+               const_total.emplace_back(nparams, arr_tmp);
+           }
+       }
+       nshift += nelems;
+   }
+
+
+   auto nconst1 = const_total.size();
+
+   // Inter-order constraints
+   int nshift2 = 0;
+   for (order = 0; order < maxorder; ++order) {
+       if (order > 0) {
+           int nparam2 = nequiv[order - 1].size() + nequiv[order].size();
+
+           if (const_fix[order - 1].empty() && const_fix[order].empty()) {
+               for (auto &p : const_rotation_cross[order]) {
+                   for (i = 0; i < nparams; ++i) arr_tmp[i] = 0.0;
+                   for (const auto &it : p) {
+                       arr_tmp[nshift2 + it.first] = it.second;
+                   }
+                //    for (i = 0; i < nparam2; ++i) {
+                //        arr_tmp[nshift2 + i] = p.w_const[i];
+                //    }
+                   const_total.emplace_back(nparams, arr_tmp);
+               }
+           }
+
+           nshift2 += nequiv[order - 1].size();
+       }
+   }
+   deallocate(arr_tmp);
+
+   if (nconst1 != const_total.size())
+       remove_redundant_rows(nparams, const_total, tolerance_constraint);
+
+   nconst = const_total.size();
+
+   if (fix_harmonic) nconst += nequiv[0].size();
+   if (fix_cubic) nconst += nequiv[1].size();
+
+   for (i = 0; i < nconst; ++i) {
+       for (j = 0; j < nparams; ++j) {
+           const_mat[i][j] = 0.0;
+       }
+       const_rhs[i] = 0.0;
+   }
+
+   int irow = 0;
+   int icol = 0;
+   int ishift = 0;
+
+   if (fix_harmonic) {
+
+       for (const auto &p : const_fix[0]) {
+           i = p.p_index_target;
+           const_mat[i][i] = 1.0;
+           const_rhs[i] = p.val_to_fix;
+       }
+
+       irow += const_fix[0].size();
+       icol += const_fix[0].size();
+       ishift += const_fix[0].size();
+   }
+
+   if (fix_cubic && maxorder > 1) {
+
+       int ishift2 = nequiv[0].size();
+
+       for (const auto &p : const_fix[1]) {
+           i = p.p_index_target;
+           const_mat[i + ishift][i + ishift2] = 1.0;
+           const_rhs[i + ishift] = p.val_to_fix;
+       }
+
+       irow += const_fix[1].size();
+       icol += const_fix[1].size();
+   }
+
+   for (auto &p : const_total) {
+       for (i = 0; i < nparams; ++i) {
+           const_mat[irow][i] = p.w_const[i];
+       }
+       ++irow;
+   }
+   const_total.clear();
+}
 
 
 void Constraint::get_mapping_constraint(const int nmax,
                                         std::vector<int> *nequiv,
-                                        std::vector<ConstraintClass> *const_in,
+                                        ConstraintSparseForm *const_in,
                                         std::vector<ConstraintTypeFix> *const_fix_out,
                                         std::vector<ConstraintTypeRelate> *const_relate_out,
                                         boost::bimap<int, int> *index_bimap_out)
@@ -567,32 +569,42 @@ void Constraint::get_mapping_constraint(const int nmax,
             std::vector<unsigned int> p_index_tmp;
 
             for (auto p = const_in[order].rbegin(); p != const_in[order].rend(); ++p) {
-                p_index_target = -1;
-                for (i = 0; i < nparam; ++i) {
-                    if (std::abs((*p).w_const[i]) >= tolerance_constraint) {
-                        p_index_target = i;
-                        break;
-                    }
-                }
+//                p_index_target = -1;
+                // for (i = 0; i < nparam; ++i) {
+                //     if (std::abs((*p).w_const[i]) >= tolerance_constraint) {
+                //         p_index_target = i;
+                //         break;
+                //     }
+                // }
 
-                if (p_index_target == -1) {
-                    for (i = 0; i < nparam; ++i) {
-                        std::cout << std::setw(15) << (*p).w_const[i];
-                    }
-                    std::cout << std::endl;
-                    exit("get_mapping_constraint",
-                         "No finite entry found in the constraint.");
-                }
+                // if (p_index_target == -1) {
+                //     for (i = 0; i < nparam; ++i) {
+                //         std::cout << std::setw(15) << (*p).w_const[i];
+                //     }
+                //     std::cout << std::endl;
+                //     exit("get_mapping_constraint",
+                //          "No finite entry found in the constraint.");
+                // }
 
                 alpha_tmp.clear();
                 p_index_tmp.clear();
-
-                for (i = p_index_target + 1; i < nparam; ++i) {
-                    if (std::abs((*p).w_const[i]) > tolerance_constraint) {
-                        alpha_tmp.push_back((*p).w_const[i]);
-                        p_index_tmp.push_back(i);
+                int counter = 0;
+                for (auto p2 = (*p).begin(); p2 != (*p).end(); ++p2) {
+                    if (counter == 0) {
+                        p_index_target = p2->first;
+                    } else {
+                        alpha_tmp.push_back(p2->second);
+                        p_index_tmp.push_back(p2->first);
                     }
+                    ++counter;
                 }
+  
+                // for (i = p_index_target + 1; i < nparam; ++i) {
+                //     if (std::abs((*p).w_const[i]) > tolerance_constraint) {
+                //         alpha_tmp.push_back((*p).w_const[i]);
+                //         p_index_tmp.push_back(i);
+                //     }
+                // }
 
                 if (!alpha_tmp.empty()) {
                     const_relate_out[order].emplace_back(p_index_target,
@@ -1020,7 +1032,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
     }
     constraint_all.clear();
 
-    rref_sparse2(nparams, const_out, tolerance_constraint);
+    rref_sparse(nparams, const_out, tolerance_constraint);
 }
 
 void Constraint::generate_rotational_constraint(System *system,
@@ -1614,12 +1626,12 @@ void Constraint::generate_rotational_constraint(System *system,
         const_cross_vec[order].clear();
 
         //  Perform rref
-        rref_sparse2(nparams[order],
+        rref_sparse(nparams[order],
                     const_rotation_self[order],
                     tolerance);
 
         if (order > 0) {
-            rref_sparse2(nparams[order - 1] + nparams[order],
+            rref_sparse(nparams[order - 1] + nparams[order],
                         const_rotation_cross[order],
                         tolerance);
         }

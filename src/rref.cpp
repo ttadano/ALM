@@ -417,14 +417,12 @@ void rref_sparse2(const int ncols,
         }
     }
 
-    std::cout << "sp_constraint.size() = " << sp_constraint.size() << std::endl;
-    std::cout << "nrank = " << nrank << std::endl;
     // Remove emptry entries from the sp_constraint vector
     sp_constraint.erase(std::remove_if(sp_constraint.begin(),
                                        sp_constraint.end(),
                                        [](const std::map<unsigned int, double> &obj) { return obj.empty(); }),
                         sp_constraint.end());
-    std::cout << "sp_constraint.size() = " << sp_constraint.size() << std::endl;
 
-    //  std::sort(sp_constraint.begin(), sp_constraint.end());
+    // sp_constraint.erase(sp_constraint.begin() + nrank, sp_constraint.end());
+    // sp_constraint.shrink_to_fit();
 }
