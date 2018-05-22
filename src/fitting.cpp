@@ -786,7 +786,6 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                     ++iparam;
                 }
             }
-           // std::cout << "OK" << std::endl;
 
             // Convert the full matrix and vector into a smaller irreducible form
             // by using constraint information.
@@ -803,6 +802,8 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                             * amat_orig_tmp[j][ishift + constraint->const_fix[order][i].p_index_target];
                     }
                 }
+
+                std::cout << "pass const_fix" << std::endl;
 
                 for (const auto &it : constraint->index_bimap[order]) {
                     inew = it.left + iparam;
@@ -824,12 +825,14 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                          << std::setw(5) << constraint->const_relate[order][i].p_index_orig[j]
                          << std::setw(15) << constraint->const_relate[order][i].alpha[j] << std::endl;*/
 
+                        std::cout << " iold = " << iold - ishift;
+                        std::cout << " p_index_orig = " << constraint->const_relate[order][i].p_index_orig[j];
                         inew = constraint->index_bimap[order].right.at(
                                 constraint->const_relate[order][i].p_index_orig[j]) +
                             iparam;
 
-
-                       // std::cout << " inew = " << inew << std::endl;
+                        
+                        std::cout << " inew = " << inew - iparam << std::endl;
 
                         for (k = 0; k < natmin3; ++k) {
                             amat_mod_tmp[k][inew] -= amat_orig_tmp[k][iold]
@@ -837,6 +840,8 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                         }
                     }
                 }
+                std::cout << "pass const_relate" << std::endl;
+
 //                std::cout << "OK" << std::endl;
 
                 ishift += fcs->nequiv[order].size();

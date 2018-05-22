@@ -213,7 +213,6 @@ void rref_sparse(const int ncols,
         irow = FirstColList[icol][0];
         auto const_now = sp_constraint[irow];
 
-
         division_factor = sp_constraint[irow].begin()->second;
         division_factor = 1.0 / division_factor;
 
@@ -238,12 +237,10 @@ void rref_sparse(const int ncols,
                         sp_constraint[jrow][it_now.first] = -scaling_factor * it_now.second;
                     } else {
                         it_other->second -= scaling_factor * it_now.second;
-                        //if (std::abs(it_other->second) < tolerance) {
-                        //    sp_constraint[jrow].erase(it_other);
-                        //}
                     }
                 }
-                for (auto it_other = sp_constraint[jrow].begin(); it_other != sp_constraint[jrow].end(); ++it_other) {
+                for (auto it_other = sp_constraint[jrow].begin(); 
+                         it_other != sp_constraint[jrow].end(); ++it_other) {
                     if (std::abs(it_other->second) < tolerance) {
                         sp_constraint[jrow].erase(it_other);
                     }
@@ -304,19 +301,10 @@ void rref_sparse2(const int ncols,
     std::map<unsigned int, double> const_tmp2;
     int nrows = sp_constraint.size();
     int icol, irow, jrow;
-    int jcol;
     double scaling_factor;
     double division_factor;
 
     int nrank = 0;
-
-  /*  std::vector<std::set<unsigned int>> FirstColList;
-    FirstColList.resize(ncols);*/
-
-    // Stores pivot candidates of the input matrix
-    //for (irow = 0; irow < nrows; ++irow) {
-    //    FirstColList[sp_constraint[irow].begin()->first].insert(irow);
-    //}
 
     unsigned int nsize_firstcol;
 
@@ -326,6 +314,8 @@ void rref_sparse2(const int ncols,
     std::set<unsigned int>::iterator it_found;
     std::map<unsigned int, double>::iterator it_elem;
 
+    std::sort(sp_constraint.begin(), sp_constraint.end());
+
     for (irow = 0; irow < nrows; ++irow) {
 
         pivot = irow;
@@ -333,9 +323,7 @@ void rref_sparse2(const int ncols,
         while (true) {
             it_elem = sp_constraint[pivot].find(icol);
             if (it_elem != sp_constraint[pivot].end()) {
-                if (std::abs(it_elem->second) > tolerance) {
-                    break;
-                }
+                break;
             }
 
             ++pivot;
@@ -347,43 +335,24 @@ void rref_sparse2(const int ncols,
             }
         }
 
-        //for (jcol = icol; jcol < ncols; ++jcol) {
-        //    it_found = std::find_if(FirstColList[jcol].begin(),
-        //                            FirstColList[jcol].end(),
-        //                            [irow](int x) { return x >= irow; });
-
-        //    if (it_found != FirstColList[jcol].end()) {
-        //        icol = jcol;
-        //        break;
-        //    }
-        //}
-
         if (icol == ncols) break;
 
         if (std::abs(it_elem->second) > tolerance) ++nrank;
         //pivot = *it_found;
 
         if (pivot != irow) {
-
-            /*   if (!sp_constraint[irow].empty()) {
-                   FirstColList[sp_constraint[irow].begin()->first].erase(irow);
-               }
-               FirstColList[sp_constraint[pivot].begin()->first].erase(pivot);*/
-
             std::iter_swap(sp_constraint.begin() + irow,
                            sp_constraint.begin() + pivot);
-
-            /*          if (!sp_constraint[pivot].empty()) {
-                          FirstColList[sp_constraint[pivot].begin()->first].insert(pivot);
-                      }
-                      FirstColList[sp_constraint[irow].begin()->first].insert(irow);*/
         }
+//        std::cout << "PASS SWAP: " << irow << std::endl;
 
         division_factor = sp_constraint[irow].begin()->second;
         division_factor = 1.0 / division_factor;
         for (auto &it : sp_constraint[irow]) {
             it.second *= division_factor;
         }
+
+//         std::cout << "PASS NORMALIZE: " << irow << std::endl;
 
         for (jrow = 0; jrow < nrows; ++jrow) {
             if (jrow == irow) continue;
@@ -392,30 +361,30 @@ void rref_sparse2(const int ncols,
             if (it_elem == sp_constraint[jrow].end()) continue;
             scaling_factor = it_elem->second;
 
-  /*          it_found = FirstColList[icol].find(jrow);
-            if (it_found != FirstColList[icol].end()) {
-                FirstColList[icol].erase(jrow);
-            }*/
-
             // Subtract irow elements from jrow
             for (const auto &it_now : sp_constraint[irow]) {
                 auto it_other = sp_constraint[jrow].find(it_now.first);
                 if (it_other != sp_constraint[jrow].end()) {
                     it_other->second -= scaling_factor * it_now.second;
+                    if (std::abs(it_other->second) < tolerance) {
+                        sp_constraint[jrow].erase(it_other);
+                    }
                 } else {
                     sp_constraint[jrow][it_now.first] = -scaling_factor * it_now.second;
                 }
             }
-            for (auto it_other = sp_constraint[jrow].begin(); it_other != sp_constraint[jrow].end(); ++it_other) {
-                if (std::abs(it_other->second) < tolerance) {
-                    sp_constraint[jrow].erase(it_other);
-                }
-            }
-            //if (!sp_constraint[jrow].empty()) {
-            //    FirstColList[sp_constraint[jrow].begin()->first].insert(jrow);
-            //}
+            // for (auto it_other = sp_constraint[jrow].begin(); it_other != sp_constraint[jrow].end(); ++it_other) {
+            //     if (std::abs(it_other->second) < tolerance) {
+            //         sp_constraint[jrow].erase(it_other);
+            //     }
+            // }
         }
+
+  //      std::cout << "PASS SUBTRACTION : " << irow << std::endl;
+
     }
+
+   // std::cout << "OK3" << std::endl;
 
     // Remove emptry entries from the sp_constraint vector
     sp_constraint.erase(std::remove_if(sp_constraint.begin(),
