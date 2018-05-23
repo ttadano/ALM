@@ -496,7 +496,8 @@ void Fcs::get_constraint_symmetry2(const int nat,
                                   const std::vector<FcProperty> &fc_table,
                                   const int nparams,
                                   const double tolerance,
-                                  ConstraintSparseForm &const_out)
+                                  ConstraintSparseForm &const_out,
+                                  const bool do_rref)
 {
     // Create constraint matrices arising from the crystal symmetry.
     // Necessary for hexagonal systems.
@@ -563,7 +564,8 @@ void Fcs::get_constraint_symmetry2(const int nat,
         int *atm_index, *atm_index_symm;
         int *xyz_index;
         double c_tmp;
-
+        double maxabs;
+        
         std::unordered_set<FcProperty>::iterator iter_found;
         std::vector<double> const_now_omp;
         std::vector<std::vector<double>> const_omp;
@@ -614,11 +616,16 @@ void Fcs::get_constraint_symmetry2(const int nat,
                         const_now_omp[(*iter_found).mother] += (*iter_found).sign * c_tmp;
                     }
                 }
-                // Comment out for debug
+
                 if (!is_allzero(const_now_omp, tolerance, loc_nonzero)) {
                     if (const_now_omp[loc_nonzero] < 0.0) {
                         for (j = 0; j < nparams; ++j) const_now_omp[j] *= -1.0;
                     }
+                    // maxabs = 0.0;
+                    // for (j = 0; j < nparams; ++j) {
+                    //     maxabs = std::max(maxabs, std::abs(const_now_omp[j]));
+                    // }
+                    // std::cout << "maxabs = " << maxabs << std::endl;
                     
                     const_tmp_omp.clear();
                     for (j = 0; j < nparams; ++j) {
@@ -627,14 +634,9 @@ void Fcs::get_constraint_symmetry2(const int nat,
                         }
                     }
                     constraint_list_omp.emplace_back(const_tmp_omp);
-
-//                    const_omp.push_back(const_now_omp);
                 }
 
             } // close isym loop
-
-//            if (const_omp.size() > nparams) rref(const_omp, tolerance);
-
         } // close ii loop
 
         deallocate(ind);
@@ -644,16 +646,11 @@ void Fcs::get_constraint_symmetry2(const int nat,
 
 #pragma omp critical
         {
-            // for (auto &it : const_omp) {
-            //     const_out.push_back(it);
-            // }
-
             for (const auto &it : constraint_list_omp) {
                 constraint_all.emplace_back(it);
             }
         }
         constraint_list_omp.clear();
-//        const_omp.clear();
     } // close openmp region
 
     deallocate(xyzcomponent);
@@ -685,10 +682,9 @@ void Fcs::get_constraint_symmetry2(const int nat,
         const_out.emplace_back(const_tmp2);
     }
     constraint_all.clear();
-    rref_sparse2(nparams, const_out, tolerance);
+
+    if (do_rref) rref_sparse2(nparams, const_out, tolerance);
 }
-
-
 
 void Fcs::get_available_symmop(const int nat,
                                Symmetry *symmetry,

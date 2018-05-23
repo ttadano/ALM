@@ -215,10 +215,10 @@ void Constraint::setup(ALM *alm)
                                               alm->verbosity,
                                               const_symmetry);
 
-    std::cout << "CONST SYMMETRY" << std::endl;
-    for (auto i = 0; i < maxorder; ++i) {
-        print_constraint(const_symmetry[i]);
-    }
+//    std::cout << "CONST SYMMETRY" << std::endl;
+//    for (auto i = 1; i < maxorder; ++i) {
+//        print_constraint(const_symmetry[i]);
+//    }
 
     extra_constraint_from_symmetry = false;
 
@@ -233,10 +233,10 @@ void Constraint::setup(ALM *alm)
                                           alm->fcs,
                                           alm->verbosity,
                                           const_translation);
-        std::cout << "CONST TRANSLATION" << std::endl;
-        for (auto i = 0; i < maxorder; ++i) {
-            print_constraint(const_translation[i]);
-        }
+        // std::cout << "CONST TRANSLATION" << std::endl;
+        // for (auto i = 1; i < maxorder; ++i) {
+        //     print_constraint(const_translation[i]);
+        // }
     }
 
     if (impose_inv_R) {
@@ -258,7 +258,6 @@ void Constraint::setup(ALM *alm)
         // for (auto i = 0; i < maxorder; ++i) {
         //     print_constraint(const_rotation_cross[i]);
         // }
-
     }
 
     // Merge intra-order constrants and do reduction 
@@ -271,34 +270,29 @@ void Constraint::setup(ALM *alm)
               const_translation[order].size()
               + const_rotation_self[order].size()
               + const_symmetry[order].size());
-  
-  const_self[order].insert(const_self[order].end(),
-                            const_translation[order].begin(),
-                            const_translation[order].end());
 
+            // The order of const_symmetry and const_translation 
+            // must not be changed since the rref_sparse2 is sensitive to
+            // the numerical accuracy of the input matrix.
+            const_self[order].insert(const_self[order].end(),
+                                    const_symmetry[order].begin(),
+                                    const_symmetry[order].end());
+
+            const_self[order].insert(const_self[order].end(),
+                                   const_translation[order].begin(),
+                                    const_translation[order].end());
   
-          if (!const_symmetry[order].empty()) {
-              const_self[order].insert(const_self[order].end(),
-                                       const_symmetry[order].begin(),
-                                       const_symmetry[order].end());
-              rref_sparse2(nparam, const_self[order], tolerance_constraint);
-          //    remove_redundant_rows(nparam, const_self[order], tolerance_constraint);
-          }
-  
-          if (!const_rotation_self[order].empty()) {
-              const_self[order].insert(const_self[order].end(),
-                                       const_rotation_self[order].begin(),
-                                       const_rotation_self[order].end());
-              std::cout << "Start merge2 : size = " << const_self[order].size() << std::endl;
-              rref_sparse2(nparam, const_self[order], tolerance_constraint);
-          //    remove_redundant_rows(nparam, const_self[order], tolerance_constraint);
-          }
+            const_self[order].insert(const_self[order].end(),
+                                    const_rotation_self[order].begin(),
+                                    const_rotation_self[order].end());
+
+          rref_sparse2(nparam, const_self[order], tolerance_constraint);
       }
 
-        std::cout << "CONST MERGED" << std::endl;
-        for (auto i = 0; i < maxorder; ++i) {
-            print_constraint(const_self[i]);
-        }
+        // std::cout << "CONST MERGED" << std::endl;
+        // for (auto i = 1; i < maxorder; ++i) {
+        //     print_constraint(const_self[i]);
+        // }
 
     get_mapping_constraint(maxorder,
                            alm->fcs->nequiv,
@@ -622,8 +616,8 @@ void Constraint::get_mapping_constraint(const int nmax,
             }
         }
 
-        std::cout << "const_relate.size() = " << const_relate_out[order].size() << std::endl;
-        std::cout << "const_fix.size() = " << const_fix_out[order].size() << std::endl;
+        // std::cout << "const_relate.size() = " << const_relate_out[order].size() << std::endl;
+        // std::cout << "const_fix.size() = " << const_fix_out[order].size() << std::endl;
 
     }
 
@@ -702,7 +696,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
                                       fcs->fc_table[order],
                                       fcs->nequiv[order].size(),
                                       tolerance_constraint,
-                                      const_out[order]);
+                                      const_out[order], true);
 
         if (has_constraint_from_symm) {
             std::cout << " done." << std::endl;
@@ -749,7 +743,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
                                    order,
                                    fcs->fc_table[order],
                                    fcs->nequiv[order].size(),
-                                   const_out[order]);
+                                   const_out[order], true);
 
         if (verbosity > 0) std::cout << " done." << std::endl;
     }
@@ -765,7 +759,8 @@ void Constraint::get_constraint_translation(const Cell &supercell,
                                             const int order,
                                             const std::vector<FcProperty> &fc_table,
                                             const int nparams,
-                                            ConstraintSparseForm &const_out)
+                                            ConstraintSparseForm &const_out,
+                                            const bool do_rref)
 {
     // Generate equality constraint for the acoustic sum rule.
 
@@ -1038,8 +1033,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
         const_out.emplace_back(const_tmp2);
     }
     constraint_all.clear();
-
-    rref_sparse2(nparams, const_out, tolerance_constraint);
+    if (do_rref) rref_sparse2(nparams, const_out, tolerance_constraint);
 }
 
 void Constraint::generate_rotational_constraint(System *system,

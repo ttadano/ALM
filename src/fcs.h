@@ -131,7 +131,8 @@ namespace ALM_NS
                                      const std::vector<FcProperty> &,
                                      int,
                                      double,
-                                     ConstraintSparseForm &);
+                                     ConstraintSparseForm &,
+                                     bool do_rref = false);
 
     private:
         bool store_zeros;

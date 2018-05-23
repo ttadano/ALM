@@ -187,7 +187,7 @@ namespace ALM_NS
         if (len1 != len2) return false;
 
         for (int i = 0; i < len1; ++i) {
-            if (obj1[i].col != obj2[i].col || (std::abs(obj1[i].val - obj2[i].val) > 1.0e-12)) {
+            if (obj1[i].col != obj2[i].col || (std::abs(obj1[i].val - obj2[i].val) > 1.0e-10)) {
                 return false;
             }
         }
@@ -297,7 +297,8 @@ namespace ALM_NS
                                         int,
                                         const std::vector<FcProperty> &,
                                         int,
-                                        ConstraintSparseForm &);
+                                        ConstraintSparseForm &,
+                                        bool do_rref = false);
 
         void generate_translational_constraint(const Cell &,
                                                Symmetry *,
