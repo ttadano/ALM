@@ -121,16 +121,6 @@ namespace ALM_NS
                                      const std::vector<FcProperty> &,
                                      int,
                                      double,
-                                     std::vector<std::vector<double>> &);
-
-        void get_constraint_symmetry2(int,
-                                     Symmetry *,
-                                     int,
-                                     const std::set<IntList> &,
-                                     std::string,
-                                     const std::vector<FcProperty> &,
-                                     int,
-                                     double,
                                      ConstraintSparseForm &,
                                      bool do_rref = false);
 

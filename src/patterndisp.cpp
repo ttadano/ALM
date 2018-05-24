@@ -95,7 +95,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
                                                 fc_table[order], nequiv[order],
                                                 fc_zeros[order], false);
 
-        alm->fcs->get_constraint_symmetry2(alm->system->supercell.number_of_atoms,
+        alm->fcs->get_constraint_symmetry(alm->system->supercell.number_of_atoms,
                                           alm->symmetry,
                                           order,
                                           alm->interaction->cluster_list[order],

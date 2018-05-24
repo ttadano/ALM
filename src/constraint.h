@@ -18,7 +18,6 @@
 #include <utility>
 #include <vector>
 #include <string>
-#include <iostream>
 #include <iomanip>
 #include <map>
 
@@ -275,7 +274,8 @@ namespace ALM_NS
                         int &);
         bool is_allzero(const std::vector<double> &,
                         double,
-                        int &, const int nshift = 0);
+                        int &,
+                        const int nshift = 0);
 
 
         void remove_redundant_rows(int,
