@@ -3,8 +3,8 @@ from setuptools import setup, Extension
 # from distutils.core import setup, Extension
 import numpy
 
-os.environ["CC"] = "gcc-7"
-os.environ["CXX"] = "g++-7"
+os.environ["CC"] = "gcc-8"
+os.environ["CXX"] = "g++-8"
 
 include_dirs_numpy = [numpy.get_include()]
 

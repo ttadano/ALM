@@ -42,7 +42,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
     int maxorder = alm->interaction->maxorder;
     std::string preferred_basis;
     std::vector<int> group_tmp;
-    std::vector<ConstraintClass> *constsym;
+    std::vector<std::map<unsigned int, double>> *constsym;
     std::vector<std::vector<double>> const_tmp;
 
     std::vector<int> pairs;
@@ -55,6 +55,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
     std::vector<ConstraintTypeFix> *const_fix_tmp;
     std::vector<ConstraintTypeRelate> *const_relate_tmp;
     boost::bimap<int, int> *index_bimap_tmp;
+    const bool do_rref = true;
 
     if (alm->verbosity > 0) {
         std::cout << " DISPLACEMENT PATTERN" << std::endl;
@@ -74,6 +75,9 @@ void Displace::gen_displacement_pattern(ALM *alm)
     } else {
         preferred_basis = "Lattice";
     }
+
+    std::cout << "Preferred_basis = " << preferred_basis << std::endl;
+    std::cout << ncompat_cart << " " << ncompat_latt << std::endl;
 
     allocate(fc_table, maxorder);
     allocate(fc_zeros, maxorder);
@@ -99,11 +103,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
                                           fc_table[order],
                                           nequiv[order].size(),
                                           alm->constraint->tolerance_constraint,
-                                          const_tmp);
-
-        for (auto &it : const_tmp) {
-            constsym[order].emplace_back(ConstraintClass(it));
-        }
+                                          constsym[order], do_rref);
 
     }
 

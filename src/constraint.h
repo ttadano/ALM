@@ -18,6 +18,10 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <iomanip>
+#include <map>
+
+typedef std::vector<std::map<unsigned int, double>> ConstraintSparseForm;
 
 namespace ALM_NS
 {
@@ -82,8 +86,117 @@ namespace ALM_NS
         for (int i = 0; i < n; ++i) {
             if (std::abs(a[i] - b[i]) > eps12) return false;
         }
-        //        if (std::sqrt(res)>eps12) return false;
         return true;
+    }
+
+    class ConstraintIntegerElement
+    {
+        // For sparse representation
+    public:
+        unsigned int col;
+        int val;
+
+        ConstraintIntegerElement(const unsigned int col_in,
+                                 const int val_in) :
+            col(col_in), val(val_in) {}
+    };
+
+    // Operator for sort 
+    inline bool operator<(const std::vector<ConstraintIntegerElement> &obj1,
+                          const std::vector<ConstraintIntegerElement> &obj2)
+    {
+        const int len1 = obj1.size();
+        const int len2 = obj2.size();
+        const int min = std::min(len1, len2);
+
+        for (int i = 0; i < min; ++i) {
+            if (obj1[i].col < obj2[i].col) {
+                return true;
+            } else if (obj1[i].col > obj2[i].col) {
+                return false;
+            } else {
+                if (obj1[i].val < obj2[i].val) {
+                    return true;
+                } else if (obj1[i].val > obj2[i].val) {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Operator for unique
+    inline bool operator==(const std::vector<ConstraintIntegerElement> &obj1,
+                           const std::vector<ConstraintIntegerElement> &obj2)
+    {
+        const int len1 = obj1.size();
+        const int len2 = obj2.size();
+        if (len1 != len2) return false;
+
+        for (int i = 0; i < len1; ++i) {
+            if (obj1[i].col != obj2[i].col || obj1[i].val != obj2[i].val) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    class ConstraintDoubleElement
+    {
+        // For sparse representation
+    public:
+        unsigned int col;
+        double val;
+
+        ConstraintDoubleElement(const unsigned int col_in,
+                                const double val_in) :
+            col(col_in), val(val_in) {}
+    };
+
+    // Operator for sort 
+    inline bool operator<(const std::vector<ConstraintDoubleElement> &obj1,
+                          const std::vector<ConstraintDoubleElement> &obj2)
+    {
+        const int len1 = obj1.size();
+        const int len2 = obj2.size();
+        const int min = std::min(len1, len2);
+
+        for (int i = 0; i < min; ++i) {
+            if (obj1[i].col < obj2[i].col) {
+                return true;
+            } else if (obj1[i].col > obj2[i].col) {
+                return false;
+            } else {
+                if (obj1[i].val < obj2[i].val) {
+                    return true;
+                } else if (obj1[i].val > obj2[i].val) {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Operator for unique
+    inline bool operator==(const std::vector<ConstraintDoubleElement> &obj1,
+                           const std::vector<ConstraintDoubleElement> &obj2)
+    {
+        const int len1 = obj1.size();
+        const int len2 = obj2.size();
+        if (len1 != len2) return false;
+
+        for (int i = 0; i < len1; ++i) {
+            if (obj1[i].col != obj2[i].col || (std::abs(obj1[i].val - obj2[i].val) > 1.0e-10)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    inline bool operator<(const std::map<unsigned int, double> &obj1,
+                          const std::map<unsigned int, double> &obj2)
+    {
+        return obj1.begin()->first < obj2.begin()->first;
     }
 
     class Constraint
@@ -108,7 +221,7 @@ namespace ALM_NS
         bool extra_constraint_from_symmetry;
         std::string rotation_axis;
 
-        std::vector<ConstraintClass> *const_symmetry;
+        ConstraintSparseForm *const_symmetry;
         std::vector<ConstraintTypeFix> *const_fix;
         std::vector<ConstraintTypeRelate> *const_relate;
         std::vector<ConstraintTypeRelate> *const_relate_rotation;
@@ -116,7 +229,7 @@ namespace ALM_NS
 
         void get_mapping_constraint(int,
                                     std::vector<int> *,
-                                    std::vector<ConstraintClass> *,
+                                    ConstraintSparseForm *,
                                     std::vector<ConstraintTypeFix> *,
                                     std::vector<ConstraintTypeRelate> *,
                                     boost::bimap<int, int> *);
@@ -125,10 +238,10 @@ namespace ALM_NS
 
         bool impose_inv_T, impose_inv_R, exclude_last_R;
 
-        std::vector<ConstraintClass> *const_translation;
-        std::vector<ConstraintClass> *const_rotation_self;
-        std::vector<ConstraintClass> *const_rotation_cross;
-        std::vector<ConstraintClass> *const_self;
+        ConstraintSparseForm *const_translation;
+        ConstraintSparseForm *const_rotation_self;
+        ConstraintSparseForm *const_rotation_cross;
+        ConstraintSparseForm *const_self;
 
         void set_default_variables();
         void deallocate_variables();
@@ -142,13 +255,16 @@ namespace ALM_NS
                                             Interaction *,
                                             Fcs *,
                                             const int,
-                                            std::vector<ConstraintClass> *,
-                                            std::vector<ConstraintClass> *);
+                                            const double,
+                                            ConstraintSparseForm *,
+                                            ConstraintSparseForm *);
 
         void calc_constraint_matrix(int,
                                     std::vector<int> *,
                                     int,
                                     int &);
+
+        void print_constraint(const ConstraintSparseForm &);
 
         void setup_rotation_axis(bool [3][3]);
         bool is_allzero(int,
@@ -158,7 +274,9 @@ namespace ALM_NS
                         int &);
         bool is_allzero(const std::vector<double> &,
                         double,
-                        int &);
+                        int &,
+                        const int nshift = 0);
+
 
         void remove_redundant_rows(int,
                                    std::vector<ConstraintClass> &,
@@ -170,7 +288,7 @@ namespace ALM_NS
                                                        Interaction *,
                                                        Fcs *,
                                                        const int,
-                                                       std::vector<ConstraintClass> *);
+                                                       ConstraintSparseForm *);
 
         void get_constraint_translation(const Cell &,
                                         Symmetry *,
@@ -179,14 +297,15 @@ namespace ALM_NS
                                         int,
                                         const std::vector<FcProperty> &,
                                         int,
-                                        std::vector<ConstraintClass> &);
+                                        ConstraintSparseForm &,
+                                        bool do_rref = false);
 
         void generate_translational_constraint(const Cell &,
                                                Symmetry *,
                                                Interaction *,
                                                Fcs *,
                                                const int,
-                                               std::vector<ConstraintClass> *);
+                                               ConstraintSparseForm *);
 
         void fix_forceconstants_to_file(int,
                                         Symmetry *,

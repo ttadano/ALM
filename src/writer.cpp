@@ -199,7 +199,7 @@ void Writer::write_force_constants(ALM *alm)
 
     ofs_fcs << std::endl;
 
-    if (alm->constraint->extra_constraint_from_symmetry) {
+  /*  if (alm->constraint->extra_constraint_from_symmetry) {
 
         ofs_fcs << " -------------- Constraints from crystal symmetry --------------" << std::endl << std::endl;
         for (order = 0; order < maxorder; ++order) {
@@ -225,7 +225,7 @@ void Writer::write_force_constants(ALM *alm)
             ofs_fcs << std::endl;
         }
         ofs_fcs << std::endl;
-    }
+    }*/
 
     ofs_fcs.unsetf(std::ios::showpos);
 

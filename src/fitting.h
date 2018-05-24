@@ -37,10 +37,10 @@ namespace ALM_NS
         double **f_in;
         int use_sparseQR;
 
-        void set_displacement_and_force(const double * const *u_in,
-                                        const double * const *f_in,
-                                        int nat,
-                                        int ndata_used);
+        void set_displacement_and_force(const double * const *,
+                                        const double * const *,
+                                        int,
+                                        int);
 
 
         void get_matrix_elements_algebraic_constraint(int,
@@ -58,7 +58,7 @@ namespace ALM_NS
                             Constraint *);
 
 
-        const int get_ndata_used();
+        int get_ndata_used() const;
         double gamma(int,
                      const int *);
 
@@ -140,18 +140,11 @@ namespace ALM_NS
                                              Constraint *);
 
         int factorial(int);
-        int rankSVD(int,
-                    int,
-                    double *,
-                    double);
         int rankQRD(int,
                     int,
                     double *,
                     double);
-        int rankSVD2(int,
-                     int,
-                     double **,
-                     double);
+ 
     };
 
     extern "C" {
@@ -179,30 +172,6 @@ namespace ALM_NS
                  double *c,
                  double *d,
                  double *x,
-                 double *work,
-                 int *lwork,
-                 int *info);
-
-    void dgesdd_(const char *jobz,
-                 int *m,
-                 int *n,
-                 double *a,
-                 int *lda,
-                 double *s,
-                 double *u,
-                 int *ldu,
-                 double *vt,
-                 int *ldvt,
-                 double *work,
-                 int *lwork,
-                 int *iwork,
-                 int *info);
-
-    void dgeqrf_(int *m,
-                 int *n,
-                 double *a,
-                 int *lda,
-                 double *tau,
                  double *work,
                  int *lwork,
                  int *info);

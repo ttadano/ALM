@@ -15,7 +15,11 @@
 #include "interaction.h"
 #include <vector>
 #include <set>
+#include <map>
 #include <algorithm>
+
+typedef std::vector<std::map<unsigned int, double>> ConstraintSparseForm;
+
 
 namespace ALM_NS
 {
@@ -117,7 +121,8 @@ namespace ALM_NS
                                      const std::vector<FcProperty> &,
                                      int,
                                      double,
-                                     std::vector<std::vector<double>> &);
+                                     ConstraintSparseForm &,
+                                     bool do_rref = false);
 
     private:
         bool store_zeros;

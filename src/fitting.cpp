@@ -320,7 +320,7 @@ void Fitting::set_fcs_values(const int maxorder,
     }
 }
 
-const int Fitting::get_ndata_used()
+int Fitting::get_ndata_used() const
 {
     return ndata_used;
 }
@@ -515,7 +515,7 @@ int Fitting::fit_algebraic_constraints(int N,
                                        const int maxorder,
                                        Fcs *fcs,
                                        Constraint *constraint,
-    const int verbosity)
+                                       const int verbosity)
 {
     int i, j;
     unsigned long k;
@@ -525,7 +525,7 @@ int Fitting::fit_algebraic_constraints(int N,
     double *WORK, *S, *fsum2;
 
     if (verbosity > 0)
-    std::cout << "  Entering fitting routine: SVD with constraints considered algebraically." << std::endl;
+        std::cout << "  Entering fitting routine: SVD with constraints considered algebraically." << std::endl;
 
     LMIN = std::min<int>(M, N);
     LMAX = std::max<int>(M, N);
@@ -806,6 +806,8 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                             * amat_orig_tmp[j][ishift + constraint->const_fix[order][i].p_index_target];
                     }
                 }
+
+                //                std::cout << "pass const_fix" << std::endl;
 
                 for (const auto &it : constraint->index_bimap[order]) {
                     inew = it.left + iparam;
@@ -1245,97 +1247,6 @@ int Fitting::rankQRD(const int m,
     return nrank;
 }
 
-int Fitting::rankSVD(const int m,
-                     const int n,
-                     double *mat,
-                     const double tolerance)
-{
-    auto m_ = m;
-    auto n_ = n;
-
-    auto LWORK = 10 * m;
-    int INFO;
-    int *IWORK;
-    auto ldu = 1, ldvt = 1;
-    double *s, *WORK;
-    double u[1], vt[1];
-
-    const auto nmin = std::min<int>(m, n);
-
-    allocate(IWORK, 8 * nmin);
-    allocate(WORK, LWORK);
-    allocate(s, nmin);
-
-    char mode[] = "N";
-
-    dgesdd_(mode, &m_, &n_, mat, &m_, s, u, &ldu, vt, &ldvt,
-            WORK, &LWORK, IWORK, &INFO);
-
-    auto rank = 0;
-    for (int i = 0; i < nmin; ++i) {
-        if (s[i] > s[0] * tolerance) ++rank;
-    }
-
-    deallocate(WORK);
-    deallocate(IWORK);
-    deallocate(s);
-
-    return rank;
-}
-
-int Fitting::rankSVD2(const int m_in,
-                      const int n_in,
-                      double **mat,
-                      const double tolerance)
-{
-    // Reveal the rank of matrix mat without destroying the matrix elements
-
-    int i;
-    double *arr;
-
-    auto m = m_in;
-    auto n = n_in;
-
-    allocate(arr, m * n);
-
-    auto k = 0;
-
-    for (int j = 0; j < n; ++j) {
-        for (i = 0; i < m; ++i) {
-            arr[k++] = mat[i][j];
-        }
-    }
-
-    auto LWORK = 10 * m;
-    int INFO;
-    int *IWORK;
-    auto ldu = 1, ldvt = 1;
-    double *s, *WORK;
-    double u[1], vt[1];
-
-    const int nmin = std::min<int>(m, n);
-
-    allocate(IWORK, 8 * nmin);
-    allocate(WORK, LWORK);
-    allocate(s, nmin);
-
-    char mode[] = "N";
-
-    dgesdd_(mode, &m, &n, arr, &m, s, u, &ldu, vt, &ldvt,
-            WORK, &LWORK, IWORK, &INFO);
-
-    int rank = 0;
-    for (i = 0; i < nmin; ++i) {
-        if (s[i] > s[0] * tolerance) ++rank;
-    }
-
-    deallocate(IWORK);
-    deallocate(WORK);
-    deallocate(s);
-    deallocate(arr);
-
-    return rank;
-}
 
 #ifdef WITH_SPARSE_SOLVER
 int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
