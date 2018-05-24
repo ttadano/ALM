@@ -734,8 +734,6 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
             continue;
         }
 
-        ConstraintSparseForm const_sparse_tmp;
-
         get_constraint_translation(supercell,
                                    symmetry,
                                    interaction,
