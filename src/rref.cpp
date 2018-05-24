@@ -307,7 +307,11 @@ void rref_sparse2(const int ncols,
     int icol, irow, jrow;
     double scaling_factor;
     double division_factor;
-    double zero_criterion = tolerance * 1.0e-3;
+
+    // This parameter controls the stability and performance.
+    // Smaller value is more stable but little more costly.
+//    double zero_criterion = tolerance * 1.0e-3;
+    double zero_criterion = eps15; 
 
     int nrank = 0;
     int pivot;
