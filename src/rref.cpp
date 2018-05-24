@@ -301,12 +301,13 @@ void rref_sparse2(const int ncols,
     // This function is somewhat sensitive to the numerical accuracy.
     // The loss of numerical digits can lead to instability.
     // Column ordering may improve the stability, but I'm not sure.
+    // Smaller tolerance is preferable.
 
     int nrows = sp_constraint.size();
     int icol, irow, jrow;
     double scaling_factor;
     double division_factor;
-    double maxabs;
+    double zero_criterion = tolerance * 1.0e-3;
 
     int nrank = 0;
     int pivot;
@@ -322,7 +323,9 @@ void rref_sparse2(const int ncols,
         while (true) {
             it_elem = sp_constraint[pivot].find(icol);
             if (it_elem != sp_constraint[pivot].end()) {
-                break; 
+                if (std::abs(it_elem->second) >= tolerance) {
+                    break; 
+                }
             }
 
             ++pivot;
@@ -336,40 +339,17 @@ void rref_sparse2(const int ncols,
 
         if (icol == ncols) break;
 
-        if (std::abs(it_elem->second) > tolerance) ++nrank;
+        if (std::abs(it_elem->second) >= tolerance) ++nrank;
 
         if (pivot != irow) {
             std::iter_swap(sp_constraint.begin() + irow,
                            sp_constraint.begin() + pivot);
         }
 
-        division_factor = sp_constraint[irow].begin()->second;
-        division_factor = 1.0 / division_factor;
+        division_factor = 1.0 / it_elem->second;
         for (auto &it : sp_constraint[irow]) {
             it.second *= division_factor;
         }
-
-        // if (icol == 492) {
-        //     std::cout << "Detect icol = " << icol << std::endl;
-        //     std::cout << "irow = " << irow << std::endl;
-        //      it_elem = sp_constraint[0].find(icol);
-        //     if (it_elem != sp_constraint[0].end()){
-        //       scaling_factor = it_elem->second;
-
-        //       std::cout << "Current row" << std::endl;
-        //       for (const auto &it_now : sp_constraint[irow]) {
-        //           std::cout << std::setw(5) << it_now.first;
-        //           std::cout << std::setw(15) << it_now.second << std::endl;
-        //       }
-        //       std::cout << std::endl;
-        //       std::cout << "Target row" << std::endl;
-        //       for (const auto &it_now : sp_constraint[0]) {
-        //           std::cout << std::setw(5) << it_now.first;
-        //           std::cout << std::setw(15) << it_now.second << std::endl;
-        //       }
-        //       std::cout << std::endl;
-        //     }
-        // }
 
         for (jrow = 0; jrow < nrows; ++jrow) {
             if (jrow == irow) continue;
@@ -380,10 +360,15 @@ void rref_sparse2(const int ncols,
 
             // Subtract irow elements from jrow
             for (const auto &it_now : sp_constraint[irow]) {
+                if (it_now.first < icol) {
+                    continue;
+                }
                 auto it_other = sp_constraint[jrow].find(it_now.first);
                 if (it_other != sp_constraint[jrow].end()) {
                     it_other->second -= scaling_factor * it_now.second;
-                    if (std::abs(it_other->second) < tolerance) {
+                    // Delete zero elements and remove from map. 
+                    // A smaller threshould is used for better stability.
+                    if (std::abs(it_other->second) < zero_criterion) {
                         sp_constraint[jrow].erase(it_other);
                     }
                 } else {
@@ -397,33 +382,25 @@ void rref_sparse2(const int ncols,
             if (it_other != sp_constraint[jrow].end()){
                 sp_constraint[jrow].erase(it_other);
             }
-
-
-            // if (!sp_constraint[jrow].empty()) {
-            //     auto x = std::max_element(sp_constraint[jrow].begin(), sp_constraint[jrow].end(),
-            //                          [](const std::pair<unsigned int, double>& p1, const std::pair<unsigned int, double>& p2) {
-            //                             return std::abs(p1.second) < std::abs(p2.second);});
-            // maxabs = std::abs(x->second);
-            // it_other = sp_constraint[jrow].begin();
-            // while (it_other != sp_constraint[jrow].end()) {
-            //     if (std::abs(it_other->second) < tolerance * maxabs) {
-            //         sp_constraint[jrow].erase(it_other++);
-            //     } else {
-            //         ++it_other;
-            //     }
-            // }
-            // }
-           
         }
     }
 
+    // Erase all elements smaller than the tolerance value
+    for (jrow = 0; jrow < nrows; ++jrow) {
+        auto it_other = sp_constraint[jrow].begin();
+         while (it_other != sp_constraint[jrow].end()) {
+             if (std::abs(it_other->second) <= tolerance) {
+                 sp_constraint[jrow].erase(it_other++);
+             } else {
+                 ++it_other;
+             }
+         }
+    }
 
     // Remove emptry entries from the sp_constraint vector
     sp_constraint.erase(std::remove_if(sp_constraint.begin(),
                                        sp_constraint.end(),
                                        [](const std::map<unsigned int, double> &obj) { return obj.empty(); }),
                         sp_constraint.end());
-
-//    sp_constraint.erase(sp_constraint.begin() + nrank, sp_constraint.end());
     sp_constraint.shrink_to_fit();
 }

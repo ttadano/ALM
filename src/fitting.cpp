@@ -831,7 +831,6 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                                 constraint->const_relate[order][i].p_index_orig[j]) +
                             iparam;
 
-                        
 //                        std::cout << " inew = " << inew - iparam << std::endl;
 
                         for (k = 0; k < natmin3; ++k) {

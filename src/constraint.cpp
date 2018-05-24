@@ -1033,7 +1033,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
         const_out.emplace_back(const_tmp2);
     }
     constraint_all.clear();
-    if (do_rref) rref_sparse2(nparams, const_out, tolerance_constraint);
+    if (do_rref) rref_sparse2(nparams, const_out, eps8);
 }
 
 void Constraint::generate_rotational_constraint(System *system,
@@ -1924,7 +1924,7 @@ void Constraint::print_constraint(const ConstraintSparseForm &const_in)
     std::cout << std::endl;
     std::cout << "TOTAL CONST SIZE :" << std::setw(6) << nconst << std::endl;
     for (const auto &it : const_in) {
-        std::cout << "CONST : " << std::setw(6) << counter + 1 << std::endl;
+        std::cout << "CONST : " << std::setw(5) << counter + 1 << std::endl;
         for (const auto &it2 : it) {
             std::cout << std::setw(5) << it2.first + 1;
             std::cout << std::setw(15) << it2.second << std::endl;
