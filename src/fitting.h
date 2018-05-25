@@ -31,6 +31,7 @@ namespace ALM_NS
         int fitmain(ALM *);
 
         int ndata, nstart, nend;
+        int skip_s, skip_e;
 
         double *params;
         double **u_in;

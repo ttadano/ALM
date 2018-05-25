@@ -57,7 +57,7 @@ void ALMCUI::run(int narg, char **arg)
         writer->write_input_vars(alm);
     }
 
-    if (alm->mode == "fitting") {
+    if (alm->mode == "fitting" || alm->mode == "lasso") {
         input_parser->parse_displacement_and_force(alm);
     }
     delete input_parser;
@@ -75,15 +75,6 @@ void ALMCUI::run(int narg, char **arg)
         std::cout << std::endl << " Job finished at "
             << alm->timer->DateAndTime() << std::endl;
     }
-
-    //std::cout << "FCS: " << alm->timer->get_walltime("fcs")
-    //    << " " << alm->timer->get_cputime("fcs") << std::endl;
-    //std::cout << "CONSTRAINT: " << alm->timer->get_walltime("constraint")
-    //    << " " << alm->timer->get_cputime("constraint") << std::endl;
-    //std::cout << "FITTING: " << alm->timer->get_walltime("fitting")
-    //    << " " << alm->timer->get_cputime("fitting") << std::endl;
-    //std::cout << "SYSTEM: " << alm->timer->get_walltime("system") << std::endl;
-
 
     delete alm;
 }

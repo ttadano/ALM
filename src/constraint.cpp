@@ -14,6 +14,7 @@
 #include "error.h"
 #include "fcs.h"
 #include "interaction.h"
+#include "lasso.h"
 #include "mathfunctions.h"
 #include "memory.h"
 #include "rref.h"
@@ -103,6 +104,14 @@ void Constraint::setup(ALM *alm)
     constraint_algebraic = constraint_mode / 10;
     constraint_mode = constraint_mode % 10;
     int maxorder = alm->interaction->maxorder;
+
+    if (alm->mode == "lasso") {
+        if (constraint_mode > 1) {
+            warn("Constraint::setup()", "Sorry, only ICONST = 11 is supported when MODE = lasso.");
+            constraint_mode = 1;
+        }
+        constraint_algebraic = 1;
+    }
 
     switch (constraint_mode) {
     case 0: // do nothing

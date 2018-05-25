@@ -14,6 +14,7 @@
 #include "files.h"
 #include "fitting.h"
 #include "interaction.h"
+#include "lasso.h"
 #include "memory.h"
 #include "patterndisp.h"
 #include "symmetry.h"
@@ -69,6 +70,7 @@ ALM::~ALM()
     delete fcs;
     delete symmetry;
     delete fitting;
+    delete lasso;
     delete constraint;
     delete displace;
     delete timer;
@@ -82,6 +84,7 @@ void ALM::create()
     fcs = new Fcs();
     symmetry = new Symmetry();
     fitting = new Fitting();
+    lasso = new Lasso();
     constraint = new Constraint();
     displace = new Displace();
     timer = new Timer();
@@ -637,27 +640,15 @@ void ALM::generate_force_constant()
 
 void ALM::run()
 {
-    //if (!verbosity) {
-    //    ofs_alm = new std::ofstream("alm.log", std::ofstream::out);
-    //    coutbuf = std::cout.rdbuf();
-    //    std::cout.rdbuf(ofs_alm->rdbuf());
-    //}
-
     generate_force_constant();
 
     if (mode == "fitting") {
         optimize();
     } else if (mode == "suggest") {
         run_suggest();
+    } else if (mode == "lasso") {
+        optimize_lasso();
     }
-
-    //if (!verbosity) {
-    //    ofs_alm->close();
-    //    delete ofs_alm;
-    //    ofs_alm = nullptr;
-    //    std::cout.rdbuf(coutbuf);
-    //    coutbuf = nullptr;
-    //}
 }
 
 int ALM::optimize()
@@ -677,6 +668,20 @@ int ALM::optimize()
 void ALM::run_suggest()
 {
     displace->gen_displacement_pattern(this);
+}
+
+int ALM::optimize_lasso()
+{
+    if (!structure_initialized) {
+        std::cout << "initialize_structure must be called beforehand." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    if (!ready_to_fit) {
+        constraint->setup(this);
+        ready_to_fit = true;
+    }
+    int info = lasso->optimize_main(this);
+    return info;
 }
 
 

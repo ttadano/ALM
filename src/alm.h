@@ -29,6 +29,7 @@ namespace ALM_NS
         class Fcs *fcs;
         class Symmetry *symmetry;
         class Fitting *fitting;
+        class Lasso *lasso;
         class Constraint *constraint;
         class Files *files;
         class Displace *displace;
@@ -103,6 +104,7 @@ namespace ALM_NS
                                  double *bvec);
         void generate_force_constant();
         int optimize();
+        int optimize_lasso();
         void run_suggest();
         void run();
 

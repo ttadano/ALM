@@ -55,6 +55,8 @@ void Fitting::set_default_variables()
     ndata = 0;
     nstart = 1;
     nend = 0;
+    skip_s = 0;
+    skip_e = 0;
     ndata_used = 0;
     use_sparseQR = 0;
 }

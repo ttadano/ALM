@@ -37,6 +37,8 @@ namespace ALM_NS
                                                 int ndata,
                                                 int nstart,
                                                 int nend,
+                                                int skip_s,
+                                                int skip_e,
                                                 std::string file_disp,
                                                 std::string file_force);
         std::string str_magmom;
