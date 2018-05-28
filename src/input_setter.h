@@ -67,7 +67,7 @@ namespace ALM_NS
                               bool fix_harmonic,
                               bool fix_cubic,
                               int flag_sparse);
-        void InputSetter::set_lasso_vars(ALM *alm,
+        void set_lasso_vars(ALM *alm,
                                  double lasso_alpha,
                                  double lasso_min_alpha,
                                  double lasso_max_alpha,
