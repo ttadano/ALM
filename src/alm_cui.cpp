@@ -11,6 +11,7 @@
 #include "alm_cui.h"
 #include "alm.h"
 #include "input_parser.h"
+#include "lasso.h"
 #include "timer.h"
 #include "version.h"
 #include "writer.h"
@@ -64,7 +65,7 @@ void ALMCUI::run(int narg, char **arg)
 
     alm->run();
 
-    if (alm->mode == "fitting") {
+    if (alm->mode == "fitting" || (alm->mode == "lasso" && alm->lasso->lasso_cv == 0)) {
         writer->writeall(alm);
     } else if (alm->mode == "suggest") {
         writer->write_displacement_pattern(alm);

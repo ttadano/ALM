@@ -15,6 +15,7 @@ or http://opensource.org/licenses/mit-license.php for information.
 #include "symmetry.h"
 #include "files.h"
 #include "interaction.h"
+#include "input_parser.h"
 #include "fcs.h"
 #include "constraint.h"
 #include "timer.h"
@@ -35,24 +36,23 @@ Lasso::Lasso()
 
 Lasso::~Lasso()
 {
-//    deallocate_variables();
 }
 
 void Lasso::set_default_variables()
 {
-    lasso_dnorm = 1.0;
-    lasso_alpha = 1.0;
-    lasso_lambda = 10.0;
+    disp_norm = 1.0;
+    l1_alpha = 1.0;
+    l2_lambda = 10.0;
     lasso_tol = 1.0e-7;
-    lasso_maxiter = 100000;
-    lasso_maxiter_cg = 5;
+    maxiter = 100000;
+    maxiter_cg = 5;
     lasso_cv = 0;
     lasso_cvset = 10;
-    lasso_freq = 1000;
+    output_frequency = 1000;
     lasso_zero_thr = 1.0e-50;
-    lasso_min_alpha = 1.0e-3;
-    lasso_max_alpha = 1.0;
-    lasso_num_alpha = 100;
+    l1_alpha_min = 1.0e-3;
+    l1_alpha_max = 1.0;
+    num_l1_alpha = 100;
     lasso_pcg = 0;
     lasso_algo = 0;
     standardize = 1;
@@ -64,28 +64,24 @@ void Lasso::lasso_main(ALM *alm)
     const int nat = alm->system->supercell.number_of_atoms;
     const auto natmin = alm->symmetry->nat_prim;
     const int maxorder = alm->interaction->maxorder;
-    const int nconsts = alm->constraint->number_of_constraints;
     const int ndata = alm->fitting->ndata;
     const int nstart = alm->fitting->nstart;
-    const int nend = alm->system->nend;
-    const int skip_s = alm->system->skip_s;
-    const int skip_e = alm->system->skip_e;
+    const int nend = alm->fitting->nend;
+    const int skip_s = alm->fitting->skip_s;
+    const int skip_e = alm->fitting->skip_e;
     const int ntran = alm->symmetry->ntran;
     const int ndata_used = nend - nstart + 1 - skip_e + skip_s;
-    const int maxorder = interaction->maxorder;
 
     double scale_factor;
     double **u, **f;
-    double **amat, *fsum, *fsum_orig;
+    double **amat, *fsum;
     double *bvec_breg, *dvec_breg;
     // for LASSO validation
     double **u_test, **f_test;
     double **amat_test, *fsum_test;
-    double *fsum_orig_test;
-    double f2norm, f2norm_test;
+    double fnorm, fnorm_test;
     int ndata_used_test = alm->lasso->nend_test - alm->lasso->nstart_test + 1;
 
-    double *prefactor_force;
 
     int N = 0;
     int N_new = 0;
@@ -93,17 +89,17 @@ void Lasso::lasso_main(ALM *alm)
         N += alm->fcs->nequiv[i].size();
         N_new += alm->constraint->index_bimap[i].size();
     }
- 
+
     int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
     int M_test = 3 * natmin * ndata_used_test * ntran;
 
-    if (alm->verbosity > 0)  {
+    if (alm->verbosity > 0) {
         std::cout << " LASSO" << std::endl;
         std::cout << " =====" << std::endl << std::endl;
 
         std::cout << "  Reference files" << std::endl;
-        std::cout << "   Displacement: " << files->file_disp << std::endl;
-        std::cout << "   Force       : " << files->file_force << std::endl;
+        std::cout << "   Displacement: " << alm->files->file_disp << std::endl;
+        std::cout << "   Force       : " << alm->files->file_force << std::endl;
         std::cout << std::endl;
 
         std::cout << "  NSTART = " << nstart << "; NEND = " << nend;
@@ -131,135 +127,143 @@ void Lasso::lasso_main(ALM *alm)
     allocate(u_test, ndata_used_test, 3 * nat);
     allocate(f_test, ndata_used_test, 3 * nat);
 
-    input_parser->parse_displacement_and_force_files(u, 
-    f,
-     nat, 
-     ndata, 
-     nstart, 
-     nend,
-                                       skip_s, 
-                                       skip_e,
-                                       file_disp, 
-                                       file_force);
+    InputParser *input_parser = new InputParser();
 
+    input_parser->parse_displacement_and_force_files(u,
+                                                     f,
+                                                     nat,
+                                                     ndata,
+                                                     nstart,
+                                                     nend,
+                                                     skip_s,
+                                                     skip_e,
+                                                     alm->files->file_disp,
+                                                     alm->files->file_force);
 
-    // fitting->data_multiplier(nat, ndata, nstart, nend, skip_s, skip_e, ndata_used,
-    //                          nmulti, symmetry->multiply_data, u, f,
-    //                          files->file_disp, files->file_force);
-    // fitting->data_multiplier(nat, ndata_test, nstart_test, nend_test, 0, 0, ndata_used_test,
-    //                          nmulti, symmetry->multiply_data, u_test, f_test,
-    //                          dfile_test, ffile_test);
-    double fnorm;
-    const unsigned long nrows = 3 * static_cast<long>(natmin)
-        * static_cast<long>(ndata_used)
-        * static_cast<long>(ntran);
+    input_parser->parse_displacement_and_force_files(u_test,
+                                                     f_test,
+                                                     nat,
+                                                     ndata_used_test,
+                                                     nstart_test,
+                                                     nend_test,
+                                                     0,
+                                                     0,
+                                                     dfile_test,
+                                                     ffile_test);
 
-    const unsigned long ncols = static_cast<long>(N_new);
-
-    std::vector<double> amat;
-    std::vector<double> bvec;
-    std::vector<double> param_tmp(N);
-
-    memory->allocate(amat, M, N_new);
-    memory->allocate(fsum, M);
-    memory->allocate(fsum_orig, M);
-
-    memory->allocate(amat_test, M_test, N_new);
-    memory->allocate(fsum_test, M_test);
-    memory->allocate(fsum_orig_test, M_test);
+    delete input_parser;
 
     // Scale displacements
 
-    double inv_dnorm = 1.0 / disp_norm;
-    for (i = 0; i < ndata_used * nmulti; ++i) {
+    const double inv_dnorm = 1.0 / disp_norm;
+    for (i = 0; i < ndata_used; ++i) {
         for (j = 0; j < 3 * nat; ++j) {
             u[i][j] *= inv_dnorm;
         }
     }
 
-    for (i = 0; i < ndata_used_test * nmulti; ++i) {
+    for (i = 0; i < ndata_used_test; ++i) {
         for (j = 0; j < 3 * nat; ++j) {
             u_test[i][j] *= inv_dnorm;
         }
     }
 
     // Scale force constants
-
     for (i = 0; i < maxorder; ++i) {
         scale_factor = std::pow(disp_norm, i + 1);
-        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-            constraint->const_fix[i][j].val_to_fix *= scale_factor;
+        for (j = 0; j < alm->constraint->const_fix[i].size(); ++j) {
+            alm->constraint->const_fix[i][j].val_to_fix *= scale_factor;
         }
     }
 
-    fitting->calc_matrix_elements_algebraic_constraint(M, N, N_new, nat, natmin, ndata_used,
-                                                       nmulti, maxorder, u, f,
-                                                       amat, fsum, fsum_orig);
 
-    fitting->calc_matrix_elements_algebraic_constraint(M_test, N, N_new, nat, natmin, ndata_used_test,
-                                                       nmulti, maxorder, u_test, f_test,
-                                                       amat_test, fsum_test, fsum_orig_test);
+    unsigned long nrows = 3 * static_cast<long>(natmin)
+        * static_cast<long>(ndata_used)
+        * static_cast<long>(ntran);
 
-    f2norm = 0.0;
-    f2norm_test = 0.0;
-    for (i = 0; i < M; ++i) {
-        f2norm += std::pow(fsum_orig[i], 2.0);
-    }
-    for (i = 0; i < M_test; ++i) {
-        f2norm_test += std::pow(fsum_orig_test[i], 2.0);
-    }
+    const unsigned long ncols = static_cast<long>(N_new);
 
-    // Calculate prefactor for atomic forces
+    std::vector<double> amat_1D;
+    std::vector<double> bvec;
 
-    memory->allocate(prefactor_force, N_new);
+    amat_1D.resize(nrows * ncols, 0.0);
+    bvec.resize(nrows, 0.0);
 
-    int ishift2 = 0;
-    int iparam2 = 0;
-    int inew2, iold2;
-    int iold2_dup;
+    alm->fitting->set_displacement_and_force(u, f, nat, ndata_used);
 
-    int *ind;
+    alm->fitting->get_matrix_elements_algebraic_constraint(maxorder,
+                                                           ndata_used,
+                                                           &amat_1D[0],
+                                                           &bvec[0],
+                                                           fnorm,
+                                                           alm->symmetry,
+                                                           alm->fcs,
+                                                           alm->constraint);
 
-    memory->allocate(ind, maxorder + 1);
-    for (i = 0; i < maxorder; ++i) {
-        for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
-             it != constraint->index_bimap[i].end(); ++it) {
-            inew2 = (*it).left + iparam2;
-            iold2 = (*it).right;
-            iold2_dup = 0;
-            for (j = 0; j < iold2; ++j) {
-                iold2_dup += fcs->nequiv[i][j];
-            }
+    deallocate(u);
+    deallocate(f);
+    allocate(amat, M, N_new);
+    allocate(fsum, M);
 
-            for (j = 0; j < i + 2; ++j) {
-                ind[j] = fcs->fc_table[i][iold2_dup].elems[j];
-            }
-            prefactor_force[inew2] = fitting->gamma(i + 2, ind);
+    unsigned long m = 0;
+    for (auto icol = 0; icol < N_new; ++icol) {
+        for (auto irow = 0; irow < M; ++irow) {
+            amat[irow][icol] = amat_1D[m++];
         }
-
-        ishift2 += fcs->nequiv[i].size();
-        iparam2 += constraint->index_bimap[i].size();
     }
-    memory->deallocate(ind);
+    for (auto irow = 0; irow < M; ++irow) {
+        fsum[irow] = bvec[irow];
+    }
+
+    nrows = 3 * static_cast<long>(natmin)
+        * static_cast<long>(ndata_used_test)
+        * static_cast<long>(ntran);
+
+    amat_1D.resize(nrows * ncols, 0.0);
+    bvec.resize(nrows, 0.0);
+
+    alm->fitting->set_displacement_and_force(u_test, f_test, nat, ndata_used_test);
+
+    alm->fitting->get_matrix_elements_algebraic_constraint(maxorder,
+                                                           ndata_used_test,
+                                                           &amat_1D[0],
+                                                           &bvec[0],
+                                                           fnorm_test,
+                                                           alm->symmetry,
+                                                           alm->fcs,
+                                                           alm->constraint);
+
+    deallocate(u_test);
+    deallocate(f_test);
+    allocate(amat_test, M_test, N_new);
+    allocate(fsum_test, M_test);
+
+    m = 0;
+    for (auto icol = 0; icol < N_new; ++icol) {
+        for (auto irow = 0; irow < M_test; ++irow) {
+            amat_test[irow][icol] = amat_1D[m++];
+        }
+    }
+    for (auto irow = 0; irow < M_test; ++irow) {
+        fsum_test[irow] = bvec[irow];
+    }
+
+    amat_1D.clear();
+    bvec.clear();
+
 
     // Scale back force constants
 
     for (i = 0; i < maxorder; ++i) {
         scale_factor = 1.0 / std::pow(disp_norm, i + 1);
-        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-            constraint->const_fix[i][j].val_to_fix *= scale_factor;
+        for (j = 0; j < alm->constraint->const_fix[i].size(); ++j) {
+            alm->constraint->const_fix[i][j].val_to_fix *= scale_factor;
         }
     }
 
-    memory->deallocate(u);
-    memory->deallocate(f);
-    memory->deallocate(u_test);
-    memory->deallocate(f_test);
-
     // Start Lasso optimization
 
-    double *param;
-    memory->allocate(param, N_new);
+    std::vector<double> param(N_new);
 
     double *factor_std;
     bool *has_prod;
@@ -280,8 +284,8 @@ void Lasso::lasso_main(ALM *alm)
         x.resize(N_new);
         scale_beta.resize(N_new);
 
-        memory->allocate(has_prod, N_new);
-        memory->allocate(factor_std, N_new);
+        allocate(has_prod, N_new);
+        allocate(factor_std, N_new);
 
         for (i = 0; i < N_new; ++i) {
             param[i] = 0.0;
@@ -348,8 +352,8 @@ void Lasso::lasso_main(ALM *alm)
 
         // Split bregman
 
-        memory->allocate(bvec_breg, N_new);
-        memory->allocate(dvec_breg, N_new);
+        allocate(bvec_breg, N_new);
+        allocate(dvec_breg, N_new);
 
         for (i = 0; i < N_new; ++i) {
             param[i] = 0.0;
@@ -375,33 +379,10 @@ void Lasso::lasso_main(ALM *alm)
         }
         std::cout << std::endl;
 
-        std::string file_lasso_fcs, file_lasso_fcs2;
-        std::ofstream ofs_lasso_fcs, ofs_lasso_fcs2;
-        std::string file_cv;
         std::ofstream ofs_cv;
 
-        // file_lasso_fcs = files->job_title + ".lasso_fcs";
-        // ofs_lasso_fcs.open(file_lasso_fcs.c_str(), std::ios::out);
-        // if (!ofs_lasso_fcs) error->exit("lasso_main", "cannot open file_lasso_fcs");
-        // file_lasso_fcs2 = files->job_title + ".lasso_fcs_orig";
-        // ofs_lasso_fcs2.open(file_lasso_fcs2.c_str(), std::ios::out);
-
-        file_cv = files->job_title + ".lasso_cv";
+        std::string file_cv = alm->files->job_title + ".lasso_cv";
         ofs_cv.open(file_cv.c_str(), std::ios::out);
-
-        // if (lasso_algo == 0) {
-        //     ofs_lasso_fcs << "# Algorithm : Coordinate descent" << std::endl;
-        //     ofs_lasso_fcs << "# LASSO_DBASIS = " << std::setw(15) << disp_norm << std::endl;
-        //     ofs_lasso_fcs << "# LASSO_TOL = " << std::setw(15) << lasso_tol << std::endl;
-        //     ofs_lasso_fcs << "# L1 ALPHA, FCS " << std::endl;
-        // } else if (lasso_algo == 1) {
-        //     ofs_lasso_fcs << "# Algorithm : Split-Bregman iteration" << std::endl;
-        //     ofs_lasso_fcs << "# LASSO_LAMBDA (L2) = " << std::setw(15) << l2_lambda << std::endl;
-        //     ofs_lasso_fcs << "# LASSO_DBASIS = " << std::setw(15) << disp_norm << std::endl;
-        //     ofs_lasso_fcs << "# LASSO_TOL = " << std::setw(15) << lasso_tol << std::endl;
-        //     ofs_lasso_fcs << "# L1 ALPHA, FCS " << std::endl;
-        // }
-
 
         if (lasso_algo == 0) {
             ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
@@ -416,27 +397,19 @@ void Lasso::lasso_main(ALM *alm)
             ofs_cv << "# L1 ALPHA, Fitting error, Validation error, Num. zero IFCs (2nd, 3rd, ...) " << std::endl;
         }
 
-        int ishift;
-        int iparam;
-        double tmp;
-        int inew, iold;
         int initialize_mode;
         double res1, res2;
-        int *nzero_lasso;
 
-        memory->allocate(nzero_lasso, maxorder);
+        std::vector<int> nzero_lasso(maxorder);
 
-        int ialpha;
-
-        for (ialpha = 0; ialpha <= num_l1_alpha; ++ialpha) {
+        for (int ialpha = 0; ialpha <= num_l1_alpha; ++ialpha) {
 
             l1_alpha = l1_alpha_min * std::pow(l1_alpha_max / l1_alpha_min,
-                                               static_cast<double>(num_l1_alpha - ialpha) / static_cast<double>(num_l1_alpha));
+                                               static_cast<double>(num_l1_alpha - ialpha) / static_cast<double>(
+                                                   num_l1_alpha));
 
             std::cout << "-----------------------------------------------------------------" << std::endl;
             std::cout << "  L1_ALPHA = " << std::setw(15) << l1_alpha << std::endl;
-            // ofs_lasso_fcs << std::setw(15) << l1_alpha;
-            // ofs_lasso_fcs2 << std::setw(15) << l1_alpha;
 
             ofs_cv << std::setw(15) << l1_alpha;
 
@@ -449,7 +422,7 @@ void Lasso::lasso_main(ALM *alm)
             if (lasso_algo == 0) {
                 // Coordinate Descent method
                 coordinate_descent(M, N_new, l1_alpha, lasso_tol, initialize_mode, maxiter,
-                                   x, A, b, C, has_prod, Prod, grad, f2norm, output_frequency,
+                                   x, A, b, C, has_prod, Prod, grad, fnorm, output_frequency,
                                    scale_beta, standardize);
 
                 for (i = 0; i < N_new; ++i) param[i] = x[i] * factor_std[i];
@@ -458,93 +431,25 @@ void Lasso::lasso_main(ALM *alm)
             } else if (lasso_algo == 1) {
                 // Split-Bregman
                 split_bregman_minimization(M, N_new, l1_alpha, l2_lambda, lasso_tol, maxiter,
-                                           amat, fsum, f2norm, param, bvec_breg, dvec_breg,
+                                           amat, fsum, fnorm, &param[0], bvec_breg, dvec_breg,
                                            initialize_mode, output_frequency);
             }
 
-            calculate_residual(M, N_new, amat, param, fsum, f2norm, res1);
-            calculate_residual(M_test, N_new, amat_test, param, fsum_test, f2norm_test, res2);
+            calculate_residual(M, N_new, amat, &param[0], fsum, fnorm, res1);
+            calculate_residual(M_test, N_new, amat_test, &param[0], fsum_test, fnorm_test, res2);
 
             // Count the number of zero parameters
-            iparam = 0;
+            int iparam = 0;
 
             for (i = 0; i < maxorder; ++i) {
                 nzero_lasso[i] = 0;
-                for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
-                     it != constraint->index_bimap[i].end(); ++it) {
-                    inew = (*it).left + iparam;
+                for (const auto &it : alm->constraint->index_bimap[i]) {
+                    int inew = it.left + iparam;
                     if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
 
                 }
-                iparam += constraint->index_bimap[i].size();
+                iparam += alm->constraint->index_bimap[i].size();
             }
-
-            k = 0;
-            for (i = 0; i < maxorder; ++i) {
-                scale_factor = 1.0 / std::pow(disp_norm, i + 1);
-
-                for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
-                    param[k] *= scale_factor;
-                    ++k;
-                }
-            }
-
-            ishift = 0;
-            iparam = 0;
-
-            memory->allocate(fitting->params, N);
-
-            for (i = 0; i < maxorder; ++i) {
-                for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-                    fitting->params[constraint->const_fix[i][j].p_index_target + ishift]
-                        = constraint->const_fix[i][j].val_to_fix;
-                }
-
-                for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
-                     it != constraint->index_bimap[i].end(); ++it) {
-                    inew = (*it).left + iparam;
-                    iold = (*it).right + ishift;
-
-                    fitting->params[iold] = param[inew];
-                }
-
-                for (j = 0; j < constraint->const_relate[i].size(); ++j) {
-                    tmp = 0.0;
-
-                    for (k = 0; k < constraint->const_relate[i][j].alpha.size(); ++k) {
-                        tmp += constraint->const_relate[i][j].alpha[k]
-                            * fitting->params[constraint->const_relate[i][j].p_index_orig[k] + ishift];
-                    }
-                    fitting->params[constraint->const_relate[i][j].p_index_target + ishift] = -tmp;
-                }
-
-                ishift += fcs->nequiv[i].size();
-                iparam += constraint->index_bimap[i].size();
-            }
-
-
-            // k = 0;
-            // for (i = 0; i < maxorder; ++i) {
-            //     for (j = 0; j < fcs->nequiv[i].size(); ++j) {
-            //         ofs_lasso_fcs << std::setw(15) << fitting->params[k];
-            //         ++k;
-            //     }
-            // }
-            // ofs_lasso_fcs << std::endl;
-
-            // ofs_lasso_fcs2 << std::setw(15) << std::sqrt(res1);
-            // ofs_lasso_fcs2 << std::setw(15) << std::sqrt(res2);
-            // for (i = 0; i < N_new; ++i) {
-            //     ofs_lasso_fcs2 << std::setw(15) << param[i];
-            // }
-            // ofs_lasso_fcs2 << std::endl;
-            // ofs_lasso_fcs2 << "#";
-            // for (i = 0; i < maxorder; ++i) {
-            //     ofs_lasso_fcs2 << std::setw(5) << nzero_lasso[i];
-            // }
-            // ofs_lasso_fcs2 << std::endl;
-
-            memory->deallocate(fitting->params);
 
             ofs_cv << std::setw(15) << std::sqrt(res1);
             ofs_cv << std::setw(15) << std::sqrt(res2);
@@ -552,32 +457,15 @@ void Lasso::lasso_main(ALM *alm)
                 ofs_cv << std::setw(10) << nzero_lasso[i];
             }
             ofs_cv << std::endl;
-
-            k = 0;
-            for (i = 0; i < maxorder; ++i) {
-                scale_factor = std::pow(disp_norm, i + 1);
-
-                for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
-                    param[k] *= scale_factor;
-                    ++k;
-                }
-            }
         }
 
-        // ofs_lasso_fcs.close();
-        // ofs_lasso_fcs2.close();
         ofs_cv.close();
-
-        memory->deallocate(nzero_lasso);
-
 
     } else if (lasso_cv == 0) {
 
         double res1;
-        int *nzero_lasso;
+        std::vector<int> nzero_lasso(maxorder);
         bool find_sparse_representation = true;
-
-        memory->allocate(nzero_lasso, maxorder);
 
         std::cout << "  Lasso minimization with the following parameters:" << std::endl;
         std::cout << "   LASSO_ALPHA  (L1) = " << std::setw(15) << l1_alpha << std::endl;
@@ -595,7 +483,7 @@ void Lasso::lasso_main(ALM *alm)
             find_sparse_representation = false;
 
             coordinate_descent(M, N_new, l1_alpha, lasso_tol, 0, maxiter,
-                               x, A, b, C, has_prod, Prod, grad, f2norm,
+                               x, A, b, C, has_prod, Prod, grad, fnorm * fnorm,
                                output_frequency, scale_beta, standardize);
 
             for (i = 0; i < N_new; ++i) param[i] = x[i] * factor_std[i];
@@ -603,12 +491,12 @@ void Lasso::lasso_main(ALM *alm)
         } else if (lasso_algo == 1) {
             // Split-Bregman Method
             split_bregman_minimization(M, N_new, l1_alpha, l2_lambda, lasso_tol, maxiter,
-                                       amat, fsum, f2norm, param,
+                                       amat, fsum, fnorm * fnorm, &param[0],
                                        bvec_breg, dvec_breg, 0, output_frequency);
         }
 
 
-        calculate_residual(M, N_new, amat, param, fsum, f2norm, res1);
+        calculate_residual(M, N_new, amat, &param[0], fsum, fnorm, res1);
 
         // Count the number of zero parameters
         int iparam, inew;
@@ -616,29 +504,35 @@ void Lasso::lasso_main(ALM *alm)
 
         for (i = 0; i < maxorder; ++i) {
             nzero_lasso[i] = 0;
-            for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
-                 it != constraint->index_bimap[i].end(); ++it) {
+            for (boost::bimap<int, int>::const_iterator it = alm->constraint->index_bimap[i].begin();
+                 it != alm->constraint->index_bimap[i].end(); ++it) {
                 inew = (*it).left + iparam;
                 if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
 
             }
-            iparam += constraint->index_bimap[i].size();
+            iparam += alm->constraint->index_bimap[i].size();
         }
 
         std::cout << "  RESIDUAL (%): " << std::sqrt(res1) * 100.0 << std::endl;
         for (int order = 0; order < maxorder; ++order) {
-            std::cout << "  Number of non-zero " << std::setw(9) << interaction->str_order[order] << " FCs : "
-                << constraint->index_bimap[order].size() - nzero_lasso[order] << std::endl;
+            std::cout << "  Number of non-zero " << std::setw(9) << alm->interaction->str_order[order] << " FCs : "
+                << alm->constraint->index_bimap[order].size() - nzero_lasso[order] << std::endl;
         }
         std::cout << std::endl;
 
         if (find_sparse_representation) {
 
-            double *param_copy;
-            int itol;
-            double tolerance_tmp;
+            // Calculate prefactor for atomic forces
+            std::vector<double> prefactor_force(N_new);
 
-            memory->allocate(param_copy, N_new);
+            get_prefactor_force(maxorder,
+                                alm->fcs,
+                                alm->constraint,
+                                alm->fitting,
+                                prefactor_force);
+
+            std::vector<double> param_copy(N_new);
+            double tolerance_tmp;
 
             for (i = 0; i < N_new; ++i) {
                 param_copy[i] = param[i];
@@ -648,7 +542,7 @@ void Lasso::lasso_main(ALM *alm)
 
             std::cout << " LASSO_ZERO_THR, Number of zero parameters, fitting error (%) " << std::endl;
 
-            for (itol = 0; itol <= 100; ++itol) {
+            for (int itol = 0; itol <= 100; ++itol) {
                 tolerance_tmp = 1.0e-20 * std::pow(scale_factor, static_cast<double>(itol));
 
                 std::cout << std::setw(15) << tolerance_tmp;
@@ -658,92 +552,54 @@ void Lasso::lasso_main(ALM *alm)
                 for (i = 0; i < maxorder; ++i) {
                     nzero_lasso[i] = 0;
 
-                    for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
-                         it != constraint->index_bimap[i].end(); ++it) {
-                        inew = (*it).left + iparam;
+                    for (const auto &it : alm->constraint->index_bimap[i]) {
+                        inew = it.left + iparam;
 
                         if (std::abs(param_copy[inew]) * prefactor_force[inew] < tolerance_tmp) {
                             ++nzero_lasso[i];
                             param_copy[inew] = 0.0;
                         }
                     }
-                    iparam += constraint->index_bimap[i].size();
+                    iparam += alm->constraint->index_bimap[i].size();
 
                     std::cout << std::setw(10) << nzero_lasso[i];
                 }
 
-                calculate_residual(M, N_new, amat, param_copy, fsum, f2norm, res1);
+                calculate_residual(M, N_new, amat, &param_copy[0], fsum, fnorm * fnorm, res1);
                 std::cout << std::setw(15) << std::sqrt(res1) * 100.0 << std::endl;
             }
-
-            memory->deallocate(param_copy);
         }
-        memory->deallocate(nzero_lasso);
     }
 
     if (lasso_algo == 0) {
-        memory->deallocate(has_prod);
-        memory->deallocate(factor_std);
+        deallocate(has_prod);
+        deallocate(factor_std);
     } else if (lasso_algo == 1) {
-        memory->deallocate(bvec_breg);
-        memory->deallocate(dvec_breg);
+        deallocate(bvec_breg);
+        deallocate(dvec_breg);
     }
 
     k = 0;
     for (i = 0; i < maxorder; ++i) {
         scale_factor = 1.0 / std::pow(disp_norm, i + 1);
 
-        for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
+        for (j = 0; j < alm->constraint->index_bimap[i].size(); ++j) {
             param[k] *= scale_factor;
             ++k;
         }
     }
 
-    int ishift = 0;
-    int iparam = 0;
-    double tmp;
-    int inew, iold;
+    alm->fitting->set_fcs_values(maxorder,
+                                 &param[0],
+                                 alm->fcs->nequiv,
+                                 alm->constraint);
 
-    memory->allocate(fitting->params, N);
+    deallocate(amat);
+    deallocate(fsum);
+    deallocate(amat_test);
+    deallocate(fsum_test);
 
-    for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-            fitting->params[constraint->const_fix[i][j].p_index_target + ishift]
-                = constraint->const_fix[i][j].val_to_fix;
-        }
-
-        for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
-             it != constraint->index_bimap[i].end(); ++it) {
-            inew = (*it).left + iparam;
-            iold = (*it).right + ishift;
-
-            fitting->params[iold] = param[inew];
-        }
-
-        for (j = 0; j < constraint->const_relate[i].size(); ++j) {
-            tmp = 0.0;
-
-            for (k = 0; k < constraint->const_relate[i][j].alpha.size(); ++k) {
-                tmp += constraint->const_relate[i][j].alpha[k]
-                    * fitting->params[constraint->const_relate[i][j].p_index_orig[k] + ishift];
-            }
-            fitting->params[constraint->const_relate[i][j].p_index_target + ishift] = -tmp;
-        }
-
-        ishift += fcs->nequiv[i].size();
-        iparam += constraint->index_bimap[i].size();
-    }
-
-    memory->deallocate(param);
-    memory->deallocate(amat);
-    memory->deallocate(fsum);
-    memory->deallocate(fsum_orig);
-    memory->deallocate(amat_test);
-    memory->deallocate(fsum_test);
-    memory->deallocate(fsum_orig_test);
-    memory->deallocate(prefactor_force);
-
-    timer->print_elapsed();
+    alm->timer->print_elapsed();
     std::cout << " --------------------------------------------------------------" << std::endl;
 }
 
@@ -1005,14 +861,14 @@ void Lasso::split_bregman_minimization(const int M,
     int N_ = N;
     int M_ = M;
 
-    memory->allocate(bvec2, N);
-    memory->allocate(dvec2, N);
-    memory->allocate(param_tmp, N);
-    memory->allocate(Amat_1d, M * N);
-    memory->allocate(Qmat_CG, N * N);
-    memory->allocate(bvec_CG, N);
-    memory->allocate(bvec_CG_update, N);
-    memory->allocate(res, M);
+    allocate(bvec2, N);
+    allocate(dvec2, N);
+    allocate(param_tmp, N);
+    allocate(Amat_1d, M * N);
+    allocate(Qmat_CG, N * N);
+    allocate(bvec_CG, N);
+    allocate(bvec_CG_update, N);
+    allocate(res, M);
 
     // Prepare Qmat = A^T A, which is positive semidefinite.
     // When alpha is nonzero, Qmat becomes positive definite.
@@ -1037,8 +893,8 @@ void Lasso::split_bregman_minimization(const int M,
         //
         std::cout << "    LASSO_PCG = 1: Prepare preconditioning matrix ...";
 
-        memory->allocate(mat_precondition, N, N);
-        memory->allocate(vec_d, N);
+        allocate(mat_precondition, N, N);
+        allocate(vec_d, N);
 
         incomplete_cholesky_factorization(N, Qmat_CG, mat_precondition, vec_d);
         std::cout << " done." << std::endl << std::endl;
@@ -1120,7 +976,8 @@ void Lasso::split_bregman_minimization(const int M,
             }
 
             std::cout << std::endl;
-            std::cout << "    1: ||u_{k}-u_{k-1}||_2     = " << std::setw(15) << std::sqrt(diff / static_cast<double>(N))
+            std::cout << "    1: ||u_{k}-u_{k-1}||_2     = " << std::setw(15) << std::sqrt(
+                    diff / static_cast<double>(N))
                 << std::setw(15) << std::sqrt(diff / param_norm) << std::endl;
 
             tmp = 0.0;
@@ -1231,17 +1088,17 @@ void Lasso::split_bregman_minimization(const int M,
 
     // Memory deallocation
 
-    memory->deallocate(bvec2);
-    memory->deallocate(dvec2);
-    memory->deallocate(param_tmp);
-    memory->deallocate(bvec_CG);
-    memory->deallocate(bvec_CG_update);
-    memory->deallocate(Qmat_CG);
-    memory->deallocate(Amat_1d);
-    memory->deallocate(res);
+    deallocate(bvec2);
+    deallocate(dvec2);
+    deallocate(param_tmp);
+    deallocate(bvec_CG);
+    deallocate(bvec_CG_update);
+    deallocate(Qmat_CG);
+    deallocate(Amat_1d);
+    deallocate(res);
     if (preconditioner == 1) {
-        memory->deallocate(mat_precondition);
-        memory->deallocate(vec_d);
+        deallocate(mat_precondition);
+        deallocate(vec_d);
     }
 
 
@@ -1275,10 +1132,10 @@ void Lasso::minimize_quadratic_CG(const int N,
 
     static double tol = 1.0e-10;
 
-    memory->allocate(descent_vec, N);
-    memory->allocate(val_tmp, N);
-    memory->allocate(residual_vec, N);
-    memory->allocate(vec_tmp, N);
+    allocate(descent_vec, N);
+    allocate(val_tmp, N);
+    allocate(residual_vec, N);
+    allocate(vec_tmp, N);
 
     // Initialization
 
@@ -1417,18 +1274,18 @@ void Lasso::minimize_quadratic_CG(const int N,
         }
 
     } else {
-        error->exit("minimize_quadratic_CG",
-                    "preconditioner > 1. This cannot happen.");
+        exit("minimize_quadratic_CG",
+             "preconditioner > 1. This cannot happen.");
     }
 
     for (i = 0; i < N; ++i) {
         val_out[i] = val_tmp[i];
     }
 
-    memory->deallocate(descent_vec);
-    memory->deallocate(val_tmp);
-    memory->deallocate(residual_vec);
-    memory->deallocate(vec_tmp);
+    deallocate(descent_vec);
+    deallocate(val_tmp);
+    deallocate(residual_vec);
+    deallocate(vec_tmp);
 }
 
 
@@ -1528,8 +1385,8 @@ void Lasso::minimize_quadratic_CG(const int N,
         }
 
     } else {
-        error->exit("minimize_quadratic_CG",
-                    "preconditioner > 1. This cannot happen.");
+        exit("minimize_quadratic_CG",
+             "preconditioner > 1. This cannot happen.");
     }
 
     val_out = val_tmp;
@@ -1541,7 +1398,7 @@ void Lasso::calculate_residual(const int M,
                                double **Amat,
                                double *param,
                                double *fvec,
-                               const double f2norm,
+                               const double fnorm,
                                double &res)
 {
     int i, j;
@@ -1563,7 +1420,7 @@ void Lasso::calculate_residual(const int M,
     }
 
     vec_tmp = Amat2 * param2 - fvec2;
-    res = vec_tmp.dot(vec_tmp) / f2norm;
+    res = vec_tmp.dot(vec_tmp) / (fnorm * fnorm);
 }
 
 int Lasso::incomplete_cholesky_factorization(const int N,
@@ -1602,7 +1459,10 @@ int Lasso::incomplete_cholesky_factorization(const int N,
     return 0;
 }
 
-int Lasso::incomplete_cholesky_factorization(const int N, double *A, double **L, double *d)
+int Lasso::incomplete_cholesky_factorization(const int N,
+                                             double *A,
+                                             double **L,
+                                             double *d)
 {
     // The vector A should be read as matrix A whose component is transposed (C<-->fortran convertion).
 
@@ -1614,7 +1474,7 @@ int Lasso::incomplete_cholesky_factorization(const int N, double *A, double **L,
 
     if (N <= 0) return 0;
 
-    memory->allocate(mat, N, N);
+    allocate(mat, N, N);
 
     m = 0;
     for (i = 0; i < N; ++i) {
@@ -1640,7 +1500,7 @@ int Lasso::incomplete_cholesky_factorization(const int N, double *A, double **L,
         d[i] = 1.0 / L[i][i];
     }
 
-    memory->deallocate(mat);
+    deallocate(mat);
 
     return 0;
 }
@@ -1679,13 +1539,17 @@ void Lasso::forward_backward_substitution(const int N,
 }
 
 
-void Lasso::forward_backward_substitution(const int N, double **L, double *d, double *vec_in, double *vec_out)
+void Lasso::forward_backward_substitution(const int N,
+                                          double **L,
+                                          double *d,
+                                          double *vec_in,
+                                          double *vec_out)
 {
     int i, j;
     double tmp;
     double *vec_tmp;
 
-    memory->allocate(vec_tmp, N);
+    allocate(vec_tmp, N);
 
     for (i = 0; i < N; ++i) {
         vec_tmp[i] = 0.0;
@@ -1708,7 +1572,7 @@ void Lasso::forward_backward_substitution(const int N, double **L, double *d, do
         vec_out[i] = vec_tmp[i] - d[i] * tmp;
     }
 
-    memory->deallocate(vec_tmp);
+    deallocate(vec_tmp);
 }
 
 
@@ -1717,7 +1581,8 @@ void Lasso::coordinate_descent(const int M,
                                const double alpha,
                                const double tolerance,
                                const int warm_start,
-                               const int maxiter, Eigen::VectorXd &x,
+                               const int maxiter,
+                               Eigen::VectorXd &x,
                                const Eigen::MatrixXd &A,
                                const Eigen::VectorXd &b,
                                const Eigen::VectorXd &C,
@@ -1871,4 +1736,41 @@ void Lasso::coordinate_descent(const int M,
     std::cout << std::endl;
 
     for (i = 0; i < N; ++i) x[i] = beta(i);
+}
+
+
+void Lasso::get_prefactor_force(const int maxorder,
+                                Fcs *fcs,
+                                Constraint *constraint,
+                                Fitting *fitting,
+                                std::vector<double> &prefactor)
+{
+    int i, j;
+    int ishift2 = 0;
+    int iparam2 = 0;
+    int inew2, iold2;
+    int iold2_dup;
+
+    int *ind;
+
+    allocate(ind, maxorder + 1);
+    for (i = 0; i < maxorder; ++i) {
+        for (const auto &it : constraint->index_bimap[i]) {
+            inew2 = it.left + iparam2;
+            iold2 = it.right;
+            iold2_dup = 0;
+            for (j = 0; j < iold2; ++j) {
+                iold2_dup += fcs->nequiv[i][j];
+            }
+
+            for (j = 0; j < i + 2; ++j) {
+                ind[j] = fcs->fc_table[i][iold2_dup].elems[j];
+            }
+            prefactor[inew2] = fitting->gamma(i + 2, ind);
+        }
+
+        ishift2 += fcs->nequiv[i].size();
+        iparam2 += constraint->index_bimap[i].size();
+    }
+    deallocate(ind);
 }

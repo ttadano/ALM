@@ -91,7 +91,7 @@ void Writer::write_input_vars(const ALM *alm)
         std::cout << "  FFILE = " << alm->files->file_force << std::endl;
         std::cout << "  NDATA = " << alm->fitting->ndata << "; NSTART = " << alm->fitting->nstart
             << "; NEND = " << alm->fitting->nend << std::endl;
-        std::cout << "  SKIP = " << alm->fitting->skip_s + 1 << "-" << alm->fitting->>skip_e << std::endl;
+        std::cout << "  SKIP = " << alm->fitting->skip_s + 1 << "-" << alm->fitting->skip_e << std::endl;
         std::cout << "  ICONST = " << alm->constraint->constraint_mode << std::endl;
         std::cout << "  ROTAXIS = " << alm->constraint->rotation_axis << std::endl;
         std::cout << "  FC2XML = " << alm->constraint->fc2_file << std::endl;

@@ -680,7 +680,8 @@ int ALM::optimize_lasso()
         constraint->setup(this);
         ready_to_fit = true;
     }
-    int info = lasso->optimize_main(this);
+    lasso->lasso_main(this);
+    int info = 1;
     return info;
 }
 

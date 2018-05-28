@@ -11,7 +11,11 @@
 #pragma once
 
 #include "alm.h"
+#include "constraint.h"
+#include "fcs.h"
+#include "fitting.h"
 #include <string>
+#include <vector>
 #include <Eigen/Dense>
 
 namespace ALM_NS
@@ -47,50 +51,129 @@ namespace ALM_NS
 
         void set_default_variables();
 
-        void split_bregman_minimization(const int, const int, const double, const double,
-                                        const double, const int, double **, double *, const double, double *,
-                                        double *, double *, const int, const int);
+        void split_bregman_minimization(int,
+                                        int,
+                                        double,
+                                        double,
+                                        double,
+                                        int,
+                                        double **,
+                                        double *,
+                                        double,
+                                        double *,
+                                        double *,
+                                        double *,
+                                        int,
+                                        int);
 
-        void coordinate_descent(const int, const int, const double, const double, const int, const int,
-                                Eigen::VectorXd &, const Eigen::MatrixXd &, const Eigen::VectorXd &,
-                                const Eigen::VectorXd &, bool *, Eigen::MatrixXd &, Eigen::VectorXd &,
-                                const double, const int, Eigen::VectorXd, const int);
+        void coordinate_descent(int,
+                                int,
+                                double,
+                                double,
+                                int,
+                                int,
+                                Eigen::VectorXd &,
+                                const Eigen::MatrixXd &,
+                                const Eigen::VectorXd &,
+                                const Eigen::VectorXd &,
+                                bool *,
+                                Eigen::MatrixXd &,
+                                Eigen::VectorXd &,
+                                double,
+                                int,
+                                Eigen::VectorXd,
+                                int);
 
-        void calculate_residual(const int, const int, double **, double *, double *,
-                                const double, double &);
+        void calculate_residual(int,
+                                int,
+                                double **,
+                                double *,
+                                double *,
+                                double,
+                                double &);
 
-        void minimize_quadratic_CG(const int, double *, double *, double *, const int, const bool,
-                                   double **, double *, const int);
+        void minimize_quadratic_CG(int,
+                                   double *,
+                                   double *,
+                                   double *,
+                                   int,
+                                   bool,
+                                   double **,
+                                   double *,
+                                   int);
 
-        void minimize_quadratic_CG(const int, const Eigen::MatrixXd &, const Eigen::VectorXd &,
-                                   Eigen::VectorXd &, const int, const bool,
-                                   const Eigen::MatrixXd &, const Eigen::VectorXd &, const int);
+        void minimize_quadratic_CG(int,
+                                   const Eigen::MatrixXd &,
+                                   const Eigen::VectorXd &,
+                                   Eigen::VectorXd &,
+                                   int,
+                                   bool,
+                                   const Eigen::MatrixXd &,
+                                   const Eigen::VectorXd &,
+                                   int);
 
-        int incomplete_cholesky_factorization(const int, const Eigen::MatrixXd &,
-                                              Eigen::MatrixXd &, Eigen::VectorXd &);
+        int incomplete_cholesky_factorization(int,
+                                              const Eigen::MatrixXd &,
+                                              Eigen::MatrixXd &,
+                                              Eigen::VectorXd &);
 
-        int incomplete_cholesky_factorization(const int, double *, double **, double *);
+        int incomplete_cholesky_factorization(int,
+                                              double *,
+                                              double **,
+                                              double *);
 
-        void forward_backward_substitution(const int, const Eigen::MatrixXd &, const Eigen::VectorXd &,
-                                           const Eigen::VectorXd &, Eigen::VectorXd &);
+        void forward_backward_substitution(int,
+                                           const Eigen::MatrixXd &,
+                                           const Eigen::VectorXd &,
+                                           const Eigen::VectorXd &,
+                                           Eigen::VectorXd &);
 
-        void forward_backward_substitution(const int, double **, double *, double *, double *);
+        void forward_backward_substitution(int,
+                                           double **,
+                                           double *,
+                                           double *,
+                                           double *);
+
+        void get_prefactor_force(int,
+                                 Fcs *,
+                                 Constraint *,
+                                 Fitting *,
+                                 std::vector<double> &);
     };
 
-    inline double shrink(const double x, const double a)
+    inline double shrink(const double x,
+                         const double a)
     {
         double xabs = std::abs(x);
         double sign = static_cast<double>((0.0 < x) - (x < 0.0));
         return sign * std::max<double>(xabs - a, 0.0);
     }
 
-    extern "C"
-    {
-        void dgemm_(const char *TRANSA, const char *TRANSB, int *M, int *N, int *K,
-                    double *ALPHA, double *A, int *LDA, double *B, int *LDB, double *BETA,
-                    double *C, int *LDC);
+    extern "C" {
+    void dgemm_(const char *TRANSA,
+                const char *TRANSB,
+                int *M,
+                int *N,
+                int *K,
+                double *ALPHA,
+                double *A,
+                int *LDA,
+                double *B,
+                int *LDB,
+                double *BETA,
+                double *C,
+                int *LDC);
 
-        void dgemv_(const char *trans, int *M, int *N, double *alpha, double *a, int *lda,
-                    double *x, int *incx, double *beta, double *y, int *incy);
+    void dgemv_(const char *trans,
+                int *M,
+                int *N,
+                double *alpha,
+                double *a,
+                int *lda,
+                double *x,
+                int *incx,
+                double *beta,
+                double *y,
+                int *incy);
     }
 }
