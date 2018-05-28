@@ -639,7 +639,8 @@ void InputParser::parse_fitting_vars(ALM *alm)
     int constraint_flag;
     int flag_sparse = 0;
     std::string rotation_axis;
-    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML SPARSE \
+    std::string str_allowed_list =
+        "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML SPARSE \
                                    LASSO_DNORM LASSO_ALPHA LASSO_LAMBDA LASSO_MAXITER LASSO_TOL LASSO_CV LASSO_CVSET \
                                    LASSO_MAXITER_CG LASSO_FREQ LASSO_ZERO_THR LASSO_MAXALPHA LASSO_MINALPHA LASSO_NALPHA \
                                    LASSO_PCG NDATA_TEST DFILE_TEST FFILE_TEST NSTART_TEST NEND_TEST SKIP STANDARDIZE LASSO_ALGO";
@@ -870,27 +871,27 @@ void InputParser::parse_fitting_vars(ALM *alm)
 
         InputSetter *input_setter = new InputSetter();
         input_setter->set_lasso_vars(alm,
-                                    lasso_alpha,
-                                    lasso_min_alpha,
-                                    lasso_max_alpha,
-                                    lasso_num_alpha,
-                                    lasso_tol,
-                                    lasso_maxiter,
-                                    lasso_freq,
-                                    lasso_algo,
-                                    standardize,
-                                    lasso_dnorm,
-                                    lasso_lambda,
-                                    lasso_maxiter_cg,
-                                    lasso_pcg,
-                                    lasso_cv,
-                                    lasso_cvset,
-                                    lasso_zero_thr,
-                                    ndata_test,
-                                    nstart_test,
-                                    nend_test,
-                                    dfile_test,
-                                    ffile_test);
+                                     lasso_alpha,
+                                     lasso_min_alpha,
+                                     lasso_max_alpha,
+                                     lasso_num_alpha,
+                                     lasso_tol,
+                                     lasso_maxiter,
+                                     lasso_freq,
+                                     lasso_algo,
+                                     standardize,
+                                     lasso_dnorm,
+                                     lasso_lambda,
+                                     lasso_maxiter_cg,
+                                     lasso_pcg,
+                                     lasso_cv,
+                                     lasso_cvset,
+                                     lasso_zero_thr,
+                                     ndata_test,
+                                     nstart_test,
+                                     nend_test,
+                                     dfile_test,
+                                     ffile_test);
         delete input_setter;
     }
 

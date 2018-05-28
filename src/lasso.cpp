@@ -271,6 +271,9 @@ void Lasso::lasso_main(ALM *alm)
     Eigen::MatrixXd A, Prod;
     Eigen::VectorXd b, C, grad, x;
     Eigen::VectorXd scale_beta;
+    Eigen::MatrixXd A_test;
+    Eigen::VectorXd b_test;
+    Eigen::VectorXd fdiff, fdiff_test;
 
     if (lasso_algo == 0) {
 
@@ -283,6 +286,12 @@ void Lasso::lasso_main(ALM *alm)
         grad.resize(N_new);
         x.resize(N_new);
         scale_beta.resize(N_new);
+
+        A_test.resize(M_test, N_new);
+        b_test.resize(M_test);
+
+        fdiff.resize(M);
+        fdiff_test.resize(M);
 
         allocate(has_prod, N_new);
         allocate(factor_std, N_new);
@@ -300,12 +309,18 @@ void Lasso::lasso_main(ALM *alm)
             b(i) = fsum[i];
         }
 
+        for (i = 0; i < M_test; ++i) {
+            for (j = 0; j < N_new; ++j) {
+                A_test(i, j) = amat_test[i][j];
+            }
+            b_test(i) = fsum_test[i];
+        }
         // Standardize if necessary
 
         double Minv = 1.0 / static_cast<double>(M);
 
         if (standardize) {
-            double sum1, sum2, tmp;
+            double sum1, sum2;
 
             std::cout << " STANDARDIZE = 1 : Standardization will be performed for matrix A and vector b." << std::endl;
             std::cout << "                   The LASSO_DNORM-tag will be neglected." << std::endl;
@@ -316,12 +331,13 @@ void Lasso::lasso_main(ALM *alm)
                 for (i = 0; i < M; ++i) {
                     A(i, j) = (A(i, j) - sum1) / std::sqrt(sum2 - sum1 * sum1);
                 }
+                for (i = 0; i < M_test; ++i) {
+                    A_test(i, j) = (A_test(i, j) - sum1) / std::sqrt(sum2 - sum1 * sum1);
+                }
                 factor_std[j] = 1.0 / std::sqrt(sum2 - sum1 * sum1);
                 scale_beta(j) = 1.0;
             }
-            // Is it necesary?
-            tmp = b.sum() * Minv;
-            for (i = 0; i < M; ++i) b(i) -= tmp;
+
         } else {
             double sum2;
             std::cout << " STANDARDIZE = 0 : No standardization of matrix A and vector b." << std::endl;
@@ -405,8 +421,7 @@ void Lasso::lasso_main(ALM *alm)
         for (int ialpha = 0; ialpha <= num_l1_alpha; ++ialpha) {
 
             l1_alpha = l1_alpha_min * std::pow(l1_alpha_max / l1_alpha_min,
-                                               static_cast<double>(num_l1_alpha - ialpha) / static_cast<double>(
-                                                   num_l1_alpha));
+                                               static_cast<double>(num_l1_alpha - ialpha) / static_cast<double>(num_l1_alpha));
 
             std::cout << "-----------------------------------------------------------------" << std::endl;
             std::cout << "  L1_ALPHA = " << std::setw(15) << l1_alpha << std::endl;
@@ -425,18 +440,23 @@ void Lasso::lasso_main(ALM *alm)
                                    x, A, b, C, has_prod, Prod, grad, fnorm, output_frequency,
                                    scale_beta, standardize);
 
-                for (i = 0; i < N_new; ++i) param[i] = x[i] * factor_std[i];
+                for (i = 0; i < N_new; ++i) param[i] = x[i];
 
+                fdiff = A * x - b;
+                fdiff_test = A_test * x - b_test;
+                res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
+                res2 = fdiff_test.dot(fdiff_test) / (fnorm_test * fnorm_test);
 
             } else if (lasso_algo == 1) {
                 // Split-Bregman
                 split_bregman_minimization(M, N_new, l1_alpha, l2_lambda, lasso_tol, maxiter,
                                            amat, fsum, fnorm, &param[0], bvec_breg, dvec_breg,
                                            initialize_mode, output_frequency);
-            }
 
-            calculate_residual(M, N_new, amat, &param[0], fsum, fnorm, res1);
-            calculate_residual(M_test, N_new, amat_test, &param[0], fsum_test, fnorm_test, res2);
+
+                calculate_residual(M, N_new, amat, &param[0], fsum, fnorm, res1);
+                calculate_residual(M_test, N_new, amat_test, &param[0], fsum_test, fnorm_test, res2);
+            }
 
             // Count the number of zero parameters
             int iparam = 0;
@@ -483,7 +503,7 @@ void Lasso::lasso_main(ALM *alm)
             find_sparse_representation = false;
 
             coordinate_descent(M, N_new, l1_alpha, lasso_tol, 0, maxiter,
-                               x, A, b, C, has_prod, Prod, grad, fnorm * fnorm,
+                               x, A, b, C, has_prod, Prod, grad, fnorm,
                                output_frequency, scale_beta, standardize);
 
             for (i = 0; i < N_new; ++i) param[i] = x[i] * factor_std[i];
@@ -491,7 +511,7 @@ void Lasso::lasso_main(ALM *alm)
         } else if (lasso_algo == 1) {
             // Split-Bregman Method
             split_bregman_minimization(M, N_new, l1_alpha, l2_lambda, lasso_tol, maxiter,
-                                       amat, fsum, fnorm * fnorm, &param[0],
+                                       amat, fsum, fnorm, &param[0],
                                        bvec_breg, dvec_breg, 0, output_frequency);
         }
 
@@ -565,7 +585,7 @@ void Lasso::lasso_main(ALM *alm)
                     std::cout << std::setw(10) << nzero_lasso[i];
                 }
 
-                calculate_residual(M, N_new, amat, &param_copy[0], fsum, fnorm * fnorm, res1);
+                calculate_residual(M, N_new, amat, &param_copy[0], fsum, fnorm, res1);
                 std::cout << std::setw(15) << std::sqrt(res1) * 100.0 << std::endl;
             }
         }
@@ -612,7 +632,7 @@ void Lasso::split_bregman_minimization(const int M,
                                        const int maxiter,
                                        double **Amat,
                                        double *fvec,
-                                       const double f2norm,
+                                       const double fnorm,
                                        double *param,
                                        double *bvec,
                                        double *dvec,
@@ -994,7 +1014,7 @@ void Lasso::split_bregman_minimization(const int M,
                 tmp += res[i] * res[i];
             }
             std::cout << "    3: ||Au_{k}-f||_2          = " << std::setw(15)
-                << std::sqrt(tmp) << std::setw(15) << std::sqrt(tmp / f2norm) << std::endl;
+                << std::sqrt(tmp) << std::setw(15) << std::sqrt(tmp / (fnorm * fnorm)) << std::endl;
             tmp = 0.0;
             for (i = 0; i < N; ++i) {
                 tmp += std::pow(dvec2[i] - alpha * param_tmp[i], 2.0);
@@ -1049,7 +1069,7 @@ void Lasso::split_bregman_minimization(const int M,
                 tmp += res[i] * res[i];
             }
             std::cout << "    3': ||Au_{k}-f||_2          = " << std::setw(15)
-                << std::sqrt(tmp) << std::setw(15) << std::sqrt(tmp / f2norm) << std::endl;
+                << std::sqrt(tmp) << std::setw(15) << std::sqrt(tmp / (fnorm * fnorm)) << std::endl;
             tmp = 0.0;
             for (i = 0; i < N; ++i) {
                 tmp += std::pow(dvec2[i] - alpha * param_tmp[i], 2.0);
@@ -1589,7 +1609,7 @@ void Lasso::coordinate_descent(const int M,
                                bool *has_prod,
                                Eigen::MatrixXd &Prod,
                                Eigen::VectorXd &grad,
-                               const double f2norm,
+                               const double fnorm,
                                const int nfreq,
                                Eigen::VectorXd scale_beta,
                                const int standardize)
@@ -1652,7 +1672,7 @@ void Lasso::coordinate_descent(const int M,
                 res = A * beta - b;
                 tmp = res.dot(res);
                 std::cout << "    3: ||Au_{k}-f||_2          = " << std::setw(15) << std::sqrt(tmp)
-                    << std::setw(15) << std::sqrt(tmp / f2norm) << std::endl;
+                    << std::setw(15) << std::sqrt(tmp / (fnorm * fnorm)) << std::endl;
                 std::cout << std::endl;
             }
         }
@@ -1698,7 +1718,7 @@ void Lasso::coordinate_descent(const int M,
                 res = A * beta - b;
                 tmp = res.dot(res);
                 std::cout << "    3: ||Au_{k}-f||_2          = " << std::setw(15) << std::sqrt(tmp)
-                    << std::setw(15) << std::sqrt(tmp / f2norm) << std::endl;
+                    << std::setw(15) << std::sqrt(tmp / (fnorm * fnorm)) << std::endl;
                 std::cout << std::endl;
             }
         }
@@ -1732,7 +1752,7 @@ void Lasso::coordinate_descent(const int M,
     res = A * beta - b;
     tmp = res.dot(res);
     std::cout << "    3': ||Au_{k}-f||_2          = " << std::setw(15) << std::sqrt(tmp)
-        << std::setw(15) << std::sqrt(tmp / f2norm) << std::endl;
+        << std::setw(15) << std::sqrt(tmp / (fnorm * fnorm)) << std::endl;
     std::cout << std::endl;
 
     for (i = 0; i < N; ++i) x[i] = beta(i);
