@@ -80,7 +80,7 @@ void Lasso::lasso_main(ALM *alm)
     double **u_test, **f_test;
     double **amat_test, *fsum_test;
     double fnorm, fnorm_test;
-    int ndata_used_test = alm->lasso->nend_test - alm->lasso->nstart_test + 1;
+    int ndata_used_test = nend_test - nstart_test + 1;
 
 
     int N = 0;
@@ -143,13 +143,15 @@ void Lasso::lasso_main(ALM *alm)
     input_parser->parse_displacement_and_force_files(u_test,
                                                      f_test,
                                                      nat,
-                                                     ndata_used_test,
+                                                     ndata_test,
                                                      nstart_test,
                                                      nend_test,
                                                      0,
                                                      0,
                                                      dfile_test,
                                                      ffile_test);
+
+    
 
     delete input_parser;
 
