@@ -56,6 +56,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
             ${PROJECT_SOURCE_DIR}/src/fitting.cpp
             ${PROJECT_SOURCE_DIR}/src/interaction.cpp
+            ${PROJECT_SOURCE_DIR}/src/lasso.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
             ${PROJECT_SOURCE_DIR}/src/rref.cpp
             ${PROJECT_SOURCE_DIR}/src/symmetry.cpp
@@ -69,6 +70,7 @@ set(HEADERS ${PROJECT_SOURCE_DIR}/src/alm.h
             ${PROJECT_SOURCE_DIR}/src/files.h
             ${PROJECT_SOURCE_DIR}/src/fitting.h
             ${PROJECT_SOURCE_DIR}/src/interaction.h
+            ${PROJECT_SOURCE_DIR}/src/lasso.h
             ${PROJECT_SOURCE_DIR}/src/patterndisp.h
             ${PROJECT_SOURCE_DIR}/src/rref.h
             ${PROJECT_SOURCE_DIR}/src/symmetry.h
