@@ -261,20 +261,15 @@ void Lasso::lasso_main(ALM *alm)
         // Coordinate descent
 
         A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], M, N_new);
-        b = Eigen::Map<Eigen::VectorXd>(&fsum[0], M);
+        b = Eigen::Map<Eigen::VectorXd>(&bvec[0], M);
         A_test = Eigen::Map<Eigen::MatrixXd>(&amat_1D_test[0], M_test, N_new);
-        b_test = Eigen::Map<Eigen::VectorXd>(&fsum_test[0], M_test);
-        //A.resize(M, N_new);
+        b_test = Eigen::Map<Eigen::VectorXd>(&bvec_test[0], M_test);
+
         Prod.resize(N_new, N_new);
-        //b.resize(M);
         C.resize(N_new);
         grad.resize(N_new);
         x.resize(N_new);
         scale_beta.resize(N_new);
-
-        // A_test.resize(M_test, N_new);
-        //b_test.resize(M_test);
-
         fdiff.resize(M);
         fdiff_test.resize(M);
 
@@ -529,15 +524,17 @@ void Lasso::lasso_main(ALM *alm)
 
             for (i = 0; i < N_new; ++i) param[i] = x[i] * factor_std[i];
 
+            fdiff = A * x - b;
+            res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
+
         } else if (lasso_algo == 1) {
             // Split-Bregman Method
             split_bregman_minimization(M, N_new, l1_alpha, l2_lambda, lasso_tol, maxiter,
                                        amat, fsum, fnorm, &param[0],
                                        bvec_breg, dvec_breg, 0, output_frequency);
+            
+            calculate_residual(M, N_new, amat, &param[0], fsum, fnorm, res1);
         }
-
-
-        calculate_residual(M, N_new, amat, &param[0], fsum, fnorm, res1);
 
         // Count the number of zero parameters
         int iparam, inew;
