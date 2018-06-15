@@ -846,7 +846,7 @@ void InputParser::parse_fitting_vars(ALM *alm)
             nstart_test = boost::lexical_cast<int>(fitting_var_dict["NSTART_TEST"]);
         }
         if (fitting_var_dict["NEND_TEST"].empty()) {
-            nend_test = ndata_test;
+            nend_test = 1;
         } else {
             nend_test = boost::lexical_cast<int>(fitting_var_dict["NEND_TEST"]);
         }

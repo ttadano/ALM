@@ -34,9 +34,7 @@ Lasso::Lasso()
     set_default_variables();
 }
 
-Lasso::~Lasso()
-{
-}
+Lasso::~Lasso() {}
 
 void Lasso::set_default_variables()
 {
@@ -56,6 +54,9 @@ void Lasso::set_default_variables()
     lasso_pcg = 0;
     lasso_algo = 0;
     standardize = 1;
+    ndata_test = 0;
+    nstart_test = 0;
+    nend_test = 0;
 }
 
 void Lasso::lasso_main(ALM *alm)
@@ -74,18 +75,17 @@ void Lasso::lasso_main(ALM *alm)
 
     double scale_factor;
     double **u, **f;
-    double **amat, *fsum;
+
     double *bvec_breg, *dvec_breg;
     // for LASSO validation
     double **u_test, **f_test;
-    double **amat_test, *fsum_test;
+
     double fnorm, fnorm_test;
     int ndata_used_test = nend_test - nstart_test + 1;
 
-
     int N = 0;
     int N_new = 0;
-    for (auto i = 0; i < maxorder; ++i) {
+    for (i = 0; i < maxorder; ++i) {
         N += alm->fcs->nequiv[i].size();
         N_new += alm->constraint->index_bimap[i].size();
     }
@@ -151,8 +151,6 @@ void Lasso::lasso_main(ALM *alm)
                                                      dfile_test,
                                                      ffile_test);
 
-    
-
     delete input_parser;
 
     // Scale displacements
@@ -185,8 +183,8 @@ void Lasso::lasso_main(ALM *alm)
 
     const unsigned long ncols = static_cast<long>(N_new);
 
-    std::vector<double> amat_1D;
-    std::vector<double> bvec;
+    std::vector<double> amat_1D, amat_1D_test;
+    std::vector<double> bvec, bvec_test;
 
     amat_1D.resize(nrows * ncols, 0.0);
     bvec.resize(nrows, 0.0);
@@ -204,32 +202,20 @@ void Lasso::lasso_main(ALM *alm)
 
     deallocate(u);
     deallocate(f);
-    allocate(amat, M, N_new);
-    allocate(fsum, M);
-
-    unsigned long m = 0;
-    for (auto icol = 0; icol < N_new; ++icol) {
-        for (auto irow = 0; irow < M; ++irow) {
-            amat[irow][icol] = amat_1D[m++];
-        }
-    }
-    for (auto irow = 0; irow < M; ++irow) {
-        fsum[irow] = bvec[irow];
-    }
 
     nrows = 3 * static_cast<long>(natmin)
         * static_cast<long>(ndata_used_test)
         * static_cast<long>(ntran);
 
-    amat_1D.resize(nrows * ncols, 0.0);
-    bvec.resize(nrows, 0.0);
+    amat_1D_test.resize(nrows * ncols, 0.0);
+    bvec_test.resize(nrows, 0.0);
 
     alm->fitting->set_displacement_and_force(u_test, f_test, nat, ndata_used_test);
 
     alm->fitting->get_matrix_elements_algebraic_constraint(maxorder,
                                                            ndata_used_test,
-                                                           &amat_1D[0],
-                                                           &bvec[0],
+                                                           &amat_1D_test[0],
+                                                           &bvec_test[0],
                                                            fnorm_test,
                                                            alm->symmetry,
                                                            alm->fcs,
@@ -237,22 +223,6 @@ void Lasso::lasso_main(ALM *alm)
 
     deallocate(u_test);
     deallocate(f_test);
-    allocate(amat_test, M_test, N_new);
-    allocate(fsum_test, M_test);
-
-    m = 0;
-    for (auto icol = 0; icol < N_new; ++icol) {
-        for (auto irow = 0; irow < M_test; ++irow) {
-            amat_test[irow][icol] = amat_1D[m++];
-        }
-    }
-    for (auto irow = 0; irow < M_test; ++irow) {
-        fsum_test[irow] = bvec[irow];
-    }
-
-    amat_1D.clear();
-    bvec.clear();
-
 
     // Scale back force constants
 
@@ -277,20 +247,33 @@ void Lasso::lasso_main(ALM *alm)
     Eigen::VectorXd b_test;
     Eigen::VectorXd fdiff, fdiff_test;
 
+    double **amat, *fsum;
+    double **amat_test, *fsum_test;
+
+    amat = nullptr;
+    fsum = nullptr;
+    amat_test = nullptr;
+    fsum_test = nullptr;
+
+
     if (lasso_algo == 0) {
 
         // Coordinate descent
 
-        A.resize(M, N_new);
+        A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], M, N_new);
+        b = Eigen::Map<Eigen::VectorXd>(&fsum[0], M);
+        A_test = Eigen::Map<Eigen::MatrixXd>(&amat_1D_test[0], M_test, N_new);
+        b_test = Eigen::Map<Eigen::VectorXd>(&fsum_test[0], M_test);
+        //A.resize(M, N_new);
         Prod.resize(N_new, N_new);
-        b.resize(M);
+        //b.resize(M);
         C.resize(N_new);
         grad.resize(N_new);
         x.resize(N_new);
         scale_beta.resize(N_new);
 
-        A_test.resize(M_test, N_new);
-        b_test.resize(M_test);
+        // A_test.resize(M_test, N_new);
+        //b_test.resize(M_test);
 
         fdiff.resize(M);
         fdiff_test.resize(M);
@@ -298,25 +281,30 @@ void Lasso::lasso_main(ALM *alm)
         allocate(has_prod, N_new);
         allocate(factor_std, N_new);
 
+        /*
+
+        for (i = 0; i < M; ++i) {
+        for (j = 0; j < N_new; ++j) {
+        A(i, j) = amat[i][j];
+        }
+        b(i) = fsum[i];
+        }
+
+        for (i = 0; i < M_test; ++i) {
+        for (j = 0; j < N_new; ++j) {
+        A_test(i, j) = amat_test[i][j];
+        }
+        b_test(i) = fsum_test[i];
+        }
+
+         */
+
         for (i = 0; i < N_new; ++i) {
             param[i] = 0.0;
             x[i] = 0.0;
             has_prod[i] = false;
         }
 
-        for (i = 0; i < M; ++i) {
-            for (j = 0; j < N_new; ++j) {
-                A(i, j) = amat[i][j];
-            }
-            b(i) = fsum[i];
-        }
-
-        for (i = 0; i < M_test; ++i) {
-            for (j = 0; j < N_new; ++j) {
-                A_test(i, j) = amat_test[i][j];
-            }
-            b_test(i) = fsum_test[i];
-        }
         // Standardize if necessary
 
         double Minv = 1.0 / static_cast<double>(M);
@@ -367,6 +355,36 @@ void Lasso::lasso_main(ALM *alm)
         }
 
     } else if (lasso_algo == 1) {
+
+
+        allocate(amat, M, N_new);
+        allocate(fsum, M);
+        allocate(amat_test, M_test, N_new);
+        allocate(fsum_test, M_test);
+
+        unsigned long m = 0;
+        for (auto icol = 0; icol < N_new; ++icol) {
+            for (auto irow = 0; irow < M; ++irow) {
+                amat[irow][icol] = amat_1D[m++];
+            }
+        }
+        for (auto irow = 0; irow < M; ++irow) {
+            fsum[irow] = bvec[irow];
+        }
+        m = 0;
+        for (auto icol = 0; icol < N_new; ++icol) {
+            for (auto irow = 0; irow < M_test; ++irow) {
+                amat_test[irow][icol] = amat_1D_test[m++];
+            }
+        }
+        for (auto irow = 0; irow < M_test; ++irow) {
+            fsum_test[irow] = bvec_test[irow];
+        }
+
+        amat_1D.clear();
+        amat_1D_test.clear();
+        bvec.clear();
+        bvec_test.clear();
 
         // Split bregman
 
@@ -423,7 +441,8 @@ void Lasso::lasso_main(ALM *alm)
         for (int ialpha = 0; ialpha <= num_l1_alpha; ++ialpha) {
 
             l1_alpha = l1_alpha_min * std::pow(l1_alpha_max / l1_alpha_min,
-                                               static_cast<double>(num_l1_alpha - ialpha) / static_cast<double>(num_l1_alpha));
+                                               static_cast<double>(num_l1_alpha - ialpha) / static_cast<double>(
+                                                   num_l1_alpha));
 
             std::cout << "-----------------------------------------------------------------" << std::endl;
             std::cout << "  L1_ALPHA = " << std::setw(15) << l1_alpha << std::endl;
@@ -616,10 +635,18 @@ void Lasso::lasso_main(ALM *alm)
                                  alm->fcs->nequiv,
                                  alm->constraint);
 
-    deallocate(amat);
-    deallocate(fsum);
-    deallocate(amat_test);
-    deallocate(fsum_test);
+    if (amat) {
+        deallocate(amat);
+    }
+    if (fsum) {
+        deallocate(fsum);
+    }
+    if (amat_test) {
+        deallocate(amat_test);
+    }
+    if (fsum_test) {
+        deallocate(fsum_test);
+    }
 
     alm->timer->print_elapsed();
     std::cout << " --------------------------------------------------------------" << std::endl;
