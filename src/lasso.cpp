@@ -496,7 +496,7 @@ void Lasso::lasso_main(ALM *alm)
                     scale_factor = 1.0 / std::pow(disp_norm, i + 1);
 
                     for (j = 0; j < alm->constraint->index_bimap[i].size(); ++j) {
-                        params_tmp[k] *= scale_factor * factor_std[i];;
+                        params_tmp[k] *= scale_factor * factor_std[k];
                         ++k;
                     }
                 }
