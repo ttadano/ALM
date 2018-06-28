@@ -205,12 +205,14 @@ void InputSetter::set_lasso_vars(ALM *alm,
                                  const int lasso_pcg,
                                  const int lasso_cv,
                                  const int lasso_cvset,
+                                 const int save_solution_path,
+                                 const int debias_ols,
                                  const double lasso_zero_thr,
-                                 const int ndata_test, 
+                                 const int ndata_test,
                                  const int nstart_test,
                                  const int nend_test,
                                  std::string dfile_test,
-                                 std::string ffile_test) 
+                                 std::string ffile_test)
 {
     alm->lasso->disp_norm = lasso_dnorm;
     alm->lasso->l1_alpha = lasso_alpha;
@@ -224,7 +226,9 @@ void InputSetter::set_lasso_vars(ALM *alm,
     alm->lasso->lasso_pcg = lasso_pcg;
     alm->lasso->lasso_cv = lasso_cv;
     alm->lasso->lasso_cvset = lasso_cvset;
+    alm->lasso->save_solution_path = save_solution_path;
     alm->lasso->output_frequency = lasso_freq;
+    alm->lasso->debias_ols = debias_ols;
     alm->lasso->lasso_zero_thr = lasso_zero_thr;
     alm->lasso->ndata_test = ndata_test;
     alm->lasso->nstart_test = nstart_test;

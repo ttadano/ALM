@@ -57,6 +57,8 @@ void Lasso::set_default_variables()
     ndata_test = 0;
     nstart_test = 0;
     nend_test = 0;
+    save_solution_path = 0;
+    debias_ols = 0;
 }
 
 void Lasso::lasso_main(ALM *alm)
@@ -276,24 +278,6 @@ void Lasso::lasso_main(ALM *alm)
         allocate(has_prod, N_new);
         allocate(factor_std, N_new);
 
-        /*
-
-        for (i = 0; i < M; ++i) {
-        for (j = 0; j < N_new; ++j) {
-        A(i, j) = amat[i][j];
-        }
-        b(i) = fsum[i];
-        }
-
-        for (i = 0; i < M_test; ++i) {
-        for (j = 0; j < N_new; ++j) {
-        A_test(i, j) = amat_test[i][j];
-        }
-        b_test(i) = fsum_test[i];
-        }
-
-         */
-
         for (i = 0; i < N_new; ++i) {
             param[i] = 0.0;
             x[i] = 0.0;
@@ -410,9 +394,10 @@ void Lasso::lasso_main(ALM *alm)
         }
         std::cout << std::endl;
 
-        std::ofstream ofs_cv;
+        std::ofstream ofs_cv, ofs_coef;
 
         std::string file_cv = alm->files->job_title + ".lasso_cv";
+        std::string file_coef = alm->files->job_title + ".lasso_coef";
         ofs_cv.open(file_cv.c_str(), std::ios::out);
 
         if (lasso_algo == 0) {
@@ -428,10 +413,18 @@ void Lasso::lasso_main(ALM *alm)
             ofs_cv << "# L1 ALPHA, Fitting error, Validation error, Num. zero IFCs (2nd, 3rd, ...) " << std::endl;
         }
 
+
         int initialize_mode;
         double res1, res2;
-
         std::vector<int> nzero_lasso(maxorder);
+        std::vector<double> params_tmp;
+
+        if (save_solution_path) {
+            ofs_coef.open(file_coef.c_str(), std::ios::out);
+            ofs_coef << "# L1 ALPHA, coefficients" << std::endl;
+            params_tmp.resize(N_new);
+        }
+
 
         for (int ialpha = 0; ialpha <= num_l1_alpha; ++ialpha) {
 
@@ -493,8 +486,27 @@ void Lasso::lasso_main(ALM *alm)
                 ofs_cv << std::setw(10) << nzero_lasso[i];
             }
             ofs_cv << std::endl;
-        }
 
+            if (save_solution_path) {
+                ofs_coef << std::setw(15) << l1_alpha;
+
+                for (i = 0; i < N_new; ++i) params_tmp[i] = param[i];
+                k = 0;
+                for (i = 0; i < maxorder; ++i) {
+                    scale_factor = 1.0 / std::pow(disp_norm, i + 1);
+
+                    for (j = 0; j < alm->constraint->index_bimap[i].size(); ++j) {
+                        params_tmp[k] *= scale_factor * factor_std[i];;
+                        ++k;
+                    }
+                }
+                for (i = 0; i < N_new; ++i) {
+                    ofs_coef << std::setw(15) << params_tmp[i];
+                }
+                ofs_coef << std::endl;
+            }
+        }
+        if (save_solution_path) ofs_coef.close();
         ofs_cv.close();
 
     } else if (lasso_cv == 0) {
@@ -532,7 +544,7 @@ void Lasso::lasso_main(ALM *alm)
             split_bregman_minimization(M, N_new, l1_alpha, l2_lambda, lasso_tol, maxiter,
                                        amat, fsum, fnorm, &param[0],
                                        bvec_breg, dvec_breg, 0, output_frequency);
-            
+
             calculate_residual(M, N_new, amat, &param[0], fsum, fnorm, res1);
         }
 
@@ -609,12 +621,36 @@ void Lasso::lasso_main(ALM *alm)
         }
     }
 
-    if (lasso_algo == 0) {
-        deallocate(has_prod);
-        deallocate(factor_std);
-    } else if (lasso_algo == 1) {
-        deallocate(bvec_breg);
-        deallocate(dvec_breg);
+ 
+    if (debias_ols) {
+        // Perform OLS fitting to the features selected by LASSO for reducing the bias.
+
+        std::cout << " DEBIAS_OLS = 1: Attempt to reduce the bias of LASSO by performing OLS fitting" << std::endl;
+        std::cout << "                 with features selected by LASSO." << std::endl;
+
+        std::vector<int> nonzero_index, zero_index;
+        int iparam = 0;
+        int inew;
+        for (i = 0; i < N_new; ++i) {
+            if (std::abs(param[i]) >= eps) {
+                nonzero_index.push_back(i);
+            } else {
+                zero_index.push_back(i);
+            }
+        }
+
+        int N_nonzero = nonzero_index.size();
+        Eigen::MatrixXd A_nonzero(M, N_nonzero);
+
+        for (i = 0; i < N_nonzero; ++i) {
+            A_nonzero.col(i) = A.col(nonzero_index[i]);
+        }
+        Eigen::VectorXd x_nonzero = A_nonzero.colPivHouseholderQr().solve(b);
+
+        for (i = 0; i < N_new; ++i) param[i] = 0.0;
+        for (i = 0; i < N_nonzero; ++i) {
+            param[nonzero_index[i]] = x_nonzero[i] * factor_std[nonzero_index[i]];
+        }
     }
 
     k = 0;
@@ -625,6 +661,15 @@ void Lasso::lasso_main(ALM *alm)
             param[k] *= scale_factor;
             ++k;
         }
+    }
+
+    if (lasso_algo == 0) {
+        deallocate(has_prod);
+        deallocate(factor_std);
+    }
+    else if (lasso_algo == 1) {
+        deallocate(bvec_breg);
+        deallocate(dvec_breg);
     }
 
     alm->fitting->set_fcs_values(maxorder,

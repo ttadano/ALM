@@ -45,6 +45,9 @@ namespace ALM_NS
         int ndata_test, nstart_test, nend_test;
         std::string dfile_test, ffile_test;
 
+        int save_solution_path;
+        int debias_ols;
+
         void lasso_main(ALM *);
 
     private:

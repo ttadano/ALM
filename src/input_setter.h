@@ -83,6 +83,8 @@ namespace ALM_NS
                             int lasso_pcg,
                             int lasso_cv,
                             int lasso_cvset,
+                            int save_solution_path,
+                            int debias_ols,
                             double lasso_zero_thr,
                             int ndata_test,
                             int nstart_test,

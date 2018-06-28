@@ -643,18 +643,12 @@ void InputParser::parse_fitting_vars(ALM *alm)
         "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML SPARSE \
                                    LASSO_DNORM LASSO_ALPHA LASSO_LAMBDA LASSO_MAXITER LASSO_TOL LASSO_CV LASSO_CVSET \
                                    LASSO_MAXITER_CG LASSO_FREQ LASSO_ZERO_THR LASSO_MAXALPHA LASSO_MINALPHA LASSO_NALPHA \
-                                   LASSO_PCG NDATA_TEST DFILE_TEST FFILE_TEST NSTART_TEST NEND_TEST SKIP STANDARDIZE LASSO_ALGO";
+                                   LASSO_PCG NDATA_TEST DFILE_TEST FFILE_TEST NSTART_TEST NEND_TEST SKIP STANDARDIZE LASSO_ALGO \
+                                   SOLUTION_PATH DEBIAS_OLS";
     std::string str_no_defaults = "NDATA DFILE FFILE";
     std::vector<std::string> no_defaults;
     std::map<std::string, std::string> fitting_var_dict;
 
-    double lasso_dnorm, lasso_alpha, lasso_lambda, lasso_tol;
-    double lasso_max_alpha, lasso_min_alpha;
-    int lasso_cv, lasso_cvset;
-    int lasso_maxiter, lasso_maxiter_cg;
-    int lasso_freq, lasso_num_alpha;
-    int lasso_pcg, standardize, lasso_algo;
-    double lasso_zero_thr;
     int ndata_test, nstart_test, nend_test;
     int skip_s, skip_e;
     std::string str_skip, dfile_test, ffile_test;
@@ -761,22 +755,24 @@ void InputParser::parse_fitting_vars(ALM *alm)
 
     if (alm->mode == "lasso") {
 
-        lasso_dnorm = 0.2;
-        lasso_alpha = 1.0;
-        lasso_lambda = 10.0;
-        lasso_tol = 1.0e-7;
-        lasso_maxiter = 100000;
-        lasso_maxiter_cg = 5;
-        lasso_cv = 0;
-        lasso_cvset = 10;
-        lasso_freq = 1000;
-        lasso_zero_thr = 1.0e-50;
-        lasso_min_alpha = 1.0e-3;
-        lasso_max_alpha = 1.0;
-        lasso_num_alpha = 20;
-        lasso_pcg = 0;
-        lasso_algo = 0;
-        standardize = 1;
+        double lasso_dnorm = 0.2;
+        double lasso_alpha = 1.0;
+        double lasso_lambda = 10.0;
+        double lasso_tol = 1.0e-7;
+        int lasso_maxiter = 100000;
+        int lasso_maxiter_cg = 5;
+        int lasso_cv = 0;
+        int lasso_cvset = 10;
+        int lasso_freq = 1000;
+        double lasso_zero_thr = 1.0e-50;
+        double lasso_min_alpha = 1.0e-3;
+        double lasso_max_alpha = 1.0;
+        int lasso_num_alpha = 20;
+        int lasso_pcg = 0;
+        int lasso_algo = 0;
+        int standardize = 1;
+        int save_solution_path = 0;
+        int debias_ols = 0;
 
         if (!fitting_var_dict["LASSO_DNORM"].empty()) {
             lasso_dnorm = boost::lexical_cast<double>(fitting_var_dict["LASSO_DNORM"]);
@@ -825,6 +821,12 @@ void InputParser::parse_fitting_vars(ALM *alm)
         }
         if (!fitting_var_dict["LASSO_ALGO"].empty()) {
             lasso_algo = boost::lexical_cast<int>(fitting_var_dict["LASSO_ALGO"]);
+        }
+        if (!fitting_var_dict["SOLUTION_PATH"].empty()) {
+            save_solution_path = boost::lexical_cast<int>(fitting_var_dict["SOLUTION_PATH"]);
+        }
+        if (!fitting_var_dict["DEBIAS_OLS"].empty()) {
+            debias_ols = boost::lexical_cast<int>(fitting_var_dict["DEBIAS_OLS"]);
         }
 
         if (lasso_pcg < 0 || lasso_pcg > 1) {
@@ -886,6 +888,8 @@ void InputParser::parse_fitting_vars(ALM *alm)
                                      lasso_pcg,
                                      lasso_cv,
                                      lasso_cvset,
+                                     save_solution_path,
+                                     debias_ols,
                                      lasso_zero_thr,
                                      ndata_test,
                                      nstart_test,
