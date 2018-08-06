@@ -55,6 +55,8 @@ void Fitting::set_default_variables()
     ndata = 0;
     nstart = 1;
     nend = 0;
+    skip_s = 0;
+    skip_e = 0;
     ndata_used = 0;
     use_sparseQR = 0;
 }
@@ -139,7 +141,7 @@ int Fitting::fitmain(ALM *alm)
             // Use a solver for sparse matrix (Requires less memory for sparse inputs.)
 
 #ifdef WITH_SPARSE_SOLVER
-            Eigen::SparseMatrix<double> sp_amat(nrows, ncols);
+            SpMat sp_amat(nrows, ncols);
             Eigen::VectorXd sp_bvec(nrows);
 
             get_matrix_elements_in_sparse_form(maxorder, 
@@ -150,6 +152,8 @@ int Fitting::fitmain(ALM *alm)
                                                alm->symmetry,
                                                alm->fcs,
                                                alm->constraint);
+
+            std::cout << "Now, start fitting ..." << std::endl;
 
             info_fitting = run_eigen_sparseQR(sp_amat, 
                                               sp_bvec, 
@@ -862,7 +866,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 #ifdef WITH_SPARSE_SOLVER
 void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
                                                  const int ndata_fit,
-                                                 Eigen::SparseMatrix<double> &sp_amat,
+                                                 SpMat &sp_amat,
                                                  Eigen::VectorXd &sp_bvec,
                                                  double &fnorm,
                                                  Symmetry *symmetry,
@@ -1249,7 +1253,7 @@ int Fitting::rankQRD(const int m,
 
 
 #ifdef WITH_SPARSE_SOLVER
-int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
+int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
                                 const Eigen::VectorXd &sp_bvec,
                                 std::vector<double> &param_out, 
                                 const double fnorm,
@@ -1260,14 +1264,19 @@ int Fitting::run_eigen_sparseQR(const Eigen::SparseMatrix<double> &sp_mat,
 {
 //    Eigen::BenchTimer t;
 
-    typedef Eigen::SparseMatrix<double> SpMat;
     SpMat AtA;
+
+//    std::cout << "Start calculating AtA ..." << std::endl;
     AtA = sp_mat.transpose()*sp_mat;
 //    std::cout << sp_mat.rows() << "x" << sp_mat.cols() << "\n";
   
+//    std::cout << "done." << std::endl;
+
+ //   std::cout << "Start calculating AtB ..." << std::endl;
     Eigen::VectorXd AtB, x;
     AtB = sp_mat.transpose()*sp_bvec;
- 
+ //   std::cout << "done." << std::endl;
+   
     if (verbosity > 0) {
         std::cout << "  Solve least-squares problem by sparse LDLT." << std::endl;
     }

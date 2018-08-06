@@ -18,6 +18,7 @@
 
 #ifdef WITH_SPARSE_SOLVER
 #include <Eigen/SparseCore>
+typedef Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t> SpMat;
 #endif
 
 namespace ALM_NS
@@ -31,6 +32,7 @@ namespace ALM_NS
         int fitmain(ALM *);
 
         int ndata, nstart, nend;
+        int skip_s, skip_e;
 
         double *params;
         double **u_in;
@@ -116,14 +118,14 @@ namespace ALM_NS
 #ifdef WITH_SPARSE_SOLVER
         void get_matrix_elements_in_sparse_form(int,
                                                 int,
-                                                Eigen::SparseMatrix<double> &,
+                                                SpMat &,
                                                 Eigen::VectorXd &,
                                                 double &,
                                                 Symmetry *,
                                                 Fcs *,
                                                 Constraint *);
 
-        int run_eigen_sparseQR(const Eigen::SparseMatrix<double> &,
+        int run_eigen_sparseQR(const SpMat &,
                                const Eigen::VectorXd &,
                                std::vector<double> &, 
                                double,
