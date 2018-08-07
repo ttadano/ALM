@@ -1273,8 +1273,8 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 //    std::cout << "done." << std::endl;
 
  //   std::cout << "Start calculating AtB ..." << std::endl;
-    Eigen::VectorXd AtB, x;
-    AtB = sp_mat.transpose()*sp_bvec;
+ //   Eigen::VectorXd AtB, x;
+    auto AtB = sp_mat.transpose()*sp_bvec;
  //   std::cout << "done." << std::endl;
    
     if (verbosity > 0) {
@@ -1291,7 +1291,8 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 
 //    t.reset(); t.start();
     Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
-    x.setZero(); x = ldlt.solve(AtB);
+ //   x.setZero(); 
+    auto x = ldlt.solve(AtB);
 //    t.stop();
     //std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
   
@@ -1322,7 +1323,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
     // std::cout << "bicg    : " << bicg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
   
 
-    Eigen::VectorXd res = sp_bvec - sp_mat * x;
+    auto res = sp_bvec - sp_mat * x;
     auto res2norm = res.squaredNorm();
     auto nparams = x.size();
     std::vector<double> param_irred(nparams);
