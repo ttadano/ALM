@@ -44,9 +44,10 @@ void Interaction::init(ALM *alm)
     int nat = alm->system->supercell.number_of_atoms;
     int nkd = alm->system->supercell.number_of_elems;
 
-
-    std::cout << " INTERACTION" << std::endl;
-    std::cout << " ===========" << std::endl << std::endl;
+    if (alm->verbosity > 0) {
+        std::cout << " INTERACTION" << std::endl;
+        std::cout << " ===========" << std::endl << std::endl;
+    }
 
     set_ordername();
 
@@ -100,47 +101,54 @@ void Interaction::init(ALM *alm)
                    interaction_cluster);
 
 
-    std::cout << "  +++ Cutoff Radii Matrix in Bohr Unit (NKD x NKD matrix) +++" << std::endl;
+    if (alm->verbosity > 0) {
+        std::cout << "  +++ Cutoff Radii Matrix in Bohr Unit (NKD x NKD matrix) +++" << std::endl;
 
-    for (i = 0; i < maxorder; ++i) {
-        std::cout << "  " << std::setw(9) << str_order[i] << std::endl;
-        for (j = 0; j < nkd; ++j) {
-            for (k = 0; k < nkd; ++k) {
-                if (cutoff_radii[i][j][k] < 0.0) {
-                    std::cout << std::setw(9) << "None";
-                } else {
-                    std::cout << std::setw(9) << cutoff_radii[i][j][k];
+        for (i = 0; i < maxorder; ++i) {
+            std::cout << "  " << std::setw(9) << str_order[i] << std::endl;
+            for (j = 0; j < nkd; ++j) {
+                for (k = 0; k < nkd; ++k) {
+                    if (cutoff_radii[i][j][k] < 0.0) {
+                        std::cout << std::setw(9) << "None";
+                    } else {
+                        std::cout << std::setw(9) << cutoff_radii[i][j][k];
+                    }
                 }
+                std::cout << std::endl;
             }
             std::cout << std::endl;
         }
+
+        print_neighborlist(alm->system->supercell.number_of_atoms,
+                           alm->symmetry->nat_prim,
+                           alm->symmetry->map_p2s,
+                           alm->system->supercell.kind,
+                           alm->system->kdname);
+    }
+
+    if (alm->verbosity > 1) {
+        print_interaction_information(alm->symmetry->nat_prim,
+                                      alm->symmetry->map_p2s,
+                                      alm->system->supercell.kind,
+                                      alm->system->kdname,
+                                      interaction_pair);
+    }
+
+    if (alm->verbosity > 0) {
+        for (i = 0; i < maxorder; ++i) {
+            if (i + 2 > nbody_include[i]) {
+                std::cout << "  For " << std::setw(8) << str_order[i] << ", ";
+                std::cout << "interactions related to more than" << std::setw(2) << nbody_include[i];
+                std::cout << " atoms will be neglected." << std::endl;
+            }
+        }
+
+
+        alm->timer->print_elapsed();
+        std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
 
-    print_interaction_information(alm->symmetry->nat_prim,
-                                  alm->symmetry->map_p2s,
-                                  alm->system->supercell.kind,
-                                  alm->system->kdname,
-                                  interaction_pair);
-
-    print_neighborlist(alm->system->supercell.number_of_atoms,
-                       alm->symmetry->nat_prim,
-                       alm->symmetry->map_p2s,
-                       alm->system->supercell.kind,
-                       alm->system->kdname);
-
-    for (i = 0; i < maxorder; ++i) {
-        if (i + 2 > nbody_include[i]) {
-            std::cout << "  For " << std::setw(8) << str_order[i] << ", ";
-            std::cout << "interactions related to more than" << std::setw(2) << nbody_include[i];
-            std::cout << " atoms will be neglected." << std::endl;
-        }
-    }
-
-
-    alm->timer->print_elapsed();
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << std::endl;
     alm->timer->stop_clock("interaction");
 }
 

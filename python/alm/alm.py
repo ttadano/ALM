@@ -8,6 +8,7 @@ class ALM:
         self._xcoord = np.array(xcoord, dtype='double', order='C')
         self._kd = np.array(kd, dtype='intc', order='C')
         self._iconst = 11
+        self._verbosity = 0
 
     def __enter__(self):
         self.alm_new()
@@ -23,6 +24,7 @@ class ALM:
                 print("Too many ALM objects")
                 raise
             self._set_cell()
+            self._set_verbosity()
         else:
             print("This ALM object is already initialized.")
             raise
@@ -41,11 +43,17 @@ class ALM:
 
         alm.run_suggest(self._id)
     
-    def optimize(self):
+    def optimize(self, solver='dense'):
         if self._id is None:
             self._show_error_message()
 
-        info = alm.optimize(self._id)
+        if solver not in ['dense', 'sparseQR']:
+            print("The given solver option is not supported.")
+            print("Available options are 'dense' and 'sparseQR'.")
+            raise
+
+        info = alm.optimize(self._id, solver)
+
         return info
     
     def set_displacement_and_force(self, u, f):
@@ -57,15 +65,24 @@ class ALM:
             np.array(u, dtype='double', order='C'),
             np.array(f, dtype='double', order='C'))
 
-    def find_force_constant(self, norder, rcs, nbody = []):
-        # TODO: support nbody option
+    def find_force_constant(self, norder, rcs, nbody = None):
         if self._id is None:
             self._show_error_message()
 
+        if nbody is None:
+            nbody = []
+            for i in range(norder):
+                nbody.append(i + 2)
+        
+        else:
+            if len(nbody) != norder:
+                raise("The size of nbody must be equal to norder.")
+        
         self._norder = norder
         self._set_norder()
         alm.set_cutoff_radii(self._id,
                              np.array(rcs, dtype='double', order='C'))
+        alm.set_nbody_rule(self._id, np.array(nbody, dtype='intc'))
 
         alm.generate_force_constant(self._id)
 
@@ -78,10 +95,23 @@ class ALM:
         if translation is True:
             iconst = 11
         else:
-            iconst = 0
+            iconst = 10
 
         self._iconst = iconst
         alm.set_constraint_type(self._id, self._iconst)
+
+    def set_verbosity(self, verbosity):
+        if self._id is None:
+            self._show_error_message()
+
+        self._verbosity = verbosity
+        alm.set_verbosity(self._id, self._verbosity)
+
+    def _set_verbosity(self):
+        if self._id is None:
+            self._show_error_message()
+        
+        alm.set_verbosity(self._id, self._verbosity)
 
 
     def set_cutoff_radii(self, rcs):

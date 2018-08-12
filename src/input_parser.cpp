@@ -204,7 +204,6 @@ void InputParser::parse_general_vars(ALM *alm)
 {
     int i, j;
     std::string prefix, str_tmp, str_disp_basis;
-    int nsym;
     int printsymmetry, is_periodic[3];
     int icount, ncount;
     bool trim_dispsign_for_evenfunc = true;
@@ -214,11 +213,12 @@ void InputParser::parse_general_vars(ALM *alm)
     double **magmom, magmag;
     double tolerance;
     double tolerance_constraint;
+    int verbosity;
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
     std::string str_allowed_list =
-        "PREFIX MODE NAT NKD NSYM KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
-                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST";
+        "PREFIX MODE NAT NKD KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
+                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST VERBOSITY";
     std::string str_no_defaults = "PREFIX MODE NAT NKD KD";
     std::vector<std::string> no_defaults;
     std::map<std::string, std::string> general_var_dict;
@@ -252,10 +252,10 @@ void InputParser::parse_general_vars(ALM *alm)
     assign_val(nat, "NAT", general_var_dict);
     assign_val(nkd, "NKD", general_var_dict);
 
-    if (general_var_dict["NSYM"].empty()) {
-        nsym = 0;
+    if (general_var_dict["VERBOSITY"].empty()) {
+        verbosity = 1;
     } else {
-        assign_val(nsym, "NSYM", general_var_dict);
+        assign_val(verbosity, "VERBOSITY", general_var_dict);
     }
 
     if (general_var_dict["PRINTSYM"].empty()) {
@@ -433,11 +433,11 @@ void InputParser::parse_general_vars(ALM *alm)
     input_setter->set_general_vars(alm,
                                    prefix,
                                    mode,
+                                   verbosity,
                                    str_disp_basis,
                                    general_var_dict["MAGMOM"],
                                    nat,
                                    nkd,
-                                   nsym,
                                    printsymmetry,
                                    is_periodic,
                                    trim_dispsign_for_evenfunc,
@@ -631,8 +631,9 @@ void InputParser::parse_fitting_vars(ALM *alm)
 {
     int ndata, nstart, nend;
     int constraint_flag;
+    int flag_sparse = 0;
     std::string rotation_axis;
-    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML";
+    std::string str_allowed_list = "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML SPARSE";
     std::string str_no_defaults = "NDATA DFILE FFILE";
     std::vector<std::string> no_defaults;
     std::map<std::string, std::string> fitting_var_dict;
@@ -696,6 +697,10 @@ void InputParser::parse_fitting_vars(ALM *alm)
         }
     }
 
+    if (!fitting_var_dict["SPARSE"].empty()) {
+        assign_val(flag_sparse, "SPARSE", fitting_var_dict);
+    }
+
     InputSetter *input_setter = new InputSetter();
     input_setter->set_fitting_vars(alm,
                                    ndata,
@@ -708,7 +713,8 @@ void InputParser::parse_fitting_vars(ALM *alm)
                                    fc2_file,
                                    fc3_file,
                                    fix_harmonic,
-                                   fix_cubic);
+                                   fix_cubic,
+                                   flag_sparse);
     delete input_setter;
 
     fitting_var_dict.clear();

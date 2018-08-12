@@ -1,10 +1,7 @@
 #pragma once
 
 #include <vector>
-
-void remove_redundant_rows(int,
-                           std::vector<std::vector<double>> &,
-                           double tolerance = 1.0e-12);
+#include "constraint.h"
 
 void rref(int,
           int,
@@ -14,3 +11,7 @@ void rref(int,
 
 void rref(std::vector<std::vector<double>> &,
           double tolerance = 1.0e-12);
+
+void rref_sparse(const int,
+                 ConstraintSparseForm &,
+                 double tolerance = 1.0e-12);

@@ -130,6 +130,7 @@ namespace ALM_NS
                                       const int [3],
                                       const std::vector<std::vector<unsigned int>> &,
                                       const Spin &,
+                                      const int,
                                       std::vector<SymmetryOperation> &,
                                       unsigned int &,
                                       unsigned int &,
@@ -155,7 +156,9 @@ namespace ALM_NS
                             const std::vector<std::vector<unsigned int>> &,
                             const Spin &,
                             double,
-                            std::vector<SymmetryOperation> &);
+                            std::vector<SymmetryOperation> &,
+                            int &,
+                            std::string &);
 
         bool is_translation(const int [3][3]);
         bool is_proper(const double [3][3]);

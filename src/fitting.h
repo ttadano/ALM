@@ -16,6 +16,11 @@
 #include "mkl_vsl.h"
 #endif
 
+#ifdef WITH_SPARSE_SOLVER
+#include <Eigen/SparseCore>
+typedef Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t> SpMat;
+#endif
+
 namespace ALM_NS
 {
     class Fitting
@@ -27,15 +32,17 @@ namespace ALM_NS
         int fitmain(ALM *);
 
         int ndata, nstart, nend;
+        int skip_s, skip_e;
 
         double *params;
         double **u_in;
         double **f_in;
+        int use_sparseQR;
 
-        void set_displacement_and_force(const double * const *u_in,
-                                        const double * const *f_in,
-                                        int nat,
-                                        int ndata_used);
+        void set_displacement_and_force(const double * const *,
+                                        const double * const *,
+                                        int,
+                                        int);
 
 
         void get_matrix_elements_algebraic_constraint(int,
@@ -53,7 +60,7 @@ namespace ALM_NS
                             Constraint *);
 
 
-        const int get_ndata_used();
+        int get_ndata_used() const;
         double gamma(int,
                      const int *);
 
@@ -76,7 +83,8 @@ namespace ALM_NS
                                     int,
                                     double *,
                                     double *,
-                                    double *);
+                                    double *,
+                                    int);
 
         int fit_algebraic_constraints(int,
                                       int,
@@ -86,7 +94,8 @@ namespace ALM_NS
                                       double,
                                       int,
                                       Fcs *,
-                                      Constraint *);
+                                      Constraint *,
+                                      int);
 
         int fit_with_constraints(int,
                                  int,
@@ -95,7 +104,8 @@ namespace ALM_NS
                                  double *,
                                  double *,
                                  double **,
-                                 double *);
+                                 double *,
+                                 int);
 
 
         void get_matrix_elements(int,
@@ -105,6 +115,25 @@ namespace ALM_NS
                                  Symmetry *,
                                  Fcs *);
 
+#ifdef WITH_SPARSE_SOLVER
+        void get_matrix_elements_in_sparse_form(int,
+                                                int,
+                                                SpMat &,
+                                                Eigen::VectorXd &,
+                                                double &,
+                                                Symmetry *,
+                                                Fcs *,
+                                                Constraint *);
+
+        int run_eigen_sparseQR(const SpMat &,
+                               const Eigen::VectorXd &,
+                               std::vector<double> &, 
+                               double,
+                               int,
+                               Fcs *,
+                               Constraint *,
+                               int);                          
+#endif
 
         void recover_original_forceconstants(int,
                                              const std::vector<double> &,
@@ -113,18 +142,11 @@ namespace ALM_NS
                                              Constraint *);
 
         int factorial(int);
-        int rankSVD(int,
-                    int,
-                    double *,
-                    double);
         int rankQRD(int,
                     int,
                     double *,
                     double);
-        int rankSVD2(int,
-                     int,
-                     double **,
-                     double);
+ 
     };
 
     extern "C" {
@@ -152,30 +174,6 @@ namespace ALM_NS
                  double *c,
                  double *d,
                  double *x,
-                 double *work,
-                 int *lwork,
-                 int *info);
-
-    void dgesdd_(const char *jobz,
-                 int *m,
-                 int *n,
-                 double *a,
-                 int *lda,
-                 double *s,
-                 double *u,
-                 int *ldu,
-                 double *vt,
-                 int *ldvt,
-                 double *work,
-                 int *lwork,
-                 int *iwork,
-                 int *info);
-
-    void dgeqrf_(int *m,
-                 int *n,
-                 double *a,
-                 int *lda,
-                 double *tau,
                  double *work,
                  int *lwork,
                  int *info);

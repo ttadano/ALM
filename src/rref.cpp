@@ -1,52 +1,9 @@
 #include "rref.h"
-#include "memory.h"
+#include "constraint.h"
 #include <cmath>
 #include <vector>
-
-void remove_redundant_rows(const int n,
-                           std::vector<std::vector<double>> &constraint_mat,
-                           const double tolerance)
-{
-    int i, j;
-
-    int nparam = n;
-    int nconst = constraint_mat.size();
-    double **mat_tmp;
-    std::vector<double> arr_tmp;
-
-    int nrank;
-
-    if (nconst > 0) {
-
-        allocate(mat_tmp, nconst, nparam);
-
-        for (i = 0; i < nconst; ++i) {
-            for (j = 0; j < nparam; ++j) {
-                mat_tmp[i][j] = constraint_mat[i][j];
-            }
-        }
-
-        rref(nconst, nparam, mat_tmp, nrank, tolerance);
-        arr_tmp.resize(nparam);
-        constraint_mat.clear();
-
-        for (i = 0; i < nrank; ++i) {
-            for (j = 0; j < i; ++j) arr_tmp[j] = 0.0;
-
-            for (j = i; j < nparam; ++j) {
-                if (std::abs(mat_tmp[i][j]) < tolerance) {
-                    arr_tmp[j] = 0.0;
-                } else {
-                    arr_tmp[j] = mat_tmp[i][j];
-                }
-            }
-            constraint_mat.push_back(arr_tmp);
-        }
-
-        deallocate(mat_tmp);
-
-    }
-}
+#include <map>
+#include <algorithm>
 
 
 void rref(const int nrows,
@@ -176,4 +133,121 @@ void rref(std::vector<std::vector<double>> &mat,
 
     mat.erase(mat.begin() + nrank, mat.end());
     mat.shrink_to_fit();
+}
+
+
+
+void rref_sparse(const int ncols,
+                  ConstraintSparseForm &sp_constraint,
+                  const double tolerance)
+{
+    // This function is somewhat sensitive to the numerical accuracy.
+    // The loss of numerical digits can lead to instability.
+    // Column ordering may improve the stability, but I'm not sure.
+    // Smaller tolerance is preferable.
+
+    const int nrows = sp_constraint.size();
+    int icol, irow, jrow;
+    double scaling_factor;
+    double division_factor;
+
+    // This parameter controls the stability and performance.
+    // Smaller value is more stable but little more costly.
+    //    double zero_criterion = tolerance * 1.0e-3;
+    const double zero_criterion = eps15;
+
+    int nrank = 0;
+    int pivot;
+    icol = 0;
+
+    std::set<unsigned int>::iterator it_found;
+    std::map<unsigned int, double>::iterator it_elem;
+
+    for (irow = 0; irow < nrows; ++irow) {
+
+        pivot = irow;
+
+        while (true) {
+            it_elem = sp_constraint[pivot].find(icol);
+            if (it_elem != sp_constraint[pivot].end()) {
+                if (std::abs(it_elem->second) >= tolerance) {
+                    break;
+                }
+            }
+
+            ++pivot;
+            if (pivot == nrows) {
+                pivot = irow;
+                ++icol;
+
+                if (icol == ncols) break;
+            }
+        }
+
+        if (icol == ncols) break;
+
+        if (std::abs(it_elem->second) >= tolerance) ++nrank;
+
+        if (pivot != irow) {
+            std::iter_swap(sp_constraint.begin() + irow,
+                           sp_constraint.begin() + pivot);
+        }
+
+        division_factor = 1.0 / it_elem->second;
+        for (auto &it : sp_constraint[irow]) {
+            it.second *= division_factor;
+        }
+
+        for (jrow = 0; jrow < nrows; ++jrow) {
+            if (jrow == irow) continue;
+
+            it_elem = sp_constraint[jrow].find(icol);
+            if (it_elem == sp_constraint[jrow].end()) continue;
+            scaling_factor = it_elem->second;
+
+            // Subtract irow elements from jrow
+            for (const auto &it_now : sp_constraint[irow]) {
+                if (it_now.first < icol) {
+                    continue;
+                }
+                auto it_other = sp_constraint[jrow].find(it_now.first);
+                if (it_other != sp_constraint[jrow].end()) {
+                    it_other->second -= scaling_factor * it_now.second;
+                    // Delete zero elements and remove from map. 
+                    // A smaller threshould is used for better stability.
+                    if (std::abs(it_other->second) < zero_criterion) {
+                        sp_constraint[jrow].erase(it_other);
+                    }
+                } else {
+                    sp_constraint[jrow][it_now.first] = -scaling_factor * it_now.second;
+                }
+            }
+            // Make sure to erase the icol element from the target row if it exists.
+            // When the original pivot element is large, the element after subtraction can sometimes be 
+            // larger than the tolerance value because of the loss of significant digis.
+            auto it_other = sp_constraint[jrow].find(icol);
+            if (it_other != sp_constraint[jrow].end()) {
+                sp_constraint[jrow].erase(it_other);
+            }
+        }
+    }
+
+    // Erase all elements smaller than the tolerance value
+    for (jrow = 0; jrow < nrows; ++jrow) {
+        auto it_other = sp_constraint[jrow].begin();
+        while (it_other != sp_constraint[jrow].end()) {
+            if (std::abs(it_other->second) <= tolerance) {
+                sp_constraint[jrow].erase(it_other++);
+            } else {
+                ++it_other;
+            }
+        }
+    }
+
+    // Remove emptry entries from the sp_constraint vector
+    sp_constraint.erase(std::remove_if(sp_constraint.begin(),
+                                       sp_constraint.end(),
+                                       [](const std::map<unsigned int, double> &obj) { return obj.empty(); }),
+                        sp_constraint.end());
+    sp_constraint.shrink_to_fit();
 }

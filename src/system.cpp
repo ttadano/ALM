@@ -62,12 +62,13 @@ void System::init(ALM *alm)
                                            x_image,
                                            exist_image);
 
-
-    print_structure_stdout(supercell);
-    if (lspin) print_magmom_stdout();
-    alm->timer->print_elapsed();
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << std::endl;
+    if (alm->verbosity > 0) {
+        print_structure_stdout(supercell);
+        if (lspin) print_magmom_stdout();
+        alm->timer->print_elapsed();
+        std::cout << " -------------------------------------------------------------------" << std::endl;
+        std::cout << std::endl;
+    }
 
     alm->timer->stop_clock("system");
 }

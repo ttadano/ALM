@@ -26,11 +26,11 @@ namespace ALM_NS
         void set_general_vars(ALM *alm,
                               std::string prefix,
                               std::string mode,
+                              int verbosity,
                               std::string str_disp_basis,
                               std::string str_magmom,
                               int nat,
                               int nkd,
-                              int nsym,
                               int is_printsymmetry,
                               const int is_periodic[3],
                               bool trim_dispsign_for_evenfunc,
@@ -63,7 +63,8 @@ namespace ALM_NS
                               std::string fc2_file,
                               std::string fc3_file,
                               bool fix_harmonic,
-                              bool fix_cubic);
+                              bool fix_cubic,
+                              int flag_sparse);
         void set_atomic_positions(ALM *alm,
                                   int nat,
                                   const int *kd,

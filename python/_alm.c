@@ -14,11 +14,13 @@ static PyObject * py_alm_delete(PyObject *self, PyObject *args);
 static PyObject * py_run_suggest(PyObject *self, PyObject *args);
 static PyObject * py_optimize(PyObject *self, PyObject *args);
 static PyObject * py_set_cell(PyObject *self, PyObject *args);
+static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
 static PyObject * py_get_ndata_used(PyObject *self, PyObject *args);
 static PyObject * py_set_constraint_type(PyObject *self, PyObject *args);
 static PyObject * py_set_norder(PyObject *self, PyObject *args);
 static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args);
+static PyObject * py_set_nbody_rule(PyObject *self, PyObject *args);
 static PyObject * py_generate_force_constant(PyObject *self, PyObject *args);
 static PyObject * py_get_atom_mapping_by_pure_translations
 (PyObject *self, PyObject *args);
@@ -59,10 +61,12 @@ static PyMethodDef _alm_methods[] = {
   {"run_suggest", py_run_suggest, METH_VARARGS, ""},
   {"optimize", py_optimize, METH_VARARGS, ""},
   {"set_cell", py_set_cell, METH_VARARGS, ""},
+  {"set_verbosity", py_set_verbosity, METH_VARARGS, ""},
   {"set_displacement_and_force", py_set_displacement_and_force, METH_VARARGS, ""},
   {"set_constraint_type", py_set_constraint_type, METH_VARARGS, ""},
   {"set_norder", py_set_norder, METH_VARARGS, ""},
   {"set_cutoff_radii", py_set_cutoff_radii, METH_VARARGS, ""},
+  {"set_nbody_rule", py_set_nbody_rule, METH_VARARGS, ""},
   {"generate_force_constant", py_generate_force_constant, METH_VARARGS, ""},
   {"get_atom_mapping_by_pure_translations", py_get_atom_mapping_by_pure_translations,
    METH_VARARGS, ""},
@@ -179,12 +183,14 @@ static PyObject * py_run_suggest(PyObject *self, PyObject *args)
 static PyObject * py_optimize(PyObject *self, PyObject *args)
 {
   int id, info;
-  if (!PyArg_ParseTuple(args, "i",
-                              &id)) {
+  const char *solver;
+  if (!PyArg_ParseTuple(args, "is",
+                              &id,
+                              &solver)) {
     return NULL;
   }
 
-  info = alm_optimize(id);
+  info = alm_optimize(id, solver);
 
   return PyLong_FromLong((long) info);
 }
@@ -209,6 +215,20 @@ static PyObject * py_set_cell(PyObject *self, PyObject *args)
   const int nat = PyArray_DIMS(py_kd)[0];
 
   alm_set_cell(id, nat, lavec, xcoord, kd);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_set_verbosity(PyObject *self, PyObject *args)
+{
+  int id, verbosity;
+  if (!PyArg_ParseTuple(args, "ii",
+                              &id,
+                              &verbosity)) {
+    return NULL;
+  }
+
+  alm_set_verbosity(id, verbosity);
 
   Py_RETURN_NONE;
 }
@@ -276,6 +296,23 @@ static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args)
   double *rcs = (double(*))PyArray_DATA(py_rcs);
 
   alm_set_cutoff_radii(id, rcs);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_set_nbody_rule(PyObject *self, PyObject *args)
+{
+  int id;
+  PyArrayObject* py_nbody;
+  if (!PyArg_ParseTuple(args, "iO",
+                              &id,
+                              &py_nbody)) {
+    return NULL;
+  }
+
+  int *nbody = (int(*))PyArray_DATA(py_nbody);
+
+  alm_set_nbody_include(id, nbody);
 
   Py_RETURN_NONE;
 }
