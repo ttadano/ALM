@@ -79,8 +79,8 @@ kd = [14] * 64
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
 with ALM(lavec, xcoord, kd) as alm:
-    alm.find_force_constant(2, [-1, 7.3])
-    alm.run_suggest()
+    alm.define(2, [-1, 7.3])
+    alm.suggest()
     print(alm.get_atom_mapping_by_pure_translations())
     for fc_order in (1, 2):
         print("fc_order: %d" % fc_order)
