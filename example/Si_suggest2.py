@@ -81,7 +81,7 @@ kd = [14] * 64
 with ALM(lavec, xcoord, kd) as alm:
     alm.define(2, [-1, 7.3])
     alm.suggest()
-    print(alm.get_atom_mapping_by_pure_translations())
+    print(alm.getmap_primitive_to_supercell())
     for fc_order in (1, 2):
         print("fc_order: %d" % fc_order)
         for d in alm.get_displacement_patterns(fc_order):

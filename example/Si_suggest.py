@@ -80,5 +80,5 @@ kd = [14] * 64
 with ALM(lavec, xcoord, kd) as alm:
     alm.define(1, [-1])
     alm.suggest()
-    print(alm.get_atom_mapping_by_pure_translations())
+    print(alm.getmap_primitive_to_supercell())
     print(alm.get_displacement_patterns(1))

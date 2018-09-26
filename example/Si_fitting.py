@@ -83,7 +83,6 @@ disp = np.loadtxt("disp.dat").reshape((-1, 64, 3))[[0]]
 with ALM(lavec, xcoord, kd) as alm:
     alm.define(1, [-1])
     #alm.set_constraint(translation=False)
-    #print(alm._get_number_of_irred_fc_elements(1))
     alm.set_displacement_and_force(disp, force)
     info = alm.optimize()
     fc_values, elem_indices = alm.get_fc(1)
