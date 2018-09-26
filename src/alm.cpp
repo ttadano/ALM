@@ -391,8 +391,8 @@ int ALM::get_number_of_displacement_patterns(const int fc_order) // harmonic=1, 
     return displace->pattern_all[order].size();
 }
 
-void ALM::get_numbers_of_displacements(int *numbers,
-                                       const int fc_order) // harmonic=1, ...
+void ALM::get_number_of_displaced_atoms(int *numbers,
+                                        const int fc_order) // harmonic=1, ...
 {
     const auto order = fc_order - 1;
 

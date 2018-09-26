@@ -26,7 +26,7 @@ static PyObject * py_get_atom_mapping_by_pure_translations
 (PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_displacement_patterns
 (PyObject *self, PyObject *args);
-static PyObject * py_get_numbers_of_displacements(PyObject *self, PyObject *args);
+static PyObject * py_get_number_of_displaced_atoms(PyObject *self, PyObject *args);
 static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_fc_elements(PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_irred_fc_elements(PyObject *self, PyObject *args);
@@ -72,7 +72,7 @@ static PyMethodDef _alm_methods[] = {
    METH_VARARGS, ""},
   {"get_number_of_displacement_patterns", py_get_number_of_displacement_patterns,
    METH_VARARGS, ""},
-  {"get_numbers_of_displacements", py_get_numbers_of_displacements,
+  {"get_number_of_displaced_atoms", py_get_number_of_displaced_atoms,
    METH_VARARGS, ""},
   {"get_ndata_used", py_get_ndata_used, METH_VARARGS, ""},
   {"get_displacement_patterns", py_get_displacement_patterns, METH_VARARGS, ""},
@@ -366,7 +366,7 @@ static PyObject * py_get_number_of_displacement_patterns
   return PyLong_FromLong((long) num_patterns);
 }
 
-static PyObject * py_get_numbers_of_displacements(PyObject *self, PyObject *args)
+static PyObject * py_get_number_of_displaced_atoms(PyObject *self, PyObject *args)
 {
   int id, fc_order;
   PyArrayObject* py_numbers;
@@ -380,7 +380,7 @@ static PyObject * py_get_numbers_of_displacements(PyObject *self, PyObject *args
 
   int (*numbers) = (int(*))PyArray_DATA(py_numbers);
 
-  alm_get_numbers_of_displacements(id, numbers, fc_order);
+  alm_get_number_of_displaced_atoms(id, numbers, fc_order);
 
   Py_RETURN_NONE;
 }

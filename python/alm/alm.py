@@ -55,6 +55,11 @@ class ALM:
 
            with ALM(lavec, xcoord, kd) as alm:
 
+        Note
+        ----
+        When an ALM instance is created by ``alm_new``, it must be deleted
+        by ``alm_delete`` to avoid memory leak.
+
         """
 
         if self._id is None:
@@ -86,7 +91,7 @@ class ALM:
         self._id = None
 
     def suggest(self):
-        """Suggest displacement patterns to obtain force constants."""
+        """Compute displacement patterns to obtain force constants."""
 
         if self._id is None:
             self._show_error_message()
@@ -100,11 +105,12 @@ class ALM:
         ----------
         solver : str, default='dense'
             Solver choice for fitting either 'dense' or 'SimplicialLDLT'.
-            When solver='dense', the fitting is performed with the
-            singular value decomposition implemented in LAPACK.
-            When solver='SimplicialLDLT', the fitting is performed with
-            the sparse solver class SimplicialLDLT implemented in
-            Eigen3 library.
+            
+            - When solver='dense', the fitting is performed with the
+              singular value decomposition implemented in LAPACK.
+            - When solver='SimplicialLDLT', the fitting is performed with
+              the sparse solver class SimplicialLDLT implemented in
+              Eigen3 library.
 
         Returns
         -------
@@ -157,8 +163,9 @@ class ALM:
         ----------
         norder : int
             Maximum order of the Taylor expansion potential.
-            When norder = 1, only harmonic (2nd-order) terms are considered and
-            when norder = 2, both harmonic and cubic terms are considered.
+            
+            - If ``norder = 1``, only harmonic (2nd-order) terms are considered.
+            - If ``norder = 2``, both harmonic and cubic terms are considered.
 
         rcs : array_like
             Cutoff radii defined for each order.
@@ -168,7 +175,7 @@ class ALM:
 
         nbody : array_like, default = None
             Option to neglect multi-body interactions.
-            dtype='int'
+            dtype='intc'
             shape=(norder,)
 
         """
@@ -227,7 +234,8 @@ class ALM:
         Parameters
         ----------
         verbosity : int
-            Choose the level of the output frequency from 0 (no output) or 1 (normal output).
+            Choose the level of the output frequency from 
+            0 (no output) or 1 (normal output).
 
         """
 
@@ -238,22 +246,20 @@ class ALM:
         alm.set_verbosity(self._id, self._verbosity)
 
     def _set_verbosity(self):
-        """Set verbosity of output. Do the same job as the public function set_verbosity."""
+        """Private method to set the verbosity."""
 
         if self._id is None:
             self._show_error_message()
 
         alm.set_verbosity(self._id, self._verbosity)
 
-    def get_atom_mapping_by_pure_translations(self):
+    def getmap_primitive_to_supercell(self):
         """Returns the mapping information from the primitive cell to the supercell.
 
         Returns
         -------
-        map_p2s : array_like
+        map_p2s : array_like, dtype='intc', shape = (num_trans, num_atoms_primitive)
             The mapping information of atoms from the primitive cell to the supercell.
-            dtype='int'
-            shape = (num_trans, num_atoms_primitive)
 
         """
         
@@ -271,7 +277,11 @@ class ALM:
         ----------
         fc_order : int
             The order of force constants to get the displacement patterns.
-            fc_order = 1 means harmonic, and fc_order = 2 means cubic, etc.
+
+            - If ``fc_order = 1``, returns patterns for harmonic force constants.
+            - If ``fc_order = 2``, returns patterns for cubic force constants.
+            - If ``fc_order = 3``, returns patterns for quartic force constants.
+            - ...
 
         Returns
         -------
@@ -286,7 +296,11 @@ class ALM:
         if self._id is None:
             self._show_error_message()
 
-        numbers = self._get_numbers_of_displacements(fc_order)
+        if fc_order > self._norder:
+            print("The fc_order must not be larger than the maximum order (norder).")
+            raise ValueError
+
+        numbers = self._get_number_of_displaced_atoms(fc_order)
         tot_num = np.sum(numbers)
         atom_indices = np.zeros(tot_num, dtype='intc')
         disp_patterns = np.zeros((tot_num, 3), dtype='double', order='C')
@@ -311,8 +325,12 @@ class ALM:
         Parameters
         ----------
         fc_order : int
-            The order of force constants to get the force constants.
-            fc_order = 1 means harmonic, and fc_order = 2 means cubic, etc.
+            The order of force constants to get.
+            
+            - If ``fc_order = 1``, returns harmonic force constants.
+            - If ``fc_order = 2``, returns cubic force constants.
+            - If ``fc_order = 3``, returns quartic force constants.
+            - ...
 
         mode : str, optional (default="origin")
             The choice of the force constant list to be returned.
@@ -335,13 +353,17 @@ class ALM:
 
         Note
         ----
-        This method does not replicate force constants elements that
-        can be generated from the set by the permutation of indices.
+        This method does not return force constants elements that
+        can be replicated by the permutation of indices.
 
         """
 
         if self._id is None:
             self._show_error_message()
+
+        if fc_order > self._norder:
+            print("The fc_order must not be larger than the maximum order (norder).")
+            raise ValueError
 
         if mode == "origin":
 
@@ -393,6 +415,12 @@ class ALM:
             The irreducible set of force constants.
             dtype='double'
             shape=(num_fc,)
+
+        Note
+        ----
+        When an external optimizer, such as numpy.linalg.lstsq, is used to fit
+        force constants, the force constants need to be passed to the ALM instance
+        by ``set_fc`` to use the ``get_fc`` method.
 
         """
 
@@ -449,18 +477,21 @@ class ALM:
         return np.reshape(amat, (3 * nat * ndata_used, fc_length), order='F'), bvec
 
     def _set_cell(self):
+        """Private method to setup the crystal lattice information"""
         if self._id is None:
             self._show_error_message()
 
         alm.set_cell(self._id, self._lavec, self._xcoord, self._kd)
 
     def _set_norder(self):
+        """Private method to set the maximum order of the Taylor expansion"""
         if self._id is None:
             self._show_error_message()
 
         alm.set_norder(self._id, self._norder)
 
     def _get_ndata_used(self):
+        """Private method to return the number of training data sets"""
         if self._id is None:
             self._show_error_message()
 
@@ -468,24 +499,65 @@ class ALM:
         return ndata_used
 
     def _get_id(self):
+        """Private method to return the instance ID"""
         return self._id
 
     def _get_number_of_displacement_patterns(self, fc_order):
+        """Private method to return the number of displacement patterns
+        
+        Parameters
+        ----------
+        fc_order : int
+            The order of force constants.
+            fc_order = 1 for harmonic, fc_order = 2 for cubic ...
+
+        """
+
         return alm.get_number_of_displacement_patterns(self._id, fc_order)
 
-    def _get_numbers_of_displacements(self, fc_order):
+    def _get_number_of_displaced_atoms(self, fc_order):
+        """Private method to return the number of displaced atoms
+        
+        Parameters
+        ----------
+        fc_order : int
+            The order of force constants.
+            fc_order = 1 for harmonic, fc_order = 2 for cubic ...
+
+        """
+
         num_disp_patterns = self._get_number_of_displacement_patterns(
             fc_order)
         numbers = np.zeros(num_disp_patterns, dtype='intc')
-        alm.get_numbers_of_displacements(self._id, numbers, fc_order)
+        alm.get_number_of_displaced_atoms(self._id, numbers, fc_order)
         return numbers
 
-    def _get_number_of_fc_elements(self, fc_order):  # harmonic: fc_order=1
+    def _get_number_of_fc_elements(self, fc_order):
+        """Private method to get the number of force constants
+        
+        Parameters
+        ----------
+        fc_order : int
+            The order of force constants.
+            fc_order = 1 for harmonic, fc_order = 2 for cubic ...
+
+        """
+
         return alm.get_number_of_fc_elements(self._id, fc_order)
 
-    def _get_number_of_irred_fc_elements(self, fc_order):  # harmonic: fc_order=1
+    def _get_number_of_irred_fc_elements(self, fc_order):
+        """Private method to get the number of irreducible set of force constants
+        
+        Parameters
+        ----------
+        fc_order : int
+            The order of force constants.
+            fc_order = 1 for harmonic, fc_order = 2 for cubic ...
+
+        """
         return alm.get_number_of_irred_fc_elements(self._id, fc_order)
 
     def _show_error_message(self):
+        """Private method to raise an error"""
         print("This ALM object has to be initialized by ALM::alm_new()")
         raise RuntimeError
