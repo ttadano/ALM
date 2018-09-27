@@ -50,9 +50,9 @@ extern "C" {
                                                   int *map_p2s);
     int alm_get_number_of_displacement_patterns(const int id,
                                                 const int fc_order); // harmonic=1,
-    void alm_get_numbers_of_displacements(const int id,
-                                          int *numbers,
-                                          const int fc_order); // harmonic=1,
+    void alm_get_number_of_displaced_atoms(const int id,
+                                           int *numbers,
+                                           const int fc_order); // harmonic=1,
     int alm_get_displacement_patterns(const int id,
                                       int *atom_indices,
                                       double *disp_patterns,

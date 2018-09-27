@@ -15,7 +15,7 @@ void show_disp_patterns(const int fc_order,
     const int num_patterns = alm->get_number_of_displacement_patterns(fc_order);
     int numbers[num_patterns];
     int total_num_disps = 0;
-    alm->get_numbers_of_displacements(numbers, fc_order);
+    alm->get_number_of_displaced_atoms(numbers, fc_order);
     for (int i = 0; i < num_patterns; i++) {
         total_num_disps += numbers[i];
     }
@@ -121,7 +121,7 @@ int main()
     std::string kdname[] = {"Si"};
     const int fc_order = 2;
 
-    alm->set_verbose(false); // ALM log is written to alm.log.
+    alm->set_verbosity(0);
     alm->set_run_mode("suggest");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(nat, lavec, xcoord, kd, kdname);

@@ -16,6 +16,7 @@
 #include "system.h"
 #include "symmetry.h"
 #include "fitting.h"
+#include "lasso.h"
 #include "constraint.h"
 #include "patterndisp.h"
 #include "alm.h"
@@ -159,6 +160,8 @@ void InputSetter::set_fitting_vars(ALM *alm,
                                    const int ndata,
                                    const int nstart,
                                    const int nend,
+                                   const int skip_s,
+                                   const int skip_e,
                                    const std::string dfile,
                                    const std::string ffile,
                                    const int constraint_flag,
@@ -172,6 +175,8 @@ void InputSetter::set_fitting_vars(ALM *alm,
     alm->fitting->ndata = ndata;
     alm->fitting->nstart = nstart;
     alm->fitting->nend = nend;
+    alm->fitting->skip_s = skip_s;
+    alm->fitting->skip_e = skip_e;
     alm->fitting->use_sparseQR = flag_sparse;
 
     alm->files->file_disp = dfile;
@@ -182,6 +187,56 @@ void InputSetter::set_fitting_vars(ALM *alm,
     alm->constraint->fix_harmonic = fix_harmonic;
     alm->constraint->fc3_file = fc3_file;
     alm->constraint->fix_cubic = fix_cubic;
+}
+
+void InputSetter::set_lasso_vars(ALM *alm,
+                                 const double lasso_alpha,
+                                 const double lasso_min_alpha,
+                                 const double lasso_max_alpha,
+                                 const int lasso_num_alpha,
+                                 const double lasso_tol,
+                                 const int lasso_maxiter,
+                                 const int lasso_freq,
+                                 const int lasso_algo,
+                                 const int standardize,
+                                 const double lasso_dnorm,
+                                 const double lasso_lambda,
+                                 const int lasso_maxiter_cg,
+                                 const int lasso_pcg,
+                                 const int lasso_cv,
+                                 const int lasso_cvset,
+                                 const int save_solution_path,
+                                 const int debias_ols,
+                                 const double lasso_zero_thr,
+                                 const int ndata_test,
+                                 const int nstart_test,
+                                 const int nend_test,
+                                 std::string dfile_test,
+                                 std::string ffile_test)
+{
+    alm->lasso->disp_norm = lasso_dnorm;
+    alm->lasso->l1_alpha = lasso_alpha;
+    alm->lasso->l1_alpha_min = lasso_min_alpha;
+    alm->lasso->l1_alpha_max = lasso_max_alpha;
+    alm->lasso->num_l1_alpha = lasso_num_alpha;
+    alm->lasso->l2_lambda = lasso_lambda;
+    alm->lasso->lasso_tol = lasso_tol;
+    alm->lasso->maxiter = lasso_maxiter;
+    alm->lasso->maxiter_cg = lasso_maxiter_cg;
+    alm->lasso->lasso_pcg = lasso_pcg;
+    alm->lasso->lasso_cv = lasso_cv;
+    alm->lasso->lasso_cvset = lasso_cvset;
+    alm->lasso->save_solution_path = save_solution_path;
+    alm->lasso->output_frequency = lasso_freq;
+    alm->lasso->debias_ols = debias_ols;
+    alm->lasso->lasso_zero_thr = lasso_zero_thr;
+    alm->lasso->ndata_test = ndata_test;
+    alm->lasso->nstart_test = nstart_test;
+    alm->lasso->nend_test = nend_test;
+    alm->lasso->dfile_test = dfile_test;
+    alm->lasso->ffile_test = ffile_test;
+    alm->lasso->standardize = standardize;
+    alm->lasso->lasso_algo = lasso_algo;
 }
 
 void InputSetter::set_atomic_positions(ALM *alm,

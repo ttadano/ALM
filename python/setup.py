@@ -30,6 +30,7 @@ if compile_with_sources:
                'input_parser.cpp',
                'input_setter.cpp',
                'interaction.cpp',
+               'lasso.cpp',
                'main.cpp',
                'patterndisp.cpp',
                'rref.cpp',

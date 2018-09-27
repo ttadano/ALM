@@ -16,6 +16,7 @@
 #include "files.h"
 #include "fitting.h"
 #include "interaction.h"
+#include "lasso.h"
 #include "memory.h"
 #include "patterndisp.h"
 #include "symmetry.h"
@@ -83,6 +84,37 @@ void Writer::write_input_vars(const ALM *alm)
         std::cout << "  FC2XML = " << alm->constraint->fc2_file << std::endl;
         std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
         std::cout << "  SPARSE = " << alm->fitting->use_sparseQR << std::endl;
+        std::cout << std::endl;
+    }  else if (alm->mode == "lasso") {
+        std::cout << " Fitting:" << std::endl;
+        std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
+        std::cout << "  FFILE = " << alm->files->file_force << std::endl;
+        std::cout << "  NDATA = " << alm->fitting->ndata << "; NSTART = " << alm->fitting->nstart
+            << "; NEND = " << alm->fitting->nend << std::endl;
+        std::cout << "  SKIP = " << alm->fitting->skip_s + 1 << "-" << alm->fitting->skip_e << std::endl;
+        std::cout << "  ICONST = " << alm->constraint->constraint_mode << std::endl;
+        std::cout << "  ROTAXIS = " << alm->constraint->rotation_axis << std::endl;
+        std::cout << "  FC2XML = " << alm->constraint->fc2_file << std::endl;
+        std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
+        std::cout << std::endl;
+        std::cout << " Lasso:" << std::endl;
+        std::cout << "  LASSO_ALPHA = " << alm->lasso->l1_alpha << std::endl;
+        std::cout << "  LASSO_MINALPHA = " << alm->lasso->l1_alpha_min;
+        std::cout << "; LASSO_MAXALPHA = " << alm->lasso->l1_alpha_max << std::endl;
+        std::cout << "  LASSO_NALPHA = " << alm->lasso->num_l1_alpha << std::endl;
+        std::cout << "  STANDARDIZE = " << alm->lasso->standardize << std::endl;
+        std::cout << "  LASSO_DNORM = " << alm->lasso->disp_norm << std::endl;
+        std::cout << "  LASSO_TOL = " << alm->lasso->lasso_tol << std::endl;
+        std::cout << "  LASSO_MAXITER = " << alm->lasso->maxiter << std::endl;
+        std::cout << "  LASSO_CV = " << std::setw(5) << alm->lasso->lasso_cv << std::endl;
+        std::cout << "  LASSO_FREQ = " << std::setw(5) << alm->lasso->output_frequency << std::endl;
+        std::cout << "  LASSO_ALGO = " << std::setw(5) << alm->lasso->lasso_algo << std::endl;
+        if (alm->lasso->lasso_algo == 1) {
+            std::cout << "  LASSO_LAMBDA = " << alm->lasso->l2_lambda << std::endl;
+            std::cout << "  LASSO_ZERO_THR = " << std::setw(15) << alm->lasso->lasso_zero_thr << std::endl;
+            std::cout << "  LASSO_MAXITER_CG = " << std::setw(5) << alm->lasso->maxiter_cg << std::endl;
+            std::cout << "  LASSO_PCG = " << std::setw(5) << alm->lasso->lasso_pcg << std::endl;
+        }
         std::cout << std::endl;
     }
     std::cout << " -------------------------------------------------------------------" << std::endl;

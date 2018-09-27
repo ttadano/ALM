@@ -189,11 +189,11 @@ extern "C" {
         return alm[id]->get_number_of_displacement_patterns(fc_order);
     }
 
-    void alm_get_numbers_of_displacements(const int id,
-                                          int *numbers,
-                                          const int fc_order) // harmonic=1,
+    void alm_get_number_of_displaced_atoms(const int id,
+                                           int *numbers,
+                                           const int fc_order) // harmonic=1,
     {
-        alm[id]->get_numbers_of_displacements(numbers, fc_order);        
+        alm[id]->get_number_of_displaced_atoms(numbers, fc_order);        
     }
 
     int alm_get_displacement_patterns(const int id,

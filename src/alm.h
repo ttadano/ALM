@@ -29,6 +29,7 @@ namespace ALM_NS
         class Fcs *fcs;
         class Symmetry *symmetry;
         class Fitting *fitting;
+        class Lasso *lasso;
         class Constraint *constraint;
         class Files *files;
         class Displace *displace;
@@ -70,8 +71,8 @@ namespace ALM_NS
 
         int get_atom_mapping_by_pure_translations(int *map_p2s);
         int get_number_of_displacement_patterns(int fc_order); // harmonic=1, ...
-        void get_numbers_of_displacements(int *numbers,
-                                          int fc_order); // harmonic=1, ...
+        void get_number_of_displaced_atoms(int *numbers,
+                                           int fc_order); // harmonic=1, ...
         int get_displacement_patterns(int *atom_indices,
                                       double *disp_patterns,
                                       int fc_order); // harmonic=1, ...
@@ -103,6 +104,7 @@ namespace ALM_NS
                                  double *bvec);
         void generate_force_constant();
         int optimize();
+        int optimize_lasso();
         void run_suggest();
         void run();
 
