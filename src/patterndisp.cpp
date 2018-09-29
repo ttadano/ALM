@@ -81,8 +81,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
         preferred_basis = "Lattice";
     }
 
-    std::cout << "Preferred_basis = " << preferred_basis << std::endl;
-    std::cout << ncompat_cart << " " << ncompat_latt << std::endl;
+   // std::cout << "Preferred_basis = " << preferred_basis << std::endl;
+   // std::cout << ncompat_cart << " " << ncompat_latt << std::endl;
 
     allocate(fc_table, maxorder);
     allocate(fc_zeros, maxorder);
