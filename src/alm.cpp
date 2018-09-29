@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -450,8 +450,8 @@ int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
 int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
 {
     // Returns the number of irreducible force constants for the given order.
-    // The irreducible force constant means a set of independent force constants 
-    // reduced by using all available symmetry operations and 
+    // The irreducible force constant means a set of independent force constants
+    // reduced by using all available symmetry operations and
     // constraints for translational invariance. Rotational invariance is not considered.
 
     const auto order = fc_order - 1;
@@ -508,7 +508,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                              // (len(fc_values), fc_order + 1) is flatten.
                              const int fc_order) // harmonic=1, ...
 {
-    // Return an irreducible set of force constants. 
+    // Return an irreducible set of force constants.
 
     int i;
     double fc_elem;
@@ -693,7 +693,7 @@ void ALM::initialize_structure(ALM *alm)
 
     if (structure_initialized) return;
     system->init(alm);
-    files->init(alm);
+    files->init();
     symmetry->init(alm);
     structure_initialized = true;
 }
