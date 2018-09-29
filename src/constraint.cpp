@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -92,20 +92,26 @@ void Constraint::deallocate_variables()
     }
 }
 
-void Constraint::setup(ALM *alm)
+void Constraint::setup(const System *system,
+                       const Fcs *fcs,
+                       const Interaction *interaction,
+                       const Symmetry *symmetry,
+                       const std::string alm_mode,
+                       const int verbosity,
+                       Timer *timer)
 {
-    alm->timer->start_clock("constraint");
+    timer->start_clock("constraint");
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << " CONSTRAINT" << std::endl;
         std::cout << " ==========" << std::endl << std::endl;
     }
 
     constraint_algebraic = constraint_mode / 10;
     constraint_mode = constraint_mode % 10;
-    int maxorder = alm->interaction->maxorder;
+    int maxorder = interaction->maxorder;
 
-    if (alm->mode == "lasso") {
+    if (alm_mode == "lasso") {
         if (constraint_mode > 1) {
             warn("Constraint::setup()", "Sorry, only ICONST = 11 is supported when MODE = lasso.");
             constraint_mode = 1;
@@ -117,7 +123,7 @@ void Constraint::setup(ALM *alm)
     case 0: // do nothing
         impose_inv_T = false;
         impose_inv_R = false;
-        if (alm->verbosity > 0) {
+        if (verbosity > 0) {
             std::cout << "  ICONST = 0: Constraint for translational/rotational invariance" << std::endl;
             std::cout << "              will NOT be considered." << std::endl;
         }
@@ -125,7 +131,7 @@ void Constraint::setup(ALM *alm)
     case 1:
         impose_inv_T = true;
         impose_inv_R = false;
-        if (alm->verbosity > 0) {
+        if (verbosity > 0) {
             std::cout << "  ICONST = 1: Constraints for translational invariance" << std::endl;
             std::cout << "              will be considered." << std::endl;
         }
@@ -134,7 +140,7 @@ void Constraint::setup(ALM *alm)
         impose_inv_T = true;
         impose_inv_R = true;
         exclude_last_R = true;
-        if (alm->verbosity > 0) {
+        if (verbosity > 0) {
             std::cout << "  ICONST = 2: Constraints for translational and rotational invariance" << std::endl;
             std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
             std::cout << "              Rotational invariance of the maximum order will be neglected" << std::endl;
@@ -144,7 +150,7 @@ void Constraint::setup(ALM *alm)
         impose_inv_T = true;
         impose_inv_R = true;
         exclude_last_R = false;
-        if (alm->verbosity > 0) {
+        if (verbosity > 0) {
             std::cout << "  ICONST = 3: Constraints for translational and rotational invariance" << std::endl;
             std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
         }
@@ -154,7 +160,7 @@ void Constraint::setup(ALM *alm)
         break;
     }
 
-    if (alm->verbosity > 0) std::cout << std::endl;
+    if (verbosity > 0) std::cout << std::endl;
 
     if (const_symmetry) {
         deallocate(const_symmetry);
@@ -188,40 +194,40 @@ void Constraint::setup(ALM *alm)
 
     if (fix_harmonic) {
 
-        if (alm->verbosity > 0) {
+        if (verbosity > 0) {
             std::cout << "  FC2XML is given : Harmonic force constants will be " << std::endl;
             std::cout << "                    fixed to the values given in " << fc2_file << std::endl;
             std::cout << std::endl;
         }
 
         fix_forceconstants_to_file(0,
-                                   alm->symmetry,
-                                   alm->fcs,
+                                   symmetry,
+                                   fcs,
                                    fc2_file,
                                    const_fix[0]);
     }
 
-    fix_cubic = fix_cubic & (alm->interaction->maxorder > 1);
+    fix_cubic = fix_cubic & (interaction->maxorder > 1);
     if (fix_cubic) {
 
-        if (alm->verbosity > 0) {
+        if (verbosity > 0) {
             std::cout << "  FC3XML is given : Cubic force constants will be " << std::endl;
             std::cout << "                    fixed to the values given in " << fc3_file << std::endl;
             std::cout << std::endl;
         }
 
         fix_forceconstants_to_file(1,
-                                   alm->symmetry,
-                                   alm->fcs,
+                                   symmetry,
+                                   fcs,
                                    fc3_file,
                                    const_fix[1]);
     }
 
-    generate_symmetry_constraint_in_cartesian(alm->system->supercell.number_of_atoms,
-                                              alm->symmetry,
-                                              alm->interaction,
-                                              alm->fcs,
-                                              alm->verbosity,
+    generate_symmetry_constraint_in_cartesian(system->supercell.number_of_atoms,
+                                              symmetry,
+                                              interaction,
+                                              fcs,
+                                              verbosity,
                                               const_symmetry);
 
     //    std::cout << "CONST SYMMETRY" << std::endl;
@@ -231,16 +237,16 @@ void Constraint::setup(ALM *alm)
 
     extra_constraint_from_symmetry = false;
 
-    for (int order = 0; order < alm->interaction->maxorder; ++order) {
+    for (int order = 0; order < interaction->maxorder; ++order) {
         if (!const_symmetry[order].empty()) extra_constraint_from_symmetry = true;
     }
 
     if (impose_inv_T) {
-        generate_translational_constraint(alm->system->supercell,
-                                          alm->symmetry,
-                                          alm->interaction,
-                                          alm->fcs,
-                                          alm->verbosity,
+        generate_translational_constraint(system->supercell,
+                                          symmetry,
+                                          interaction,
+                                          fcs,
+                                          verbosity,
                                           const_translation);
         // std::cout << "CONST TRANSLATION" << std::endl;
         // for (auto i = 1; i < maxorder; ++i) {
@@ -249,11 +255,11 @@ void Constraint::setup(ALM *alm)
     }
 
     if (impose_inv_R) {
-        generate_rotational_constraint(alm->system,
-                                       alm->symmetry,
-                                       alm->interaction,
-                                       alm->fcs,
-                                       alm->verbosity,
+        generate_rotational_constraint(system,
+                                       symmetry,
+                                       interaction,
+                                       fcs,
+                                       verbosity,
                                        tolerance_constraint,
                                        const_rotation_self,
                                        const_rotation_cross);
@@ -269,18 +275,18 @@ void Constraint::setup(ALM *alm)
         // }
     }
 
-    // Merge intra-order constrants and do reduction 
+    // Merge intra-order constrants and do reduction
 
     for (int order = 0; order < maxorder; ++order) {
 
-        int nparam = alm->fcs->nequiv[order].size();
+        int nparam = fcs->nequiv[order].size();
 
         const_self[order].reserve(
             const_translation[order].size()
             + const_rotation_self[order].size()
             + const_symmetry[order].size());
 
-        // The order of const_symmetry and const_translation 
+        // The order of const_symmetry and const_translation
         // should not be changed since the rref_sparse is sensitive to
         // the numerical accuracy of the input matrix.
         const_self[order].insert(const_self[order].end(),
@@ -304,7 +310,7 @@ void Constraint::setup(ALM *alm)
     // }
 
     get_mapping_constraint(maxorder,
-                           alm->fcs->nequiv,
+                           fcs->nequiv,
                            const_self,
                            const_fix,
                            const_relate,
@@ -320,14 +326,14 @@ void Constraint::setup(ALM *alm)
         }
         if (fix_harmonic) {
             Pmax -= const_self[0].size();
-            Pmax += alm->fcs->nequiv[0].size();
+            Pmax += fcs->nequiv[0].size();
         }
         if (fix_cubic) {
             Pmax -= const_self[1].size();
-            Pmax += alm->fcs->nequiv[1].size();
+            Pmax += fcs->nequiv[1].size();
         }
         for (int order = 0; order < maxorder; ++order) {
-            nparams += alm->fcs->nequiv[order].size();
+            nparams += fcs->nequiv[order].size();
         }
 
         if (const_mat) {
@@ -341,7 +347,7 @@ void Constraint::setup(ALM *alm)
         allocate(const_rhs, Pmax);
 
         calc_constraint_matrix(maxorder,
-                               alm->fcs->nequiv,
+                               fcs->nequiv,
                                nparams,
                                number_of_constraints);
     }
@@ -352,7 +358,7 @@ void Constraint::setup(ALM *alm)
         || fix_cubic
         || extra_constraint_from_symmetry;
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         if (exist_constraint) {
 
             int order;
@@ -360,7 +366,7 @@ void Constraint::setup(ALM *alm)
             if (impose_inv_T || impose_inv_R) {
                 std::cout << "  Number of constraints [T-inv, R-inv (self), R-inv (cross)]:" << std::endl;
                 for (order = 0; order < maxorder; ++order) {
-                    std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
+                    std::cout << "   " << std::setw(8) << interaction->str_order[order];
                     std::cout << std::setw(5) << const_translation[order].size();
                     std::cout << std::setw(5) << const_rotation_self[order].size();
                     std::cout << std::setw(5) << const_rotation_cross[order].size();
@@ -373,7 +379,7 @@ void Constraint::setup(ALM *alm)
                 std::cout << "  There are constraints from crystal symmetry." << std::endl;
                 std::cout << "  The number of such constraints for each order:" << std::endl;
                 for (order = 0; order < maxorder; ++order) {
-                    std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
+                    std::cout << "   " << std::setw(8) << interaction->str_order[order];
                     std::cout << std::setw(5) << const_symmetry[order].size();
                     std::cout << std::endl;
                 }
@@ -391,7 +397,7 @@ void Constraint::setup(ALM *alm)
             std::cout << "  Number of inequivalent constraints (self, cross) : " << std::endl;
 
             for (order = 0; order < maxorder; ++order) {
-                std::cout << "   " << std::setw(8) << alm->interaction->str_order[order];
+                std::cout << "   " << std::setw(8) << interaction->str_order[order];
                 std::cout << std::setw(5) << const_self[order].size();
                 std::cout << std::setw(5) << const_rotation_cross[order].size();
                 std::cout << std::endl;
@@ -409,7 +415,7 @@ void Constraint::setup(ALM *alm)
                 }
 
                 for (order = 0; order < maxorder; ++order) {
-                    std::cout << "  Number of free" << std::setw(9) << alm->interaction->str_order[order]
+                    std::cout << "  Number of free" << std::setw(9) << interaction->str_order[order]
                         << " FCs : " << index_bimap[order].size() << std::endl;
                 }
                 std::cout << std::endl;
@@ -420,7 +426,7 @@ void Constraint::setup(ALM *alm)
 
             }
         }
-        alm->timer->print_elapsed();
+        timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
@@ -435,7 +441,7 @@ void Constraint::setup(ALM *alm)
     deallocate(const_self);
     const_self = nullptr;
 
-    alm->timer->stop_clock("constraint");
+    timer->stop_clock("constraint");
 }
 
 void Constraint::calc_constraint_matrix(const int maxorder,
@@ -666,9 +672,9 @@ void Constraint::get_mapping_constraint(const int nmax,
 }
 
 void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
-                                                           Symmetry *symmetry,
-                                                           Interaction *interaction,
-                                                           Fcs *fcs,
+                                                           const Symmetry *symmetry,
+                                                           const Interaction *interaction,
+                                                           const Fcs *fcs,
                                                            const int verbosity,
                                                            ConstraintSparseForm *const_out)
 
@@ -719,9 +725,9 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
 
 
 void Constraint::generate_translational_constraint(const Cell &supercell,
-                                                   Symmetry *symmetry,
-                                                   Interaction *interaction,
-                                                   Fcs *fcs,
+                                                   const Symmetry *symmetry,
+                                                   const Interaction *interaction,
+                                                   const Fcs *fcs,
                                                    const int verbosity,
                                                    ConstraintSparseForm *const_out)
 {
@@ -760,9 +766,9 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
 
 
 void Constraint::get_constraint_translation(const Cell &supercell,
-                                            Symmetry *symmetry,
-                                            Interaction *interaction,
-                                            Fcs *fcs,
+                                            const Symmetry *symmetry,
+                                            const Interaction *interaction,
+                                            const Fcs *fcs,
                                             const int order,
                                             const std::vector<FcProperty> &fc_table,
                                             const int nparams,
@@ -1043,10 +1049,10 @@ void Constraint::get_constraint_translation(const Cell &supercell,
     if (do_rref) rref_sparse(nparams, const_out, eps8);
 }
 
-void Constraint::generate_rotational_constraint(System *system,
-                                                Symmetry *symmetry,
-                                                Interaction *interaction,
-                                                Fcs *fcs,
+void Constraint::generate_rotational_constraint(const System *system,
+                                                const Symmetry *symmetry,
+                                                const Interaction *interaction,
+                                                const Fcs *fcs,
                                                 const int verbosity,
                                                 const double tolerance,
                                                 ConstraintSparseForm *const_rotation_self,
@@ -1226,7 +1232,7 @@ void Constraint::generate_rotational_constraint(System *system,
                                     arr_constraint[(*iter_found).mother] += (*iter_found).sign * vec_for_rot[nu];
                                 }
 
-                                // Exchange mu <--> nu and repeat again. 
+                                // Exchange mu <--> nu and repeat again.
                                 // Note that the sign is inverted (+ --> -) in the summation
 
                                 interaction_index[1] = 3 * jat + nu;
@@ -1442,7 +1448,7 @@ void Constraint::generate_rotational_constraint(System *system,
                                             const_tmp.clear();
 
                                             if (is_allzero(arr_constraint_self, tolerance, loc_nonzero)) {
-                                                // If all elements of the "order"th order is zero, 
+                                                // If all elements of the "order"th order is zero,
                                                 // the constraint is intraorder of the "order-1"th order.
                                                 for (j = 0; j < nparams[order - 1]; ++j) {
                                                     if (std::abs(arr_constraint_lower[j]) >= tolerance) {
@@ -1710,8 +1716,8 @@ void Constraint::setup_rotation_axis(bool flag[3][3])
 
 
 void Constraint::fix_forceconstants_to_file(const int order,
-                                            Symmetry *symmetry,
-                                            Fcs *fcs,
+                                            const Symmetry *symmetry,
+                                            const Fcs *fcs,
                                             const std::string file_to_fix,
                                             std::vector<ConstraintTypeFix> &const_out)
 {

@@ -456,7 +456,13 @@ int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
 
     const auto order = fc_order - 1;
     if (!ready_to_fit) {
-        constraint->setup(this);
+        constraint->setup(system,
+                          fcs,
+                          interaction,
+                          symmetry,
+                          mode,
+                          verbosity,
+                          timer);
         ready_to_fit = true;
     }
     return constraint->index_bimap[order].size();
@@ -520,7 +526,13 @@ void ALM::get_fc_irreducible(double *fc_values,
     }
 
     if (!ready_to_fit) {
-        constraint->setup(this);
+        constraint->setup(system,
+                          fcs,
+                          interaction,
+                          symmetry,
+                          mode,
+                          verbosity,
+                          timer);
         ready_to_fit = true;
     }
 
@@ -607,10 +619,10 @@ void ALM::get_fc_all(double *fc_values,
 
 void ALM::set_fc(double *fc_in)
 {
-    fitting->set_fcs_values(this->interaction->maxorder,
+    fitting->set_fcs_values(interaction->maxorder,
                             fc_in,
-                            this->fcs->nequiv,
-                            this->constraint);
+                            fcs->nequiv,
+                            constraint);
 }
 
 void ALM::get_matrix_elements(const int nat,
@@ -626,9 +638,9 @@ void ALM::get_matrix_elements(const int nat,
                                                       amat,
                                                       bvec,
                                                       fnorm,
-                                                      this->symmetry,
-                                                      this->fcs,
-                                                      this->constraint);
+                                                      symmetry,
+                                                      fcs,
+                                                      constraint);
 }
 
 
@@ -658,7 +670,13 @@ int ALM::optimize()
         exit(EXIT_FAILURE);
     }
     if (!ready_to_fit) {
-        constraint->setup(this);
+        constraint->setup(system,
+                          fcs,
+                          interaction,
+                          symmetry,
+                          mode,
+                          verbosity,
+                          timer);
         ready_to_fit = true;
     }
     int info = fitting->fitmain(this);
@@ -677,7 +695,13 @@ int ALM::optimize_lasso()
         exit(EXIT_FAILURE);
     }
     if (!ready_to_fit) {
-        constraint->setup(this);
+        constraint->setup(system,
+                          fcs,
+                          interaction,
+                          symmetry,
+                          mode,
+                          verbosity,
+                          timer);
         ready_to_fit = true;
     }
     lasso->lasso_main(this);

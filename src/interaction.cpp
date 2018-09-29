@@ -523,9 +523,9 @@ void Interaction::print_interaction_information(const int natmin,
 
 
 bool Interaction::is_incutoff(const int n,
-                              int *atomnumlist,
+                              const int *atomnumlist,
                               const int order,
-                              const std::vector<int> &kd)
+                              const std::vector<int> &kd) const
 {
     int iat, jat;
     int ikd, jkd;
@@ -563,7 +563,7 @@ void Interaction::set_ordername()
 }
 
 int Interaction::nbody(const int n,
-                       const int *arr)
+                       const int *arr) const
 {
     std::vector<int> v(n);
 
@@ -581,7 +581,7 @@ int Interaction::nbody(const int n,
 
 bool Interaction::satisfy_nbody_rule(const int nelem,
                                      const int *arr,
-                                     const int order)
+                                     const int order) const
 {
     return nbody(nelem, arr) <= nbody_include[order];
 }

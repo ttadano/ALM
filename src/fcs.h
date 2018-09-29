@@ -90,22 +90,22 @@ namespace ALM_NS
         std::vector<FcProperty> *fc_table; // all force constants
         std::vector<FcProperty> *fc_zeros; // zero force constants (due to space group symm.)
 
-        void get_xyzcomponent(int, int **);
+        void get_xyzcomponent(int, int **) const;
 
-        bool is_inprim(int,
+        bool is_inprim(const int,
                        const int *,
-                       int,
-                       int **);
+                       const int,
+                       int **) const;
 
-        int get_minimum_index_in_primitive(int,
+        int get_minimum_index_in_primitive(const int,
                                            const int *,
-                                           int,
-                                           int,
-                                           int **);
-        double coef_sym(int,
-                        double **,
+                                           const int,
+                                           const int,
+                                           int **) const;
+        double coef_sym(const int,
+                        const double * const *,
                         const int *,
-                        const int *);
+                        const int *) const;
 
         void generate_force_constant_table(const int,
                                            const unsigned int nat,
@@ -117,35 +117,35 @@ namespace ALM_NS
                                            std::vector<FcProperty> &,
                                            bool);
 
-        void get_constraint_symmetry(int,
-                                     Symmetry *,
-                                     int,
+        void get_constraint_symmetry(const int,
+                                     const Symmetry *,
+                                     const int,
                                      const std::set<IntList> &,
-                                     std::string,
+                                     const std::string,
                                      const std::vector<FcProperty> &,
-                                     int,
-                                     double,
+                                     const int,
+                                     const double,
                                      ConstraintSparseForm &,
-                                     bool do_rref = false);
+                                     const bool do_rref = false) const;
 
     private:
         bool store_zeros;
         void set_default_variables();
         void deallocate_variables();
         bool is_ascending(int, const int *);
-        bool is_inprim(int,
-                       int,
-                       int **);
+        bool is_inprim(const int,
+                       const int,
+                       int **) const;
         bool is_allzero(const std::vector<double> &,
                         double,
-                        int &);
+                        int &) const;
         void get_available_symmop(const unsigned int,
                                   const Symmetry *,
                                   const std::string,
                                   int &,
                                   int **,
                                   double ***,
-                                  const bool);
+                                  const bool) const;
     };
 }
 

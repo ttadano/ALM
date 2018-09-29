@@ -336,15 +336,15 @@ void Fcs::generate_force_constant_table(const int order,
 }
 
 void Fcs::get_constraint_symmetry(const int nat,
-                                   Symmetry *symmetry,
-                                   const int order,
-                                   const std::set<IntList> &pairs,
-                                   const std::string basis,
-                                   const std::vector<FcProperty> &fc_table,
-                                   const int nparams,
-                                   const double tolerance,
-                                   ConstraintSparseForm &const_out,
-                                   const bool do_rref)
+                                  const Symmetry *symmetry,
+                                  const int order,
+                                  const std::set<IntList> &pairs,
+                                  const std::string basis,
+                                  const std::vector<FcProperty> &fc_table,
+                                  const int nparams,
+                                  const double tolerance,
+                                  ConstraintSparseForm &const_out,
+                                  const bool do_rref) const
 {
     // Create constraint matrices arising from the crystal symmetry.
     // Necessary for hexagonal systems.
@@ -539,7 +539,7 @@ void Fcs::get_available_symmop(const unsigned int nat,
                                int &nsym_avail,
                                int **mapping_symm,
                                double ***rotation,
-                               const bool use_compatible)
+                               const bool use_compatible) const
 {
     // Return mapping information of atoms and the rotation matrices of symmetry operations
     // that are (compatible, incompatible) with the given lattice basis (Cartesian or Lattice).
@@ -598,9 +598,9 @@ void Fcs::get_available_symmop(const unsigned int nat,
 }
 
 double Fcs::coef_sym(const int n,
-                     double **rot,
+                     const double * const *rot,
                      const int *arr1,
-                     const int *arr2)
+                     const int *arr2) const
 {
     double tmp = 1.0;
     int i;
@@ -624,7 +624,7 @@ int Fcs::get_minimum_index_in_primitive(const int n,
                                         const int *arr,
                                         const int nat,
                                         const int natmin,
-                                        int **map_p2s)
+                                        int **map_p2s) const
 {
     int i, j, atmnum;
 
@@ -657,7 +657,7 @@ int Fcs::get_minimum_index_in_primitive(const int n,
 bool Fcs::is_inprim(const int n,
                     const int *arr,
                     const int natmin,
-                    int **map_p2s)
+                    int **map_p2s) const
 {
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < natmin; ++j) {
@@ -669,7 +669,7 @@ bool Fcs::is_inprim(const int n,
 
 bool Fcs::is_inprim(const int n,
                     const int natmin,
-                    int **map_p2s)
+                    int **map_p2s) const
 {
     int atmn = n / 3;
 
@@ -681,7 +681,7 @@ bool Fcs::is_inprim(const int n,
 }
 
 void Fcs::get_xyzcomponent(const int n,
-                           int **xyz)
+                           int **xyz) const
 {
     // Return xyz component for the given order using boost algorithm library
 
@@ -704,7 +704,7 @@ void Fcs::get_xyzcomponent(const int n,
 
 bool Fcs::is_allzero(const std::vector<double> &vec,
                      const double tol,
-                     int &loc)
+                     int &loc) const
 {
     loc = -1;
     auto n = vec.size();
