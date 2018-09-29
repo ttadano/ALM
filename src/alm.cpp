@@ -95,9 +95,19 @@ void ALM::set_run_mode(const std::string mode_in)
     mode = mode_in;
 }
 
+std::string ALM::get_run_mode() const
+{
+    return mode;
+}
+
 void ALM::set_verbosity(const int verbosity_in)
 {
     verbosity = verbosity_in;
+}
+
+int ALM::get_verbosity() const
+{
+    return verbosity;
 }
 
 void ALM::set_output_filename_prefix(const std::string prefix) const // PREFIX
@@ -679,13 +689,26 @@ int ALM::optimize()
                           timer);
         ready_to_fit = true;
     }
-    int info = fitting->fitmain(this);
+    int info = fitting->fitmain(symmetry,
+                                constraint,
+                                fcs,
+                                interaction->maxorder,
+                                system->supercell.number_of_atoms,
+                                verbosity,
+                                files->file_disp,
+                                files->file_force,
+                                timer);
     return info;
 }
 
 void ALM::run_suggest()
 {
-    displace->gen_displacement_pattern(this);
+    displace->gen_displacement_pattern(interaction,
+                                       symmetry,
+                                       fcs,
+                                       constraint,
+                                       system,
+                                       verbosity);
 }
 
 int ALM::optimize_lasso()
@@ -704,7 +727,16 @@ int ALM::optimize_lasso()
                           timer);
         ready_to_fit = true;
     }
-    lasso->lasso_main(this);
+    lasso->lasso_main(symmetry,
+                      interaction,
+                      fcs,
+                      constraint,
+                      system->supercell.number_of_atoms,
+                      files,
+                      verbosity,
+                      fitting,
+                      timer);
+
     int info = 1;
     return info;
 }

@@ -70,7 +70,7 @@ namespace ALM_NS
 
         int get_ndata_used() const;
         double gamma(const int,
-                     const int *);
+                     const int *) const;
 
     private:
 
@@ -149,7 +149,7 @@ namespace ALM_NS
                                              std::vector<int> *,
                                              const Constraint *);
 
-        int factorial(int);
+        int factorial(const int) const;
         int rankQRD(const int,
                     const int,
                     double *,

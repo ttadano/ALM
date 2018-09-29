@@ -1144,7 +1144,7 @@ int Fitting::inprim_index(const int n,
 }
 
 double Fitting::gamma(const int n,
-                      const int *arr)
+                      const int *arr) const
 {
     int *arr_tmp, *nsame;
     int i;
@@ -1190,7 +1190,7 @@ double Fitting::gamma(const int n,
     return static_cast<double>(nsame_to_front) / static_cast<double>(denom);
 }
 
-int Fitting::factorial(const int n)
+int Fitting::factorial(const int n) const
 {
     if (n == 1 || n == 0) {
         return 1;

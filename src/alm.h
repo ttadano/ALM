@@ -21,7 +21,6 @@ namespace ALM_NS
         ~ALM();
 
         std::string mode;
-        int verbosity;
 
         class InputSetter *input;
         class System *system;
@@ -36,7 +35,9 @@ namespace ALM_NS
         class Timer *timer;
 
         void set_run_mode(std::string mode_in);
+        std::string get_run_mode() const;
         void set_verbosity(int verbosity_in);
+        int get_verbosity() const;
         void set_output_filename_prefix(std::string prefix) const;
         void set_is_print_symmetry(int printsymmetry);
         void set_is_print_hessians(bool print_hessian);
@@ -109,6 +110,7 @@ namespace ALM_NS
         void run();
 
     private:
+        int verbosity;
 
         bool structure_initialized;
         bool ready_to_fit;

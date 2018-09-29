@@ -4,7 +4,7 @@
  Copyright (c) 2014 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -48,7 +48,15 @@ namespace ALM_NS
         int save_solution_path;
         int debias_ols;
 
-        void lasso_main(ALM *);
+        void lasso_main(const Symmetry *symmetry,
+                        const Interaction *interaction,
+                        const Fcs *fcs,
+                        const Constraint *constraint,
+                        const unsigned int nat,
+                        const Files *files,
+                        const int verbosity,
+                        Fitting *fitting,
+                        Timer *timer);
 
     private:
 
@@ -137,10 +145,10 @@ namespace ALM_NS
                                            double *,
                                            double *);
 
-        void get_prefactor_force(int,
-                                 Fcs *,
-                                 Constraint *,
-                                 Fitting *,
+        void get_prefactor_force(const int,
+                                 const Fcs *,
+                                 const Constraint *,
+                                 const Fitting *,
                                  std::vector<double> &);
     };
 
