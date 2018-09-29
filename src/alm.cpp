@@ -692,7 +692,8 @@ void ALM::initialize_structure(ALM *alm)
     // Perform initialization only once.
 
     if (structure_initialized) return;
-    system->init(alm);
+    system->init(alm->verbosity,
+                 alm->timer);
     files->init();
     symmetry->init(alm);
     structure_initialized = true;
@@ -701,10 +702,10 @@ void ALM::initialize_structure(ALM *alm)
 void ALM::initialize_interaction(ALM *alm)
 {
     // Build interaction & force constant table
-    interaction->init(alm->timer,
-                      alm->system,
+    interaction->init(alm->system,
                       alm->symmetry,
-                      alm->verbosity);
+                      alm->verbosity,
+                      alm->timer);
     fcs->init(alm);
 
     // Switch off the ready flag because the force constants are updated

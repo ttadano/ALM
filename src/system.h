@@ -4,7 +4,7 @@
  Copyright (c) 2014 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -61,7 +61,8 @@ namespace ALM_NS
     public:
         System();
         ~System();
-        void init(ALM *);
+        void init(const int verbosity,
+                  Timer *timer);
         void frac2cart(double **);
 
         void set_cell(const double [3][3],
@@ -112,8 +113,7 @@ namespace ALM_NS
         double volume(const double [3][3], LatticeType);
         void set_atomtype_group();
 
-        void generate_coordinate_of_periodic_images(System *,
-                                                    unsigned int,
+        void generate_coordinate_of_periodic_images(const unsigned int,
                                                     const std::vector<std::vector<double>> &,
                                                     const int [3],
                                                     double ***,

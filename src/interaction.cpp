@@ -36,10 +36,10 @@ Interaction::~Interaction()
     deallocate_variables();
 }
 
-void Interaction::init(Timer *timer,
-                       const System *system,
+void Interaction::init(const System *system,
                        const Symmetry *symmetry,
-                       const int verbosity)
+                       const int verbosity,
+                       Timer *timer)
 {
     timer->start_clock("interaction");
 

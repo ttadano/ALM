@@ -195,10 +195,10 @@ namespace ALM_NS
         std::set<InteractionCluster> **interaction_cluster;
         // Interaction many-body clusters with mirrow image information
 
-        void init(Timer *timer,
-                  const System *system,
+        void init(const System *system,
                   const Symmetry *symmetry,
-                  const int verbosity);
+                  const int verbosity,
+                  Timer *timer);
 
         bool satisfy_nbody_rule(int,
                                 const int *,
