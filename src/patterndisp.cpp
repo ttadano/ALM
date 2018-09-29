@@ -4,7 +4,7 @@ patterndisp.cpp
 Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
 This file is distributed under the terms of the MIT license.
-Please see the file 'LICENCE.txt' in the root directory 
+Please see the file 'LICENCE.txt' in the root directory
 or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -36,10 +36,15 @@ Displace::~Displace()
     deallocate_variables();
 }
 
-void Displace::gen_displacement_pattern(ALM *alm)
+void Displace::gen_displacement_pattern(const Interaction *interaction,
+                                        const Symmetry *symmetry,
+                                        const Fcs *fcs,
+                                        const Constraint *constraint,
+                                        const System *system,
+                                        const int verbosity)
 {
     int i, j, m, order;
-    int maxorder = alm->interaction->maxorder;
+    int maxorder = interaction->maxorder;
     std::string preferred_basis;
     std::vector<int> group_tmp;
     std::vector<std::map<unsigned int, double>> *constsym;
@@ -57,7 +62,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
     boost::bimap<int, int> *index_bimap_tmp;
     const bool do_rref = true;
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << " DISPLACEMENT PATTERN" << std::endl;
         std::cout << " ====================" << std::endl << std::endl;
     }
@@ -65,8 +70,8 @@ void Displace::gen_displacement_pattern(ALM *alm)
     // Decide preferred basis (Cartesian or Lattice)
     int ncompat_cart = 0;
     int ncompat_latt = 0;
-    for (auto it = alm->symmetry->SymmData.begin();
-         it != alm->symmetry->SymmData.end(); ++it) {
+    for (auto it = symmetry->SymmData.begin();
+         it != symmetry->SymmData.end(); ++it) {
         if ((*it).compatible_with_cartesian) ++ncompat_cart;
         if ((*it).compatible_with_lattice) ++ncompat_latt;
     }
@@ -89,21 +94,22 @@ void Displace::gen_displacement_pattern(ALM *alm)
 
     for (order = 0; order < maxorder; ++order) {
 
-        alm->fcs->generate_force_constant_table(order, alm->system->supercell.number_of_atoms,
-                                                alm->interaction->cluster_list[order],
-                                                alm->symmetry, preferred_basis,
-                                                fc_table[order], nequiv[order],
-                                                fc_zeros[order], false);
+        fcs->generate_force_constant_table(order,
+                                           system->supercell.number_of_atoms,
+                                           interaction->cluster_list[order],
+                                           symmetry, preferred_basis,
+                                           fc_table[order], nequiv[order],
+                                           fc_zeros[order], false);
 
-        alm->fcs->get_constraint_symmetry(alm->system->supercell.number_of_atoms,
-                                          alm->symmetry,
-                                          order,
-                                          alm->interaction->cluster_list[order],
-                                          preferred_basis,
-                                          fc_table[order],
-                                          nequiv[order].size(),
-                                          alm->constraint->tolerance_constraint,
-                                          constsym[order], do_rref);
+        fcs->get_constraint_symmetry(system->supercell.number_of_atoms,
+                                     symmetry,
+                                     order,
+                                     interaction->cluster_list[order],
+                                     preferred_basis,
+                                     fc_table[order],
+                                     nequiv[order].size(),
+                                     constraint->tolerance_constraint,
+                                     constsym[order], do_rref);
 
     }
 
@@ -111,17 +117,17 @@ void Displace::gen_displacement_pattern(ALM *alm)
         const_fix_tmp[order].clear();
     }
 
-    alm->constraint->get_mapping_constraint(maxorder,
-                                            nequiv,
-                                            constsym,
-                                            const_fix_tmp,
-                                            const_relate_tmp,
-                                            index_bimap_tmp);
+    constraint->get_mapping_constraint(maxorder,
+                                       nequiv,
+                                       constsym,
+                                       const_fix_tmp,
+                                       const_relate_tmp,
+                                       index_bimap_tmp);
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of free" << std::setw(9)
-                << alm->interaction->str_order[order] << " FCs : "
+                << interaction->str_order[order] << " FCs : "
                 << index_bimap_tmp[order].size() << std::endl;
         }
         std::cout << std::endl;
@@ -146,7 +152,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
 
     deallocate(index_bimap_tmp);
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << "  Generating displacement patterns in ";
         std::cout << "Cartesian coordinate... ";
     }
@@ -164,7 +170,7 @@ void Displace::gen_displacement_pattern(ALM *alm)
                 group_tmp.clear();
 
                 // Store first order + 1 indexes as a necessary displacement pattern.
-                // Here, duplicate entries will be removed. 
+                // Here, duplicate entries will be removed.
                 // For example, (iij) will be reduced to (ij).
                 for (j = 0; j < order + 1; ++j) {
                     group_tmp.push_back(fc_table[order][m].elems[j]);
@@ -186,21 +192,21 @@ void Displace::gen_displacement_pattern(ALM *alm)
 
     allocate(pattern_all, maxorder);
     generate_pattern_all(maxorder,
-                         alm->system->supercell.number_of_atoms,
-                         alm->system->supercell.lattice_vector,
-                         alm->symmetry,
+                         system->supercell.number_of_atoms,
+                         system->supercell.lattice_vector,
+                         symmetry,
                          pattern_all,
                          dispset, preferred_basis);
 
     deallocate(dispset);
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << " done!" << std::endl;
         std::cout << std::endl;
 
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of disp. patterns for " << std::setw(9)
-                << alm->interaction->str_order[order] << " : "
+                << interaction->str_order[order] << " : "
                 << pattern_all[order].size() << std::endl;
         }
         std::cout << std::endl;
@@ -221,8 +227,8 @@ void Displace::deallocate_variables()
 
 void Displace::generate_pattern_all(const int N,
                                     const int nat,
-                                    double lavec[3][3],
-                                    Symmetry *symmetry,
+                                    const double lavec[3][3],
+                                    const Symmetry *symmetry,
                                     std::vector<AtomWithDirection> *pattern,
                                     std::set<DispAtomSet> *dispset_in,
                                     const std::string preferred_basis)
@@ -343,7 +349,7 @@ void Displace::generate_signvecs(const int N,
 
 void Displace::find_unique_sign_pairs(const int N,
                                       const int nat,
-                                      Symmetry *symmetry,
+                                      const Symmetry *symmetry,
                                       std::vector<std::vector<int>> sign_in,
                                       std::vector<int> pair_in,
                                       std::vector<std::vector<int>> &sign_out,
@@ -458,7 +464,7 @@ void Displace::find_unique_sign_pairs(const int N,
         }
     }
 
-    // Now find unique pairs of displacement directions 
+    // Now find unique pairs of displacement directions
 
     sign_found.clear();
 

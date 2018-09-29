@@ -565,7 +565,7 @@ void Constraint::get_mapping_constraint(const int nmax,
                                         ConstraintSparseForm *const_in,
                                         std::vector<ConstraintTypeFix> *const_fix_out,
                                         std::vector<ConstraintTypeRelate> *const_relate_out,
-                                        boost::bimap<int, int> *index_bimap_out)
+                                        boost::bimap<int, int> *index_bimap_out) const
 {
     // If const_fix_out[order] is not empty as input, it assumes that fix_forceconstant[order] is true.
     // In this case, const_fix_out[order] is not updated.

@@ -111,11 +111,11 @@ namespace ALM_NS
                                            const unsigned int nat,
                                            const std::set<IntList> &,
                                            const Symmetry *,
-                                           std::string,
+                                           const std::string,
                                            std::vector<FcProperty> &,
                                            std::vector<int> &,
                                            std::vector<FcProperty> &,
-                                           bool);
+                                           const bool) const;
 
         void get_constraint_symmetry(const int,
                                      const Symmetry *,
@@ -132,7 +132,7 @@ namespace ALM_NS
         bool store_zeros;
         void set_default_variables();
         void deallocate_variables();
-        bool is_ascending(int, const int *);
+        bool is_ascending(int, const int *) const;
         bool is_inprim(const int,
                        const int,
                        int **) const;

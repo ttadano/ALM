@@ -233,12 +233,12 @@ namespace ALM_NS
         std::vector<ConstraintTypeRelate> *const_relate_rotation;
         boost::bimap<int, int> *index_bimap;
 
-        void get_mapping_constraint(int,
+        void get_mapping_constraint(const int,
                                     std::vector<int> *,
                                     ConstraintSparseForm *,
                                     std::vector<ConstraintTypeFix> *,
                                     std::vector<ConstraintTypeRelate> *,
-                                    boost::bimap<int, int> *);
+                                    boost::bimap<int, int> *) const;
 
     private:
 

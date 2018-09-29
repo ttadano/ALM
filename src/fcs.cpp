@@ -134,7 +134,7 @@ void Fcs::generate_force_constant_table(const int order,
                                         std::vector<FcProperty> &fc_vec,
                                         std::vector<int> &ndup,
                                         std::vector<FcProperty> &fc_zeros,
-                                        const bool store_zeros)
+                                        const bool store_zeros) const
 {
     int i, j;
     int i1, i2;
@@ -612,7 +612,7 @@ double Fcs::coef_sym(const int n,
 }
 
 bool Fcs::is_ascending(const int n,
-                       const int *arr)
+                       const int *arr) const
 {
     for (int i = 0; i < n - 1; ++i) {
         if (arr[i] > arr[i + 1]) return false;

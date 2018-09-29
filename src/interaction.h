@@ -200,14 +200,14 @@ namespace ALM_NS
                   const int verbosity,
                   Timer *timer);
 
-        bool satisfy_nbody_rule(int,
+        bool satisfy_nbody_rule(const int,
                                 const int *,
-                                int);
+                                const int) const;
 
-        bool is_incutoff(int,
-                         int *,
-                         int,
-                         const std::vector<int> &);
+        bool is_incutoff(const int,
+                         const int *,
+                         const int,
+                         const std::vector<int> &) const;
 
         void generate_interaction_information_by_cutoff(int,
                                                         int,
@@ -250,7 +250,7 @@ namespace ALM_NS
 
         void set_ordername();
         double distance(double *, double *);
-        int nbody(int, const int *);
+        int nbody(const int, const int *) const;
 
         void calc_interaction_clusters(int,
                                        const std::vector<int> &,
