@@ -4,7 +4,7 @@
  Copyright (c) 2014 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -24,7 +24,7 @@ namespace ALM_NS
         Files();
         ~Files();
 
-        void init(ALM *);
+        void init();
 
         bool print_hessian;
         std::string job_title;

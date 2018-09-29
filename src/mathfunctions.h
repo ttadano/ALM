@@ -4,7 +4,7 @@
  Copyright (c) 2014 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -23,7 +23,7 @@ inline void matmul3(T ret[3][3], const T amat[3][3], const T bmat[3][3]) {
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
             ret_tmp[i][j] = 0.0;
-            for (k = 0; k < 3; ++k) ret_tmp[i][j] += amat[i][k] * bmat[k][j]; 	        
+            for (k = 0; k < 3; ++k) ret_tmp[i][j] += amat[i][k] * bmat[k][j]; 	
         }
     }
 
@@ -34,7 +34,7 @@ inline void matmul3(T ret[3][3], const T amat[3][3], const T bmat[3][3]) {
     }
 }
 
-inline void transpose3(double ret[3][3], const double mat[3][3]) 
+inline void transpose3(double ret[3][3], const double mat[3][3])
 {
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
@@ -43,9 +43,9 @@ inline void transpose3(double ret[3][3], const double mat[3][3])
     }
 }
 
-inline void rotvec(double vec_out[3], double vec_in[3], double mat[3][3], char mode = 'N')
+inline void rotvec(double vec_out[3], double vec_in[3], const double mat[3][3], char mode = 'N')
 {
-    // Perform matrix x vector multiplication. 
+    // Perform matrix x vector multiplication.
     //
     // vec_out = mat      * vec_in   (mode = 'N')
     //          (mat)^{t} * vec_in   (mode = 'T')
@@ -72,9 +72,9 @@ inline void rotvec(double vec_out[3], double vec_in[3], double mat[3][3], char m
     }
 }
 
-inline void rotvec(double vec_out[3], double vec_in[3], double **mat, char mode = 'N')
+inline void rotvec(double vec_out[3], double vec_in[3], const double **mat, char mode = 'N')
 {
-    // Perform matrix x vector multiplication. 
+    // Perform matrix x vector multiplication.
     //
     // vec_out = mat      * vec_in   (mode = 'N')
     //          (mat)^{t} * vec_in   (mode = 'T')
@@ -113,10 +113,10 @@ inline void invmat3(double invmat[3][3], double mat[3][3])
         }
     }
 
-    det = mat_tmp[0][0] * mat_tmp[1][1] * mat_tmp[2][2] 
-    + mat_tmp[1][0] * mat_tmp[2][1] * mat_tmp[0][2] 
+    det = mat_tmp[0][0] * mat_tmp[1][1] * mat_tmp[2][2]
+    + mat_tmp[1][0] * mat_tmp[2][1] * mat_tmp[0][2]
     + mat_tmp[2][0] * mat_tmp[0][1] * mat_tmp[1][2]
-    - mat_tmp[0][0] * mat_tmp[2][1] * mat_tmp[1][2] 
+    - mat_tmp[0][0] * mat_tmp[2][1] * mat_tmp[1][2]
     - mat_tmp[2][0] * mat_tmp[1][1] * mat_tmp[0][2]
     - mat_tmp[1][0] * mat_tmp[0][1] * mat_tmp[2][2];
 
@@ -144,10 +144,10 @@ inline void invmat3_i(int invmat[3][3], int mat[3][3])
 {
     int det;
 
-    det = mat[0][0] * mat[1][1] * mat[2][2] 
-    + mat[1][0] * mat[2][1] * mat[0][2] 
+    det = mat[0][0] * mat[1][1] * mat[2][2]
+    + mat[1][0] * mat[2][1] * mat[0][2]
     + mat[2][0] * mat[0][1] * mat[1][2]
-    - mat[0][0] * mat[2][1] * mat[1][2] 
+    - mat[0][0] * mat[2][1] * mat[1][2]
     - mat[2][0] * mat[1][1] * mat[0][2]
     - mat[1][0] * mat[0][1] * mat[2][2];
 

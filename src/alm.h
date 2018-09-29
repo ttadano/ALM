@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -20,9 +20,6 @@ namespace ALM_NS
         ALM();
         ~ALM();
 
-        std::string mode;
-        int verbosity;
-
         class InputSetter *input;
         class System *system;
         class Interaction *interaction;
@@ -36,7 +33,9 @@ namespace ALM_NS
         class Timer *timer;
 
         void set_run_mode(std::string mode_in);
+        std::string get_run_mode() const;
         void set_verbosity(int verbosity_in);
+        int get_verbosity() const;
         void set_output_filename_prefix(std::string prefix) const;
         void set_is_print_symmetry(int printsymmetry);
         void set_is_print_hessians(bool print_hessian);
@@ -109,13 +108,15 @@ namespace ALM_NS
         void run();
 
     private:
+        std::string mode;
+        int verbosity;
 
         bool structure_initialized;
         bool ready_to_fit;
         std::ofstream *ofs_alm;
         std::streambuf *coutbuf;
         void create();
-        void initialize_structure(ALM *);
-        void initialize_interaction(ALM *alm);
+        void initialize_structure();
+        void initialize_interaction();
     };
 }

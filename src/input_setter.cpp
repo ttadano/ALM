@@ -1,10 +1,10 @@
-/*
+ /*
  input_setter.cpp
 
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -78,7 +78,7 @@ void InputSetter::set_general_vars(ALM *alm,
     int i, j;
 
     alm->files->job_title = prefix;
-    alm->mode = mode;
+    alm->set_run_mode(mode);
     alm->set_verbosity(verbosity);
     alm->system->nat = nat;
     alm->system->nkd = nkd;

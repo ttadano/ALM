@@ -4,7 +4,7 @@
  Copyright (c) 2014 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -195,16 +195,19 @@ namespace ALM_NS
         std::set<InteractionCluster> **interaction_cluster;
         // Interaction many-body clusters with mirrow image information
 
-        void init(ALM *);
+        void init(const System *system,
+                  const Symmetry *symmetry,
+                  const int verbosity,
+                  Timer *timer);
 
-        bool satisfy_nbody_rule(int,
+        bool satisfy_nbody_rule(const int,
                                 const int *,
-                                int);
+                                const int) const;
 
-        bool is_incutoff(int,
-                         int *,
-                         int,
-                         const std::vector<int> &);
+        bool is_incutoff(const int,
+                         const int *,
+                         const int,
+                         const std::vector<int> &) const;
 
         void generate_interaction_information_by_cutoff(int,
                                                         int,
@@ -247,7 +250,7 @@ namespace ALM_NS
 
         void set_ordername();
         double distance(double *, double *);
-        int nbody(int, const int *);
+        int nbody(const int, const int *) const;
 
         void calc_interaction_clusters(int,
                                        const std::vector<int> &,

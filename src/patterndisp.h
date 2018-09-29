@@ -4,7 +4,7 @@
  Copyright (c) 2014 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -136,30 +136,35 @@ namespace ALM_NS
 
         std::string disp_basis;
         std::vector<AtomWithDirection> *pattern_all;
-        void gen_displacement_pattern(ALM *);
+        void gen_displacement_pattern(const Interaction *interaction,
+                                      const Symmetry *symmetry,
+                                      const Fcs *fcs,
+                                      const Constraint *constraint,
+                                      const System *system,
+                                      const int verbosity);
 
     private:
         std::vector<DispDirectionHarmonic> disp_harm, disp_harm_best;
         void set_default_variables();
         void deallocate_variables();
-        void generate_pattern_all(int,
-                                  int,
-                                  double [3][3],
-                                  Symmetry *symmetry,
+        void generate_pattern_all(const int,
+                                  const int,
+                                  const double [3][3],
+                                  const Symmetry *symmetry,
                                   std::vector<AtomWithDirection> *,
                                   std::set<DispAtomSet> *,
-                                  std::string);
+                                  const std::string);
 
-        void generate_signvecs(int,
+        void generate_signvecs(const int,
                                std::vector<std::vector<int>> &,
                                std::vector<int>);
 
-        void find_unique_sign_pairs(int,
-                                    int,
-                                    Symmetry *,
+        void find_unique_sign_pairs(const int,
+                                    const int,
+                                    const Symmetry *,
                                     std::vector<std::vector<int>>,
                                     std::vector<int>,
                                     std::vector<std::vector<int>> &,
-                                    std::string);
+                                    const std::string);
     };
 }

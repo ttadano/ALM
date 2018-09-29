@@ -41,14 +41,18 @@ Fcs::~Fcs()
     deallocate_variables();
 };
 
-void Fcs::init(ALM *alm)
+void Fcs::init(const Interaction *interaction,
+               const Symmetry *symmetry,
+               const unsigned int number_of_atoms,
+               const int verbosity,
+               Timer *timer)
 {
     int i;
-    int maxorder = alm->interaction->maxorder;
+    int maxorder = interaction->maxorder;
 
-    alm->timer->start_clock("fcs");
+    timer->start_clock("fcs");
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << " FORCE CONSTANT" << std::endl;
         std::cout << " ==============" << std::endl << std::endl;
     }
@@ -71,9 +75,9 @@ void Fcs::init(ALM *alm)
     // Generate force constants using the information of interacting atom pairs
     for (i = 0; i < maxorder; ++i) {
         generate_force_constant_table(i,
-                                      alm->system->supercell.number_of_atoms,
-                                      alm->interaction->cluster_list[i],
-                                      alm->symmetry,
+                                      number_of_atoms,
+                                      interaction->cluster_list[i],
+                                      symmetry,
                                       "Cartesian",
                                       fc_table[i],
                                       nequiv[i],
@@ -81,23 +85,23 @@ void Fcs::init(ALM *alm)
                                       store_zeros);
     }
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << std::endl;
         for (i = 0; i < maxorder; ++i) {
             std::cout << "  Number of " << std::setw(9)
-                << alm->interaction->str_order[i]
+                << interaction->str_order[i]
                 << " FCs : " << nequiv[i].size();
             std::cout << std::endl;
         }
         std::cout << std::endl;
 
 
-        alm->timer->print_elapsed();
+        timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
 
-    alm->timer->stop_clock("fcs");
+    timer->stop_clock("fcs");
 }
 
 void Fcs::set_default_variables()
@@ -123,14 +127,14 @@ void Fcs::deallocate_variables()
 
 
 void Fcs::generate_force_constant_table(const int order,
-                                        const int nat,
+                                        const unsigned int nat,
                                         const std::set<IntList> &pairs,
-                                        Symmetry *symm_in,
+                                        const Symmetry *symm_in,
                                         const std::string basis,
                                         std::vector<FcProperty> &fc_vec,
                                         std::vector<int> &ndup,
                                         std::vector<FcProperty> &fc_zeros,
-                                        const bool store_zeros)
+                                        const bool store_zeros) const
 {
     int i, j;
     int i1, i2;
@@ -332,15 +336,15 @@ void Fcs::generate_force_constant_table(const int order,
 }
 
 void Fcs::get_constraint_symmetry(const int nat,
-                                   Symmetry *symmetry,
-                                   const int order,
-                                   const std::set<IntList> &pairs,
-                                   const std::string basis,
-                                   const std::vector<FcProperty> &fc_table,
-                                   const int nparams,
-                                   const double tolerance,
-                                   ConstraintSparseForm &const_out,
-                                   const bool do_rref)
+                                  const Symmetry *symmetry,
+                                  const int order,
+                                  const std::set<IntList> &pairs,
+                                  const std::string basis,
+                                  const std::vector<FcProperty> &fc_table,
+                                  const int nparams,
+                                  const double tolerance,
+                                  ConstraintSparseForm &const_out,
+                                  const bool do_rref) const
 {
     // Create constraint matrices arising from the crystal symmetry.
     // Necessary for hexagonal systems.
@@ -529,15 +533,15 @@ void Fcs::get_constraint_symmetry(const int nat,
     if (do_rref) rref_sparse(nparams, const_out, tolerance);
 }
 
-void Fcs::get_available_symmop(const int nat,
-                               Symmetry *symmetry,
+void Fcs::get_available_symmop(const unsigned int nat,
+                               const Symmetry *symmetry,
                                const std::string basis,
                                int &nsym_avail,
                                int **mapping_symm,
                                double ***rotation,
-                               const bool use_compatible)
+                               const bool use_compatible) const
 {
-    // Return mapping information of atoms and the rotation matrices of symmetry operations 
+    // Return mapping information of atoms and the rotation matrices of symmetry operations
     // that are (compatible, incompatible) with the given lattice basis (Cartesian or Lattice).
 
     // use_compatible == true returns the compatible space group (for creating fc_table)
@@ -594,9 +598,9 @@ void Fcs::get_available_symmop(const int nat,
 }
 
 double Fcs::coef_sym(const int n,
-                     double **rot,
+                     const double * const *rot,
                      const int *arr1,
-                     const int *arr2)
+                     const int *arr2) const
 {
     double tmp = 1.0;
     int i;
@@ -608,7 +612,7 @@ double Fcs::coef_sym(const int n,
 }
 
 bool Fcs::is_ascending(const int n,
-                       const int *arr)
+                       const int *arr) const
 {
     for (int i = 0; i < n - 1; ++i) {
         if (arr[i] > arr[i + 1]) return false;
@@ -620,7 +624,7 @@ int Fcs::get_minimum_index_in_primitive(const int n,
                                         const int *arr,
                                         const int nat,
                                         const int natmin,
-                                        int **map_p2s)
+                                        int **map_p2s) const
 {
     int i, j, atmnum;
 
@@ -653,7 +657,7 @@ int Fcs::get_minimum_index_in_primitive(const int n,
 bool Fcs::is_inprim(const int n,
                     const int *arr,
                     const int natmin,
-                    int **map_p2s)
+                    int **map_p2s) const
 {
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < natmin; ++j) {
@@ -665,7 +669,7 @@ bool Fcs::is_inprim(const int n,
 
 bool Fcs::is_inprim(const int n,
                     const int natmin,
-                    int **map_p2s)
+                    int **map_p2s) const
 {
     int atmn = n / 3;
 
@@ -677,7 +681,7 @@ bool Fcs::is_inprim(const int n,
 }
 
 void Fcs::get_xyzcomponent(const int n,
-                           int **xyz)
+                           int **xyz) const
 {
     // Return xyz component for the given order using boost algorithm library
 
@@ -700,7 +704,7 @@ void Fcs::get_xyzcomponent(const int n,
 
 bool Fcs::is_allzero(const std::vector<double> &vec,
                      const double tol,
-                     int &loc)
+                     int &loc) const
 {
     loc = -1;
     auto n = vec.size();

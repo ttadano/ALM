@@ -61,18 +61,26 @@ void Lasso::set_default_variables()
     debias_ols = 0;
 }
 
-void Lasso::lasso_main(ALM *alm)
+void Lasso::lasso_main(const Symmetry *symmetry,
+                       const Interaction *interaction,
+                       const Fcs *fcs,
+                       const Constraint *constraint,
+                       const unsigned int nat,
+                       const Files *files,
+                       const int verbosity,
+                       Fitting *fitting,
+                       Timer *timer)
 {
     int i, j, k;
-    const int nat = alm->system->supercell.number_of_atoms;
-    const auto natmin = alm->symmetry->nat_prim;
-    const int maxorder = alm->interaction->maxorder;
-    const int ndata = alm->fitting->ndata;
-    const int nstart = alm->fitting->nstart;
-    const int nend = alm->fitting->nend;
-    const int skip_s = alm->fitting->skip_s;
-    const int skip_e = alm->fitting->skip_e;
-    const int ntran = alm->symmetry->ntran;
+
+    const auto natmin = symmetry->nat_prim;
+    const int maxorder = interaction->maxorder;
+    const int ndata =fitting->ndata;
+    const int nstart = fitting->nstart;
+    const int nend = fitting->nend;
+    const int skip_s = fitting->skip_s;
+    const int skip_e = fitting->skip_e;
+    const int ntran = symmetry->ntran;
     const int ndata_used = nend - nstart + 1 - skip_e + skip_s;
 
     double scale_factor;
@@ -88,31 +96,31 @@ void Lasso::lasso_main(ALM *alm)
     int N = 0;
     int N_new = 0;
     for (i = 0; i < maxorder; ++i) {
-        N += alm->fcs->nequiv[i].size();
-        N_new += alm->constraint->index_bimap[i].size();
+        N += fcs->nequiv[i].size();
+        N_new += constraint->index_bimap[i].size();
     }
 
     int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
     int M_test = 3 * natmin * ndata_used_test * ntran;
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << " LASSO" << std::endl;
         std::cout << " =====" << std::endl << std::endl;
 
         std::cout << "  Reference files" << std::endl;
-        std::cout << "   Displacement: " << alm->files->file_disp << std::endl;
-        std::cout << "   Force       : " << alm->files->file_force << std::endl;
+        std::cout << "   Displacement: " << files->file_disp << std::endl;
+        std::cout << "   Force       : " << files->file_force << std::endl;
         std::cout << std::endl;
 
         std::cout << "  NSTART = " << nstart << "; NEND = " << nend;
         if (skip_s < skip_e) std::cout << ": SKIP = " << skip_s + 1 << "-" << skip_e;
         std::cout << std::endl;
         std::cout << "  " << ndata_used
-            << " entries will be used for lasso." << std::endl << std::endl;
+                  << " entries will be used for lasso." << std::endl << std::endl;
 
         std::cout << "  Validation test files" << std::endl;
-        std::cout << "   Displacement: " << alm->lasso->dfile_test << std::endl;
-        std::cout << "   Force       : " << alm->lasso->ffile_test << std::endl;
+        std::cout << "   Displacement: " << dfile_test << std::endl;
+        std::cout << "   Force       : " << ffile_test << std::endl;
         std::cout << std::endl;
 
         std::cout << "  NSTART = " << nstart_test << "; NEND = " << nend_test << std::endl;
@@ -139,8 +147,8 @@ void Lasso::lasso_main(ALM *alm)
                                                      nend,
                                                      skip_s,
                                                      skip_e,
-                                                     alm->files->file_disp,
-                                                     alm->files->file_force);
+                                                     files->file_disp,
+                                                     files->file_force);
 
     input_parser->parse_displacement_and_force_files(u_test,
                                                      f_test,
@@ -173,8 +181,8 @@ void Lasso::lasso_main(ALM *alm)
     // Scale force constants
     for (i = 0; i < maxorder; ++i) {
         scale_factor = std::pow(disp_norm, i + 1);
-        for (j = 0; j < alm->constraint->const_fix[i].size(); ++j) {
-            alm->constraint->const_fix[i][j].val_to_fix *= scale_factor;
+        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
+            constraint->const_fix[i][j].val_to_fix *= scale_factor;
         }
     }
 
@@ -191,16 +199,16 @@ void Lasso::lasso_main(ALM *alm)
     amat_1D.resize(nrows * ncols, 0.0);
     bvec.resize(nrows, 0.0);
 
-    alm->fitting->set_displacement_and_force(u, f, nat, ndata_used);
+    fitting->set_displacement_and_force(u, f, nat, ndata_used);
 
-    alm->fitting->get_matrix_elements_algebraic_constraint(maxorder,
-                                                           ndata_used,
-                                                           &amat_1D[0],
-                                                           &bvec[0],
-                                                           fnorm,
-                                                           alm->symmetry,
-                                                           alm->fcs,
-                                                           alm->constraint);
+    fitting->get_matrix_elements_algebraic_constraint(maxorder,
+                                                      ndata_used,
+                                                      &amat_1D[0],
+                                                      &bvec[0],
+                                                      fnorm,
+                                                      symmetry,
+                                                      fcs,
+                                                      constraint);
 
     deallocate(u);
     deallocate(f);
@@ -212,16 +220,16 @@ void Lasso::lasso_main(ALM *alm)
     amat_1D_test.resize(nrows * ncols, 0.0);
     bvec_test.resize(nrows, 0.0);
 
-    alm->fitting->set_displacement_and_force(u_test, f_test, nat, ndata_used_test);
+    fitting->set_displacement_and_force(u_test, f_test, nat, ndata_used_test);
 
-    alm->fitting->get_matrix_elements_algebraic_constraint(maxorder,
+    fitting->get_matrix_elements_algebraic_constraint(maxorder,
                                                            ndata_used_test,
                                                            &amat_1D_test[0],
                                                            &bvec_test[0],
                                                            fnorm_test,
-                                                           alm->symmetry,
-                                                           alm->fcs,
-                                                           alm->constraint);
+                                                           symmetry,
+                                                           fcs,
+                                                           constraint);
 
     deallocate(u_test);
     deallocate(f_test);
@@ -230,8 +238,8 @@ void Lasso::lasso_main(ALM *alm)
 
     for (i = 0; i < maxorder; ++i) {
         scale_factor = 1.0 / std::pow(disp_norm, i + 1);
-        for (j = 0; j < alm->constraint->const_fix[i].size(); ++j) {
-            alm->constraint->const_fix[i][j].val_to_fix *= scale_factor;
+        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
+            constraint->const_fix[i][j].val_to_fix *= scale_factor;
         }
     }
 
@@ -396,8 +404,8 @@ void Lasso::lasso_main(ALM *alm)
 
         std::ofstream ofs_cv, ofs_coef;
 
-        std::string file_cv = alm->files->job_title + ".lasso_cv";
-        std::string file_coef = alm->files->job_title + ".lasso_coef";
+        std::string file_cv = files->job_title + ".lasso_cv";
+        std::string file_coef = files->job_title + ".lasso_coef";
         ofs_cv.open(file_cv.c_str(), std::ios::out);
 
         if (lasso_algo == 0) {
@@ -472,12 +480,12 @@ void Lasso::lasso_main(ALM *alm)
 
             for (i = 0; i < maxorder; ++i) {
                 nzero_lasso[i] = 0;
-                for (const auto &it : alm->constraint->index_bimap[i]) {
+                for (const auto &it : constraint->index_bimap[i]) {
                     int inew = it.left + iparam;
                     if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
 
                 }
-                iparam += alm->constraint->index_bimap[i].size();
+                iparam += constraint->index_bimap[i].size();
             }
 
             ofs_cv << std::setw(15) << std::sqrt(res1);
@@ -495,7 +503,7 @@ void Lasso::lasso_main(ALM *alm)
                 for (i = 0; i < maxorder; ++i) {
                     scale_factor = 1.0 / std::pow(disp_norm, i + 1);
 
-                    for (j = 0; j < alm->constraint->index_bimap[i].size(); ++j) {
+                    for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
                         params_tmp[k] *= scale_factor * factor_std[k];
                         ++k;
                     }
@@ -554,19 +562,19 @@ void Lasso::lasso_main(ALM *alm)
 
         for (i = 0; i < maxorder; ++i) {
             nzero_lasso[i] = 0;
-            for (boost::bimap<int, int>::const_iterator it = alm->constraint->index_bimap[i].begin();
-                 it != alm->constraint->index_bimap[i].end(); ++it) {
+            for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
+                 it != constraint->index_bimap[i].end(); ++it) {
                 inew = (*it).left + iparam;
                 if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
 
             }
-            iparam += alm->constraint->index_bimap[i].size();
+            iparam += constraint->index_bimap[i].size();
         }
 
         std::cout << "  RESIDUAL (%): " << std::sqrt(res1) * 100.0 << std::endl;
         for (int order = 0; order < maxorder; ++order) {
-            std::cout << "  Number of non-zero " << std::setw(9) << alm->interaction->str_order[order] << " FCs : "
-                << alm->constraint->index_bimap[order].size() - nzero_lasso[order] << std::endl;
+            std::cout << "  Number of non-zero " << std::setw(9) << interaction->str_order[order] << " FCs : "
+                << constraint->index_bimap[order].size() - nzero_lasso[order] << std::endl;
         }
         std::cout << std::endl;
 
@@ -576,9 +584,9 @@ void Lasso::lasso_main(ALM *alm)
             std::vector<double> prefactor_force(N_new);
 
             get_prefactor_force(maxorder,
-                                alm->fcs,
-                                alm->constraint,
-                                alm->fitting,
+                                fcs,
+                                constraint,
+                                fitting,
                                 prefactor_force);
 
             std::vector<double> param_copy(N_new);
@@ -602,7 +610,7 @@ void Lasso::lasso_main(ALM *alm)
                 for (i = 0; i < maxorder; ++i) {
                     nzero_lasso[i] = 0;
 
-                    for (const auto &it : alm->constraint->index_bimap[i]) {
+                    for (const auto &it : constraint->index_bimap[i]) {
                         inew = it.left + iparam;
 
                         if (std::abs(param_copy[inew]) * prefactor_force[inew] < tolerance_tmp) {
@@ -610,7 +618,7 @@ void Lasso::lasso_main(ALM *alm)
                             param_copy[inew] = 0.0;
                         }
                     }
-                    iparam += alm->constraint->index_bimap[i].size();
+                    iparam += constraint->index_bimap[i].size();
 
                     std::cout << std::setw(10) << nzero_lasso[i];
                 }
@@ -621,7 +629,7 @@ void Lasso::lasso_main(ALM *alm)
         }
     }
 
- 
+
     if (debias_ols) {
         // Perform OLS fitting to the features selected by LASSO for reducing the bias.
 
@@ -657,7 +665,7 @@ void Lasso::lasso_main(ALM *alm)
     for (i = 0; i < maxorder; ++i) {
         scale_factor = 1.0 / std::pow(disp_norm, i + 1);
 
-        for (j = 0; j < alm->constraint->index_bimap[i].size(); ++j) {
+        for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
             param[k] *= scale_factor;
             ++k;
         }
@@ -672,10 +680,10 @@ void Lasso::lasso_main(ALM *alm)
         deallocate(dvec_breg);
     }
 
-    alm->fitting->set_fcs_values(maxorder,
-                                 &param[0],
-                                 alm->fcs->nequiv,
-                                 alm->constraint);
+    fitting->set_fcs_values(maxorder,
+                            &param[0],
+                            fcs->nequiv,
+                            constraint);
 
     if (amat) {
         deallocate(amat);
@@ -690,7 +698,7 @@ void Lasso::lasso_main(ALM *alm)
         deallocate(fsum_test);
     }
 
-    alm->timer->print_elapsed();
+    timer->print_elapsed();
     std::cout << " --------------------------------------------------------------" << std::endl;
 }
 
@@ -1269,7 +1277,7 @@ void Lasso::minimize_quadratic_CG(const int N,
             }
             alpha = dprod_res / tmp;
 #ifdef _OPENMP
-#pragma omp parallel for 
+#pragma omp parallel for
 #endif
             for (i = 0; i < N; ++i) {
                 val_tmp[i] += alpha * descent_vec[i];
@@ -1278,7 +1286,7 @@ void Lasso::minimize_quadratic_CG(const int N,
 
             dprod_res2 = 0.0;
 #ifdef _OPENMP
-#pragma omp parallel for 
+#pragma omp parallel for
 #endif
             for (i = 0; i < N; ++i) {
                 dprod_res2 += residual_vec[i] * residual_vec[i];
@@ -1294,7 +1302,7 @@ void Lasso::minimize_quadratic_CG(const int N,
 
             beta = dprod_res2 / dprod_res;
 #ifdef _OPENMP
-#pragma omp parallel for 
+#pragma omp parallel for
 #endif
             for (i = 0; i < N; ++i) {
                 descent_vec[i] = residual_vec[i] + beta * descent_vec[i];
@@ -1324,7 +1332,7 @@ void Lasso::minimize_quadratic_CG(const int N,
             }
             alpha = dprod_res / tmp;
 #ifdef _OPENMP
-#pragma omp parallel for 
+#pragma omp parallel for
 #endif
             for (i = 0; i < N; ++i) {
                 val_tmp[i] += alpha * descent_vec[i];
@@ -1451,7 +1459,7 @@ void Lasso::minimize_quadratic_CG(const int N,
 
             // (A, p_i)
             vec_tmp = Amat * descent_vec;
-            // Alpha = 
+            // Alpha =
             alpha = dprod_res / descent_vec.dot(vec_tmp);
 
             val_tmp = val_tmp + alpha * descent_vec;
@@ -1831,9 +1839,9 @@ void Lasso::coordinate_descent(const int M,
 
 
 void Lasso::get_prefactor_force(const int maxorder,
-                                Fcs *fcs,
-                                Constraint *constraint,
-                                Fitting *fitting,
+                                const Fcs *fcs,
+                                const Constraint *constraint,
+                                const Fitting *fitting,
                                 std::vector<double> &prefactor)
 {
     int i, j;

@@ -4,7 +4,7 @@ interaction.cpp
 Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
 This file is distributed under the terms of the MIT license.
-Please see the file 'LICENCE.txt' in the root directory 
+Please see the file 'LICENCE.txt' in the root directory
 or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -36,15 +36,18 @@ Interaction::~Interaction()
     deallocate_variables();
 }
 
-void Interaction::init(ALM *alm)
+void Interaction::init(const System *system,
+                       const Symmetry *symmetry,
+                       const int verbosity,
+                       Timer *timer)
 {
-    alm->timer->start_clock("interaction");
+    timer->start_clock("interaction");
 
     int i, j, k;
-    int nat = alm->system->supercell.number_of_atoms;
-    int nkd = alm->system->supercell.number_of_elems;
+    int nat = system->supercell.number_of_atoms;
+    int nkd = system->supercell.number_of_elems;
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << " INTERACTION" << std::endl;
         std::cout << " ===========" << std::endl << std::endl;
     }
@@ -64,12 +67,12 @@ void Interaction::init(ALM *alm)
     if (interaction_pair) {
         deallocate(interaction_pair);
     }
-    allocate(interaction_pair, maxorder, alm->symmetry->nat_prim);
+    allocate(interaction_pair, maxorder, symmetry->nat_prim);
 
     if (interaction_cluster) {
         deallocate(interaction_cluster);
     }
-    allocate(interaction_cluster, maxorder, alm->symmetry->nat_prim);
+    allocate(interaction_cluster, maxorder, symmetry->nat_prim);
 
     if (cluster_list) {
         deallocate(cluster_list);
@@ -77,31 +80,31 @@ void Interaction::init(ALM *alm)
     allocate(cluster_list, maxorder);
 
     get_pairs_of_minimum_distance(nat,
-                                  alm->system->x_image,
-                                  alm->system->exist_image);
+                                  system->x_image,
+                                  system->exist_image);
 
-    set_interaction_by_cutoff(alm->system->supercell.number_of_atoms,
-                              alm->system->supercell.kind,
-                              alm->symmetry->nat_prim,
-                              alm->symmetry->map_p2s,
+    set_interaction_by_cutoff(system->supercell.number_of_atoms,
+                              system->supercell.kind,
+                              symmetry->nat_prim,
+                              symmetry->map_p2s,
                               cutoff_radii,
                               interaction_pair);
 
-    calc_interaction_clusters(alm->symmetry->nat_prim,
-                              alm->system->supercell.kind,
-                              alm->symmetry->map_p2s,
+    calc_interaction_clusters(symmetry->nat_prim,
+                              system->supercell.kind,
+                              symmetry->map_p2s,
                               interaction_pair,
-                              alm->system->x_image,
-                              alm->system->exist_image,
+                              system->x_image,
+                              system->exist_image,
                               interaction_cluster);
 
-    generate_pairs(alm->symmetry->nat_prim,
-                   alm->symmetry->map_p2s,
+    generate_pairs(symmetry->nat_prim,
+                   symmetry->map_p2s,
                    cluster_list,
                    interaction_cluster);
 
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << "  +++ Cutoff Radii Matrix in Bohr Unit (NKD x NKD matrix) +++" << std::endl;
 
         for (i = 0; i < maxorder; ++i) {
@@ -119,22 +122,22 @@ void Interaction::init(ALM *alm)
             std::cout << std::endl;
         }
 
-        print_neighborlist(alm->system->supercell.number_of_atoms,
-                           alm->symmetry->nat_prim,
-                           alm->symmetry->map_p2s,
-                           alm->system->supercell.kind,
-                           alm->system->kdname);
+        print_neighborlist(system->supercell.number_of_atoms,
+                           symmetry->nat_prim,
+                           symmetry->map_p2s,
+                           system->supercell.kind,
+                           system->kdname);
     }
 
-    if (alm->verbosity > 1) {
-        print_interaction_information(alm->symmetry->nat_prim,
-                                      alm->symmetry->map_p2s,
-                                      alm->system->supercell.kind,
-                                      alm->system->kdname,
+    if (verbosity > 1) {
+        print_interaction_information(symmetry->nat_prim,
+                                      symmetry->map_p2s,
+                                      system->supercell.kind,
+                                      system->kdname,
                                       interaction_pair);
     }
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         for (i = 0; i < maxorder; ++i) {
             if (i + 2 > nbody_include[i]) {
                 std::cout << "  For " << std::setw(8) << str_order[i] << ", ";
@@ -144,12 +147,12 @@ void Interaction::init(ALM *alm)
         }
 
 
-        alm->timer->print_elapsed();
+        timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
 
-    alm->timer->stop_clock("interaction");
+    timer->stop_clock("interaction");
 }
 
 void Interaction::generate_pairs(const int natmin,
@@ -181,7 +184,7 @@ void Interaction::generate_pairs(const int natmin,
 
                 insort(order + 2, pair_tmp);
 
-                // Ignore many-body case 
+                // Ignore many-body case
                 // if (!satisfy_nbody_rule(order + 2, pair_tmp, order)) continue;
                 pair_out[order].insert(IntList(order + 2, pair_tmp));
             }
@@ -236,7 +239,7 @@ void Interaction::get_pairs_of_minimum_distance(int nat,
                                                 int *exist)
 {
     //
-    // Calculate the minimum distance between atom i and j 
+    // Calculate the minimum distance between atom i and j
     // under the periodic boundary conditions
     //
     int icell;
@@ -274,7 +277,7 @@ void Interaction::get_pairs_of_minimum_distance(int nat,
 
             dist_min = distall[i][j][0].dist;
             for (auto it = distall[i][j].cbegin(); it != distall[i][j].cend(); ++it) {
-                // The tolerance below (1.e-3) should be chosen so that 
+                // The tolerance below (1.e-3) should be chosen so that
                 // the mirror images with equal distances are found correctly.
                 // If this fails, the phonon dispersion would be incorrect.
                 if (std::abs((*it).dist - dist_min) < 1.0e-3) {
@@ -520,9 +523,9 @@ void Interaction::print_interaction_information(const int natmin,
 
 
 bool Interaction::is_incutoff(const int n,
-                              int *atomnumlist,
+                              const int *atomnumlist,
                               const int order,
-                              const std::vector<int> &kd)
+                              const std::vector<int> &kd) const
 {
     int iat, jat;
     int ikd, jkd;
@@ -560,7 +563,7 @@ void Interaction::set_ordername()
 }
 
 int Interaction::nbody(const int n,
-                       const int *arr)
+                       const int *arr) const
 {
     std::vector<int> v(n);
 
@@ -578,7 +581,7 @@ int Interaction::nbody(const int n,
 
 bool Interaction::satisfy_nbody_rule(const int nelem,
                                      const int *arr,
-                                     const int order)
+                                     const int order) const
 {
     return nbody(nelem, arr) <= nbody_include[order];
 }
@@ -746,7 +749,7 @@ void Interaction::set_interaction_cluster(const int order,
                     rc_tmp = cutoff_radii[order][ikd][jkd];
                     cell_vector.clear();
 
-                    // Loop over the cell images of atom 'jat' and add to the list 
+                    // Loop over the cell images of atom 'jat' and add to the list
                     // as a candidate for the interaction cluster.
                     // The mirror images whose distance is larger than the minimum value
                     // of the distance(iat, jat) can be added to the cell_vector list.

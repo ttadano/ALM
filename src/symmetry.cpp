@@ -4,7 +4,7 @@
  Copyright (c) 2014-2018 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -38,21 +38,23 @@ Symmetry::~Symmetry()
     deallocate_variables();
 }
 
-void Symmetry::init(ALM *alm)
+void Symmetry::init(const System *system,
+                    const int verbosity,
+                    Timer *timer)
 {
-    alm->timer->start_clock("symmetry");
+    timer->start_clock("symmetry");
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << " SYMMETRY" << std::endl;
         std::cout << " ========" << std::endl << std::endl;
     }
 
 
-    setup_symmetry_operation(alm->system->supercell,
-                             alm->system->is_periodic,
-                             alm->system->atomtype_group,
-                             alm->system->spin,
-                             alm->verbosity,
+    setup_symmetry_operation(system->supercell,
+                             system->is_periodic,
+                             system->atomtype_group,
+                             system->spin,
+                             verbosity,
                              SymmData,
                              nsym,
                              nat_prim,
@@ -66,7 +68,7 @@ void Symmetry::init(ALM *alm)
     //                       kd_prim, xcoord_prim,
     //                       tolerance);
 
-    int nat = alm->system->supercell.number_of_atoms;
+    int nat = system->supercell.number_of_atoms;
 
     if (map_sym) {
         deallocate(map_sym);
@@ -78,21 +80,21 @@ void Symmetry::init(ALM *alm)
     }
     allocate(map_p2s, nat_prim, ntran);
 
-    gen_mapping_information(alm->system->supercell,
-                            alm->system->atomtype_group,
+    gen_mapping_information(system->supercell,
+                            system->atomtype_group,
                             SymmData,
                             symnum_tran,
                             map_sym, map_p2s, map_s2p);
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         print_symminfo_stdout();
-        alm->timer->print_elapsed();
+        timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
 
 
-    alm->timer->stop_clock("symmetry");
+    timer->stop_clock("symmetry");
 }
 
 void Symmetry::set_default_variables()
@@ -149,7 +151,7 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
     }
 
     // The order in SymmData_out changes for each run because it was generated
-    // with OpenMP. Therefore, we sort the list here to have the same result. 
+    // with OpenMP. Therefore, we sort the list here to have the same result.
     std::sort(SymmData_out.begin() + 1, SymmData_out.end());
     nsym_out = SymmData_out.size();
 

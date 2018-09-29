@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -95,9 +95,19 @@ void ALM::set_run_mode(const std::string mode_in)
     mode = mode_in;
 }
 
+std::string ALM::get_run_mode() const
+{
+    return mode;
+}
+
 void ALM::set_verbosity(const int verbosity_in)
 {
     verbosity = verbosity_in;
+}
+
+int ALM::get_verbosity() const
+{
+    return verbosity;
 }
 
 void ALM::set_output_filename_prefix(const std::string prefix) const // PREFIX
@@ -450,13 +460,19 @@ int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
 int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
 {
     // Returns the number of irreducible force constants for the given order.
-    // The irreducible force constant means a set of independent force constants 
-    // reduced by using all available symmetry operations and 
+    // The irreducible force constant means a set of independent force constants
+    // reduced by using all available symmetry operations and
     // constraints for translational invariance. Rotational invariance is not considered.
 
     const auto order = fc_order - 1;
     if (!ready_to_fit) {
-        constraint->setup(this);
+        constraint->setup(system,
+                          fcs,
+                          interaction,
+                          symmetry,
+                          mode,
+                          verbosity,
+                          timer);
         ready_to_fit = true;
     }
     return constraint->index_bimap[order].size();
@@ -508,7 +524,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                              // (len(fc_values), fc_order + 1) is flatten.
                              const int fc_order) // harmonic=1, ...
 {
-    // Return an irreducible set of force constants. 
+    // Return an irreducible set of force constants.
 
     int i;
     double fc_elem;
@@ -520,7 +536,13 @@ void ALM::get_fc_irreducible(double *fc_values,
     }
 
     if (!ready_to_fit) {
-        constraint->setup(this);
+        constraint->setup(system,
+                          fcs,
+                          interaction,
+                          symmetry,
+                          mode,
+                          verbosity,
+                          timer);
         ready_to_fit = true;
     }
 
@@ -607,10 +629,10 @@ void ALM::get_fc_all(double *fc_values,
 
 void ALM::set_fc(double *fc_in)
 {
-    fitting->set_fcs_values(this->interaction->maxorder,
+    fitting->set_fcs_values(interaction->maxorder,
                             fc_in,
-                            this->fcs->nequiv,
-                            this->constraint);
+                            fcs->nequiv,
+                            constraint);
 }
 
 void ALM::get_matrix_elements(const int nat,
@@ -626,16 +648,16 @@ void ALM::get_matrix_elements(const int nat,
                                                       amat,
                                                       bvec,
                                                       fnorm,
-                                                      this->symmetry,
-                                                      this->fcs,
-                                                      this->constraint);
+                                                      symmetry,
+                                                      fcs,
+                                                      constraint);
 }
 
 
 void ALM::generate_force_constant()
 {
-    initialize_structure(this);
-    initialize_interaction(this);
+    initialize_structure();
+    initialize_interaction();
 }
 
 void ALM::run()
@@ -658,16 +680,35 @@ int ALM::optimize()
         exit(EXIT_FAILURE);
     }
     if (!ready_to_fit) {
-        constraint->setup(this);
+        constraint->setup(system,
+                          fcs,
+                          interaction,
+                          symmetry,
+                          mode,
+                          verbosity,
+                          timer);
         ready_to_fit = true;
     }
-    int info = fitting->fitmain(this);
+    int info = fitting->fitmain(symmetry,
+                                constraint,
+                                fcs,
+                                interaction->maxorder,
+                                system->supercell.number_of_atoms,
+                                verbosity,
+                                files->file_disp,
+                                files->file_force,
+                                timer);
     return info;
 }
 
 void ALM::run_suggest()
 {
-    displace->gen_displacement_pattern(this);
+    displace->gen_displacement_pattern(interaction,
+                                       symmetry,
+                                       fcs,
+                                       constraint,
+                                       system,
+                                       verbosity);
 }
 
 int ALM::optimize_lasso()
@@ -677,32 +718,54 @@ int ALM::optimize_lasso()
         exit(EXIT_FAILURE);
     }
     if (!ready_to_fit) {
-        constraint->setup(this);
+        constraint->setup(system,
+                          fcs,
+                          interaction,
+                          symmetry,
+                          mode,
+                          verbosity,
+                          timer);
         ready_to_fit = true;
     }
-    lasso->lasso_main(this);
+    lasso->lasso_main(symmetry,
+                      interaction,
+                      fcs,
+                      constraint,
+                      system->supercell.number_of_atoms,
+                      files,
+                      verbosity,
+                      fitting,
+                      timer);
+
     int info = 1;
     return info;
 }
 
 
-void ALM::initialize_structure(ALM *alm)
+void ALM::initialize_structure()
 {
     // Initialization of structure information.
     // Perform initialization only once.
 
     if (structure_initialized) return;
-    system->init(alm);
-    files->init(alm);
-    symmetry->init(alm);
+    system->init(verbosity, timer);
+    files->init();
+    symmetry->init(system, verbosity, timer);
     structure_initialized = true;
 }
 
-void ALM::initialize_interaction(ALM *alm)
+void ALM::initialize_interaction()
 {
     // Build interaction & force constant table
-    interaction->init(alm);
-    fcs->init(alm);
+    interaction->init(system,
+                      symmetry,
+                      verbosity,
+                      timer);
+    fcs->init(interaction,
+              symmetry,
+              system->supercell.number_of_atoms,
+              verbosity,
+              timer);
 
     // Switch off the ready flag because the force constants are updated
     // but corresponding constranits are not.
