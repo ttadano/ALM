@@ -53,7 +53,7 @@ void InputParser::run(ALM *alm,
     parse_input(alm);
 }
 
-void InputParser::parse_displacement_and_force(ALM *alm)
+void InputParser::parse_displacement_and_force(ALM *alm) const
 {
     int nat = alm->system->nat;
     int ndata = alm->fitting->ndata;
@@ -88,7 +88,7 @@ void InputParser::parse_displacement_and_force_files(double **u,
                                                      const int skip_s,
                                                      const int skip_e,
                                                      const std::string file_disp,
-                                                     const std::string file_force)
+                                                     const std::string file_force) const
 {
     int i, j, k;
     int idata;
@@ -1350,13 +1350,13 @@ int InputParser::locate_tag(std::string key)
     }
 }
 
-bool InputParser::is_endof_entry(std::string str)
+bool InputParser::is_endof_entry(std::string str) const
 {
     return str[0] == '/';
 }
 
 void InputParser::split_str_by_space(const std::string str,
-                                     std::vector<std::string> &str_vec)
+                                     std::vector<std::string> &str_vec) const
 {
     std::string str_tmp;
     std::istringstream is(str);

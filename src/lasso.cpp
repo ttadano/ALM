@@ -75,7 +75,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
 
     const auto natmin = symmetry->nat_prim;
     const int maxorder = interaction->maxorder;
-    const int ndata =fitting->ndata;
+    const int ndata = fitting->ndata;
     const int nstart = fitting->nstart;
     const int nend = fitting->nend;
     const int skip_s = fitting->skip_s;
@@ -116,7 +116,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
         if (skip_s < skip_e) std::cout << ": SKIP = " << skip_s + 1 << "-" << skip_e;
         std::cout << std::endl;
         std::cout << "  " << ndata_used
-                  << " entries will be used for lasso." << std::endl << std::endl;
+            << " entries will be used for lasso." << std::endl << std::endl;
 
         std::cout << "  Validation test files" << std::endl;
         std::cout << "   Displacement: " << dfile_test << std::endl;
@@ -223,13 +223,13 @@ void Lasso::lasso_main(const Symmetry *symmetry,
     fitting->set_displacement_and_force(u_test, f_test, nat, ndata_used_test);
 
     fitting->get_matrix_elements_algebraic_constraint(maxorder,
-                                                           ndata_used_test,
-                                                           &amat_1D_test[0],
-                                                           &bvec_test[0],
-                                                           fnorm_test,
-                                                           symmetry,
-                                                           fcs,
-                                                           constraint);
+                                                      ndata_used_test,
+                                                      &amat_1D_test[0],
+                                                      &bvec_test[0],
+                                                      fnorm_test,
+                                                      symmetry,
+                                                      fcs,
+                                                      constraint);
 
     deallocate(u_test);
     deallocate(f_test);
@@ -674,8 +674,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
     if (lasso_algo == 0) {
         deallocate(has_prod);
         deallocate(factor_std);
-    }
-    else if (lasso_algo == 1) {
+    } else if (lasso_algo == 1) {
         deallocate(bvec_breg);
         deallocate(dvec_breg);
     }
@@ -1396,7 +1395,7 @@ void Lasso::minimize_quadratic_CG(const int N,
                                   const bool is_print_info,
                                   const Eigen::MatrixXd &L,
                                   const Eigen::VectorXd &d,
-                                  const int preconditioner)
+                                  const int preconditioner) const
 {
     int iter_CG;
     double alpha, beta;
@@ -1498,7 +1497,7 @@ void Lasso::calculate_residual(const int M,
                                double *param,
                                double *fvec,
                                const double fnorm,
-                               double &res)
+                               double &res) const
 {
     int i, j;
     using namespace Eigen;
@@ -1525,7 +1524,7 @@ void Lasso::calculate_residual(const int M,
 int Lasso::incomplete_cholesky_factorization(const int N,
                                              const Eigen::MatrixXd &A,
                                              Eigen::MatrixXd &L,
-                                             Eigen::VectorXd &d)
+                                             Eigen::VectorXd &d) const
 {
     int i, j, k;
     double lld;
@@ -1561,7 +1560,7 @@ int Lasso::incomplete_cholesky_factorization(const int N,
 int Lasso::incomplete_cholesky_factorization(const int N,
                                              double *A,
                                              double **L,
-                                             double *d)
+                                             double *d) const
 {
     // The vector A should be read as matrix A whose component is transposed (C<-->fortran convertion).
 
@@ -1609,7 +1608,7 @@ void Lasso::forward_backward_substitution(const int N,
                                           const Eigen::MatrixXd &L,
                                           const Eigen::VectorXd &d,
                                           const Eigen::VectorXd &vec_in,
-                                          Eigen::VectorXd &vec_out)
+                                          Eigen::VectorXd &vec_out) const
 {
     int i, j;
     double tmp;
@@ -1642,7 +1641,7 @@ void Lasso::forward_backward_substitution(const int N,
                                           double **L,
                                           double *d,
                                           double *vec_in,
-                                          double *vec_out)
+                                          double *vec_out) const
 {
     int i, j;
     double tmp;
@@ -1691,7 +1690,7 @@ void Lasso::coordinate_descent(const int M,
                                const double fnorm,
                                const int nfreq,
                                Eigen::VectorXd scale_beta,
-                               const int standardize)
+                               const int standardize) const
 {
     int i, j;
     int iloop;
@@ -1842,7 +1841,7 @@ void Lasso::get_prefactor_force(const int maxorder,
                                 const Fcs *fcs,
                                 const Constraint *constraint,
                                 const Fitting *fitting,
-                                std::vector<double> &prefactor)
+                                std::vector<double> &prefactor) const
 {
     int i, j;
     int ishift2 = 0;

@@ -28,7 +28,8 @@ ALMCUI::ALMCUI() {}
 
 ALMCUI::~ALMCUI() {}
 
-void ALMCUI::run(int narg, char **arg)
+void ALMCUI::run(int narg,
+                 char **arg) const
 {
     ALM *alm = new ALM();
 

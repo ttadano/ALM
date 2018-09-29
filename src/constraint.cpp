@@ -447,7 +447,7 @@ void Constraint::setup(const System *system,
 void Constraint::calc_constraint_matrix(const int maxorder,
                                         std::vector<int> *nequiv,
                                         const int nparams,
-                                        int &nconst)
+                                        int &nconst) const
 {
     int i, j;
     int order;
@@ -676,7 +676,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
                                                            const Interaction *interaction,
                                                            const Fcs *fcs,
                                                            const int verbosity,
-                                                           ConstraintSparseForm *const_out)
+                                                           ConstraintSparseForm *const_out) const
 
 {
     // Create constraint matrices arising from the crystal symmetry.
@@ -773,7 +773,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
                                             const std::vector<FcProperty> &fc_table,
                                             const int nparams,
                                             ConstraintSparseForm &const_out,
-                                            const bool do_rref)
+                                            const bool do_rref) const
 {
     // Generate equality constraint for the acoustic sum rule.
 
@@ -1016,7 +1016,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
 
             intlist.clear();
         } // close if
-    } // close loop i
+    }     // close loop i
 
     deallocate(xyzcomponent);
     deallocate(intarr);
@@ -1259,7 +1259,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                             }
 
                         } // nu
-                    } // mu
+                    }     // mu
                 }
             } else {
 
@@ -1481,14 +1481,14 @@ void Constraint::generate_rotational_constraint(const System *system,
                                         }
 
                                     } // nu
-                                } // mu
+                                }     // mu
 
                             } // ixyz
 
                         } while (g.next());
 
                     } // direction
-                } // icrd
+                }     // icrd
             }
 
             // Additional constraint for the last order.
@@ -1556,7 +1556,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                                     += (*iter_found).sign * static_cast<double>(levi_factor);
                                             }
                                         } // jcrd
-                                    } // lambda
+                                    }     // lambda
 
                                     if (!is_allzero(arr_constraint_self, tolerance, loc_nonzero)) {
                                         if (arr_constraint_self[loc_nonzero] < 0.0) {
@@ -1572,7 +1572,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                     }
 
                                 } // nu
-                            } // mu
+                            }     // mu
 
                         } // ixyz
 
@@ -1663,7 +1663,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
 int Constraint::levi_civita(const int i,
                             const int j,
-                            const int k)
+                            const int k) const
 {
     return (j - i) * (k - i) * (k - j) / 2;
 }
@@ -1719,7 +1719,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
                                             const Symmetry *symmetry,
                                             const Fcs *fcs,
                                             const std::string file_to_fix,
-                                            std::vector<ConstraintTypeFix> &const_out)
+                                            std::vector<ConstraintTypeFix> &const_out) const
 {
     using namespace boost::property_tree;
     ptree pt;
@@ -1833,7 +1833,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
 
 bool Constraint::is_allzero(const int n,
                             const double *arr,
-                            const int nshift)
+                            const int nshift) const
 {
     for (int i = nshift; i < n; ++i) {
         if (std::abs(arr[i]) > eps10) {
@@ -1844,7 +1844,7 @@ bool Constraint::is_allzero(const int n,
 }
 
 bool Constraint::is_allzero(const std::vector<int> &vec,
-                            int &loc)
+                            int &loc) const
 {
     loc = -1;
     for (int i = 0; i < vec.size(); ++i) {
@@ -1859,7 +1859,7 @@ bool Constraint::is_allzero(const std::vector<int> &vec,
 bool Constraint::is_allzero(const std::vector<double> &vec,
                             const double tol,
                             int &loc,
-                            const int nshift)
+                            const int nshift) const
 {
     loc = -1;
     auto n = vec.size();
@@ -1875,7 +1875,7 @@ bool Constraint::is_allzero(const std::vector<double> &vec,
 
 void Constraint::remove_redundant_rows(const int n,
                                        std::vector<ConstraintClass> &Constraint_vec,
-                                       const double tolerance)
+                                       const double tolerance) const
 {
     int i, j;
 
@@ -1930,7 +1930,7 @@ void Constraint::remove_redundant_rows(const int n,
     }
 }
 
-void Constraint::print_constraint(const ConstraintSparseForm &const_in)
+void Constraint::print_constraint(const ConstraintSparseForm &const_in) const
 {
     auto nconst = const_in.size();
     int counter = 0;

@@ -60,7 +60,7 @@ namespace ALM_NS
                                                       double &,
                                                       const Symmetry *,
                                                       const Fcs *,
-                                                      const Constraint *);
+                                                      const Constraint *) const;
 
         void set_fcs_values(const int,
                             double *,
@@ -82,17 +82,17 @@ namespace ALM_NS
         void data_multiplier(double **,
                              std::vector<std::vector<double>> &,
                              const int,
-                             const Symmetry *);
+                             const Symmetry *) const;
 
         int inprim_index(const int,
-                         const Symmetry *);
+                         const Symmetry *) const;
 
         int fit_without_constraints(int,
                                     int,
                                     double *,
                                     double *,
                                     double *,
-                                    const int);
+                                    const int) const;
 
         int fit_algebraic_constraints(int,
                                       int,
@@ -103,7 +103,7 @@ namespace ALM_NS
                                       const int,
                                       const Fcs *,
                                       const Constraint *,
-                                      const int);
+                                      const int) const;
 
         int fit_with_constraints(int,
                                  int,
@@ -113,7 +113,7 @@ namespace ALM_NS
                                  double *,
                                  double **,
                                  double *,
-                                 const int);
+                                 const int) const;
 
 
         void get_matrix_elements(const int,
@@ -121,7 +121,7 @@ namespace ALM_NS
                                  double *,
                                  double *,
                                  const Symmetry *,
-                                 const Fcs *);
+                                 const Fcs *) const;
 
 #ifdef WITH_SPARSE_SOLVER
         void get_matrix_elements_in_sparse_form(const int,
@@ -147,13 +147,13 @@ namespace ALM_NS
                                              const std::vector<double> &,
                                              std::vector<double> &,
                                              std::vector<int> *,
-                                             const Constraint *);
+                                             const Constraint *) const;
 
         int factorial(const int) const;
         int rankQRD(const int,
                     const int,
                     double *,
-                    const double);
+                    const double) const;
 
     };
 

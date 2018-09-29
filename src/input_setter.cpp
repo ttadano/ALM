@@ -1,4 +1,4 @@
- /*
+/*
  input_setter.cpp
 
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
@@ -27,7 +27,7 @@ InputSetter::InputSetter() {}
 
 InputSetter::~InputSetter() {}
 
-void InputSetter::deallocator(ALM *alm)
+void InputSetter::deallocator(ALM *alm) const
 {
     if (alm->system->kdname) {
         deallocate(alm->system->kdname);
@@ -73,7 +73,7 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const std::string *kdname,
                                    const double * const *magmom,
                                    const double tolerance,
-                                   const double tolerance_constraint)
+                                   const double tolerance_constraint) const
 {
     int i, j;
 
@@ -113,7 +113,7 @@ void InputSetter::set_general_vars(ALM *alm,
 
 void InputSetter::set_cell_parameter(ALM *alm,
                                      const double a,
-                                     const double lavec_tmp[3][3])
+                                     const double lavec_tmp[3][3]) const
 {
     int i, j;
 
@@ -126,7 +126,7 @@ void InputSetter::set_cell_parameter(ALM *alm,
 
 void InputSetter::set_interaction_vars(ALM *alm,
                                        const int maxorder,
-                                       const int *nbody_include)
+                                       const int *nbody_include) const
 {
     int i;
 
@@ -141,7 +141,7 @@ void InputSetter::set_interaction_vars(ALM *alm,
 void InputSetter::set_cutoff_radii(ALM *alm,
                                    const int maxorder,
                                    const int nkd,
-                                   const double * const * const *rcs)
+                                   const double * const * const *rcs) const
 {
     int i, j, k;
 
@@ -170,7 +170,7 @@ void InputSetter::set_fitting_vars(ALM *alm,
                                    const std::string fc3_file,
                                    const bool fix_harmonic,
                                    const bool fix_cubic,
-                                   const int flag_sparse)
+                                   const int flag_sparse) const
 {
     alm->fitting->ndata = ndata;
     alm->fitting->nstart = nstart;
@@ -212,7 +212,7 @@ void InputSetter::set_lasso_vars(ALM *alm,
                                  const int nstart_test,
                                  const int nend_test,
                                  std::string dfile_test,
-                                 std::string ffile_test)
+                                 std::string ffile_test) const
 {
     alm->lasso->disp_norm = lasso_dnorm;
     alm->lasso->l1_alpha = lasso_alpha;
@@ -242,7 +242,7 @@ void InputSetter::set_lasso_vars(ALM *alm,
 void InputSetter::set_atomic_positions(ALM *alm,
                                        const int nat,
                                        const int *kd,
-                                       const double * const *xeq)
+                                       const double * const *xeq) const
 {
     int i, j;
 

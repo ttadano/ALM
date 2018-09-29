@@ -13,7 +13,8 @@
 
 using namespace ALM_NS;
 
-int main(int argc, char **argv)
+int main(int argc,
+         char **argv)
 {
     ALMCUI *alm_cui = new ALMCUI();
 

@@ -157,7 +157,7 @@ namespace ALM_NS
 
         void generate_signvecs(const int,
                                std::vector<std::vector<int>> &,
-                               std::vector<int>);
+                               std::vector<int>) const;
 
         void find_unique_sign_pairs(const int,
                                     const int,
@@ -165,6 +165,6 @@ namespace ALM_NS
                                     std::vector<std::vector<int>>,
                                     std::vector<int>,
                                     std::vector<std::vector<int>> &,
-                                    const std::string);
+                                    const std::string) const;
     };
 }

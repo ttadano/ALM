@@ -324,7 +324,7 @@ void Displace::generate_pattern_all(const int N,
 
 void Displace::generate_signvecs(const int N,
                                  std::vector<std::vector<int>> &sign,
-                                 std::vector<int> vec)
+                                 std::vector<int> vec) const
 {
     // returns the product of signs ('+','-')
 
@@ -353,7 +353,7 @@ void Displace::find_unique_sign_pairs(const int N,
                                       std::vector<std::vector<int>> sign_in,
                                       std::vector<int> pair_in,
                                       std::vector<std::vector<int>> &sign_out,
-                                      const std::string preferred_basis)
+                                      const std::string preferred_basis) const
 {
     int isym, i, j, k;
     int mapped_atom;

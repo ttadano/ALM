@@ -337,7 +337,7 @@ int Fitting::fit_without_constraints(int N,
                                      double *amat,
                                      double *bvec,
                                      double *param_out,
-                                     const int verbosity)
+                                     const int verbosity) const
 {
     int i, j;
     int nrhs = 1, nrank, INFO;
@@ -413,7 +413,7 @@ int Fitting::fit_with_constraints(int N,
                                   double *param_out,
                                   double **cmat,
                                   double *dvec,
-                                  const int verbosity)
+                                  const int verbosity) const
 {
     int i, j;
     double *fsum2;
@@ -522,7 +522,7 @@ int Fitting::fit_algebraic_constraints(int N,
                                        const int maxorder,
                                        const Fcs *fcs,
                                        const Constraint *constraint,
-                                       const int verbosity)
+                                       const int verbosity) const
 {
     int i, j;
     unsigned long k;
@@ -601,7 +601,7 @@ void Fitting::get_matrix_elements(const int maxorder,
                                   double *amat,
                                   double *bvec,
                                   const Symmetry *symmetry,
-                                  const Fcs *fcs)
+                                  const Fcs *fcs) const
 {
     int i, j;
     long irow;
@@ -703,7 +703,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                                                        double &fnorm,
                                                        const Symmetry *symmetry,
                                                        const Fcs *fcs,
-                                                       const Constraint *constraint)
+                                                       const Constraint *constraint) const
 {
     int i, j;
     long irow;
@@ -1054,7 +1054,7 @@ void Fitting::recover_original_forceconstants(const int maxorder,
                                               const std::vector<double> &param_in,
                                               std::vector<double> &param_out,
                                               std::vector<int> *nequiv,
-                                              const Constraint *constraint)
+                                              const Constraint *constraint) const
 {
     // Expand the given force constants into the larger sets
     // by using the constraint matrix.
@@ -1103,7 +1103,7 @@ void Fitting::recover_original_forceconstants(const int maxorder,
 void Fitting::data_multiplier(double **data_in,
                               std::vector<std::vector<double>> &data_out,
                               const int ndata_used,
-                              const Symmetry *symmetry)
+                              const Symmetry *symmetry) const
 {
     int i, j, k;
     int n_mapped;
@@ -1128,7 +1128,7 @@ void Fitting::data_multiplier(double **data_in,
 }
 
 int Fitting::inprim_index(const int n,
-                          const Symmetry *symmetry)
+                          const Symmetry *symmetry) const
 {
     int in = -1;
     const auto atmn = n / 3;
@@ -1202,7 +1202,7 @@ int Fitting::factorial(const int n) const
 int Fitting::rankQRD(const int m,
                      const int n,
                      double *mat,
-                     const double tolerance)
+                     const double tolerance) const
 {
     // Return the rank of matrix mat revealed by the column pivoting QR decomposition
     // The matrix mat is destroyed.
@@ -1275,7 +1275,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 
 //    std::cout << "done." << std::endl;
 
- //   std::cout << "Start calculating AtB ..." << std::endl;
+//   std::cout << "Start calculating AtB ..." << std::endl;
  //   Eigen::VectorXd AtB, x;
     auto AtB = sp_mat.transpose()*sp_bvec;
  //   std::cout << "done." << std::endl;
@@ -1286,43 +1286,43 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 
 
     // t.reset(); t.start();
-    // Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
-    // Eigen::VectorXd x = qr.solve(sp_bvec);
+// Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
+// Eigen::VectorXd x = qr.solve(sp_bvec);
 
-    // t.stop();
-    // std::cout << "sqr   : " << qr.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+// t.stop();
+// std::cout << "sqr   : " << qr.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
 //    t.reset(); t.start();
     Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
  //   x.setZero();
     auto x = ldlt.solve(AtB);
 //    t.stop();
-    //std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+//std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
 
-    // t.reset(); t.start();
-    // Eigen::ConjugateGradient<SpMat> cg(AtA);
-    // cg.setTolerance(eps10);
-    // cg.setMaxIterations(10000000);
-    // x.setZero(); x = cg.solve(AtB);
-    // t.stop();
-    // std::cout << "cg    : " << cg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+// t.reset(); t.start();
+// Eigen::ConjugateGradient<SpMat> cg(AtA);
+// cg.setTolerance(eps10);
+// cg.setMaxIterations(10000000);
+// x.setZero(); x = cg.solve(AtB);
+// t.stop();
+// std::cout << "cg    : " << cg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
-    // t.reset(); t.start();
-    // Eigen::LeastSquaresConjugateGradient<SpMat> lscg(sp_mat);
-    // lscg.setTolerance(eps10);
-    // lscg.setMaxIterations(10000000);
-    // x.setZero(); x = lscg.solve(sp_bvec);
+// t.reset(); t.start();
+// Eigen::LeastSquaresConjugateGradient<SpMat> lscg(sp_mat);
+// lscg.setTolerance(eps10);
+// lscg.setMaxIterations(10000000);
+// x.setZero(); x = lscg.solve(sp_bvec);
 
-    // t.stop();
-    // std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+// t.stop();
+// std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
-    // t.reset(); t.start();
-    // Eigen::BiCGSTAB<SpMat> bicg(AtA);
-    // bicg.setTolerance(eps10);
-    // bicg.setMaxIterations(10000000);
-    // x.setZero(); x = bicg.solve(AtB);
-    // t.stop();
+// t.reset(); t.start();
+// Eigen::BiCGSTAB<SpMat> bicg(AtA);
+// bicg.setTolerance(eps10);
+// bicg.setMaxIterations(10000000);
+// x.setZero(); x = bicg.solve(AtB);
+// t.stop();
     // std::cout << "bicg    : " << bicg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
 

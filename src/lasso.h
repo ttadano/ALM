@@ -93,7 +93,7 @@ namespace ALM_NS
                                 double,
                                 int,
                                 Eigen::VectorXd,
-                                int);
+                                int) const;
 
         void calculate_residual(int,
                                 int,
@@ -101,7 +101,7 @@ namespace ALM_NS
                                 double *,
                                 double *,
                                 double,
-                                double &);
+                                double &) const;
 
         void minimize_quadratic_CG(int,
                                    double *,
@@ -121,35 +121,35 @@ namespace ALM_NS
                                    bool,
                                    const Eigen::MatrixXd &,
                                    const Eigen::VectorXd &,
-                                   int);
+                                   int) const;
 
         int incomplete_cholesky_factorization(int,
                                               const Eigen::MatrixXd &,
                                               Eigen::MatrixXd &,
-                                              Eigen::VectorXd &);
+                                              Eigen::VectorXd &) const;
 
         int incomplete_cholesky_factorization(int,
                                               double *,
                                               double **,
-                                              double *);
+                                              double *) const;
 
         void forward_backward_substitution(int,
                                            const Eigen::MatrixXd &,
                                            const Eigen::VectorXd &,
                                            const Eigen::VectorXd &,
-                                           Eigen::VectorXd &);
+                                           Eigen::VectorXd &) const;
 
         void forward_backward_substitution(int,
                                            double **,
                                            double *,
                                            double *,
-                                           double *);
+                                           double *) const;
 
         void get_prefactor_force(const int,
                                  const Fcs *,
                                  const Constraint *,
                                  const Fitting *,
-                                 std::vector<double> &);
+                                 std::vector<double> &) const;
     };
 
     inline double shrink(const double x,

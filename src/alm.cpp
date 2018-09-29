@@ -115,37 +115,37 @@ void ALM::set_output_filename_prefix(const std::string prefix) const // PREFIX
     files->job_title = prefix;
 }
 
-void ALM::set_is_print_symmetry(const int printsymmetry) // PRINTSYM
+void ALM::set_is_print_symmetry(const int printsymmetry) const // PRINTSYM
 {
     symmetry->printsymmetry = printsymmetry;
 }
 
-void ALM::set_is_print_hessians(const bool print_hessian) // HESSIAN
+void ALM::set_is_print_hessians(const bool print_hessian) const // HESSIAN
 {
     files->print_hessian = print_hessian;
 }
 
-void ALM::set_symmetry_param(const int nsym) // NSYM
+void ALM::set_symmetry_param(const int nsym) const // NSYM
 {
     symmetry->nsym = nsym;
 }
 
-void ALM::set_symmetry_tolerance(const double tolerance) // TOLERANCE
+void ALM::set_symmetry_tolerance(const double tolerance) const // TOLERANCE
 {
     symmetry->tolerance = tolerance;
 }
 
-void ALM::set_displacement_param(const bool trim_dispsign_for_evenfunc) // TRIMEVEN
+void ALM::set_displacement_param(const bool trim_dispsign_for_evenfunc) const // TRIMEVEN
 {
     displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
 }
 
-void ALM::set_displacement_basis(const std::string str_disp_basis) // DBASIS
+void ALM::set_displacement_basis(const std::string str_disp_basis) const // DBASIS
 {
     displace->disp_basis = str_disp_basis;
 }
 
-void ALM::set_periodicity(const int is_periodic[3]) // PERIODIC
+void ALM::set_periodicity(const int is_periodic[3]) const // PERIODIC
 {
     for (int i = 0; i < 3; ++i) {
         system->is_periodic[i] = is_periodic[i];
@@ -156,7 +156,7 @@ void ALM::set_cell(const int nat,
                    const double lavec[3][3],
                    const double xcoord[][3],
                    const int kd[],
-                   const std::string kdname[])
+                   const std::string kdname[]) const
 {
     int i, j;
     std::vector<int> nkd_vals(nat);
@@ -239,7 +239,7 @@ void ALM::set_magnetic_params(const double *magmom,
                               // NONCOLLINEAR
                               const int trev_sym_mag,
                               // TREVSYM
-                              const std::string str_magmom) // MAGMOM
+                              const std::string str_magmom) const // MAGMOM
 {
     const auto nat = system->nat;
     system->lspin = lspin;
@@ -262,7 +262,7 @@ void ALM::set_magnetic_params(const double *magmom,
 void ALM::set_displacement_and_force(const double *u_in,
                                      const double *f_in,
                                      const int nat,
-                                     const int ndata_used)
+                                     const int ndata_used) const
 {
     double **u;
     double **f;
@@ -286,35 +286,35 @@ void ALM::set_displacement_and_force(const double *u_in,
     deallocate(f);
 }
 
-int ALM::get_ndata_used()
+int ALM::get_ndata_used() const
 {
     return fitting->get_ndata_used();
 }
 
-void ALM::set_constraint_type(const int constraint_flag) // ICONST
+void ALM::set_constraint_type(const int constraint_flag) const // ICONST
 {
     constraint->constraint_mode = constraint_flag;
 }
 
-void ALM::set_rotation_axis(const std::string rotation_axis) // ROTAXIS
+void ALM::set_rotation_axis(const std::string rotation_axis) const // ROTAXIS
 {
     constraint->rotation_axis = rotation_axis;
 }
 
-void ALM::set_sparse_mode(const int sparse_mode) // SPARSE
+void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
 {
     fitting->use_sparseQR = sparse_mode;
 }
 
 void ALM::set_fitting_filenames(const std::string dfile,
                                 // DFILE
-                                const std::string ffile) // FFILE
+                                const std::string ffile) const // FFILE
 {
     files->file_disp = dfile;
     files->file_force = ffile;
 }
 
-void ALM::set_norder(const int maxorder) // NORDER harmonic=1
+void ALM::set_norder(const int maxorder) const // NORDER harmonic=1
 {
     int i, j, k, nkd;
 
@@ -343,7 +343,7 @@ void ALM::set_norder(const int maxorder) // NORDER harmonic=1
     }
 }
 
-void ALM::set_nbody_include(const int *nbody_include) // NBODY
+void ALM::set_nbody_include(const int *nbody_include) const // NBODY
 {
     int maxorder = interaction->maxorder;
     if (maxorder > 0) {
@@ -357,7 +357,7 @@ void ALM::set_nbody_include(const int *nbody_include) // NBODY
     }
 }
 
-void ALM::set_cutoff_radii(const double *rcs)
+void ALM::set_cutoff_radii(const double *rcs) const
 {
     const int nkd = system->supercell.number_of_elems;
     const auto maxorder = interaction->maxorder;
@@ -381,7 +381,7 @@ void ALM::set_cutoff_radii(const double *rcs)
 }
 
 
-int ALM::get_atom_mapping_by_pure_translations(int *map_p2s)
+int ALM::get_atom_mapping_by_pure_translations(int *map_p2s) const
 {
     const int ntran = symmetry->ntran;
     const int natmin = symmetry->nat_prim;
@@ -395,14 +395,16 @@ int ALM::get_atom_mapping_by_pure_translations(int *map_p2s)
 }
 
 
-int ALM::get_number_of_displacement_patterns(const int fc_order) // harmonic=1, ...
+int ALM::get_number_of_displacement_patterns(const int fc_order) const
+// harmonic=1, ...
 {
     const auto order = fc_order - 1;
     return displace->pattern_all[order].size();
 }
 
 void ALM::get_number_of_displaced_atoms(int *numbers,
-                                        const int fc_order) // harmonic=1, ...
+                                        const int fc_order) const
+// harmonic=1, ...
 {
     const auto order = fc_order - 1;
 
@@ -413,7 +415,8 @@ void ALM::get_number_of_displaced_atoms(int *numbers,
 
 int ALM::get_displacement_patterns(int *atom_indices,
                                    double *disp_patterns,
-                                   const int fc_order) // harmonic=1, ...
+                                   const int fc_order) const
+// harmonic=1, ...
 {
     AtomWithDirection *displacements;
     const auto order = fc_order - 1;
@@ -442,7 +445,8 @@ int ALM::get_displacement_patterns(int *atom_indices,
     return -1;
 }
 
-int ALM::get_number_of_fc_elements(const int fc_order) // harmonic=1, ...
+int ALM::get_number_of_fc_elements(const int fc_order) const
+// harmonic=1, ...
 {
     const auto order = fc_order - 1;
 
@@ -481,7 +485,8 @@ int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
 void ALM::get_fc_origin(double *fc_values,
                         int *elem_indices,
                         // (len(fc_values), fc_order + 1) is flatten.
-                        const int fc_order) // harmonic=1, ...
+                        const int fc_order) const
+// harmonic=1, ...
 {
     // Return a set of force constants Phi(i,j,k,...) where i is an atom
     // inside the primitive cell at origin.
@@ -574,7 +579,8 @@ void ALM::get_fc_irreducible(double *fc_values,
 void ALM::get_fc_all(double *fc_values,
                      int *elem_indices,
                      // (len(fc_values), fc_order + 1) is flatten.
-                     const int fc_order) // harmonic=1, ...
+                     const int fc_order) const
+// harmonic=1, ...
 {
     int i;
     double fc_elem;
@@ -627,7 +633,7 @@ void ALM::get_fc_all(double *fc_values,
     }
 }
 
-void ALM::set_fc(double *fc_in)
+void ALM::set_fc(double *fc_in) const
 {
     fitting->set_fcs_values(interaction->maxorder,
                             fc_in,
@@ -638,7 +644,7 @@ void ALM::set_fc(double *fc_in)
 void ALM::get_matrix_elements(const int nat,
                               const int ndata_used,
                               double *amat,
-                              double *bvec)
+                              double *bvec) const
 {
     const auto maxorder = interaction->maxorder;
     double fnorm;
@@ -701,7 +707,7 @@ int ALM::optimize()
     return info;
 }
 
-void ALM::run_suggest()
+void ALM::run_suggest() const
 {
     displace->gen_displacement_pattern(interaction,
                                        symmetry,

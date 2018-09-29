@@ -158,7 +158,7 @@ void Interaction::init(const System *system,
 void Interaction::generate_pairs(const int natmin,
                                  int **map_p2s,
                                  std::set<IntList> *pair_out,
-                                 std::set<InteractionCluster> **interaction_cluster)
+                                 std::set<InteractionCluster> **interaction_cluster) const
 {
     int i, j;
     int iat;
@@ -225,7 +225,7 @@ void Interaction::deallocate_variables()
 }
 
 double Interaction::distance(double *x1,
-                             double *x2)
+                             double *x2) const
 {
     double dist;
     dist = std::pow(x1[0] - x2[0], 2) + std::pow(x1[1] - x2[1], 2) + std::pow(x1[2] - x2[2], 2);
@@ -236,7 +236,7 @@ double Interaction::distance(double *x1,
 
 void Interaction::get_pairs_of_minimum_distance(int nat,
                                                 double ***xc_in,
-                                                int *exist)
+                                                int *exist) const
 {
     //
     // Calculate the minimum distance between atom i and j
@@ -292,7 +292,7 @@ void Interaction::print_neighborlist(const int nat,
                                      const int natmin,
                                      int **map_p2s,
                                      const std::vector<int> &kd,
-                                     std::string *kdname)
+                                     std::string *kdname) const
 {
     //
     // Print the list of neighboring atoms and distances
@@ -411,7 +411,7 @@ void Interaction::generate_interaction_information_by_cutoff(const int nat,
                                                              const std::vector<int> &kd,
                                                              int **map_p2s,
                                                              double **rc,
-                                                             std::vector<int> *interaction_list)
+                                                             std::vector<int> *interaction_list) const
 {
     int i, iat, jat, ikd, jkd;
     double cutoff_tmp;
@@ -449,7 +449,7 @@ void Interaction::set_interaction_by_cutoff(const unsigned int nat,
                                             const unsigned int nat_prim,
                                             int **map_p2s_in,
                                             double ***rcs,
-                                            std::vector<int> **interaction_pair_out)
+                                            std::vector<int> **interaction_pair_out) const
 {
     for (int order = 0; order < maxorder; ++order) {
         generate_interaction_information_by_cutoff(nat,
@@ -620,7 +620,7 @@ void Interaction::set_interaction_cluster(const int order,
                                           std::vector<int> *interaction_pair_in,
                                           double ***x_image,
                                           int *exist,
-                                          std::set<InteractionCluster> *interaction_cluster_out)
+                                          std::set<InteractionCluster> *interaction_cluster_out) const
 {
     //
     // Calculate a set of interaction clusters for the given order
@@ -855,7 +855,7 @@ void Interaction::set_interaction_cluster(const int order,
 void Interaction::cell_combination(const std::vector<std::vector<int>> &array,
                                    const int i,
                                    std::vector<int> accum,
-                                   std::vector<std::vector<int>> &comb)
+                                   std::vector<std::vector<int>> &comb) const
 {
     if (i == array.size()) {
         comb.push_back(accum);

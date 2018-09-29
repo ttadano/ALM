@@ -61,16 +61,16 @@ namespace ALM_NS
         ~Writer();
 
         void writeall(ALM *);
-        void write_input_vars(const ALM *);
-        void write_displacement_pattern(ALM *);
+        void write_input_vars(const ALM *) const;
+        void write_displacement_pattern(ALM *) const;
 
     private:
-        void write_force_constants(ALM *);
+        void write_force_constants(ALM *) const;
         void write_misc_xml(ALM *);
-        void write_hessian(ALM *);
-        void write_in_QEformat(ALM *);
-        std::string easyvizint(int);
+        void write_hessian(ALM *) const;
+        void write_in_QEformat(ALM *) const;
+        std::string easyvizint(int) const;
 
-        std::string double2string(double, int nprec = 15);
+        std::string double2string(double, int nprec = 15) const;
     };
 }

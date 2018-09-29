@@ -22,7 +22,7 @@ namespace ALM_NS
         InputSetter();
         ~InputSetter();
 
-        void deallocator(ALM *alm);
+        void deallocator(ALM *alm) const;
         void set_general_vars(ALM *alm,
                               std::string prefix,
                               std::string mode,
@@ -41,17 +41,17 @@ namespace ALM_NS
                               const std::string *kdname,
                               const double * const *magmom,
                               double tolerance,
-                              double tolerance_constraint);
+                              double tolerance_constraint) const;
         void set_cell_parameter(ALM *alm,
                                 double a,
-                                const double lavec_tmp[3][3]);
+                                const double lavec_tmp[3][3]) const;
         void set_interaction_vars(ALM *alm,
                                   int maxorder,
-                                  const int *nbody_include);
+                                  const int *nbody_include) const;
         void set_cutoff_radii(ALM *alm,
                               int maxorder,
                               int nkd,
-                              const double * const * const *rcs);
+                              const double * const * const *rcs) const;
         void set_fitting_vars(ALM *alm,
                               int ndata,
                               int nstart,
@@ -66,7 +66,7 @@ namespace ALM_NS
                               std::string fc3_file,
                               bool fix_harmonic,
                               bool fix_cubic,
-                              int flag_sparse);
+                              int flag_sparse) const;
         void set_lasso_vars(ALM *alm,
                             double lasso_alpha,
                             double lasso_min_alpha,
@@ -90,10 +90,10 @@ namespace ALM_NS
                             int nstart_test,
                             int nend_test,
                             std::string dfile_test,
-                            std::string ffile_test);
+                            std::string ffile_test) const;
         void set_atomic_positions(ALM *alm,
                                   int nat,
                                   const int *kd,
-                                  const double * const *xeq);
+                                  const double * const *xeq) const;
     };
 }

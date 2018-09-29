@@ -254,7 +254,7 @@ namespace ALM_NS
 
         int levi_civita(int,
                         int,
-                        int);
+                        int) const;
 
         void generate_rotational_constraint(const System *,
                                             const Symmetry *,
@@ -268,25 +268,25 @@ namespace ALM_NS
         void calc_constraint_matrix(int,
                                     std::vector<int> *,
                                     int,
-                                    int &);
+                                    int &) const;
 
-        void print_constraint(const ConstraintSparseForm &);
+        void print_constraint(const ConstraintSparseForm &) const;
 
         void setup_rotation_axis(bool [3][3]);
         bool is_allzero(int,
                         const double *,
-                        int nshift = 0);
+                        int nshift = 0) const;
         bool is_allzero(const std::vector<int> &,
-                        int &);
+                        int &) const;
         bool is_allzero(const std::vector<double> &,
                         double,
                         int &,
-                        const int nshift = 0);
+                        const int nshift = 0) const;
 
 
         void remove_redundant_rows(int,
                                    std::vector<ConstraintClass> &,
-                                   double tolerance = eps12);
+                                   double tolerance = eps12) const;
 
 
         void generate_symmetry_constraint_in_cartesian(int,
@@ -294,7 +294,7 @@ namespace ALM_NS
                                                        const Interaction *,
                                                        const Fcs *,
                                                        const int,
-                                                       ConstraintSparseForm *);
+                                                       ConstraintSparseForm *) const;
 
         void get_constraint_translation(const Cell &,
                                         const Symmetry *,
@@ -304,7 +304,7 @@ namespace ALM_NS
                                         const std::vector<FcProperty> &,
                                         int,
                                         ConstraintSparseForm &,
-                                        bool do_rref = false);
+                                        bool do_rref = false) const;
 
         void generate_translational_constraint(const Cell &,
                                                const Symmetry *,
@@ -317,7 +317,7 @@ namespace ALM_NS
                                         const Symmetry *,
                                         const Fcs *,
                                         std::string,
-                                        std::vector<ConstraintTypeFix> &);
+                                        std::vector<ConstraintTypeFix> &) const;
     };
 
     extern "C" {

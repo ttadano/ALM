@@ -224,7 +224,7 @@ void Symmetry::findsym_alm(const Cell &cell,
 }
 
 void Symmetry::find_lattice_symmetry(const double aa[3][3],
-                                     std::vector<RotationMatrix> &LatticeSymmList)
+                                     std::vector<RotationMatrix> &LatticeSymmList) const
 {
     /*
     Find the rotational matrices that leave the metric tensor invariant.
@@ -623,7 +623,7 @@ void Symmetry::findsym_spglib(const Cell &cell,
 void Symmetry::symop_in_cart(double rot_cart[3][3],
                              const int rot_lattice[3][3],
                              const double lavec[3][3],
-                             const double rlavec[3][3])
+                             const double rlavec[3][3]) const
 {
     int i, j;
     double sym_tmp[3][3];
@@ -646,7 +646,7 @@ void Symmetry::symop_in_cart(double rot_cart[3][3],
 }
 
 
-void Symmetry::print_symminfo_stdout()
+void Symmetry::print_symminfo_stdout() const
 {
     int i;
 
@@ -684,7 +684,7 @@ void Symmetry::gen_mapping_information(const Cell &cell,
                                        const std::vector<int> &symnum_tran,
                                        int **map_sym,
                                        int **map_p2s,
-                                       std::vector<Maps> &map_s2p)
+                                       std::vector<Maps> &map_s2p) const
 {
     int isym, iat, jat;
     int i, j;
@@ -790,7 +790,7 @@ void Symmetry::gen_mapping_information(const Cell &cell,
     }
 }
 
-bool Symmetry::is_translation(const int rot[3][3])
+bool Symmetry::is_translation(const int rot[3][3]) const
 {
     bool ret =
         rot[0][0] == 1 && rot[0][1] == 0 && rot[0][2] == 0 &&
@@ -818,7 +818,7 @@ bool Symmetry::is_compatible(const T rot[3][3],
 }
 
 
-bool Symmetry::is_proper(const double rot[3][3])
+bool Symmetry::is_proper(const double rot[3][3]) const
 {
     double det = rot[0][0] * (rot[1][1] * rot[2][2] - rot[2][1] * rot[1][2])
         - rot[1][0] * (rot[0][1] * rot[2][2] - rot[2][1] * rot[0][2])
@@ -841,7 +841,7 @@ void Symmetry::set_primitive_lattice(const double aa[3][3],
                                      unsigned int &nat_prim,
                                      int *kd_prim,
                                      double **x_prim,
-                                     const double symprec)
+                                     const double symprec) const
 {
     int i, j;
     int *types_tmp;

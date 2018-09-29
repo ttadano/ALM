@@ -307,7 +307,7 @@ void Fcs::generate_force_constant_table(const int order,
             }
 
         } // close xyz component loop
-    } // close atom number loop (iterator)
+    }     // close atom number loop (iterator)
 
     deallocate(xyzcomponent);
     list_found.clear();
@@ -484,7 +484,7 @@ void Fcs::get_constraint_symmetry(const int nat,
                 }
 
             } // close isym loop
-        } // close ii loop
+        }     // close ii loop
 
         deallocate(ind);
         deallocate(atm_index);

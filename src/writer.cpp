@@ -35,7 +35,7 @@ Writer::Writer() {}
 
 Writer::~Writer() {}
 
-void Writer::write_input_vars(const ALM *alm)
+void Writer::write_input_vars(const ALM *alm) const
 {
     unsigned int i;
 
@@ -85,7 +85,7 @@ void Writer::write_input_vars(const ALM *alm)
         std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
         std::cout << "  SPARSE = " << alm->fitting->use_sparseQR << std::endl;
         std::cout << std::endl;
-    }  else if (alm->get_run_mode() == "lasso") {
+    } else if (alm->get_run_mode() == "lasso") {
         std::cout << " Fitting:" << std::endl;
         std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
         std::cout << "  FFILE = " << alm->files->file_force << std::endl;
@@ -138,7 +138,7 @@ void Writer::writeall(ALM *alm)
     alm->timer->stop_clock("writer");
 }
 
-void Writer::write_force_constants(ALM *alm)
+void Writer::write_force_constants(ALM *alm) const
 {
     int order, j, l, m;
     unsigned int ui;
@@ -231,33 +231,33 @@ void Writer::write_force_constants(ALM *alm)
 
     ofs_fcs << std::endl;
 
-  /*  if (alm->constraint->extra_constraint_from_symmetry) {
-
-        ofs_fcs << " -------------- Constraints from crystal symmetry --------------" << std::endl << std::endl;
-        for (order = 0; order < maxorder; ++order) {
-            int nparam = alm->fcs->nequiv[order].size();
-
-
-            for (auto p = alm->constraint->const_symmetry[order].begin();
-                 p != alm->constraint->const_symmetry[order].end();
-                 ++p) {
-                ofs_fcs << "   0 = " << std::scientific << std::setprecision(6);
-                auto const_pointer = *p;
-                for (j = 0; j < nparam; ++j) {
-                    if (std::abs(const_pointer.w_const[j]) > eps8) {
-                        str_tmp = " * (FC" + std::to_string(order + 2)
-                            + "_" + std::to_string(j + 1) + ")";
-                        ofs_fcs << std::setw(10) << std::right
-                            << std::showpos << const_pointer.w_const[j];
-                        ofs_fcs << std::setw(12) << std::left << str_tmp;
-                    }
-                }
-                ofs_fcs << std::endl;
-            }
-            ofs_fcs << std::endl;
-        }
-        ofs_fcs << std::endl;
-    }*/
+    /*  if (alm->constraint->extra_constraint_from_symmetry) {
+  
+          ofs_fcs << " -------------- Constraints from crystal symmetry --------------" << std::endl << std::endl;
+          for (order = 0; order < maxorder; ++order) {
+              int nparam = alm->fcs->nequiv[order].size();
+  
+  
+              for (auto p = alm->constraint->const_symmetry[order].begin();
+                   p != alm->constraint->const_symmetry[order].end();
+                   ++p) {
+                  ofs_fcs << "   0 = " << std::scientific << std::setprecision(6);
+                  auto const_pointer = *p;
+                  for (j = 0; j < nparam; ++j) {
+                      if (std::abs(const_pointer.w_const[j]) > eps8) {
+                          str_tmp = " * (FC" + std::to_string(order + 2)
+                              + "_" + std::to_string(j + 1) + ")";
+                          ofs_fcs << std::setw(10) << std::right
+                              << std::showpos << const_pointer.w_const[j];
+                          ofs_fcs << std::setw(12) << std::left << str_tmp;
+                      }
+                  }
+                  ofs_fcs << std::endl;
+              }
+              ofs_fcs << std::endl;
+          }
+          ofs_fcs << std::endl;
+      }*/
 
     ofs_fcs.unsetf(std::ios::showpos);
 
@@ -311,7 +311,7 @@ void Writer::write_force_constants(ALM *alm)
     }
 }
 
-void Writer::write_displacement_pattern(ALM *alm)
+void Writer::write_displacement_pattern(ALM *alm) const
 {
     int maxorder = alm->interaction->maxorder;
 
@@ -681,7 +681,7 @@ void Writer::write_misc_xml(ALM *alm)
     }
 }
 
-void Writer::write_hessian(ALM *alm)
+void Writer::write_hessian(ALM *alm) const
 {
     int i, j, itran, ip;
     int pair_tmp[2];
@@ -739,7 +739,7 @@ void Writer::write_hessian(ALM *alm)
 }
 
 std::string Writer::double2string(const double d,
-                                  const int nprec)
+                                  const int nprec) const
 {
     std::string rt;
     std::stringstream ss;
@@ -749,7 +749,7 @@ std::string Writer::double2string(const double d,
     return rt;
 }
 
-void Writer::write_in_QEformat(ALM *alm)
+void Writer::write_in_QEformat(ALM *alm) const
 {
     int i, j, itran, ip;
     int pair_tmp[2];
@@ -806,7 +806,7 @@ void Writer::write_in_QEformat(ALM *alm)
     deallocate(hessian);
 }
 
-std::string Writer::easyvizint(const int n)
+std::string Writer::easyvizint(const int n) const
 {
     int atmn = n / 3 + 1;
     int crdn = n % 3;

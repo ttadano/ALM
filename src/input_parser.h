@@ -29,7 +29,7 @@ namespace ALM_NS
                  int narg,
                  const char * const *arg);
 
-        void parse_displacement_and_force(ALM *alm);
+        void parse_displacement_and_force(ALM *alm) const;
 
         void parse_displacement_and_force_files(double **u,
                                                 double **f,
@@ -40,7 +40,7 @@ namespace ALM_NS
                                                 int skip_s,
                                                 int skip_e,
                                                 std::string file_disp,
-                                                std::string file_force);
+                                                std::string file_force) const;
         std::string str_magmom;
 
     private:
@@ -61,8 +61,8 @@ namespace ALM_NS
         void parse_fitting_vars(ALM *alm);
         int locate_tag(std::string);
         void split_str_by_space(std::string,
-                                std::vector<std::string> &);
-        bool is_endof_entry(std::string);
+                                std::vector<std::string> &) const;
+        bool is_endof_entry(std::string) const;
         void get_var_dict(std::string,
                           std::map<std::string,
                                    std::string> &);

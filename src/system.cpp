@@ -78,7 +78,7 @@ void System::set_cell(const double lavec_in[3][3],
                       const unsigned int nkd_in,
                       int *kd_in,
                       double **xf_in,
-                      Cell &cell_out)
+                      Cell &cell_out) const
 {
     unsigned int i, j;
     for (i = 0; i < 3; ++i) {
@@ -121,7 +121,7 @@ void System::set_cell(const double lavec_in[3][3],
 }
 
 void System::set_reciprocal_latt(const double aa[3][3],
-                                 double bb[3][3])
+                                 double bb[3][3]) const
 {
     /*
     Calculate Reciprocal Lattice Vectors
@@ -165,7 +165,7 @@ void System::set_reciprocal_latt(const double aa[3][3],
     bb[2][2] = (aa[0][0] * aa[1][1] - aa[0][1] * aa[1][0]) * factor;
 }
 
-void System::frac2cart(double **xf)
+void System::frac2cart(double **xf) const
 {
     // x_cartesian = A x_fractional
 
@@ -184,7 +184,7 @@ void System::frac2cart(double **xf)
 }
 
 double System::volume(const double latt_in[3][3],
-                      LatticeType type)
+                      LatticeType type) const
 {
     int i, j;
     double mat[3][3];
@@ -333,7 +333,7 @@ void System::generate_coordinate_of_periodic_images(const unsigned int nat,
                                                     const std::vector<std::vector<double>> &xf_in,
                                                     const int periodic_flag[3],
                                                     double ***xc_out,
-                                                    int *is_allowed)
+                                                    int *is_allowed) const
 {
     //
     // Generate Cartesian coordinates of atoms in the neighboring 27 supercells
@@ -465,7 +465,7 @@ void System::print_structure_stdout(const Cell &cell)
 }
 
 
-void System::print_magmom_stdout()
+void System::print_magmom_stdout() const
 {
     using namespace std;
 
