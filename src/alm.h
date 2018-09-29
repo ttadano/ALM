@@ -116,6 +116,6 @@ namespace ALM_NS
         std::streambuf *coutbuf;
         void create();
         void initialize_structure();
-        void initialize_interaction(ALM *alm);
+        void initialize_interaction();
     };
 }

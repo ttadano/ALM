@@ -5,7 +5,7 @@
 
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -80,7 +80,11 @@ namespace ALM_NS
         Fcs();
         ~Fcs();
 
-        void init(ALM *);
+        void init(const Interaction *interaction,
+                  const Symmetry *symmetry,
+                  const unsigned int number_of_atoms,
+                  const int verbosity,
+                  Timer *timer);
 
         std::vector<int> *nequiv; // stores duplicate number of irreducible force constants
         std::vector<FcProperty> *fc_table; // all force constants
@@ -103,10 +107,10 @@ namespace ALM_NS
                         const int *,
                         const int *);
 
-        void generate_force_constant_table(int,
-                                           int,
+        void generate_force_constant_table(const int,
+                                           const unsigned int nat,
                                            const std::set<IntList> &,
-                                           Symmetry *,
+                                           const Symmetry *,
                                            std::string,
                                            std::vector<FcProperty> &,
                                            std::vector<int> &,
@@ -135,18 +139,18 @@ namespace ALM_NS
         bool is_allzero(const std::vector<double> &,
                         double,
                         int &);
-        void get_available_symmop(int,
-                                  Symmetry *,
-                                  std::string,
+        void get_available_symmop(const unsigned int,
+                                  const Symmetry *,
+                                  const std::string,
                                   int &,
                                   int **,
                                   double ***,
-                                  bool);
+                                  const bool);
     };
 }
 
 // Define a hash function for FcProperty class
-// Use boost::hash_combine 
+// Use boost::hash_combine
 namespace std
 {
     template <>

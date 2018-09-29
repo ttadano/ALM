@@ -635,7 +635,7 @@ void ALM::get_matrix_elements(const int nat,
 void ALM::generate_force_constant()
 {
     initialize_structure();
-    initialize_interaction(this);
+    initialize_interaction();
 }
 
 void ALM::run()
@@ -698,14 +698,18 @@ void ALM::initialize_structure()
     structure_initialized = true;
 }
 
-void ALM::initialize_interaction(ALM *alm)
+void ALM::initialize_interaction()
 {
     // Build interaction & force constant table
-    interaction->init(alm->system,
-                      alm->symmetry,
-                      alm->verbosity,
-                      alm->timer);
-    fcs->init(alm);
+    interaction->init(system,
+                      symmetry,
+                      verbosity,
+                      timer);
+    fcs->init(interaction,
+              symmetry,
+              system->supercell.number_of_atoms,
+              verbosity,
+              timer);
 
     // Switch off the ready flag because the force constants are updated
     // but corresponding constranits are not.

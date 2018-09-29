@@ -41,14 +41,18 @@ Fcs::~Fcs()
     deallocate_variables();
 };
 
-void Fcs::init(ALM *alm)
+void Fcs::init(const Interaction *interaction,
+               const Symmetry *symmetry,
+               const unsigned int number_of_atoms,
+               const int verbosity,
+               Timer *timer)
 {
     int i;
-    int maxorder = alm->interaction->maxorder;
+    int maxorder = interaction->maxorder;
 
-    alm->timer->start_clock("fcs");
+    timer->start_clock("fcs");
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << " FORCE CONSTANT" << std::endl;
         std::cout << " ==============" << std::endl << std::endl;
     }
@@ -71,9 +75,9 @@ void Fcs::init(ALM *alm)
     // Generate force constants using the information of interacting atom pairs
     for (i = 0; i < maxorder; ++i) {
         generate_force_constant_table(i,
-                                      alm->system->supercell.number_of_atoms,
-                                      alm->interaction->cluster_list[i],
-                                      alm->symmetry,
+                                      number_of_atoms,
+                                      interaction->cluster_list[i],
+                                      symmetry,
                                       "Cartesian",
                                       fc_table[i],
                                       nequiv[i],
@@ -81,23 +85,23 @@ void Fcs::init(ALM *alm)
                                       store_zeros);
     }
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << std::endl;
         for (i = 0; i < maxorder; ++i) {
             std::cout << "  Number of " << std::setw(9)
-                << alm->interaction->str_order[i]
+                << interaction->str_order[i]
                 << " FCs : " << nequiv[i].size();
             std::cout << std::endl;
         }
         std::cout << std::endl;
 
 
-        alm->timer->print_elapsed();
+        timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
 
-    alm->timer->stop_clock("fcs");
+    timer->stop_clock("fcs");
 }
 
 void Fcs::set_default_variables()
@@ -123,9 +127,9 @@ void Fcs::deallocate_variables()
 
 
 void Fcs::generate_force_constant_table(const int order,
-                                        const int nat,
+                                        const unsigned int nat,
                                         const std::set<IntList> &pairs,
-                                        Symmetry *symm_in,
+                                        const Symmetry *symm_in,
                                         const std::string basis,
                                         std::vector<FcProperty> &fc_vec,
                                         std::vector<int> &ndup,
@@ -529,15 +533,15 @@ void Fcs::get_constraint_symmetry(const int nat,
     if (do_rref) rref_sparse(nparams, const_out, tolerance);
 }
 
-void Fcs::get_available_symmop(const int nat,
-                               Symmetry *symmetry,
+void Fcs::get_available_symmop(const unsigned int nat,
+                               const Symmetry *symmetry,
                                const std::string basis,
                                int &nsym_avail,
                                int **mapping_symm,
                                double ***rotation,
                                const bool use_compatible)
 {
-    // Return mapping information of atoms and the rotation matrices of symmetry operations 
+    // Return mapping information of atoms and the rotation matrices of symmetry operations
     // that are (compatible, incompatible) with the given lattice basis (Cartesian or Lattice).
 
     // use_compatible == true returns the compatible space group (for creating fc_table)
