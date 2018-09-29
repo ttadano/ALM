@@ -701,7 +701,10 @@ void ALM::initialize_structure(ALM *alm)
 void ALM::initialize_interaction(ALM *alm)
 {
     // Build interaction & force constant table
-    interaction->init(alm);
+    interaction->init(alm->timer,
+                      alm->system,
+                      alm->symmetry,
+                      alm->verbosity);
     fcs->init(alm);
 
     // Switch off the ready flag because the force constants are updated
