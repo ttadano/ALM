@@ -634,7 +634,7 @@ void ALM::get_matrix_elements(const int nat,
 
 void ALM::generate_force_constant()
 {
-    initialize_structure(this);
+    initialize_structure();
     initialize_interaction(this);
 }
 
@@ -686,16 +686,15 @@ int ALM::optimize_lasso()
 }
 
 
-void ALM::initialize_structure(ALM *alm)
+void ALM::initialize_structure()
 {
     // Initialization of structure information.
     // Perform initialization only once.
 
     if (structure_initialized) return;
-    system->init(alm->verbosity,
-                 alm->timer);
+    system->init(verbosity, timer);
     files->init();
-    symmetry->init(alm);
+    symmetry->init(system, verbosity, timer);
     structure_initialized = true;
 }
 

@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -115,7 +115,7 @@ namespace ALM_NS
         std::ofstream *ofs_alm;
         std::streambuf *coutbuf;
         void create();
-        void initialize_structure(ALM *);
+        void initialize_structure();
         void initialize_interaction(ALM *alm);
     };
 }
