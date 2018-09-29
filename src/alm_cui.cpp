@@ -36,7 +36,7 @@ void ALMCUI::run(int narg, char **arg)
     InputParser *input_parser = new InputParser();
     input_parser->run(alm, narg, arg);
 
-    if (alm->verbosity > 0) {
+    if (alm->get_verbosity() > 0) {
         std::cout << " +-----------------------------------------------------------------+" << std::endl;
         std::cout << " +                         Program ALM                             +" << std::endl;
         std::cout << " +                             Ver.";
@@ -54,25 +54,25 @@ void ALMCUI::run(int narg, char **arg)
 
     Writer *writer = new Writer();
 
-    if (alm->verbosity > 0) {
+    if (alm->get_verbosity() > 0) {
         writer->write_input_vars(alm);
     }
 
-    if (alm->mode == "fitting" || alm->mode == "lasso") {
+    if (alm->get_run_mode() == "fitting" || alm->get_run_mode() == "lasso") {
         input_parser->parse_displacement_and_force(alm);
     }
     delete input_parser;
 
     alm->run();
 
-    if (alm->mode == "fitting" || (alm->mode == "lasso" && alm->lasso->lasso_cv == 0)) {
+    if (alm->get_run_mode() == "fitting" || (alm->get_run_mode() == "lasso" && alm->lasso->lasso_cv == 0)) {
         writer->writeall(alm);
-    } else if (alm->mode == "suggest") {
+    } else if (alm->get_run_mode() == "suggest") {
         writer->write_displacement_pattern(alm);
     }
     delete writer;
 
-    if (alm->verbosity > 0) {
+    if (alm->get_verbosity() > 0) {
         std::cout << std::endl << " Job finished at "
             << alm->timer->DateAndTime() << std::endl;
     }

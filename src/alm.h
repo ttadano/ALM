@@ -20,8 +20,6 @@ namespace ALM_NS
         ALM();
         ~ALM();
 
-        std::string mode;
-
         class InputSetter *input;
         class System *system;
         class Interaction *interaction;
@@ -110,6 +108,7 @@ namespace ALM_NS
         void run();
 
     private:
+        std::string mode;
         int verbosity;
 
         bool structure_initialized;
