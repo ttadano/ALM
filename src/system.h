@@ -66,11 +66,12 @@ namespace ALM_NS
         void frac2cart(double **) const;
 
         void set_cell(const double [3][3],
-                      unsigned int,
-                      unsigned int,
-                      int *,
-                      double **,
-                      Cell &) const;
+                      const unsigned int,
+                      const unsigned int,
+                      const int *,
+                      const double * const *);
+
+        Cell get_cell() const;
 
         void set_spin_variable(bool,
                                int,
@@ -78,7 +79,6 @@ namespace ALM_NS
                                unsigned int,
                                double **);
 
-        Cell primitivecell, supercell;
         Spin spin;
 
         std::string *kdname;
@@ -104,6 +104,8 @@ namespace ALM_NS
         double **xcoord; // fractional coordinate
 
     private:
+        Cell supercell;
+
         enum LatticeType { Direct, Reciprocal };
 
         void set_reciprocal_latt(const double [3][3], double [3][3]) const;

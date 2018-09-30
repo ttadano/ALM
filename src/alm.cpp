@@ -228,8 +228,7 @@ void ALM::set_cell(const int nat,
                      system->nat,
                      system->nkd,
                      system->kd,
-                     system->xcoord,
-                     system->supercell);
+                     system->xcoord);
 }
 
 void ALM::set_magnetic_params(const double *magmom,
@@ -328,7 +327,7 @@ void ALM::set_norder(const int maxorder) const // NORDER harmonic=1
         interaction->nbody_include[i] = i + 2;
     }
 
-    nkd = system->supercell.number_of_elems;
+    nkd = system->get_cell().number_of_elems;
     if (interaction->cutoff_radii) {
         deallocate(interaction->cutoff_radii);
     }
@@ -359,7 +358,7 @@ void ALM::set_nbody_include(const int *nbody_include) const // NBODY
 
 void ALM::set_cutoff_radii(const double *rcs) const
 {
-    const int nkd = system->supercell.number_of_elems;
+    const int nkd = system->get_cell().number_of_elems;
     const auto maxorder = interaction->maxorder;
 
     if (maxorder > 0) {
@@ -699,7 +698,7 @@ int ALM::optimize()
                                 constraint,
                                 fcs,
                                 interaction->maxorder,
-                                system->supercell.number_of_atoms,
+                                system->get_cell().number_of_atoms,
                                 verbosity,
                                 files->file_disp,
                                 files->file_force,
@@ -737,7 +736,7 @@ int ALM::optimize_lasso()
                       interaction,
                       fcs,
                       constraint,
-                      system->supercell.number_of_atoms,
+                      system->get_cell().number_of_atoms,
                       files,
                       verbosity,
                       fitting,
@@ -769,7 +768,7 @@ void ALM::initialize_interaction()
                       timer);
     fcs->init(interaction,
               symmetry,
-              system->supercell.number_of_atoms,
+              system->get_cell().number_of_atoms,
               verbosity,
               timer);
 

@@ -232,12 +232,12 @@ void Writer::write_force_constants(ALM *alm) const
     ofs_fcs << std::endl;
 
     /*  if (alm->constraint->extra_constraint_from_symmetry) {
-  
+
           ofs_fcs << " -------------- Constraints from crystal symmetry --------------" << std::endl << std::endl;
           for (order = 0; order < maxorder; ++order) {
               int nparam = alm->fcs->nequiv[order].size();
-  
-  
+
+
               for (auto p = alm->constraint->const_symmetry[order].begin();
                    p != alm->constraint->const_symmetry[order].end();
                    ++p) {
@@ -375,22 +375,22 @@ void Writer::write_misc_xml(ALM *alm)
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
             system_structure.lattice_vector[i][j]
-                = alm->system->supercell.lattice_vector[i][j];
+                = alm->system->get_cell().lattice_vector[i][j];
         }
     }
 
-    system_structure.nat = alm->system->supercell.number_of_atoms;
+    system_structure.nat = alm->system->get_cell().number_of_atoms;
     system_structure.natmin = alm->symmetry->nat_prim;
     system_structure.ntran = alm->symmetry->ntran;
-    system_structure.nspecies = alm->system->supercell.number_of_elems;
+    system_structure.nspecies = alm->system->get_cell().number_of_elems;
 
     AtomProperty prop_tmp;
 
-    for (i = 0; i < alm->system->supercell.number_of_atoms; ++i) {
-        prop_tmp.x = alm->system->supercell.x_fractional[i][0];
-        prop_tmp.y = alm->system->supercell.x_fractional[i][1];
-        prop_tmp.z = alm->system->supercell.x_fractional[i][2];
-        prop_tmp.kind = alm->system->supercell.kind[i];
+    for (i = 0; i < alm->system->get_cell().number_of_atoms; ++i) {
+        prop_tmp.x = alm->system->get_cell().x_fractional[i][0];
+        prop_tmp.y = alm->system->get_cell().x_fractional[i][1];
+        prop_tmp.z = alm->system->get_cell().x_fractional[i][2];
+        prop_tmp.kind = alm->system->get_cell().kind[i];
         prop_tmp.atom = alm->symmetry->map_s2p[i].atom_num + 1;
         prop_tmp.tran = alm->symmetry->map_s2p[i].tran_num + 1;
 
@@ -438,10 +438,10 @@ void Writer::write_misc_xml(ALM *alm)
 
     for (i = 0; i < system_structure.nat; ++i) {
         str_tmp.clear();
-        for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->supercell.x_fractional[i][j]);
+        for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->get_cell().x_fractional[i][j]);
         ptree &child = pt.add("Data.Structure.Position.pos", str_tmp);
         child.put("<xmlattr>.index", i + 1);
-        child.put("<xmlattr>.element", alm->system->kdname[alm->system->supercell.kind[i] - 1]);
+        child.put("<xmlattr>.element", alm->system->kdname[alm->system->get_cell().kind[i] - 1]);
     }
 
     pt.put("Data.Symmetry.NumberOfTranslations", alm->symmetry->ntran);
@@ -690,7 +690,7 @@ void Writer::write_hessian(ALM *alm) const
     double **hessian;
 
     //ALMCore *alm = alm->get_alm();
-    int nat3 = 3 * alm->system->supercell.number_of_atoms;
+    int nat3 = 3 * alm->system->get_cell().number_of_atoms;
 
     allocate(hessian, nat3, nat3);
 
@@ -756,7 +756,7 @@ void Writer::write_in_QEformat(ALM *alm) const
     int pair_tran[2];
     std::ofstream ofs_hes;
     double **hessian;
-    int nat3 = 3 * alm->system->supercell.number_of_atoms;
+    int nat3 = 3 * alm->system->get_cell().number_of_atoms;
 
     allocate(hessian, nat3, nat3);
 
@@ -788,8 +788,8 @@ void Writer::write_in_QEformat(ALM *alm) const
     ofs_hes << "  1  1  1" << std::endl;
     for (int icrd = 0; icrd < 3; ++icrd) {
         for (int jcrd = 0; jcrd < 3; ++jcrd) {
-            for (i = 0; i < alm->system->supercell.number_of_atoms; ++i) {
-                for (j = 0; j < alm->system->supercell.number_of_atoms; ++j) {
+            for (i = 0; i < alm->system->get_cell().number_of_atoms; ++i) {
+                for (j = 0; j < alm->system->get_cell().number_of_atoms; ++j) {
                     ofs_hes << std::setw(3) << icrd + 1;
                     ofs_hes << std::setw(3) << jcrd + 1;
                     ofs_hes << std::setw(3) << i + 1;

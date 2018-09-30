@@ -223,7 +223,7 @@ void Constraint::setup(const System *system,
                                    const_fix[1]);
     }
 
-    generate_symmetry_constraint_in_cartesian(system->supercell.number_of_atoms,
+    generate_symmetry_constraint_in_cartesian(system->get_cell().number_of_atoms,
                                               symmetry,
                                               interaction,
                                               fcs,
@@ -242,7 +242,7 @@ void Constraint::setup(const System *system,
     }
 
     if (impose_inv_T) {
-        generate_translational_constraint(system->supercell,
+        generate_translational_constraint(system->get_cell(),
                                           symmetry,
                                           interaction,
                                           fcs,
@@ -1324,7 +1324,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                             if (!interaction->is_incutoff(order + 2,
                                                                           interaction_atom,
                                                                           order,
-                                                                          system->supercell.kind))
+                                                                          system->get_cell().kind))
                                                 continue;
 
                                             atom_tmp.clear();

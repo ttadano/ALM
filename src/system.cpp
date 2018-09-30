@@ -35,9 +35,6 @@ void System::init(const int verbosity,
 {
     timer->start_clock("system");
 
-    // Generate the information of the supercell
-    set_cell(lavec, nat, nkd, kd, xcoord, supercell);
-
     // Generate the information of spins
     set_spin_variable(lspin, noncollinear, trev_sym_mag,
                       nat, magmom);
@@ -76,48 +73,52 @@ void System::init(const int verbosity,
 void System::set_cell(const double lavec_in[3][3],
                       const unsigned int nat_in,
                       const unsigned int nkd_in,
-                      int *kd_in,
-                      double **xf_in,
-                      Cell &cell_out) const
+                      const int *kd_in,
+                      const double * const *xf_in)
 {
     unsigned int i, j;
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
-            cell_out.lattice_vector[i][j] = lavec_in[i][j];
+            supercell.lattice_vector[i][j] = lavec_in[i][j];
         }
     }
-    set_reciprocal_latt(cell_out.lattice_vector,
-                        cell_out.reciprocal_lattice_vector);
+    set_reciprocal_latt(supercell.lattice_vector,
+                        supercell.reciprocal_lattice_vector);
 
-    cell_out.volume = volume(cell_out.lattice_vector, Direct);
-    cell_out.number_of_atoms = nat_in;
-    cell_out.number_of_elems = nkd_in;
-    cell_out.kind.clear();
-    cell_out.x_fractional.clear();
-    cell_out.x_cartesian.clear();
+    supercell.volume = volume(supercell.lattice_vector, Direct);
+    supercell.number_of_atoms = nat_in;
+    supercell.number_of_elems = nkd_in;
+    supercell.kind.shrink_to_fit();
+    supercell.x_fractional.shrink_to_fit();
+    supercell.x_cartesian.shrink_to_fit();
 
     std::vector<double> xtmp;
     xtmp.resize(3);
     for (i = 0; i < nat_in; ++i) {
-        cell_out.kind.push_back(kd_in[i]);
+        supercell.kind.push_back(kd_in[i]);
         for (j = 0; j < 3; ++j) {
             xtmp[j] = xf_in[i][j];
         }
-        cell_out.x_fractional.push_back(xtmp);
+        supercell.x_fractional.push_back(xtmp);
     }
 
     double xf_tmp[3], xc_tmp[3];
 
-    for (const auto &xf : cell_out.x_fractional) {
+    for (const auto &xf : supercell.x_fractional) {
         for (i = 0; i < 3; ++i) {
             xf_tmp[i] = xf[i];
         }
-        rotvec(xc_tmp, xf_tmp, cell_out.lattice_vector);
+        rotvec(xc_tmp, xf_tmp, supercell.lattice_vector);
         for (i = 0; i < 3; ++i) {
             xtmp[i] = xc_tmp[i];
         }
-        cell_out.x_cartesian.push_back(xtmp);
+        supercell.x_cartesian.push_back(xtmp);
     }
+}
+
+Cell System::get_cell() const
+{
+    return supercell;
 }
 
 void System::set_reciprocal_latt(const double aa[3][3],

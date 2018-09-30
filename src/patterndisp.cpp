@@ -95,13 +95,13 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     for (order = 0; order < maxorder; ++order) {
 
         fcs->generate_force_constant_table(order,
-                                           system->supercell.number_of_atoms,
+                                           system->get_cell().number_of_atoms,
                                            interaction->cluster_list[order],
                                            symmetry, preferred_basis,
                                            fc_table[order], nequiv[order],
                                            fc_zeros[order], false);
 
-        fcs->get_constraint_symmetry(system->supercell.number_of_atoms,
+        fcs->get_constraint_symmetry(system->get_cell().number_of_atoms,
                                      symmetry,
                                      order,
                                      interaction->cluster_list[order],
@@ -192,8 +192,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
 
     allocate(pattern_all, maxorder);
     generate_pattern_all(maxorder,
-                         system->supercell.number_of_atoms,
-                         system->supercell.lattice_vector,
+                         system->get_cell().number_of_atoms,
+                         system->get_cell().lattice_vector,
                          symmetry,
                          pattern_all,
                          dispset, preferred_basis);
