@@ -156,9 +156,9 @@ void Interaction::init(const System *system,
 }
 
 void Interaction::generate_pairs(const int natmin,
-                                 int **map_p2s,
+                                 const int * const *map_p2s,
                                  std::set<IntList> *pair_out,
-                                 std::set<InteractionCluster> **interaction_cluster) const
+                                 const std::set<InteractionCluster> * const *interaction_cluster) const
 {
     int i, j;
     int iat;
@@ -224,8 +224,8 @@ void Interaction::deallocate_variables()
     }
 }
 
-double Interaction::distance(double *x1,
-                             double *x2) const
+double Interaction::distance(const double *x1,
+                             const double *x2) const
 {
     double dist;
     dist = std::pow(x1[0] - x2[0], 2) + std::pow(x1[1] - x2[1], 2) + std::pow(x1[2] - x2[2], 2);
@@ -234,9 +234,9 @@ double Interaction::distance(double *x1,
     return dist;
 }
 
-void Interaction::get_pairs_of_minimum_distance(int nat,
-                                                double ***xc_in,
-                                                int *exist) const
+void Interaction::get_pairs_of_minimum_distance(const int nat,
+                                                const double * const * const *xc_in,
+                                                const int *exist)
 {
     //
     // Calculate the minimum distance between atom i and j
@@ -290,9 +290,9 @@ void Interaction::get_pairs_of_minimum_distance(int nat,
 
 void Interaction::print_neighborlist(const int nat,
                                      const int natmin,
-                                     int **map_p2s,
+                                     const int * const * map_p2s,
                                      const std::vector<int> &kd,
-                                     std::string *kdname) const
+                                     const std::string *kdname) const
 {
     //
     // Print the list of neighboring atoms and distances
@@ -409,8 +409,8 @@ void Interaction::print_neighborlist(const int nat,
 void Interaction::generate_interaction_information_by_cutoff(const int nat,
                                                              const int natmin,
                                                              const std::vector<int> &kd,
-                                                             int **map_p2s,
-                                                             double **rc,
+                                                             const int * const *map_p2s,
+                                                             const double * const * rc,
                                                              std::vector<int> *interaction_list) const
 {
     int i, iat, jat, ikd, jkd;
@@ -447,8 +447,8 @@ void Interaction::generate_interaction_information_by_cutoff(const int nat,
 void Interaction::set_interaction_by_cutoff(const unsigned int nat,
                                             const std::vector<int> &kd,
                                             const unsigned int nat_prim,
-                                            int **map_p2s_in,
-                                            double ***rcs,
+                                            const int * const * map_p2s_in,
+                                            const double * const * const *rcs,
                                             std::vector<int> **interaction_pair_out) const
 {
     for (int order = 0; order < maxorder; ++order) {
@@ -462,10 +462,10 @@ void Interaction::set_interaction_by_cutoff(const unsigned int nat,
 }
 
 void Interaction::print_interaction_information(const int natmin,
-                                                int **map_p2s,
+                                                const int * const *map_p2s,
                                                 const std::vector<int> &kd,
-                                                std::string *kdname,
-                                                std::vector<int> **interaction_list)
+                                                const std::string *kdname,
+                                                const std::vector<int> * const *interaction_list)
 {
     int order;
     int i, iat;
@@ -494,7 +494,6 @@ void Interaction::print_interaction_information(const int natmin,
             std::sort(intlist.begin(), intlist.end());
 
             // write atoms inside the cutoff radius
-            int id = 0;
             std::cout << "    Atom " << std::setw(5) << iat + 1
                 << "(" << std::setw(3) << kdname[kd[iat] - 1]
                 << ")" << " interacts with atoms ... " << std::endl;
@@ -616,10 +615,10 @@ void Interaction::calc_interaction_clusters(const int natmin,
 void Interaction::set_interaction_cluster(const int order,
                                           const int natmin,
                                           const std::vector<int> &kd,
-                                          int **map_p2s,
-                                          std::vector<int> *interaction_pair_in,
-                                          double ***x_image,
-                                          int *exist,
+                                          const int * const *map_p2s,
+                                          const std::vector<int> *interaction_pair_in,
+                                          const double * const * const *x_image,
+                                          const int *exist,
                                           std::set<InteractionCluster> *interaction_cluster_out) const
 {
     //
@@ -854,7 +853,7 @@ void Interaction::set_interaction_cluster(const int order,
 
 void Interaction::cell_combination(const std::vector<std::vector<int>> &array,
                                    const int i,
-                                   std::vector<int> accum,
+                                   const std::vector<int> accum,
                                    std::vector<std::vector<int>> &comb) const
 {
     if (i == array.size()) {

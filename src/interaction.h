@@ -210,18 +210,18 @@ namespace ALM_NS
                          const int,
                          const std::vector<int> &) const;
 
-        void generate_interaction_information_by_cutoff(int,
-                                                        int,
+        void generate_interaction_information_by_cutoff(const int,
+                                                        const int,
                                                         const std::vector<int> &,
-                                                        int **,
-                                                        double **,
+                                                        const int * const *,
+                                                        const double * const *,
                                                         std::vector<int> *) const;
 
-        void set_interaction_by_cutoff(unsigned int,
+        void set_interaction_by_cutoff(const unsigned int,
                                        const std::vector<int> &,
-                                       unsigned int,
-                                       int **,
-                                       double ***,
+                                       const unsigned int,
+                                       const int * const *,
+                                       const double * const * const *,
                                        std::vector<int> **) const;
 
 
@@ -233,27 +233,29 @@ namespace ALM_NS
         void set_default_variables();
         void deallocate_variables();
 
-        void get_pairs_of_minimum_distance(int,
-                                           double ***,
-                                           int *) const;
+        // can be made const function, but mindist_pairs is modified
+        // in this function.
+        void get_pairs_of_minimum_distance(const int,
+                                           const double * const * const *,
+                                           const int *);
 
-        void print_neighborlist(int,
-                                int,
-                                int **,
+        void print_neighborlist(const int,
+                                const int,
+                                const int * const *,
                                 const std::vector<int> &,
-                                std::string *) const;
+                                const std::string *) const;
 
-        void print_interaction_information(int,
-                                           int **,
+        void print_interaction_information(const int,
+                                           const int * const *,
                                            const std::vector<int> &,
-                                           std::string *,
-                                           std::vector<int> **);
+                                           const std::string *,
+                                           const std::vector<int> * const *);
 
         void set_ordername();
-        double distance(double *, double *) const;
+        double distance(const double *, const double *) const;
         int nbody(const int, const int *) const;
 
-        void calc_interaction_clusters(int,
+        void calc_interaction_clusters(const int,
                                        const std::vector<int> &,
                                        int **,
                                        std::vector<int> **,
@@ -261,24 +263,24 @@ namespace ALM_NS
                                        int *,
                                        std::set<InteractionCluster> **);
 
-        void set_interaction_cluster(int,
-                                     int,
+        void set_interaction_cluster(const int,
+                                     const int,
                                      const std::vector<int> &,
-                                     int **,
-                                     std::vector<int> *,
-                                     double ***,
-                                     int *,
+                                     const int * const *,
+                                     const std::vector<int> *,
+                                     const double * const * const*,
+                                     const int *,
                                      std::set<InteractionCluster> *) const;
 
         void cell_combination(const std::vector<std::vector<int>> &,
-                              int,
-                              std::vector<int>,
+                              const int,
+                              const std::vector<int>,
                               std::vector<std::vector<int>> &) const;
 
-        void generate_pairs(int,
-                            int **,
+        void generate_pairs(const int,
+                            const int * const *,
                             std::set<IntList> *,
-                            std::set<InteractionCluster> **) const;
+                            const std::set<InteractionCluster> * const *) const;
     };
 }
 
