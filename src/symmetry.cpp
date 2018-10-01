@@ -831,6 +831,7 @@ bool Symmetry::is_proper(const double rot[3][3]) const
         return false;
     }
     exit("is_proper", "This cannot happen.");
+    return false;  // dummy to avoid compiler warning
 }
 
 void Symmetry::set_primitive_lattice(const double aa[3][3],
