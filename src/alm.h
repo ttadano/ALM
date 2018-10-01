@@ -11,6 +11,16 @@
 #pragma once
 
 #include <string>
+#include "system.h"
+#include "interaction.h"
+#include "fcs.h"
+#include "symmetry.h"
+#include "fitting.h"
+#include "lasso.h"
+#include "constraint.h"
+#include "files.h"
+#include "patterndisp.h"
+#include "timer.h"
 
 namespace ALM_NS
 {

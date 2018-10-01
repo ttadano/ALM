@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include "constraint.h"
 
 void rref(int,

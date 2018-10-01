@@ -10,16 +10,17 @@
 
 #pragma once
 
-#include "alm.h"
-#include "constants.h"
-#include "fcs.h"
-#include "system.h"
 #include <boost/bimap.hpp>
 #include <utility>
 #include <vector>
 #include <string>
 #include <iomanip>
 #include <map>
+#include "constants.h"
+#include "fcs.h"
+#include "interaction.h"
+#include "system.h"
+#include "timer.h"
 
 typedef std::vector<std::map<unsigned int, double>> ConstraintSparseForm;
 

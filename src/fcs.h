@@ -11,15 +11,15 @@
 
 #pragma once
 
-#include "alm.h"
-#include "interaction.h"
 #include <vector>
 #include <set>
 #include <map>
 #include <algorithm>
+#include "interaction.h"
+#include "symmetry.h"
+#include "timer.h"
 
 typedef std::vector<std::map<unsigned int, double>> ConstraintSparseForm;
-
 
 namespace ALM_NS
 {

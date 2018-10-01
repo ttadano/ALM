@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "alm.h"
 #include <vector>
+
 #ifdef _VSL
 #include "mkl_vsl.h"
 #endif
@@ -20,6 +20,11 @@
 #include <Eigen/SparseCore>
 typedef Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t> SpMat;
 #endif
+
+#include "constraint.h"
+#include "symmetry.h"
+#include "fcs.h"
+#include "timer.h"
 
 namespace ALM_NS
 {
