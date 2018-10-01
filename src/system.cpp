@@ -33,6 +33,8 @@ System::~System()
 void System::init(const int verbosity,
                   Timer *timer)
 {
+    const unsigned int nat = supercell.number_of_atoms;
+
     timer->start_clock("system");
 
     // Generate the information of spins
@@ -74,9 +76,10 @@ void System::set_supercell(const double lavec_in[3][3],
                            const unsigned int nat_in,
                            const unsigned int nkd_in,
                            const int *kd_in,
-                           const double * const *xf_in)
+                           const double xf_in[][3])
 {
     unsigned int i, j;
+
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
             supercell.lattice_vector[i][j] = lavec_in[i][j];
@@ -93,6 +96,7 @@ void System::set_supercell(const double lavec_in[3][3],
     supercell.x_cartesian.shrink_to_fit();
 
     std::vector<double> xtmp;
+
     xtmp.resize(3);
     for (i = 0; i < nat_in; ++i) {
         supercell.kind.push_back(kd_in[i]);
@@ -173,7 +177,7 @@ void System::frac2cart(double **xf) const
     double *x_tmp;
     allocate(x_tmp, 3);
 
-    for (int i = 0; i < nat; ++i) {
+    for (int i = 0; i < supercell.number_of_atoms; ++i) {
 
         rotvec(x_tmp, xf[i], supercell.lattice_vector);
 
@@ -216,17 +220,7 @@ double System::volume(const double latt_in[3][3],
 void System::set_default_variables()
 {
     // Default values
-    nat = 0;
-    nkd = 0;
-    kd = nullptr;
     kdname = nullptr;
-
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; j++) {
-            lavec[i][j] = 0.0;
-        }
-    }
-    xcoord = nullptr;
     is_periodic[0] = 1;
     is_periodic[1] = 1;
     is_periodic[2] = 1;
@@ -241,14 +235,8 @@ void System::set_default_variables()
 
 void System::deallocate_variables()
 {
-    if (kd) {
-        deallocate(kd);
-    }
     if (kdname) {
         deallocate(kdname);
-    }
-    if (xcoord) {
-        deallocate(xcoord);
     }
     if (magmom) {
         deallocate(magmom);

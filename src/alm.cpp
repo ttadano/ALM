@@ -43,14 +43,6 @@ ALM::~ALM()
         deallocate(system->kdname);
     }
     system->kdname = nullptr;
-    if (system->xcoord) {
-        deallocate(system->xcoord);
-    }
-    system->xcoord = nullptr;
-    if (system->kd) {
-        deallocate(system->kd);
-    }
-    system->kd = nullptr;
     if (system->magmom) {
         deallocate(system->magmom);
     }
@@ -178,47 +170,18 @@ void ALM::set_cell(const int nat,
         }
     }
 
-    /* nkd = supercell.number_of_elems */
-    /* nat = supercell.number_of_atoms */
-    system->nkd = nkd;
-    system->nat = nat;
-
-    if (system->xcoord) {
-        deallocate(system->xcoord);
-    }
-    allocate(system->xcoord, nat, 3);
-
-    if (system->kd) {
-        deallocate(system->kd);
-    }
-    allocate(system->kd, nat);
-
-    for (i = 0; i < nat; ++i) {
-        system->kd[i] = kd[i];
-        for (j = 0; j < 3; ++j) {
-            system->xcoord[i][j] = xcoord[i][j];
-        }
-    }
-
     if (system->kdname) {
         deallocate(system->kdname);
     }
     allocate(system->kdname, nkd);
+    for (i = 0; i < nkd; ++i) {
+        system->kdname[i] = kdname[i];
+    }
 
     if (system->magmom) {
         deallocate(system->magmom);
     }
     allocate(system->magmom, nat, 3);
-
-    for (i = 0; i < nkd; ++i) {
-        system->kdname[i] = kdname[i];
-    }
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
-            system->lavec[i][j] = lavec[i][j];
-        }
-    }
-
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
             system->magmom[i][j] = 0.0;
@@ -226,11 +189,7 @@ void ALM::set_cell(const int nat,
     }
 
     // Generate the information of the supercell
-    system->set_supercell(system->lavec,
-                          system->nat,
-                          nkd,
-                          system->kd,
-                          system->xcoord);
+    system->set_supercell(lavec, nat, nkd, kd, xcoord);
 }
 
 void ALM::set_magnetic_params(const double *magmom,
@@ -242,7 +201,7 @@ void ALM::set_magnetic_params(const double *magmom,
                               // TREVSYM
                               const std::string str_magmom) const // MAGMOM
 {
-    const auto nat = system->nat;
+    const auto nat = system->get_supercell().number_of_atoms;
     system->lspin = lspin;
     system->noncollinear = noncollinear;
     system->str_magmom = str_magmom;
@@ -642,8 +601,7 @@ void ALM::set_fc(double *fc_in) const
                             constraint);
 }
 
-void ALM::get_matrix_elements(const int nat,
-                              const int ndata_used,
+void ALM::get_matrix_elements(const int ndata_used,
                               double *amat,
                               double *bvec) const
 {

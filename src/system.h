@@ -69,7 +69,7 @@ namespace ALM_NS
                            const unsigned int,
                            const unsigned int,
                            const int *,
-                           const double * const *);
+                           const double [][3]);
 
         Cell get_supercell() const;
 
@@ -95,13 +95,6 @@ namespace ALM_NS
         int noncollinear;
         double **magmom;
         std::string str_magmom;
-
-        // Referenced from input_setter, writer
-
-        int nat, nkd;
-        int *kd;
-        double lavec[3][3];
-        double **xcoord; // fractional coordinate
 
     private:
         Cell supercell;

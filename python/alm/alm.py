@@ -105,7 +105,7 @@ class ALM:
         ----------
         solver : str, default='dense'
             Solver choice for fitting either 'dense' or 'SimplicialLDLT'.
-            
+
             - When solver='dense', the fitting is performed with the
               singular value decomposition implemented in LAPACK.
             - When solver='SimplicialLDLT', the fitting is performed with
@@ -163,7 +163,7 @@ class ALM:
         ----------
         norder : int
             Maximum order of the Taylor expansion potential.
-            
+
             - If ``norder = 1``, only harmonic (2nd-order) terms are considered.
             - If ``norder = 2``, both harmonic and cubic terms are considered.
 
@@ -218,7 +218,7 @@ class ALM:
 
         if rotation is True:
             print("Rotational invariance is not supported in API.")
-            raise 
+            raise
 
         if translation is True:
             iconst = 11
@@ -234,7 +234,7 @@ class ALM:
         Parameters
         ----------
         verbosity : int
-            Choose the level of the output frequency from 
+            Choose the level of the output frequency from
             0 (no output) or 1 (normal output).
 
         """
@@ -262,7 +262,7 @@ class ALM:
             The mapping information of atoms from the primitive cell to the supercell.
 
         """
-        
+
         if self._id is None:
             self._show_error_message()
 
@@ -326,7 +326,7 @@ class ALM:
         ----------
         fc_order : int
             The order of force constants to get.
-            
+
             - If ``fc_order = 1``, returns harmonic force constants.
             - If ``fc_order = 2``, returns cubic force constants.
             - If ``fc_order = 3``, returns quartic force constants.
@@ -336,7 +336,7 @@ class ALM:
             The choice of the force constant list to be returned.
 
             - If "origin", returns the reducible set of force constants,
-              whose first element corresponds to an atom in the 
+              whose first element corresponds to an atom in the
               primitive cell at the origin.
             - If "irreducible" or "irred", returns the irreducible set of
               force constants.
@@ -472,7 +472,7 @@ class ALM:
 
         amat = np.zeros(3 * nat * ndata_used * fc_length, dtype='double')
         bvec = np.zeros(3 * nat * ndata_used)
-        alm.get_matrix_elements(self._id, nat, ndata_used, amat, bvec)
+        alm.get_matrix_elements(self._id, ndata_used, amat, bvec)
 
         return np.reshape(amat, (3 * nat * ndata_used, fc_length), order='F'), bvec
 
@@ -504,7 +504,7 @@ class ALM:
 
     def _get_number_of_displacement_patterns(self, fc_order):
         """Private method to return the number of displacement patterns
-        
+
         Parameters
         ----------
         fc_order : int
@@ -517,7 +517,7 @@ class ALM:
 
     def _get_number_of_displaced_atoms(self, fc_order):
         """Private method to return the number of displaced atoms
-        
+
         Parameters
         ----------
         fc_order : int
@@ -534,7 +534,7 @@ class ALM:
 
     def _get_number_of_fc_elements(self, fc_order):
         """Private method to get the number of force constants
-        
+
         Parameters
         ----------
         fc_order : int
@@ -547,7 +547,7 @@ class ALM:
 
     def _get_number_of_irred_fc_elements(self, fc_order):
         """Private method to get the number of irreducible set of force constants
-        
+
         Parameters
         ----------
         fc_order : int
