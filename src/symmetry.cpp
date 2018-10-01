@@ -50,7 +50,7 @@ void Symmetry::init(const System *system,
     }
 
 
-    setup_symmetry_operation(system->get_cell(),
+    setup_symmetry_operation(system->get_supercell(),
                              system->is_periodic,
                              system->atomtype_group,
                              system->spin,
@@ -68,7 +68,7 @@ void Symmetry::init(const System *system,
     //                       kd_prim, xcoord_prim,
     //                       tolerance);
 
-    int nat = system->get_cell().number_of_atoms;
+    int nat = system->get_supercell().number_of_atoms;
 
     if (map_sym) {
         deallocate(map_sym);
@@ -80,7 +80,7 @@ void Symmetry::init(const System *system,
     }
     allocate(map_p2s, nat_prim, ntran);
 
-    gen_mapping_information(system->get_cell(),
+    gen_mapping_information(system->get_supercell(),
                             system->atomtype_group,
                             SymmData,
                             symnum_tran,

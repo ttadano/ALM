@@ -116,7 +116,7 @@ void System::set_cell(const double lavec_in[3][3],
     }
 }
 
-Cell System::get_cell() const
+Cell System::get_supercell() const
 {
     return supercell;
 }

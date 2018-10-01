@@ -71,7 +71,7 @@ namespace ALM_NS
                       const int *,
                       const double * const *);
 
-        Cell get_cell() const;
+        Cell get_supercell() const;
 
         void set_spin_variable(bool,
                                int,

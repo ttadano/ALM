@@ -44,8 +44,8 @@ void Interaction::init(const System *system,
     timer->start_clock("interaction");
 
     int i, j, k;
-    int nat = system->get_cell().number_of_atoms;
-    int nkd = system->get_cell().number_of_elems;
+    int nat = system->get_supercell().number_of_atoms;
+    int nkd = system->get_supercell().number_of_elems;
 
     if (verbosity > 0) {
         std::cout << " INTERACTION" << std::endl;
@@ -83,15 +83,15 @@ void Interaction::init(const System *system,
                                   system->x_image,
                                   system->exist_image);
 
-    set_interaction_by_cutoff(system->get_cell().number_of_atoms,
-                              system->get_cell().kind,
+    set_interaction_by_cutoff(system->get_supercell().number_of_atoms,
+                              system->get_supercell().kind,
                               symmetry->nat_prim,
                               symmetry->map_p2s,
                               cutoff_radii,
                               interaction_pair);
 
     calc_interaction_clusters(symmetry->nat_prim,
-                              system->get_cell().kind,
+                              system->get_supercell().kind,
                               symmetry->map_p2s,
                               interaction_pair,
                               system->x_image,
@@ -122,17 +122,17 @@ void Interaction::init(const System *system,
             std::cout << std::endl;
         }
 
-        print_neighborlist(system->get_cell().number_of_atoms,
+        print_neighborlist(system->get_supercell().number_of_atoms,
                            symmetry->nat_prim,
                            symmetry->map_p2s,
-                           system->get_cell().kind,
+                           system->get_supercell().kind,
                            system->kdname);
     }
 
     if (verbosity > 1) {
         print_interaction_information(symmetry->nat_prim,
                                       symmetry->map_p2s,
-                                      system->get_cell().kind,
+                                      system->get_supercell().kind,
                                       system->kdname,
                                       interaction_pair);
     }
