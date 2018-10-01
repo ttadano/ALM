@@ -10,13 +10,16 @@
 
 #pragma once
 
-#include "alm.h"
-#include "constraint.h"
-#include "fcs.h"
-#include "fitting.h"
 #include <string>
 #include <vector>
 #include <Eigen/Dense>
+#include "symmetry.h"
+#include "interaction.h"
+#include "fcs.h"
+#include "constraint.h"
+#include "files.h"
+#include "fitting.h"
+#include "timer.h"
 
 namespace ALM_NS
 {

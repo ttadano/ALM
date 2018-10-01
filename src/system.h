@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "alm.h"
 #include <string>
 #include <vector>
+#include "timer.h"
 
 namespace ALM_NS
 {
@@ -65,20 +65,20 @@ namespace ALM_NS
                   Timer *timer);
         void frac2cart(double **) const;
 
-        void set_cell(const double [3][3],
-                      unsigned int,
-                      unsigned int,
-                      int *,
-                      double **,
-                      Cell &) const;
+        void set_supercell(const double [3][3],
+                           const unsigned int,
+                           const unsigned int,
+                           const int *,
+                           const double * const *);
 
-        void set_spin_variable(bool,
-                               int,
-                               int,
-                               unsigned int,
+        Cell get_supercell() const;
+
+        void set_spin_variable(const bool,
+                               const int,
+                               const int,
+                               const unsigned int,
                                double **);
 
-        Cell primitivecell, supercell;
         Spin spin;
 
         std::string *kdname;
@@ -104,6 +104,8 @@ namespace ALM_NS
         double **xcoord; // fractional coordinate
 
     private:
+        Cell supercell;
+
         enum LatticeType { Direct, Reciprocal };
 
         void set_reciprocal_latt(const double [3][3], double [3][3]) const;

@@ -10,14 +10,15 @@
 
 #pragma once
 
-#include "alm.h"
-#include "constants.h"
 #include <string>
 #include <vector>
 #include <set>
 #include <iterator>
 #include <algorithm>
-
+#include "constants.h"
+#include "system.h"
+#include "symmetry.h"
+#include "timer.h"
 
 namespace ALM_NS
 {

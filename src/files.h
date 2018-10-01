@@ -12,9 +12,6 @@
 
 #include <string>
 #include <fstream>
-#include "alm.h"
-
-//#include "pointers.h"
 
 namespace ALM_NS
 {

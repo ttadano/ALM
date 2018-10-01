@@ -23,24 +23,24 @@
 
 using namespace ALM_NS;
 
-InputSetter::InputSetter() {}
+InputSetter::InputSetter() {
+    nat = 0;
+    nkd = 0;
+    kd = nullptr;
+    kdname = nullptr;
+
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; j++) {
+            lavec[i][j] = 0.0;
+        }
+    }
+    xcoord = nullptr;
+}
 
 InputSetter::~InputSetter() {}
 
 void InputSetter::deallocator(ALM *alm) const
 {
-    if (alm->system->kdname) {
-        deallocate(alm->system->kdname);
-    }
-    alm->system->kdname = nullptr;
-    if (alm->system->xcoord) {
-        deallocate(alm->system->xcoord);
-    }
-    alm->system->xcoord = nullptr;
-    if (alm->system->kd) {
-        deallocate(alm->system->kd);
-    }
-    alm->system->kd = nullptr;
     if (alm->system->magmom) {
         deallocate(alm->system->magmom);
     }
@@ -61,8 +61,8 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const int verbosity,
                                    const std::string str_disp_basis,
                                    const std::string str_magmom,
-                                   const int nat,
-                                   const int nkd,
+                                   const int nat_in,
+                                   const int nkd_in,
                                    const int printsymmetry,
                                    const int is_periodic[3],
                                    const bool trim_dispsign_for_evenfunc,
@@ -70,31 +70,37 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const bool print_hessian,
                                    const int noncollinear,
                                    const int trevsym,
-                                   const std::string *kdname,
+                                   const std::string *kdname_in,
                                    const double * const *magmom,
                                    const double tolerance,
-                                   const double tolerance_constraint) const
+                                   const double tolerance_constraint)
 {
     int i, j;
 
     alm->files->job_title = prefix;
     alm->set_run_mode(mode);
     alm->set_verbosity(verbosity);
-    alm->system->nat = nat;
-    alm->system->nkd = nkd;
+    nat = nat_in;
+    nkd = nkd_in;
     alm->system->str_magmom = str_magmom;
     alm->symmetry->printsymmetry = printsymmetry;
     alm->symmetry->tolerance = tolerance;
-    allocate(alm->system->kdname, nkd);
-    allocate(alm->system->magmom, nat, 3);
 
-    for (i = 0; i < nkd; ++i) {
-        alm->system->kdname[i] = kdname[i];
+    if (kdname) {
+        deallocate(kdname);
     }
+    kdname = nullptr;
+    allocate(kdname, nkd_in);
+    for (i = 0; i < nkd_in; ++i) {
+        kdname[i] = kdname_in[i];
+    }
+
+    allocate(alm->system->magmom, nat_in, 3);
+
     for (i = 0; i < 3; ++i) {
         alm->system->is_periodic[i] = is_periodic[i];
     }
-    for (i = 0; i < nat; ++i) {
+    for (i = 0; i < nat_in; ++i) {
         for (j = 0; j < 3; ++j) {
             alm->system->magmom[i][j] = magmom[i][j];
         }
@@ -111,15 +117,14 @@ void InputSetter::set_general_vars(ALM *alm,
     }
 }
 
-void InputSetter::set_cell_parameter(ALM *alm,
-                                     const double a,
-                                     const double lavec_tmp[3][3]) const
+void InputSetter::set_cell_parameter(const double a,
+                                     const double lavec_in[3][3])
 {
     int i, j;
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
-            alm->system->lavec[i][j] = a * lavec_tmp[i][j];
+            lavec[i][j] = a * lavec_in[i][j];
         }
     }
 }
@@ -140,16 +145,16 @@ void InputSetter::set_interaction_vars(ALM *alm,
 
 void InputSetter::set_cutoff_radii(ALM *alm,
                                    const int maxorder,
-                                   const int nkd,
+                                   const int nkd_in,
                                    const double * const * const *rcs) const
 {
     int i, j, k;
 
-    allocate(alm->interaction->cutoff_radii, maxorder, nkd, nkd);
+    allocate(alm->interaction->cutoff_radii, maxorder, nkd_in, nkd_in);
 
     for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < nkd; ++j) {
-            for (k = 0; k < nkd; ++k) {
+        for (j = 0; j < nkd_in; ++j) {
+            for (k = 0; k < nkd_in; ++k) {
                 alm->interaction->cutoff_radii[i][j][k] = rcs[i][j][k];
             }
         }
@@ -239,22 +244,30 @@ void InputSetter::set_lasso_vars(ALM *alm,
     alm->lasso->lasso_algo = lasso_algo;
 }
 
-void InputSetter::set_atomic_positions(ALM *alm,
-                                       const int nat,
-                                       const int *kd,
-                                       const double * const *xeq) const
+void InputSetter::set_atomic_positions(const int nat_in,
+                                       const int *kd_in,
+                                       const double * const *xcoord_in)
 {
     int i, j;
 
-    allocate(alm->system->xcoord, nat, 3);
-    allocate(alm->system->kd, nat);
+    if (kd) {
+        deallocate(kd);
+    }
+    if (xcoord) {
+        deallocate(xcoord);
+    }
+    allocate(xcoord, nat);
+    allocate(kd, nat);
 
     for (i = 0; i < nat; ++i) {
-
-        alm->system->kd[i] = kd[i];
-
+        kd[i] = kd_in[i];
         for (j = 0; j < 3; ++j) {
-            alm->system->xcoord[i][j] = xeq[i][j];
+            xcoord[i][j] = xcoord_in[i][j];
         }
     }
+}
+
+void InputSetter::set_cell(ALM *alm) const
+{
+    alm->set_cell(nat, lavec, xcoord, kd, kdname);
 }

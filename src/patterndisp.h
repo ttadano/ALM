@@ -14,7 +14,11 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "alm.h"
+#include "interaction.h"
+#include "symmetry.h"
+#include "fcs.h"
+#include "constraint.h"
+#include "system.h"
 
 namespace ALM_NS
 {

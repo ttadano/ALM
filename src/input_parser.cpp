@@ -27,9 +27,13 @@
 
 using namespace ALM_NS;
 
-InputParser::InputParser() {}
+InputParser::InputParser() {
+    input_setter = new InputSetter();
+}
 
-InputParser::~InputParser() {}
+InputParser::~InputParser() {
+    delete input_setter;
+}
 
 void InputParser::run(ALM *alm,
                       const int narg,
@@ -46,7 +50,7 @@ void InputParser::run(ALM *alm,
         ifs_input.open(arg[1], std::ios::in);
         if (!ifs_input) {
             std::cout << "No such file or directory: " << arg[1] << std::endl;
-            exit(EXIT_FAILURE);
+            std::exit(EXIT_FAILURE);
         }
     }
 
@@ -55,7 +59,7 @@ void InputParser::run(ALM *alm,
 
 void InputParser::parse_displacement_and_force(ALM *alm) const
 {
-    int nat = alm->system->nat;
+    int nat = alm->system->get_supercell().number_of_atoms;
     int ndata = alm->fitting->ndata;
     int nstart = alm->fitting->nstart;
     int nend = alm->fitting->nend;
@@ -79,9 +83,12 @@ void InputParser::parse_displacement_and_force(ALM *alm) const
     deallocate(f);
 }
 
+//
+// This works independently from InputParser.
+//
 void InputParser::parse_displacement_and_force_files(double **u,
                                                      double **f,
-                                                     const int nat,
+                                                     const int nat_in,
                                                      const int ndata,
                                                      const int nstart,
                                                      const int nend,
@@ -103,7 +110,7 @@ void InputParser::parse_displacement_and_force_files(double **u,
     ifs_force.open(file_force.c_str(), std::ios::in);
     if (!ifs_force) exit("openfiles", "cannot open force file");
 
-    nreq = 3 * nat * ndata;
+    nreq = 3 * nat_in * ndata;
 
     std::vector<double> u_tmp(nreq), f_tmp(nreq);
 
@@ -137,10 +144,10 @@ void InputParser::parse_displacement_and_force_files(double **u,
         if (i >= skip_s && i < skip_e) continue;
         if (i > nend - 1) break;
 
-        for (j = 0; j < nat; ++j) {
+        for (j = 0; j < nat_in; ++j) {
             for (k = 0; k < 3; ++k) {
-                u[idata][3 * j + k] = u_tmp[3 * nat * i + 3 * j + k];
-                f[idata][3 * j + k] = f_tmp[3 * nat * i + 3 * j + k];
+                u[idata][3 * j + k] = u_tmp[3 * nat_in * i + 3 * j + k];
+                f[idata][3 * j + k] = f_tmp[3 * nat_in * i + 3 * j + k];
             }
         }
         ++idata;
@@ -182,6 +189,7 @@ void InputParser::parse_input(ALM *alm)
              "&position entry not found in the input file");
     }
     parse_atomic_positions(alm);
+    input_setter->set_cell(alm);
 
     if (!locate_tag("&interaction")) {
         exit("parse_input",
@@ -435,7 +443,6 @@ void InputParser::parse_general_vars(ALM *alm)
 
     }
 
-    InputSetter *input_setter = new InputSetter();
     input_setter->set_general_vars(alm,
                                    prefix,
                                    mode,
@@ -455,8 +462,6 @@ void InputParser::parse_general_vars(ALM *alm)
                                    magmom,
                                    tolerance,
                                    tolerance_constraint);
-    delete input_setter;
-
     allocate(magmom, nat, 3);
 
     kdname_v.clear();
@@ -551,9 +556,7 @@ void InputParser::parse_cell_parameter(ALM *alm)
         }
     }
 
-    InputSetter *input_setter = new InputSetter();
-    input_setter->set_cell_parameter(alm, a, lavec_tmp);
-    delete input_setter;
+    input_setter->set_cell_parameter(a, lavec_tmp);
 }
 
 
@@ -622,9 +625,7 @@ void InputParser::parse_interaction_vars(ALM *alm)
     }
 
 
-    InputSetter *input_setter = new InputSetter();
     input_setter->set_interaction_vars(alm, maxorder, nbody_include);
-    delete input_setter;
 
     deallocate(nbody_include);
 
@@ -735,7 +736,6 @@ void InputParser::parse_fitting_vars(ALM *alm)
         assign_val(flag_sparse, "SPARSE", fitting_var_dict);
     }
 
-    InputSetter *input_setter = new InputSetter();
     input_setter->set_fitting_vars(alm,
                                    ndata,
                                    nstart,
@@ -751,7 +751,6 @@ void InputParser::parse_fitting_vars(ALM *alm)
                                    fix_harmonic,
                                    fix_cubic,
                                    flag_sparse);
-    delete input_setter;
 
     if (alm->get_run_mode() == "lasso") {
 
@@ -871,7 +870,6 @@ void InputParser::parse_fitting_vars(ALM *alm)
                  "ndata_test, nstart_test, nend_test are not consistent with each other");
         }
 
-        InputSetter *input_setter = new InputSetter();
         input_setter->set_lasso_vars(alm,
                                      lasso_alpha,
                                      lasso_min_alpha,
@@ -896,7 +894,6 @@ void InputParser::parse_fitting_vars(ALM *alm)
                                      nend_test,
                                      dfile_test,
                                      ffile_test);
-        delete input_setter;
     }
 
     fitting_var_dict.clear();
@@ -995,9 +992,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
     }
 
 
-    InputSetter *input_setter = new InputSetter();
-    input_setter->set_atomic_positions(alm, nat, kd, xeq);
-    delete input_setter;
+    input_setter->set_atomic_positions(nat, kd, xeq);
 
     deallocate(xeq);
     deallocate(kd);
@@ -1176,9 +1171,7 @@ void InputParser::parse_cutoff_radii(ALM *alm)
     }
     deallocate(undefined_cutoff);
 
-    InputSetter *input_setter = new InputSetter();
     input_setter->set_cutoff_radii(alm, maxorder, nkd, rcs);
-    delete input_setter;
 
     deallocate(rcs);
 }
@@ -1315,7 +1308,7 @@ void InputParser::get_var_dict(const std::string keywords,
 }
 
 
-int InputParser::locate_tag(std::string key)
+int InputParser::locate_tag(const std::string key)
 {
     int ret = 0;
     std::string line;
@@ -1350,7 +1343,7 @@ int InputParser::locate_tag(std::string key)
     }
 }
 
-bool InputParser::is_endof_entry(std::string str) const
+bool InputParser::is_endof_entry(const std::string str) const
 {
     return str[0] == '/';
 }
