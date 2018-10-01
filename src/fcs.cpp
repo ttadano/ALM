@@ -9,9 +9,7 @@
 */
 
 #include "fcs.h"
-#include "alm.h"
 #include "constants.h"
-#include "constraint.h"
 #include "error.h"
 #include "interaction.h"
 #include "mathfunctions.h"
