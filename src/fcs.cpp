@@ -10,6 +10,7 @@
 
 #include "fcs.h"
 #include "constants.h"
+#include "constraint.h"
 #include "error.h"
 #include "interaction.h"
 #include "mathfunctions.h"

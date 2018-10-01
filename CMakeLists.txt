@@ -19,9 +19,9 @@ endif()
 
 if (UNIX)
     #set( ENV{BLA_VENDOR} "Intel10_64lp")
-	include_directories("/Users/tadano/src/spglib/include")
+	include_directories("/Users/togo/code/spglib/include")
     find_package(LAPACK REQUIRED)
-	set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
+	set(spglib "/Users/togo/code/spglib/lib/libsymspg.a")
 endif()
 
 #

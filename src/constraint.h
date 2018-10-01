@@ -22,8 +22,6 @@
 #include "system.h"
 #include "timer.h"
 
-typedef std::vector<std::map<unsigned int, double>> ConstraintSparseForm;
-
 namespace ALM_NS
 {
     class ConstraintClass
