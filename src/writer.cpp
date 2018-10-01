@@ -38,6 +38,10 @@ Writer::~Writer() {}
 void Writer::write_input_vars(const ALM *alm) const
 {
     unsigned int i;
+    int nat, nkd;
+
+    nat = alm->system->get_supercell().number_of_atoms;
+    nkd = alm->system->get_supercell().number_of_elems;
 
     alm->timer->start_clock("writer");
 
@@ -47,11 +51,11 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << " General:" << std::endl;
     std::cout << "  PREFIX = " << alm->files->job_title << std::endl;
     std::cout << "  MODE = " << alm->get_run_mode() << std::endl;
-    std::cout << "  NAT = " << alm->system->nat << "; NKD = " << alm->system->nkd << std::endl;
+    std::cout << "  NAT = " << nat << "; NKD = " << nkd << std::endl;
     std::cout << "  PRINTSYM = " << alm->symmetry->printsymmetry
         << "; TOLERANCE = " << alm->symmetry->tolerance << std::endl;
     std::cout << "  KD = ";
-    for (i = 0; i < alm->system->nkd; ++i) std::cout << std::setw(4) << alm->system->kdname[i];
+    for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->system->kdname[i];
     std::cout << std::endl;
     std::cout << "  PERIODIC = ";
     for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->system->is_periodic[i];

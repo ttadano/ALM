@@ -65,18 +65,18 @@ namespace ALM_NS
                   Timer *timer);
         void frac2cart(double **) const;
 
-        void set_cell(const double [3][3],
-                      const unsigned int,
-                      const unsigned int,
-                      const int *,
-                      const double * const *);
+        void set_supercell(const double [3][3],
+                           const unsigned int,
+                           const unsigned int,
+                           const int *,
+                           const double * const *);
 
         Cell get_supercell() const;
 
-        void set_spin_variable(bool,
-                               int,
-                               int,
-                               unsigned int,
+        void set_spin_variable(const bool,
+                               const int,
+                               const int,
+                               const unsigned int,
                                double **);
 
         Spin spin;

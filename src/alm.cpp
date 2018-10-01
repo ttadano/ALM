@@ -178,6 +178,8 @@ void ALM::set_cell(const int nat,
         }
     }
 
+    /* nkd = supercell.number_of_elems */
+    /* nat = supercell.number_of_atoms */
     system->nkd = nkd;
     system->nat = nat;
 
@@ -224,11 +226,11 @@ void ALM::set_cell(const int nat,
     }
 
     // Generate the information of the supercell
-    system->set_cell(system->lavec,
-                     system->nat,
-                     system->nkd,
-                     system->kd,
-                     system->xcoord);
+    system->set_supercell(system->lavec,
+                          system->nat,
+                          nkd,
+                          system->kd,
+                          system->xcoord);
 }
 
 void ALM::set_magnetic_params(const double *magmom,

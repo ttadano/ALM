@@ -4,13 +4,14 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
 #pragma once
 
 #include "alm.h"
+#include "input_setter.h"
 
 #include <fstream>
 #include <string>
@@ -26,21 +27,21 @@ namespace ALM_NS
         InputParser();
         ~InputParser();
         void run(ALM *alm,
-                 int narg,
+                 const int narg,
                  const char * const *arg);
 
         void parse_displacement_and_force(ALM *alm) const;
 
         void parse_displacement_and_force_files(double **u,
                                                 double **f,
-                                                int nat,
-                                                int ndata,
-                                                int nstart,
-                                                int nend,
-                                                int skip_s,
-                                                int skip_e,
-                                                std::string file_disp,
-                                                std::string file_force) const;
+                                                const int nat_in,
+                                                const int ndata,
+                                                const int nstart,
+                                                const int nend,
+                                                const int skip_s,
+                                                const int skip_e,
+                                                const std::string file_disp,
+                                                const std::string file_force) const;
         std::string str_magmom;
 
     private:
@@ -51,6 +52,7 @@ namespace ALM_NS
         int maxorder;
         int nat;
         int nkd;
+        InputSetter *input_setter;
 
         void parse_input(ALM *alm);
         void parse_general_vars(ALM *alm);
@@ -59,24 +61,17 @@ namespace ALM_NS
         void parse_interaction_vars(ALM *alm);
         void parse_cutoff_radii(ALM *alm);
         void parse_fitting_vars(ALM *alm);
-        int locate_tag(std::string);
-        void split_str_by_space(std::string,
+        int locate_tag(const std::string);
+        void split_str_by_space(const std::string,
                                 std::vector<std::string> &) const;
-        bool is_endof_entry(std::string) const;
-        void get_var_dict(std::string,
+        bool is_endof_entry(const std::string) const;
+        void get_var_dict(const std::string,
                           std::map<std::string,
                                    std::string> &);
 
         template <typename T>
         void assign_val(T &,
-                        std::string,
+                        const std::string,
                         std::map<std::string, std::string>);
-
-        void set_displacement_and_force(ALM *alm,
-                                        const double * const *u,
-                                        const double * const *f,
-                                        int nat,
-                                        int ndata_used,
-                                        int nmulti);
     };
 }

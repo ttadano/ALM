@@ -70,11 +70,11 @@ void System::init(const int verbosity,
     timer->stop_clock("system");
 }
 
-void System::set_cell(const double lavec_in[3][3],
-                      const unsigned int nat_in,
-                      const unsigned int nkd_in,
-                      const int *kd_in,
-                      const double * const *xf_in)
+void System::set_supercell(const double lavec_in[3][3],
+                           const unsigned int nat_in,
+                           const unsigned int nkd_in,
+                           const int *kd_in,
+                           const double * const *xf_in)
 {
     unsigned int i, j;
     for (i = 0; i < 3; ++i) {
