@@ -20,7 +20,6 @@ namespace ALM_NS
         ALM();
         ~ALM();
 
-        class InputSetter *input;
         class System *system;
         class Interaction *interaction;
         class Fcs *fcs;
