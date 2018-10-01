@@ -1,6 +1,5 @@
 import numpy as np
 from . import _alm as alm
-import warnings
 
 
 class ALM:
