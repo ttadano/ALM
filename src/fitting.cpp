@@ -4,7 +4,7 @@
  Copyright (c) 2014-2018 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -13,12 +13,9 @@
 #include "constraint.h"
 #include "error.h"
 #include "fcs.h"
-#include "files.h"
-#include "interaction.h"
 #include "mathfunctions.h"
 #include "memory.h"
 #include "symmetry.h"
-#include "system.h"
 #include "timer.h"
 #include <iostream>
 #include <cmath>
@@ -74,31 +71,37 @@ void Fitting::deallocate_variables()
     }
 }
 
-int Fitting::fitmain(ALM *alm)
+int Fitting::fitmain(const Symmetry *symmetry,
+                     const Constraint *constraint,
+                     const Fcs *fcs,
+                     const int maxorder,
+                     const unsigned int nat,
+                     const int verbosity,
+                     const std::string file_disp,
+                     const std::string file_force,
+                     Timer *timer)
 {
-    alm->timer->start_clock("fitting");
+    timer->start_clock("fitting");
 
-    const int nat = alm->system->supercell.number_of_atoms;
-    const int natmin = alm->symmetry->nat_prim;
-    const int maxorder = alm->interaction->maxorder;
-    const int nconsts = alm->constraint->number_of_constraints;
+    const int natmin = symmetry->nat_prim;
+    const int nconsts = constraint->number_of_constraints;
     const int ndata_used = nend - nstart + 1;
-    const int ntran = alm->symmetry->ntran;
+    const int ntran = symmetry->ntran;
     int info_fitting;
 
     int N = 0;
     for (auto i = 0; i < maxorder; ++i) {
-        N += alm->fcs->nequiv[i].size();
+        N += fcs->nequiv[i].size();
     }
     int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << " FITTING" << std::endl;
         std::cout << " =======" << std::endl << std::endl;
 
         std::cout << "  Reference files" << std::endl;
-        std::cout << "   Displacement: " << alm->files->file_disp << std::endl;
-        std::cout << "   Force       : " << alm->files->file_force << std::endl;
+        std::cout << "   Displacement: " << file_disp << std::endl;
+        std::cout << "   Force       : " << file_force << std::endl;
         std::cout << std::endl;
 
         std::cout << "  NSTART = " << nstart << "; NEND = " << nend << std::endl;
@@ -113,16 +116,16 @@ int Fitting::fitmain(ALM *alm)
     std::vector<double> bvec;
     std::vector<double> param_tmp(N);
 
-    if (alm->constraint->constraint_algebraic) {
+    if (constraint->constraint_algebraic) {
 
         // Apply constraints algebraically. (ICONST = 2, 3 is not supported.)
         // SPARSE = 1 is used only when the constraints are considered algebraically.
 
         int N_new = 0;
         for (auto i = 0; i < maxorder; ++i) {
-            N_new += alm->constraint->index_bimap[i].size();
+            N_new += constraint->index_bimap[i].size();
         }
-        if (alm->verbosity > 0) {
+        if (verbosity > 0) {
             std::cout << "  Total Number of Free Parameters : "
                 << N_new << std::endl << std::endl;
         }
@@ -144,25 +147,25 @@ int Fitting::fitmain(ALM *alm)
             SpMat sp_amat(nrows, ncols);
             Eigen::VectorXd sp_bvec(nrows);
 
-            get_matrix_elements_in_sparse_form(maxorder, 
-                                               ndata_used, 
-                                               sp_amat, 
+            get_matrix_elements_in_sparse_form(maxorder,
+                                               ndata_used,
+                                               sp_amat,
                                                sp_bvec,
                                                fnorm,
-                                               alm->symmetry,
-                                               alm->fcs,
-                                               alm->constraint);
+                                               symmetry,
+                                               fcs,
+                                               constraint);
 
             std::cout << "Now, start fitting ..." << std::endl;
 
-            info_fitting = run_eigen_sparseQR(sp_amat, 
-                                              sp_bvec, 
-                                              param_tmp, 
-                                              fnorm, 
-                                              maxorder, 
-                                              alm->fcs, 
-                                              alm->constraint,
-                                              alm->verbosity);
+            info_fitting = run_eigen_sparseQR(sp_amat,
+                                              sp_bvec,
+                                              param_tmp,
+                                              fnorm,
+                                              maxorder,
+                                              fcs,
+                                              constraint,
+                                              verbosity);
 #else
             std::cout << " Please recompile the code with -DWITH_SPARSE_SOLVER" << std::endl;
             exit("fitmain", "Sparse solver not supported.");
@@ -180,9 +183,9 @@ int Fitting::fitmain(ALM *alm)
                                                      &amat[0],
                                                      &bvec[0],
                                                      fnorm,
-                                                     alm->symmetry,
-                                                     alm->fcs,
-                                                     alm->constraint);
+                                                     symmetry,
+                                                     fcs,
+                                                     constraint);
 
             // Perform fitting with SVD
 
@@ -191,9 +194,9 @@ int Fitting::fitmain(ALM *alm)
                                             &amat[0], &bvec[0],
                                             param_tmp,
                                             fnorm, maxorder,
-                                            alm->fcs,
-                                            alm->constraint,
-                                            alm->verbosity);
+                                            fcs,
+                                            constraint,
+                                            verbosity);
         }
 
     } else {
@@ -220,28 +223,28 @@ int Fitting::fitmain(ALM *alm)
                             ndata_used,
                             &amat[0],
                             &bvec[0],
-                            alm->symmetry,
-                            alm->fcs);
+                            symmetry,
+                            fcs);
 
         // Perform fitting with SVD or QRD
 
         assert(!amat.empty());
         assert(!bvec.empty());
 
-        if (alm->constraint->exist_constraint) {
+        if (constraint->exist_constraint) {
             info_fitting
                 = fit_with_constraints(N, M, nconsts,
                                        &amat[0], &bvec[0],
                                        &param_tmp[0],
-                                       alm->constraint->const_mat,
-                                       alm->constraint->const_rhs,
-                                       alm->verbosity);
+                                       constraint->const_mat,
+                                       constraint->const_rhs,
+                                       verbosity);
         } else {
             info_fitting
                 = fit_without_constraints(N, M,
                                           &amat[0], &bvec[0],
                                           &param_tmp[0],
-                                          alm->verbosity);
+                                          verbosity);
         }
     }
 
@@ -252,14 +255,14 @@ int Fitting::fitmain(ALM *alm)
     allocate(params, N);
     for (auto i = 0; i < N; ++i) params[i] = param_tmp[i];
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         std::cout << std::endl;
-        alm->timer->print_elapsed();
+        timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
 
-    alm->timer->stop_clock("fitting");
+    timer->stop_clock("fitting");
 
     return info_fitting;
 }
@@ -292,7 +295,7 @@ void Fitting::set_displacement_and_force(const double * const *disp_in,
 void Fitting::set_fcs_values(const int maxorder,
                              double *fc_in,
                              std::vector<int> *nequiv,
-                             Constraint *constraint)
+                             const Constraint *constraint)
 {
     // fc_in: irreducible set of force constants
     // fc_length: dimension of params (can differ from that of fc_in)
@@ -334,7 +337,7 @@ int Fitting::fit_without_constraints(int N,
                                      double *amat,
                                      double *bvec,
                                      double *param_out,
-                                     const int verbosity)
+                                     const int verbosity) const
 {
     int i, j;
     int nrhs = 1, nrank, INFO;
@@ -410,7 +413,7 @@ int Fitting::fit_with_constraints(int N,
                                   double *param_out,
                                   double **cmat,
                                   double *dvec,
-                                  const int verbosity)
+                                  const int verbosity) const
 {
     int i, j;
     double *fsum2;
@@ -517,9 +520,9 @@ int Fitting::fit_algebraic_constraints(int N,
                                        std::vector<double> &param_out,
                                        const double fnorm,
                                        const int maxorder,
-                                       Fcs *fcs,
-                                       Constraint *constraint,
-                                       const int verbosity)
+                                       const Fcs *fcs,
+                                       const Constraint *constraint,
+                                       const int verbosity) const
 {
     int i, j;
     unsigned long k;
@@ -597,8 +600,8 @@ void Fitting::get_matrix_elements(const int maxorder,
                                   const int ndata_fit,
                                   double *amat,
                                   double *bvec,
-                                  Symmetry *symmetry,
-                                  Fcs *fcs)
+                                  const Symmetry *symmetry,
+                                  const Fcs *fcs) const
 {
     int i, j;
     long irow;
@@ -698,9 +701,9 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                                                        double *amat,
                                                        double *bvec,
                                                        double &fnorm,
-                                                       Symmetry *symmetry,
-                                                       Fcs *fcs,
-                                                       Constraint *constraint)
+                                                       const Symmetry *symmetry,
+                                                       const Fcs *fcs,
+                                                       const Constraint *constraint) const
 {
     int i, j;
     long irow;
@@ -869,9 +872,9 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
                                                  SpMat &sp_amat,
                                                  Eigen::VectorXd &sp_bvec,
                                                  double &fnorm,
-                                                 Symmetry *symmetry,
-                                                 Fcs *fcs,
-                                                 Constraint *constraint)
+                                                 const Symmetry *symmetry,
+                                                 const Fcs *fcs,
+                                                 const Constraint *constraint)
 {
     int i, j;
     long irow;
@@ -1051,9 +1054,9 @@ void Fitting::recover_original_forceconstants(const int maxorder,
                                               const std::vector<double> &param_in,
                                               std::vector<double> &param_out,
                                               std::vector<int> *nequiv,
-                                              Constraint *constraint)
+                                              const Constraint *constraint) const
 {
-    // Expand the given force constants into the larger sets 
+    // Expand the given force constants into the larger sets
     // by using the constraint matrix.
 
     int i, j, k;
@@ -1100,7 +1103,7 @@ void Fitting::recover_original_forceconstants(const int maxorder,
 void Fitting::data_multiplier(double **data_in,
                               std::vector<std::vector<double>> &data_out,
                               const int ndata_used,
-                              Symmetry *symmetry)
+                              const Symmetry *symmetry) const
 {
     int i, j, k;
     int n_mapped;
@@ -1125,7 +1128,7 @@ void Fitting::data_multiplier(double **data_in,
 }
 
 int Fitting::inprim_index(const int n,
-                          Symmetry *symmetry)
+                          const Symmetry *symmetry) const
 {
     int in = -1;
     const auto atmn = n / 3;
@@ -1141,7 +1144,7 @@ int Fitting::inprim_index(const int n,
 }
 
 double Fitting::gamma(const int n,
-                      const int *arr)
+                      const int *arr) const
 {
     int *arr_tmp, *nsame;
     int i;
@@ -1187,7 +1190,7 @@ double Fitting::gamma(const int n,
     return static_cast<double>(nsame_to_front) / static_cast<double>(denom);
 }
 
-int Fitting::factorial(const int n)
+int Fitting::factorial(const int n) const
 {
     if (n == 1 || n == 0) {
         return 1;
@@ -1199,7 +1202,7 @@ int Fitting::factorial(const int n)
 int Fitting::rankQRD(const int m,
                      const int n,
                      double *mat,
-                     const double tolerance)
+                     const double tolerance) const
 {
     // Return the rank of matrix mat revealed by the column pivoting QR decomposition
     // The matrix mat is destroyed.
@@ -1255,11 +1258,11 @@ int Fitting::rankQRD(const int m,
 #ifdef WITH_SPARSE_SOLVER
 int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
                                 const Eigen::VectorXd &sp_bvec,
-                                std::vector<double> &param_out, 
+                                std::vector<double> &param_out,
                                 const double fnorm,
                                 const int maxorder,
-                                Fcs *fcs,
-                                Constraint *constraint,
+                                const Fcs *fcs,
+                                const Constraint *constraint,
                                 const int verbosity)
 {
 //    Eigen::BenchTimer t;
@@ -1269,59 +1272,59 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 //    std::cout << "Start calculating AtA ..." << std::endl;
     AtA = sp_mat.transpose()*sp_mat;
 //    std::cout << sp_mat.rows() << "x" << sp_mat.cols() << "\n";
-  
+
 //    std::cout << "done." << std::endl;
 
- //   std::cout << "Start calculating AtB ..." << std::endl;
+//   std::cout << "Start calculating AtB ..." << std::endl;
  //   Eigen::VectorXd AtB, x;
     auto AtB = sp_mat.transpose()*sp_bvec;
  //   std::cout << "done." << std::endl;
-   
+
     if (verbosity > 0) {
         std::cout << "  Solve least-squares problem by sparse LDLT." << std::endl;
     }
 
 
-    // t.reset(); t.start();    
-    // Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
-    // Eigen::VectorXd x = qr.solve(sp_bvec);
+    // t.reset(); t.start();
+// Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
+// Eigen::VectorXd x = qr.solve(sp_bvec);
 
-    // t.stop();
-    // std::cout << "sqr   : " << qr.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+// t.stop();
+// std::cout << "sqr   : " << qr.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
 //    t.reset(); t.start();
     Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
- //   x.setZero(); 
+ //   x.setZero();
     auto x = ldlt.solve(AtB);
 //    t.stop();
-    //std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
-  
-  
-    // t.reset(); t.start();
-    // Eigen::ConjugateGradient<SpMat> cg(AtA);
-    // cg.setTolerance(eps10);
-    // cg.setMaxIterations(10000000);
-    // x.setZero(); x = cg.solve(AtB);
-    // t.stop();
-    // std::cout << "cg    : " << cg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
-  
-    // t.reset(); t.start();
-    // Eigen::LeastSquaresConjugateGradient<SpMat> lscg(sp_mat);
-    // lscg.setTolerance(eps10);
-    // lscg.setMaxIterations(10000000);
-    // x.setZero(); x = lscg.solve(sp_bvec);
+//std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
-    // t.stop();
-    // std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
-  
-    // t.reset(); t.start();
-    // Eigen::BiCGSTAB<SpMat> bicg(AtA);
-    // bicg.setTolerance(eps10);
-    // bicg.setMaxIterations(10000000);
-    // x.setZero(); x = bicg.solve(AtB);
-    // t.stop();
+
+// t.reset(); t.start();
+// Eigen::ConjugateGradient<SpMat> cg(AtA);
+// cg.setTolerance(eps10);
+// cg.setMaxIterations(10000000);
+// x.setZero(); x = cg.solve(AtB);
+// t.stop();
+// std::cout << "cg    : " << cg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+
+// t.reset(); t.start();
+// Eigen::LeastSquaresConjugateGradient<SpMat> lscg(sp_mat);
+// lscg.setTolerance(eps10);
+// lscg.setMaxIterations(10000000);
+// x.setZero(); x = lscg.solve(sp_bvec);
+
+// t.stop();
+// std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+
+// t.reset(); t.start();
+// Eigen::BiCGSTAB<SpMat> bicg(AtA);
+// bicg.setTolerance(eps10);
+// bicg.setMaxIterations(10000000);
+// x.setZero(); x = bicg.solve(AtB);
+// t.stop();
     // std::cout << "bicg    : " << bicg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
-  
+
 
     auto res = sp_bvec - sp_mat * x;
     auto res2norm = res.squaredNorm();
@@ -1347,7 +1350,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
             std::cout << "  Fitting error (%) : "
                 << sqrt(res2norm / (fnorm * fnorm)) * 100.0 << std::endl;
         }
-    
+
         return 0;
 
     } else {

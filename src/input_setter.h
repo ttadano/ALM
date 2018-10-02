@@ -22,7 +22,7 @@ namespace ALM_NS
         InputSetter();
         ~InputSetter();
 
-        void deallocator(ALM *alm);
+        void deallocator(ALM *alm) const;
         void set_general_vars(ALM *alm,
                               std::string prefix,
                               std::string mode,
@@ -41,21 +41,23 @@ namespace ALM_NS
                               const std::string *kdname,
                               const double * const *magmom,
                               double tolerance,
-                              double tolerance_constraint);
+                              double tolerance_constraint) const;
         void set_cell_parameter(ALM *alm,
                                 double a,
-                                const double lavec_tmp[3][3]);
+                                const double lavec_tmp[3][3]) const;
         void set_interaction_vars(ALM *alm,
                                   int maxorder,
-                                  const int *nbody_include);
+                                  const int *nbody_include) const;
         void set_cutoff_radii(ALM *alm,
                               int maxorder,
                               int nkd,
-                              const double * const * const *rcs);
+                              const double * const * const *rcs) const;
         void set_fitting_vars(ALM *alm,
                               int ndata,
                               int nstart,
                               int nend,
+                              int skip_s,
+                              int skip_e,
                               std::string dfile,
                               std::string ffile,
                               int constraint_flag,
@@ -64,10 +66,34 @@ namespace ALM_NS
                               std::string fc3_file,
                               bool fix_harmonic,
                               bool fix_cubic,
-                              int flag_sparse);
+                              int flag_sparse) const;
+        void set_lasso_vars(ALM *alm,
+                            double lasso_alpha,
+                            double lasso_min_alpha,
+                            double lasso_max_alpha,
+                            int lasso_num_alpha,
+                            double lasso_tol,
+                            int lasso_maxiter,
+                            int lasso_freq,
+                            int lasso_algo,
+                            int standardize,
+                            double lasso_dnorm,
+                            double lasso_lambda,
+                            int lasso_maxiter_cg,
+                            int lasso_pcg,
+                            int lasso_cv,
+                            int lasso_cvset,
+                            int save_solution_path,
+                            int debias_ols,
+                            double lasso_zero_thr,
+                            int ndata_test,
+                            int nstart_test,
+                            int nend_test,
+                            std::string dfile_test,
+                            std::string ffile_test) const;
         void set_atomic_positions(ALM *alm,
                                   int nat,
                                   const int *kd,
-                                  const double * const *xeq);
+                                  const double * const *xeq) const;
     };
 }

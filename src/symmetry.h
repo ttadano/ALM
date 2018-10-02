@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -101,7 +101,9 @@ namespace ALM_NS
         Symmetry();
         ~Symmetry();
 
-        void init(ALM *);
+        void init(const System *system,
+                  const int verbosity,
+                  Timer *timer);
 
         unsigned int nsym, ntran, nat_prim;
         std::vector<int> symnum_tran;
@@ -143,7 +145,7 @@ namespace ALM_NS
                                      const std::vector<int> &,
                                      int **,
                                      int **,
-                                     std::vector<Maps> &);
+                                     std::vector<Maps> &) const;
 
         void findsym_alm(const Cell &,
                          const int [3],
@@ -160,22 +162,22 @@ namespace ALM_NS
                             int &,
                             std::string &);
 
-        bool is_translation(const int [3][3]);
-        bool is_proper(const double [3][3]);
+        bool is_translation(const int [3][3]) const;
+        bool is_proper(const double [3][3]) const;
 
         void symop_in_cart(double [3][3],
                            const int [3][3],
                            const double [3][3],
-                           const double [3][3]);
+                           const double [3][3]) const;
 
-        void print_symminfo_stdout();
+        void print_symminfo_stdout() const;
 
         template <typename T>
         bool is_compatible(const T [3][3],
                            double tolerance_zero = 1.0e-5);
 
         void find_lattice_symmetry(const double [3][3],
-                                   std::vector<RotationMatrix> &);
+                                   std::vector<RotationMatrix> &) const;
 
         void find_crystal_symmetry(const Cell &,
                                    const std::vector<std::vector<unsigned int>> &,
@@ -192,7 +194,7 @@ namespace ALM_NS
                                    unsigned int &,
                                    int *,
                                    double **,
-                                   double);
+                                   double) const;
 
         std::string file_sym;
     };

@@ -40,12 +40,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\spglib;$(UniversalCRT_IncludePath);C:\boost\boost_1_66_0;C:\eigen_c++;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <IncludePath>C:\boost\include\boost-1_67;C:\spglib;$(UniversalCRT_IncludePath);C:\boost\boost_1_66_0;C:\eigen_c++;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
     <LibraryPath>C:\spglib;$(UniversalCRT_LibraryPath_x86);C:\boost\boost_1_66_0\lib;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSDK_LibraryPath_x86);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>C:\spglib;$(UniversalCRT_IncludePath);C:\boost\boost_1_66_0;C:\eigen_c++;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
-    <LibraryPath>C:\spglib;$(UniversalCRT_LibraryPath_x86);C:\boost\boost_1_66_0\lib;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSDK_LibraryPath_x86);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\boost\include\boost-1_67\;C:\spglib;$(UniversalCRT_IncludePath);C:\boost\boost_1_66_0;C:\eigen_c++;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>C:\spglib;$(UniversalCRT_LibraryPath_x86);$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSDK_LibraryPath_x86);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -87,6 +87,7 @@
     <ClCompile Include="input_parser.cpp" />
     <ClCompile Include="input_setter.cpp" />
     <ClCompile Include="interaction.cpp" />
+    <ClCompile Include="lasso.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="patterndisp.cpp" />
     <ClCompile Include="rref.cpp" />
@@ -107,6 +108,7 @@
     <ClInclude Include="input_parser.h" />
     <ClInclude Include="input_setter.h" />
     <ClInclude Include="interaction.h" />
+    <ClInclude Include="lasso.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="patterndisp.h" />
     <ClInclude Include="rref.h" />

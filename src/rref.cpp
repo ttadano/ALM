@@ -136,10 +136,9 @@ void rref(std::vector<std::vector<double>> &mat,
 }
 
 
-
 void rref_sparse(const int ncols,
-                  ConstraintSparseForm &sp_constraint,
-                  const double tolerance)
+                 ConstraintSparseForm &sp_constraint,
+                 const double tolerance)
 {
     // This function is somewhat sensitive to the numerical accuracy.
     // The loss of numerical digits can lead to instability.

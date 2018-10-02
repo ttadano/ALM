@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -30,15 +30,15 @@ System::~System()
     deallocate_variables();
 }
 
-void System::init(ALM *alm)
+void System::init(const int verbosity,
+                  Timer *timer)
 {
-    int i, j;
-    alm->timer->start_clock("system");
+    timer->start_clock("system");
 
     // Generate the information of the supercell
     set_cell(lavec, nat, nkd, kd, xcoord, supercell);
 
-    // Generate the information of spins 
+    // Generate the information of spins
     set_spin_variable(lspin, noncollinear, trev_sym_mag,
                       nat, magmom);
 
@@ -56,21 +56,21 @@ void System::init(ALM *alm)
     }
     allocate(exist_image, nneib);
 
-    generate_coordinate_of_periodic_images(alm->system, nat,
-                                           alm->system->supercell.x_fractional,
-                                           alm->system->is_periodic,
+    generate_coordinate_of_periodic_images(nat,
+                                           supercell.x_fractional,
+                                           is_periodic,
                                            x_image,
                                            exist_image);
 
-    if (alm->verbosity > 0) {
+    if (verbosity > 0) {
         print_structure_stdout(supercell);
         if (lspin) print_magmom_stdout();
-        alm->timer->print_elapsed();
+        timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
     }
 
-    alm->timer->stop_clock("system");
+    timer->stop_clock("system");
 }
 
 void System::set_cell(const double lavec_in[3][3],
@@ -78,7 +78,7 @@ void System::set_cell(const double lavec_in[3][3],
                       const unsigned int nkd_in,
                       int *kd_in,
                       double **xf_in,
-                      Cell &cell_out)
+                      Cell &cell_out) const
 {
     unsigned int i, j;
     for (i = 0; i < 3; ++i) {
@@ -121,7 +121,7 @@ void System::set_cell(const double lavec_in[3][3],
 }
 
 void System::set_reciprocal_latt(const double aa[3][3],
-                                 double bb[3][3])
+                                 double bb[3][3]) const
 {
     /*
     Calculate Reciprocal Lattice Vectors
@@ -165,7 +165,7 @@ void System::set_reciprocal_latt(const double aa[3][3],
     bb[2][2] = (aa[0][0] * aa[1][1] - aa[0][1] * aa[1][0]) * factor;
 }
 
-void System::frac2cart(double **xf)
+void System::frac2cart(double **xf) const
 {
     // x_cartesian = A x_fractional
 
@@ -184,7 +184,7 @@ void System::frac2cart(double **xf)
 }
 
 double System::volume(const double latt_in[3][3],
-                      LatticeType type)
+                      LatticeType type) const
 {
     int i, j;
     double mat[3][3];
@@ -285,9 +285,9 @@ void System::set_atomtype_group()
 {
     // In the case of collinear calculation, spin moments are considered as scalar
     // variables. Therefore, the same elements with different magnetic moments are
-    // considered as different types. In noncollinear calculations, 
+    // considered as different types. In noncollinear calculations,
     // magnetic moments are not considered in this stage. They will be treated
-    // separately in symmetry.cpp where spin moments will be rotated and flipped 
+    // separately in symmetry.cpp where spin moments will be rotated and flipped
     // using time-reversal symmetry.
 
     unsigned int i;
@@ -329,16 +329,15 @@ void System::set_atomtype_group()
 }
 
 
-void System::generate_coordinate_of_periodic_images(System *system,
-                                                    const unsigned int nat,
+void System::generate_coordinate_of_periodic_images(const unsigned int nat,
                                                     const std::vector<std::vector<double>> &xf_in,
                                                     const int periodic_flag[3],
                                                     double ***xc_out,
-                                                    int *is_allowed)
+                                                    int *is_allowed) const
 {
     //
     // Generate Cartesian coordinates of atoms in the neighboring 27 supercells
-    // 
+    //
 
     unsigned int i, j;
     int ia, ja, ka;
@@ -351,7 +350,7 @@ void System::generate_coordinate_of_periodic_images(System *system,
         }
     }
     // Convert to Cartesian coordinate
-    system->frac2cart(xc_out[0]);
+    frac2cart(xc_out[0]);
 
     for (ia = -1; ia <= 1; ++ia) {
         for (ja = -1; ja <= 1; ++ja) {
@@ -366,7 +365,7 @@ void System::generate_coordinate_of_periodic_images(System *system,
                     xc_out[icell][i][2] = xf_in[i][2] + static_cast<double>(ka);
                 }
                 // Convert to Cartesian coordinate
-                system->frac2cart(xc_out[icell]);
+                frac2cart(xc_out[icell]);
             }
         }
     }
@@ -382,7 +381,7 @@ void System::generate_coordinate_of_periodic_images(System *system,
 
                 ++icell;
 
-                // When periodic flag is zero along an axis, 
+                // When periodic flag is zero along an axis,
                 // periodic images along that axis cannot be considered.
                 if (((std::abs(ia) == 1) && (periodic_flag[0] == 0)) ||
                     ((std::abs(ja) == 1) && (periodic_flag[1] == 0)) ||
@@ -466,7 +465,7 @@ void System::print_structure_stdout(const Cell &cell)
 }
 
 
-void System::print_magmom_stdout()
+void System::print_magmom_stdout() const
 {
     using namespace std;
 

@@ -37,7 +37,7 @@ namespace ALM_NS
 
     private:
         void reset();
-        double elapsed_walltime();
+        double elapsed_walltime() const;
         double elapsed_cputime();
         std::map<std::string, double> walltime;
         std::map<std::string, double> cputime;
@@ -47,7 +47,7 @@ namespace ALM_NS
 #if defined(WIN32) || defined(_WIN32)
         LARGE_INTEGER walltime_ref;
         LARGE_INTEGER frequency;
-        double get_cputime();
+        double get_cputime() const;
         double cputime_ref;
 #else
         timeval walltime_ref;

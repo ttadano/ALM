@@ -43,7 +43,7 @@ void Timer::reset()
 #endif
 }
 
-double Timer::elapsed_walltime()
+double Timer::elapsed_walltime() const
 {
 #if defined(WIN32) || defined(_WIN32)
     LARGE_INTEGER time_now;
@@ -59,7 +59,7 @@ double Timer::elapsed_walltime()
 }
 
 #if defined(WIN32) || defined(_WIN32)
-double Timer::get_cputime()
+double Timer::get_cputime() const
 {
     FILETIME createTime;
     FILETIME exitTime;

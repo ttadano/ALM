@@ -18,6 +18,6 @@ namespace ALM_NS
     public:
         ALMCUI();
         ~ALMCUI();
-        void run(int narg, char **arg);
+        void run(int narg, char **arg) const;
     };
 }

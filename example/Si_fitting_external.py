@@ -89,7 +89,7 @@ alm.alm_new()
 alm.set_displacement_and_force(disp, force)
 
 # Define the taylor expansion model and find force constants
-alm.find_force_constant(2, [-1, 7.3])
+alm.define(2, [-1, 7.3])
 
 # Set up options for translational invariance
 alm.set_constraint(translation=True)

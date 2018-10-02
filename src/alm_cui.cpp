@@ -11,6 +11,7 @@
 #include "alm_cui.h"
 #include "alm.h"
 #include "input_parser.h"
+#include "lasso.h"
 #include "timer.h"
 #include "version.h"
 #include "writer.h"
@@ -27,7 +28,8 @@ ALMCUI::ALMCUI() {}
 
 ALMCUI::~ALMCUI() {}
 
-void ALMCUI::run(int narg, char **arg)
+void ALMCUI::run(int narg,
+                 char **arg) const
 {
     ALM *alm = new ALM();
 
@@ -35,7 +37,7 @@ void ALMCUI::run(int narg, char **arg)
     InputParser *input_parser = new InputParser();
     input_parser->run(alm, narg, arg);
 
-    if (alm->verbosity > 0) {
+    if (alm->get_verbosity() > 0) {
         std::cout << " +-----------------------------------------------------------------+" << std::endl;
         std::cout << " +                         Program ALM                             +" << std::endl;
         std::cout << " +                             Ver.";
@@ -53,37 +55,28 @@ void ALMCUI::run(int narg, char **arg)
 
     Writer *writer = new Writer();
 
-    if (alm->verbosity > 0) {
+    if (alm->get_verbosity() > 0) {
         writer->write_input_vars(alm);
     }
 
-    if (alm->mode == "fitting") {
+    if (alm->get_run_mode() == "fitting" || alm->get_run_mode() == "lasso") {
         input_parser->parse_displacement_and_force(alm);
     }
     delete input_parser;
 
     alm->run();
 
-    if (alm->mode == "fitting") {
+    if (alm->get_run_mode() == "fitting" || (alm->get_run_mode() == "lasso" && alm->lasso->lasso_cv == 0)) {
         writer->writeall(alm);
-    } else if (alm->mode == "suggest") {
+    } else if (alm->get_run_mode() == "suggest") {
         writer->write_displacement_pattern(alm);
     }
     delete writer;
 
-    if (alm->verbosity > 0) {
+    if (alm->get_verbosity() > 0) {
         std::cout << std::endl << " Job finished at "
             << alm->timer->DateAndTime() << std::endl;
     }
-
-    //std::cout << "FCS: " << alm->timer->get_walltime("fcs")
-    //    << " " << alm->timer->get_cputime("fcs") << std::endl;
-    //std::cout << "CONSTRAINT: " << alm->timer->get_walltime("constraint")
-    //    << " " << alm->timer->get_cputime("constraint") << std::endl;
-    //std::cout << "FITTING: " << alm->timer->get_walltime("fitting")
-    //    << " " << alm->timer->get_cputime("fitting") << std::endl;
-    //std::cout << "SYSTEM: " << alm->timer->get_walltime("system") << std::endl;
-
 
     delete alm;
 }

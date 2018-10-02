@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -101,7 +101,7 @@ namespace ALM_NS
             col(col_in), val(val_in) {}
     };
 
-    // Operator for sort 
+    // Operator for sort
     inline bool operator<(const std::vector<ConstraintIntegerElement> &obj1,
                           const std::vector<ConstraintIntegerElement> &obj2)
     {
@@ -153,7 +153,7 @@ namespace ALM_NS
             col(col_in), val(val_in) {}
     };
 
-    // Operator for sort 
+    // Operator for sort
     inline bool operator<(const std::vector<ConstraintDoubleElement> &obj1,
                           const std::vector<ConstraintDoubleElement> &obj2)
     {
@@ -205,7 +205,13 @@ namespace ALM_NS
         Constraint();
         ~Constraint();
 
-        void setup(ALM *alm);
+        void setup(const System *system,
+                   const Fcs *fcs,
+                   const Interaction *interaction,
+                   const Symmetry *symmetry,
+                   const std::string alm_mode,
+                   const int verbosity,
+                   Timer *timer);
 
         int constraint_mode;
         int number_of_constraints;
@@ -227,12 +233,12 @@ namespace ALM_NS
         std::vector<ConstraintTypeRelate> *const_relate_rotation;
         boost::bimap<int, int> *index_bimap;
 
-        void get_mapping_constraint(int,
+        void get_mapping_constraint(const int,
                                     std::vector<int> *,
                                     ConstraintSparseForm *,
                                     std::vector<ConstraintTypeFix> *,
                                     std::vector<ConstraintTypeRelate> *,
-                                    boost::bimap<int, int> *);
+                                    boost::bimap<int, int> *) const;
 
     private:
 
@@ -248,12 +254,12 @@ namespace ALM_NS
 
         int levi_civita(int,
                         int,
-                        int);
+                        int) const;
 
-        void generate_rotational_constraint(System *,
-                                            Symmetry *,
-                                            Interaction *,
-                                            Fcs *,
+        void generate_rotational_constraint(const System *,
+                                            const Symmetry *,
+                                            const Interaction *,
+                                            const Fcs *,
                                             const int,
                                             const double,
                                             ConstraintSparseForm *,
@@ -262,56 +268,56 @@ namespace ALM_NS
         void calc_constraint_matrix(int,
                                     std::vector<int> *,
                                     int,
-                                    int &);
+                                    int &) const;
 
-        void print_constraint(const ConstraintSparseForm &);
+        void print_constraint(const ConstraintSparseForm &) const;
 
         void setup_rotation_axis(bool [3][3]);
         bool is_allzero(int,
                         const double *,
-                        int nshift = 0);
+                        int nshift = 0) const;
         bool is_allzero(const std::vector<int> &,
-                        int &);
+                        int &) const;
         bool is_allzero(const std::vector<double> &,
                         double,
                         int &,
-                        const int nshift = 0);
+                        const int nshift = 0) const;
 
 
         void remove_redundant_rows(int,
                                    std::vector<ConstraintClass> &,
-                                   double tolerance = eps12);
+                                   double tolerance = eps12) const;
 
 
         void generate_symmetry_constraint_in_cartesian(int,
-                                                       Symmetry *,
-                                                       Interaction *,
-                                                       Fcs *,
+                                                       const Symmetry *,
+                                                       const Interaction *,
+                                                       const Fcs *,
                                                        const int,
-                                                       ConstraintSparseForm *);
+                                                       ConstraintSparseForm *) const;
 
         void get_constraint_translation(const Cell &,
-                                        Symmetry *,
-                                        Interaction *,
-                                        Fcs *,
+                                        const Symmetry *,
+                                        const Interaction *,
+                                        const Fcs *,
                                         int,
                                         const std::vector<FcProperty> &,
                                         int,
                                         ConstraintSparseForm &,
-                                        bool do_rref = false);
+                                        bool do_rref = false) const;
 
         void generate_translational_constraint(const Cell &,
-                                               Symmetry *,
-                                               Interaction *,
-                                               Fcs *,
+                                               const Symmetry *,
+                                               const Interaction *,
+                                               const Fcs *,
                                                const int,
                                                ConstraintSparseForm *);
 
         void fix_forceconstants_to_file(int,
-                                        Symmetry *,
-                                        Fcs *,
+                                        const Symmetry *,
+                                        const Fcs *,
                                         std::string,
-                                        std::vector<ConstraintTypeFix> &);
+                                        std::vector<ConstraintTypeFix> &) const;
     };
 
     extern "C" {

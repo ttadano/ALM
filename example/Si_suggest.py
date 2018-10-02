@@ -78,7 +78,7 @@ kd = [14] * 64
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
 with ALM(lavec, xcoord, kd) as alm:
-    alm.find_force_constant(1, [-1])
-    alm.run_suggest()
-    print(alm.get_atom_mapping_by_pure_translations())
+    alm.define(1, [-1])
+    alm.suggest()
+    print(alm.getmap_primitive_to_supercell())
     print(alm.get_displacement_patterns(1))

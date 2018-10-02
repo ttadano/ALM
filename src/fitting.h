@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -29,7 +29,15 @@ namespace ALM_NS
         Fitting();
         ~Fitting();
 
-        int fitmain(ALM *);
+        int fitmain(const Symmetry *symmetry,
+                    const Constraint *constraint,
+                    const Fcs *fcs,
+                    const int maxorder,
+                    const unsigned int nat,
+                    const int verbosity,
+                    const std::string file_disp,
+                    const std::string file_force,
+                    Timer *timer);
 
         int ndata, nstart, nend;
         int skip_s, skip_e;
@@ -41,28 +49,28 @@ namespace ALM_NS
 
         void set_displacement_and_force(const double * const *,
                                         const double * const *,
-                                        int,
-                                        int);
+                                        const int,
+                                        const int);
 
 
-        void get_matrix_elements_algebraic_constraint(int,
-                                                      int,
+        void get_matrix_elements_algebraic_constraint(const int,
+                                                      const int,
                                                       double *,
                                                       double *,
                                                       double &,
-                                                      Symmetry *,
-                                                      Fcs *,
-                                                      Constraint *);
+                                                      const Symmetry *,
+                                                      const Fcs *,
+                                                      const Constraint *) const;
 
         void set_fcs_values(const int,
                             double *,
                             std::vector<int> *,
-                            Constraint *);
+                            const Constraint *);
 
 
         int get_ndata_used() const;
-        double gamma(int,
-                     const int *);
+        double gamma(const int,
+                     const int *) const;
 
     private:
 
@@ -73,29 +81,29 @@ namespace ALM_NS
 
         void data_multiplier(double **,
                              std::vector<std::vector<double>> &,
-                             int,
-                             Symmetry *);
+                             const int,
+                             const Symmetry *) const;
 
-        int inprim_index(int,
-                         Symmetry *);
+        int inprim_index(const int,
+                         const Symmetry *) const;
 
         int fit_without_constraints(int,
                                     int,
                                     double *,
                                     double *,
                                     double *,
-                                    int);
+                                    const int) const;
 
         int fit_algebraic_constraints(int,
                                       int,
                                       double *,
                                       double *,
                                       std::vector<double> &,
-                                      double,
-                                      int,
-                                      Fcs *,
-                                      Constraint *,
-                                      int);
+                                      const double,
+                                      const int,
+                                      const Fcs *,
+                                      const Constraint *,
+                                      const int) const;
 
         int fit_with_constraints(int,
                                  int,
@@ -105,48 +113,48 @@ namespace ALM_NS
                                  double *,
                                  double **,
                                  double *,
-                                 int);
+                                 const int) const;
 
 
-        void get_matrix_elements(int,
-                                 int,
+        void get_matrix_elements(const int,
+                                 const int,
                                  double *,
                                  double *,
-                                 Symmetry *,
-                                 Fcs *);
+                                 const Symmetry *,
+                                 const Fcs *) const;
 
 #ifdef WITH_SPARSE_SOLVER
-        void get_matrix_elements_in_sparse_form(int,
-                                                int,
+        void get_matrix_elements_in_sparse_form(const int,
+                                                const int,
                                                 SpMat &,
                                                 Eigen::VectorXd &,
                                                 double &,
-                                                Symmetry *,
-                                                Fcs *,
-                                                Constraint *);
+                                                const Symmetry *,
+                                                const Fcs *,
+                                                const Constraint *);
 
         int run_eigen_sparseQR(const SpMat &,
                                const Eigen::VectorXd &,
-                               std::vector<double> &, 
-                               double,
-                               int,
-                               Fcs *,
-                               Constraint *,
-                               int);                          
+                               std::vector<double> &,
+                               const double,
+                               const int,
+                               const Fcs *,
+                               const Constraint *,
+                               const int);
 #endif
 
-        void recover_original_forceconstants(int,
+        void recover_original_forceconstants(const int,
                                              const std::vector<double> &,
                                              std::vector<double> &,
                                              std::vector<int> *,
-                                             Constraint *);
+                                             const Constraint *) const;
 
-        int factorial(int);
-        int rankQRD(int,
-                    int,
+        int factorial(const int) const;
+        int rankQRD(const int,
+                    const int,
                     double *,
-                    double);
- 
+                    const double) const;
+
     };
 
     extern "C" {

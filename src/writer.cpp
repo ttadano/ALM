@@ -16,6 +16,7 @@
 #include "files.h"
 #include "fitting.h"
 #include "interaction.h"
+#include "lasso.h"
 #include "memory.h"
 #include "patterndisp.h"
 #include "symmetry.h"
@@ -34,7 +35,7 @@ Writer::Writer() {}
 
 Writer::~Writer() {}
 
-void Writer::write_input_vars(const ALM *alm)
+void Writer::write_input_vars(const ALM *alm) const
 {
     unsigned int i;
 
@@ -45,7 +46,7 @@ void Writer::write_input_vars(const ALM *alm)
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << " General:" << std::endl;
     std::cout << "  PREFIX = " << alm->files->job_title << std::endl;
-    std::cout << "  MODE = " << alm->mode << std::endl;
+    std::cout << "  MODE = " << alm->get_run_mode() << std::endl;
     std::cout << "  NAT = " << alm->system->nat << "; NKD = " << alm->system->nkd << std::endl;
     std::cout << "  PRINTSYM = " << alm->symmetry->printsymmetry
         << "; TOLERANCE = " << alm->symmetry->tolerance << std::endl;
@@ -68,11 +69,11 @@ void Writer::write_input_vars(const ALM *alm)
     std::cout << std::endl << std::endl;
 
 
-    if (alm->mode == "suggest") {
+    if (alm->get_run_mode() == "suggest") {
         std::cout << "  DBASIS = " << alm->displace->disp_basis << std::endl;
         std::cout << std::endl;
 
-    } else if (alm->mode == "fitting") {
+    } else if (alm->get_run_mode() == "fitting") {
         std::cout << " Fitting:" << std::endl;
         std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
         std::cout << "  FFILE = " << alm->files->file_force << std::endl;
@@ -84,6 +85,37 @@ void Writer::write_input_vars(const ALM *alm)
         std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
         std::cout << "  SPARSE = " << alm->fitting->use_sparseQR << std::endl;
         std::cout << std::endl;
+    } else if (alm->get_run_mode() == "lasso") {
+        std::cout << " Fitting:" << std::endl;
+        std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
+        std::cout << "  FFILE = " << alm->files->file_force << std::endl;
+        std::cout << "  NDATA = " << alm->fitting->ndata << "; NSTART = " << alm->fitting->nstart
+            << "; NEND = " << alm->fitting->nend << std::endl;
+        std::cout << "  SKIP = " << alm->fitting->skip_s + 1 << "-" << alm->fitting->skip_e << std::endl;
+        std::cout << "  ICONST = " << alm->constraint->constraint_mode << std::endl;
+        std::cout << "  ROTAXIS = " << alm->constraint->rotation_axis << std::endl;
+        std::cout << "  FC2XML = " << alm->constraint->fc2_file << std::endl;
+        std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
+        std::cout << std::endl;
+        std::cout << " Lasso:" << std::endl;
+        std::cout << "  LASSO_ALPHA = " << alm->lasso->l1_alpha << std::endl;
+        std::cout << "  LASSO_MINALPHA = " << alm->lasso->l1_alpha_min;
+        std::cout << "; LASSO_MAXALPHA = " << alm->lasso->l1_alpha_max << std::endl;
+        std::cout << "  LASSO_NALPHA = " << alm->lasso->num_l1_alpha << std::endl;
+        std::cout << "  STANDARDIZE = " << alm->lasso->standardize << std::endl;
+        std::cout << "  LASSO_DNORM = " << alm->lasso->disp_norm << std::endl;
+        std::cout << "  LASSO_TOL = " << alm->lasso->lasso_tol << std::endl;
+        std::cout << "  LASSO_MAXITER = " << alm->lasso->maxiter << std::endl;
+        std::cout << "  LASSO_CV = " << std::setw(5) << alm->lasso->lasso_cv << std::endl;
+        std::cout << "  LASSO_FREQ = " << std::setw(5) << alm->lasso->output_frequency << std::endl;
+        std::cout << "  LASSO_ALGO = " << std::setw(5) << alm->lasso->lasso_algo << std::endl;
+        if (alm->lasso->lasso_algo == 1) {
+            std::cout << "  LASSO_LAMBDA = " << alm->lasso->l2_lambda << std::endl;
+            std::cout << "  LASSO_ZERO_THR = " << std::setw(15) << alm->lasso->lasso_zero_thr << std::endl;
+            std::cout << "  LASSO_MAXITER_CG = " << std::setw(5) << alm->lasso->maxiter_cg << std::endl;
+            std::cout << "  LASSO_PCG = " << std::setw(5) << alm->lasso->lasso_pcg << std::endl;
+        }
+        std::cout << std::endl;
     }
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
@@ -94,7 +126,7 @@ void Writer::writeall(ALM *alm)
 {
     alm->timer->start_clock("writer");
 
-    if (alm->verbosity > 0)
+    if (alm->get_verbosity() > 0)
         std::cout << " The following files are created:" << std::endl << std::endl;
 
     write_force_constants(alm);
@@ -111,7 +143,7 @@ void Writer::writeall(ALM *alm)
     alm->timer->stop_clock("writer");
 }
 
-void Writer::write_force_constants(ALM *alm)
+void Writer::write_force_constants(ALM *alm) const
 {
     int order, j, l, m;
     unsigned int ui;
@@ -278,20 +310,20 @@ void Writer::write_force_constants(ALM *alm)
     deallocate(str_fcs);
     ofs_fcs.close();
 
-    if (alm->verbosity > 0) {
+    if (alm->get_verbosity() > 0) {
         std::cout << " Force constants in a human-readable format : "
             << alm->files->file_fcs << std::endl;
     }
 }
 
-void Writer::write_displacement_pattern(ALM *alm)
+void Writer::write_displacement_pattern(ALM *alm) const
 {
     int maxorder = alm->interaction->maxorder;
 
     std::ofstream ofs_pattern;
     std::string file_disp_pattern;
 
-    if (alm->verbosity > 0)
+    if (alm->get_verbosity() > 0)
         std::cout << " Suggested displacement patterns are printed in the following files: " << std::endl;
 
     for (int order = 0; order < maxorder; ++order) {
@@ -329,13 +361,13 @@ void Writer::write_displacement_pattern(ALM *alm)
 
         ofs_pattern.close();
 
-        if (alm->verbosity > 0) {
+        if (alm->get_verbosity() > 0) {
             std::cout << "  " << alm->interaction->str_order[order]
                 << " : " << file_disp_pattern << std::endl;
         }
 
     }
-    if (alm->verbosity > 0) std::cout << std::endl;
+    if (alm->get_verbosity() > 0) std::cout << std::endl;
 }
 
 
@@ -649,12 +681,12 @@ void Writer::write_misc_xml(ALM *alm)
 
     deallocate(pair_tmp);
 
-    if (alm->verbosity > 0) {
+    if (alm->get_verbosity() > 0) {
         std::cout << " Input data for the phonon code ANPHON      : " << file_xml << std::endl;
     }
 }
 
-void Writer::write_hessian(ALM *alm)
+void Writer::write_hessian(ALM *alm) const
 {
     int i, j, itran, ip;
     int pair_tmp[2];
@@ -706,13 +738,13 @@ void Writer::write_hessian(ALM *alm)
     ofs_hes.close();
     deallocate(hessian);
 
-    if (alm->verbosity) {
+    if (alm->get_verbosity()) {
         std::cout << " Complete Hessian matrix                    : " << alm->files->file_hes << std::endl;
     }
 }
 
 std::string Writer::double2string(const double d,
-                                  const int nprec)
+                                  const int nprec) const
 {
     std::string rt;
     std::stringstream ss;
@@ -722,7 +754,7 @@ std::string Writer::double2string(const double d,
     return rt;
 }
 
-void Writer::write_in_QEformat(ALM *alm)
+void Writer::write_in_QEformat(ALM *alm) const
 {
     int i, j, itran, ip;
     int pair_tmp[2];
@@ -958,7 +990,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm)
     deallocate(has_element);
 }
 
-std::string Writer::easyvizint(const int n)
+std::string Writer::easyvizint(const int n) const
 {
     int atmn = n / 3 + 1;
     int crdn = n % 3;
