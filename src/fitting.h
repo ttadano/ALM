@@ -32,15 +32,15 @@ namespace ALM_NS
         Fitting();
         ~Fitting();
 
-        int fitmain(const Symmetry *symmetry,
-                    const Constraint *constraint,
-                    const Fcs *fcs,
-                    const int maxorder,
-                    const unsigned int nat,
-                    const int verbosity,
-                    const std::string file_disp,
-                    const std::string file_force,
-                    Timer *timer);
+        int optimize_main(const Symmetry *symmetry,
+                          const Constraint *constraint,
+                          const Fcs *fcs,
+                          const int maxorder,
+                          const unsigned int nat,
+                          const int verbosity,
+                          const std::string file_disp,
+                          const std::string file_force,
+                          Timer *timer);
 
         int ndata, nstart, nend;
         int skip_s, skip_e;

@@ -95,15 +95,15 @@ void Fitting::deallocate_variables()
     }
 }
 
-int Fitting::fitmain(const Symmetry *symmetry,
-                     const Constraint *constraint,
-                     const Fcs *fcs,
-                     const int maxorder,
-                     const unsigned int nat,
-                     const int verbosity,
-                     const std::string file_disp,
-                     const std::string file_force,
-                     Timer *timer)
+int Fitting::optimize_main(const Symmetry *symmetry,
+                           const Constraint *constraint,
+                           const Fcs *fcs,
+                           const int maxorder,
+                           const unsigned int nat,
+                           const int verbosity,
+                           const std::string file_disp,
+                           const std::string file_force,
+                           Timer *timer)
 {
     timer->start_clock("fitting");
 
@@ -192,7 +192,7 @@ int Fitting::fitmain(const Symmetry *symmetry,
                                               verbosity);
 #else
             std::cout << " Please recompile the code with -DWITH_SPARSE_SOLVER" << std::endl;
-            exit("fitmain", "Sparse solver not supported.");
+            exit("optimize_main", "Sparse solver not supported.");
 #endif
 
         } else {

@@ -613,15 +613,15 @@ int ALM::optimize()
                           timer);
         ready_to_fit = true;
     }
-    int info = fitting->fitmain(symmetry,
-                                constraint,
-                                fcs,
-                                interaction->maxorder,
-                                system->get_supercell().number_of_atoms,
-                                verbosity,
-                                files->file_disp,
-                                files->file_force,
-                                timer);
+    int info = fitting->optimize_main(symmetry,
+                                      constraint,
+                                      fcs,
+                                      interaction->maxorder,
+                                      system->get_supercell().number_of_atoms,
+                                      verbosity,
+                                      files->file_disp,
+                                      files->file_force,
+                                      timer);
     return info;
 }
 
@@ -652,14 +652,14 @@ int ALM::optimize_lasso()
         ready_to_fit = true;
     }
     fitting->lasso_main(symmetry,
-                      interaction,
-                      fcs,
-                      constraint,
-                      system->get_supercell().number_of_atoms,
-                      files,
-                      verbosity,
-                      fitting,
-                      timer);
+                        interaction,
+                        fcs,
+                        constraint,
+                        system->get_supercell().number_of_atoms,
+                        files,
+                        verbosity,
+                        fitting,
+                        timer);
 
     int info = 1;
     return info;
