@@ -111,13 +111,6 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  LASSO_MAXITER = " << alm->fitting->maxiter << std::endl;
         std::cout << "  LASSO_CV = " << std::setw(5) << alm->fitting->lasso_cv << std::endl;
         std::cout << "  LASSO_FREQ = " << std::setw(5) << alm->fitting->output_frequency << std::endl;
-        std::cout << "  LASSO_ALGO = " << std::setw(5) << alm->fitting->lasso_algo << std::endl;
-        if (alm->fitting->lasso_algo == 1) {
-            std::cout << "  LASSO_LAMBDA = " << alm->fitting->l2_lambda << std::endl;
-            std::cout << "  LASSO_ZERO_THR = " << std::setw(15) << alm->fitting->lasso_zero_thr << std::endl;
-            std::cout << "  LASSO_MAXITER_CG = " << std::setw(5) << alm->fitting->maxiter_cg << std::endl;
-            std::cout << "  LASSO_PCG = " << std::setw(5) << alm->fitting->lasso_pcg << std::endl;
-        }
         std::cout << std::endl;
     }
     std::cout << " -------------------------------------------------------------------" << std::endl;

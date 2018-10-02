@@ -81,17 +81,12 @@ namespace ALM_NS
         double disp_norm;
         double l1_alpha;
         double l1_alpha_min, l1_alpha_max;
-        double l2_lambda;
         double lasso_tol;
-        double lasso_zero_thr;
         int lasso_cv;
         int lasso_cvset;
         int maxiter;
-        int maxiter_cg;
-        int lasso_pcg;
         int output_frequency;
         int num_l1_alpha;
-        int lasso_algo;
         int standardize;
 
         int ndata_test, nstart_test, nend_test;
@@ -195,21 +190,6 @@ namespace ALM_NS
 
 
         // Moved from lasso.h
-        void split_bregman_minimization(int,
-                                        int,
-                                        double,
-                                        double,
-                                        double,
-                                        int,
-                                        double **,
-                                        double *,
-                                        double,
-                                        double *,
-                                        double *,
-                                        double *,
-                                        int,
-                                        int);
-
         void coordinate_descent(int,
                                 int,
                                 double,
@@ -236,47 +216,6 @@ namespace ALM_NS
                                 double,
                                 double &) const;
 
-        void minimize_quadratic_CG(int,
-                                   double *,
-                                   double *,
-                                   double *,
-                                   int,
-                                   bool,
-                                   double **,
-                                   double *,
-                                   int);
-
-        void minimize_quadratic_CG(int,
-                                   const Eigen::MatrixXd &,
-                                   const Eigen::VectorXd &,
-                                   Eigen::VectorXd &,
-                                   int,
-                                   bool,
-                                   const Eigen::MatrixXd &,
-                                   const Eigen::VectorXd &,
-                                   int) const;
-
-        int incomplete_cholesky_factorization(int,
-                                              const Eigen::MatrixXd &,
-                                              Eigen::MatrixXd &,
-                                              Eigen::VectorXd &) const;
-
-        int incomplete_cholesky_factorization(int,
-                                              double *,
-                                              double **,
-                                              double *) const;
-
-        void forward_backward_substitution(int,
-                                           const Eigen::MatrixXd &,
-                                           const Eigen::VectorXd &,
-                                           const Eigen::VectorXd &,
-                                           Eigen::VectorXd &) const;
-
-        void forward_backward_substitution(int,
-                                           double **,
-                                           double *,
-                                           double *,
-                                           double *) const;
 
         void get_prefactor_force(const int,
                                  const Fcs *,
