@@ -55,12 +55,12 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << "  PRINTSYM = " << alm->symmetry->printsymmetry
         << "; TOLERANCE = " << alm->symmetry->tolerance << std::endl;
     std::cout << "  KD = ";
-    for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->system->kdname[i];
+    for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->system->get_kdname()[i];
     std::cout << std::endl;
     std::cout << "  PERIODIC = ";
-    for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->system->is_periodic[i];
+    for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->system->get_periodicity()[i];
     std::cout << std::endl;
-    std::cout << "  MAGMOM = " << alm->system->str_magmom << std::endl;
+    std::cout << "  MAGMOM = " << alm->system->get_str_magmom() << std::endl;
     std::cout << "  HESSIAN = " << alm->files->print_hessian << std::endl;
     std::cout << std::endl;
 
@@ -421,7 +421,7 @@ void Writer::write_misc_xml(ALM *alm)
 
     for (i = 0; i < system_structure.nspecies; ++i) {
         ptree &child = pt.add("Data.Structure.AtomicElements.element",
-                              alm->system->kdname[i]);
+                              alm->system->get_kdname()[i]);
         child.put("<xmlattr>.number", i + 1);
     }
 
@@ -437,9 +437,9 @@ void Writer::write_misc_xml(ALM *alm)
     pt.put("Data.Structure.LatticeVector.a3", str_pos[2]);
 
     std::stringstream ss;
-    ss << alm->system->is_periodic[0] << " "
-        << alm->system->is_periodic[1] << " "
-        << alm->system->is_periodic[2];
+    ss << alm->system->get_periodicity()[0] << " "
+        << alm->system->get_periodicity()[1] << " "
+        << alm->system->get_periodicity()[2];
     pt.put("Data.Structure.Periodicity", ss.str());
 
     pt.put("Data.Structure.Position", "");
@@ -450,7 +450,7 @@ void Writer::write_misc_xml(ALM *alm)
         for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->get_supercell().x_fractional[i][j]);
         ptree &child = pt.add("Data.Structure.Position.pos", str_tmp);
         child.put("<xmlattr>.index", i + 1);
-        child.put("<xmlattr>.element", alm->system->kdname[alm->system->get_supercell().kind[i] - 1]);
+        child.put("<xmlattr>.element", alm->system->get_kdname()[alm->system->get_supercell().kind[i] - 1]);
     }
 
     pt.put("Data.Symmetry.NumberOfTranslations", alm->symmetry->ntran);
@@ -463,13 +463,13 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    if (alm->system->lspin) {
+    if (alm->system->get_spin().lspin) {
         pt.put("Data.MagneticMoments", "");
-        pt.put("Data.MagneticMoments.Noncollinear", alm->system->noncollinear);
-        pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm->system->trev_sym_mag);
+        pt.put("Data.MagneticMoments.Noncollinear", alm->system->get_spin().noncollinear);
+        pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm->system->get_spin().time_reversal_symm);
         for (i = 0; i < system_structure.nat; ++i) {
             str_tmp.clear();
-            for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->magmom[i][j], 5);
+            for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->get_spin().magmom[i][j], 5);
             ptree &child = pt.add("Data.MagneticMoments.mag", str_tmp);
             child.put("<xmlattr>.index", i + 1);
         }

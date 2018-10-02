@@ -39,22 +39,6 @@ ALM::ALM()
 
 ALM::~ALM()
 {
-    if (system->kdname) {
-        deallocate(system->kdname);
-    }
-    system->kdname = nullptr;
-    if (system->xcoord) {
-        deallocate(system->xcoord);
-    }
-    system->xcoord = nullptr;
-    if (system->kd) {
-        deallocate(system->kd);
-    }
-    system->kd = nullptr;
-    if (system->magmom) {
-        deallocate(system->magmom);
-    }
-    system->magmom = nullptr;
     if (interaction->nbody_include) {
         deallocate(interaction->nbody_include);
     }
@@ -147,9 +131,7 @@ void ALM::set_displacement_basis(const std::string str_disp_basis) const // DBAS
 
 void ALM::set_periodicity(const int is_periodic[3]) const // PERIODIC
 {
-    for (int i = 0; i < 3; ++i) {
-        system->is_periodic[i] = is_periodic[i];
-    }
+    system->set_periodicity(is_periodic);
 }
 
 void ALM::set_cell(const int nat,
@@ -178,62 +160,12 @@ void ALM::set_cell(const int nat,
         }
     }
 
-    /* nkd = supercell.number_of_elems */
-    /* nat = supercell.number_of_atoms */
-    system->nkd = nkd;
-    system->nat = nat;
-
-    if (system->xcoord) {
-        deallocate(system->xcoord);
-    }
-    allocate(system->xcoord, nat, 3);
-
-    if (system->kd) {
-        deallocate(system->kd);
-    }
-    allocate(system->kd, nat);
-
-    for (i = 0; i < nat; ++i) {
-        system->kd[i] = kd[i];
-        for (j = 0; j < 3; ++j) {
-            system->xcoord[i][j] = xcoord[i][j];
-        }
-    }
-
-    if (system->kdname) {
-        deallocate(system->kdname);
-    }
-    allocate(system->kdname, nkd);
-
-    if (system->magmom) {
-        deallocate(system->magmom);
-    }
-    allocate(system->magmom, nat, 3);
-
-    for (i = 0; i < nkd; ++i) {
-        system->kdname[i] = kdname[i];
-    }
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
-            system->lavec[i][j] = lavec[i][j];
-        }
-    }
-
-    for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
-            system->magmom[i][j] = 0.0;
-        }
-    }
-
     // Generate the information of the supercell
-    system->set_supercell(system->lavec,
-                          system->nat,
-                          nkd,
-                          system->kd,
-                          system->xcoord);
+    system->set_supercell(lavec, nat, nkd, kd, xcoord);
+    system->set_kdname(kdname);
 }
 
-void ALM::set_magnetic_params(const double *magmom,
+void ALM::set_magnetic_params(const double (*magmom)[3],
                               // MAGMOM
                               const bool lspin,
                               const int noncollinear,
@@ -242,22 +174,11 @@ void ALM::set_magnetic_params(const double *magmom,
                               // TREVSYM
                               const std::string str_magmom) const // MAGMOM
 {
-    const auto nat = system->nat;
-    system->lspin = lspin;
-    system->noncollinear = noncollinear;
-    system->str_magmom = str_magmom;
-    system->trev_sym_mag = trev_sym_mag;
-
-    if (system->magmom) {
-        deallocate(system->magmom);
-    }
-    allocate(system->magmom, nat, 3);
-
-    for (int i = 0; i < nat; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            system->magmom[i][j] = magmom[i * 3 + j];
-        }
-    }
+    system->set_spin_variables(lspin,
+                               noncollinear,
+                               trev_sym_mag,
+                               magmom);
+    system->set_str_magmom(str_magmom);
 }
 
 void ALM::set_displacement_and_force(const double *u_in,
@@ -642,8 +563,7 @@ void ALM::set_fc(double *fc_in) const
                             constraint);
 }
 
-void ALM::get_matrix_elements(const int nat,
-                              const int ndata_used,
+void ALM::get_matrix_elements(const int ndata_used,
                               double *amat,
                               double *bvec) const
 {

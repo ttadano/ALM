@@ -92,8 +92,8 @@ namespace ALM_NS
                             std::string ffile_test) const;
         void set_atomic_positions(const int nat_in,
                                   const int *kd_in,
-                                  const double * const *xcoord_in);
-        void set_cell(ALM *alm) const;
+                                  const double (*xcoord_in)[3]);
+        void set_geometric_structure(ALM *alm) const;
 
     private:
         int nat, nkd;
@@ -101,6 +101,12 @@ namespace ALM_NS
         double lavec[3][3];
         double (*xcoord)[3]; // fractional coordinate
         std::string *kdname;
+        int is_periodic[3];
 
+        bool lspin;
+        double (*magmom)[3];
+        int noncollinear;
+        int trevsym;
+        std::string str_magmom;
     };
 }

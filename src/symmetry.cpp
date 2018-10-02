@@ -51,9 +51,9 @@ void Symmetry::init(const System *system,
 
 
     setup_symmetry_operation(system->get_supercell(),
-                             system->is_periodic,
-                             system->atomtype_group,
-                             system->spin,
+                             system->get_periodicity(),
+                             system->get_atomtype_group(),
+                             system->get_spin(),
                              verbosity,
                              SymmData,
                              nsym,
@@ -81,7 +81,7 @@ void Symmetry::init(const System *system,
     allocate(map_p2s, nat_prim, ntran);
 
     gen_mapping_information(system->get_supercell(),
-                            system->atomtype_group,
+                            system->get_atomtype_group(),
                             SymmData,
                             symnum_tran,
                             map_sym, map_p2s, map_s2p);
@@ -648,8 +648,6 @@ void Symmetry::symop_in_cart(double rot_cart[3][3],
 
 void Symmetry::print_symminfo_stdout() const
 {
-    int i;
-
     std::cout << "  Number of symmetry operations = " << SymmData.size() << std::endl;
     std::cout << std::endl;
     if (ntran > 1) {
@@ -748,9 +746,6 @@ void Symmetry::gen_mapping_information(const Cell &cell,
             }
         }
     }
-
-    double shift[3];
-    double pos[3], pos_std[3];
 
     // Generate map_p2s (primitive --> super)
 

@@ -119,12 +119,12 @@ extern "C" {
         delete [] kdname;
     }
 
-    void alm_set_verbosity(const int id, const int verbosity) 
+    void alm_set_verbosity(const int id, const int verbosity)
     {
         alm[id]->set_verbosity(verbosity);
     }
 
-    // void set_magnetic_params(const double* magmom,
+    // void set_magnetic_params(const double* const * magmom,
     //   		       const bool lspin,
     //   		       const int noncollinear,
     //   		       const int trev_sym_mag,
@@ -193,7 +193,7 @@ extern "C" {
                                            int *numbers,
                                            const int fc_order) // harmonic=1,
     {
-        alm[id]->get_number_of_displaced_atoms(numbers, fc_order);        
+        alm[id]->get_number_of_displaced_atoms(numbers, fc_order);
     }
 
     int alm_get_displacement_patterns(const int id,
@@ -248,12 +248,11 @@ extern "C" {
     }
 
     void alm_get_matrix_elements(const int id,
-                                 const int nat,
                                  const int ndata_used,
                                  double *amat,
                                  double *bvec)
     {
-        alm[id]->get_matrix_elements(nat, ndata_used, amat, bvec);
+        alm[id]->get_matrix_elements(ndata_used, amat, bvec);
     }
 
     void alm_run_suggest(const int id)
@@ -270,7 +269,7 @@ extern "C" {
         int info;
 
         if (str_solver == "dense") {
-            
+
             alm[id]->set_sparse_mode(0);
             info = alm[id]->optimize();
 

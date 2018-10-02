@@ -1,8 +1,8 @@
 #ifndef __ALM_WRAPPER_H__
 #define __ALM_WRAPPER_H__
 
-#ifdef __cplusplus 
-extern "C" { 
+#ifdef __cplusplus
+extern "C" {
 #endif
 
     void alm_init(void);
@@ -23,7 +23,7 @@ extern "C" {
                       const int kd[]);
     void alm_set_verbosity(const int id,
                            const int verbosity);
-    // void set_magnetic_params(const double* magmom,
+    // void set_magnetic_params(const double* const * magmom,
     //   		       const bool lspin,
     //   		       const int noncollinear,
     //   		       const int trev_sym_mag,
@@ -81,16 +81,15 @@ extern "C" {
     void alm_set_fc(const int id, double *fc_in);
 
     void alm_get_matrix_elements(const int id,
-                                 const int nat,
                                  const int ndata_used,
                                  double *amat,
                                  double *bvec);
 
     void alm_run_suggest(const int id);
-    int alm_optimize(const int id, 
+    int alm_optimize(const int id,
                      const char *solver);
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 }
 #endif
 

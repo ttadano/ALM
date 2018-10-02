@@ -541,14 +541,12 @@ static PyObject * py_set_fc(PyObject *self, PyObject *args)
 static PyObject * py_get_matrix_elements(PyObject *self, PyObject *args)
 {
   int id;
-  int nat;
   int ndata_used;
   PyArrayObject* py_amat;
   PyArrayObject* py_bvec;
 
-  if (!PyArg_ParseTuple(args, "iiiOO",
+  if (!PyArg_ParseTuple(args, "iiOO",
                               &id,
-                              &nat,
                               &ndata_used,
                               &py_amat,
                               &py_bvec)) {
@@ -558,7 +556,7 @@ static PyObject * py_get_matrix_elements(PyObject *self, PyObject *args)
   double (*amat) = (double(*))PyArray_DATA(py_amat);
   double (*bvec) = (double(*))PyArray_DATA(py_bvec);
 
-  alm_get_matrix_elements(id, nat, ndata_used, amat, bvec);
+  alm_get_matrix_elements(id, ndata_used, amat, bvec);
 
   Py_RETURN_NONE;
 }
