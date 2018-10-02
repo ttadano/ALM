@@ -17,7 +17,7 @@ extra_link_args = ['-lstdc++',
 #                   '/usr/local/opt/gcc/lib/gcc/7/libgomp.a']
 
 
-include_dir_spglib=['/Users/tadano/src/spglib/include']
+include_dir_spglib=['/Users/tadano/src/spglib/include', '/usr/local/include/eigen3/']
 
 library_dirs = []
 if compile_with_sources:

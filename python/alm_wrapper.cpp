@@ -273,7 +273,7 @@ extern "C" {
             alm[id]->set_sparse_mode(0);
             info = alm[id]->optimize();
 
-        } else if (str_solver == "sparseQR") {
+        } else if (str_solver == "SimplicialLDLT") {
 
             alm[id]->set_sparse_mode(1);
             info = alm[id]->optimize();
