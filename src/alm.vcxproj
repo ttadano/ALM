@@ -87,7 +87,6 @@
     <ClCompile Include="input_parser.cpp" />
     <ClCompile Include="input_setter.cpp" />
     <ClCompile Include="interaction.cpp" />
-    <ClCompile Include="lasso.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="patterndisp.cpp" />
     <ClCompile Include="rref.cpp" />
@@ -108,7 +107,6 @@
     <ClInclude Include="input_parser.h" />
     <ClInclude Include="input_setter.h" />
     <ClInclude Include="interaction.h" />
-    <ClInclude Include="lasso.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="patterndisp.h" />
     <ClInclude Include="rref.h" />

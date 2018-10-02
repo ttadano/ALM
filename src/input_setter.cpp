@@ -16,7 +16,6 @@
 #include "system.h"
 #include "symmetry.h"
 #include "fitting.h"
-#include "lasso.h"
 #include "constraint.h"
 #include "patterndisp.h"
 #include "alm.h"
@@ -240,29 +239,29 @@ void InputSetter::set_lasso_vars(ALM *alm,
                                  std::string dfile_test,
                                  std::string ffile_test) const
 {
-    alm->lasso->disp_norm = lasso_dnorm;
-    alm->lasso->l1_alpha = lasso_alpha;
-    alm->lasso->l1_alpha_min = lasso_min_alpha;
-    alm->lasso->l1_alpha_max = lasso_max_alpha;
-    alm->lasso->num_l1_alpha = lasso_num_alpha;
-    alm->lasso->l2_lambda = lasso_lambda;
-    alm->lasso->lasso_tol = lasso_tol;
-    alm->lasso->maxiter = lasso_maxiter;
-    alm->lasso->maxiter_cg = lasso_maxiter_cg;
-    alm->lasso->lasso_pcg = lasso_pcg;
-    alm->lasso->lasso_cv = lasso_cv;
-    alm->lasso->lasso_cvset = lasso_cvset;
-    alm->lasso->save_solution_path = save_solution_path;
-    alm->lasso->output_frequency = lasso_freq;
-    alm->lasso->debias_ols = debias_ols;
-    alm->lasso->lasso_zero_thr = lasso_zero_thr;
-    alm->lasso->ndata_test = ndata_test;
-    alm->lasso->nstart_test = nstart_test;
-    alm->lasso->nend_test = nend_test;
-    alm->lasso->dfile_test = dfile_test;
-    alm->lasso->ffile_test = ffile_test;
-    alm->lasso->standardize = standardize;
-    alm->lasso->lasso_algo = lasso_algo;
+    alm->fitting->disp_norm = lasso_dnorm;
+    alm->fitting->l1_alpha = lasso_alpha;
+    alm->fitting->l1_alpha_min = lasso_min_alpha;
+    alm->fitting->l1_alpha_max = lasso_max_alpha;
+    alm->fitting->num_l1_alpha = lasso_num_alpha;
+    alm->fitting->l2_lambda = lasso_lambda;
+    alm->fitting->lasso_tol = lasso_tol;
+    alm->fitting->maxiter = lasso_maxiter;
+    alm->fitting->maxiter_cg = lasso_maxiter_cg;
+    alm->fitting->lasso_pcg = lasso_pcg;
+    alm->fitting->lasso_cv = lasso_cv;
+    alm->fitting->lasso_cvset = lasso_cvset;
+    alm->fitting->save_solution_path = save_solution_path;
+    alm->fitting->output_frequency = lasso_freq;
+    alm->fitting->debias_ols = debias_ols;
+    alm->fitting->lasso_zero_thr = lasso_zero_thr;
+    alm->fitting->ndata_test = ndata_test;
+    alm->fitting->nstart_test = nstart_test;
+    alm->fitting->nend_test = nend_test;
+    alm->fitting->dfile_test = dfile_test;
+    alm->fitting->ffile_test = ffile_test;
+    alm->fitting->standardize = standardize;
+    alm->fitting->lasso_algo = lasso_algo;
 }
 
 void InputSetter::set_atomic_positions(const int nat_in,

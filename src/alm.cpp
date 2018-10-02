@@ -14,7 +14,6 @@
 #include "files.h"
 #include "fitting.h"
 #include "interaction.h"
-#include "lasso.h"
 #include "memory.h"
 #include "patterndisp.h"
 #include "symmetry.h"
@@ -54,7 +53,6 @@ ALM::~ALM()
     delete fcs;
     delete symmetry;
     delete fitting;
-    delete lasso;
     delete constraint;
     delete displace;
     delete timer;
@@ -68,7 +66,6 @@ void ALM::create()
     fcs = new Fcs();
     symmetry = new Symmetry();
     fitting = new Fitting();
-    lasso = new Lasso();
     constraint = new Constraint();
     displace = new Displace();
     timer = new Timer();
@@ -654,7 +651,7 @@ int ALM::optimize_lasso()
                           timer);
         ready_to_fit = true;
     }
-    lasso->lasso_main(symmetry,
+    fitting->lasso_main(symmetry,
                       interaction,
                       fcs,
                       constraint,

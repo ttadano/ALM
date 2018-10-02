@@ -16,7 +16,6 @@
 #include "fcs.h"
 #include "symmetry.h"
 #include "fitting.h"
-#include "lasso.h"
 #include "constraint.h"
 #include "files.h"
 #include "patterndisp.h"
@@ -35,7 +34,6 @@ namespace ALM_NS
         class Fcs *fcs;
         class Symmetry *symmetry;
         class Fitting *fitting;
-        class Lasso *lasso;
         class Constraint *constraint;
         class Files *files;
         class Displace *displace;

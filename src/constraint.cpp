@@ -14,7 +14,6 @@
 #include "error.h"
 #include "fcs.h"
 #include "interaction.h"
-#include "lasso.h"
 #include "mathfunctions.h"
 #include "memory.h"
 #include "rref.h"

@@ -16,7 +16,6 @@
 #include "files.h"
 #include "fitting.h"
 #include "interaction.h"
-#include "lasso.h"
 #include "memory.h"
 #include "patterndisp.h"
 #include "symmetry.h"
@@ -102,22 +101,22 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
         std::cout << std::endl;
         std::cout << " Lasso:" << std::endl;
-        std::cout << "  LASSO_ALPHA = " << alm->lasso->l1_alpha << std::endl;
-        std::cout << "  LASSO_MINALPHA = " << alm->lasso->l1_alpha_min;
-        std::cout << "; LASSO_MAXALPHA = " << alm->lasso->l1_alpha_max << std::endl;
-        std::cout << "  LASSO_NALPHA = " << alm->lasso->num_l1_alpha << std::endl;
-        std::cout << "  STANDARDIZE = " << alm->lasso->standardize << std::endl;
-        std::cout << "  LASSO_DNORM = " << alm->lasso->disp_norm << std::endl;
-        std::cout << "  LASSO_TOL = " << alm->lasso->lasso_tol << std::endl;
-        std::cout << "  LASSO_MAXITER = " << alm->lasso->maxiter << std::endl;
-        std::cout << "  LASSO_CV = " << std::setw(5) << alm->lasso->lasso_cv << std::endl;
-        std::cout << "  LASSO_FREQ = " << std::setw(5) << alm->lasso->output_frequency << std::endl;
-        std::cout << "  LASSO_ALGO = " << std::setw(5) << alm->lasso->lasso_algo << std::endl;
-        if (alm->lasso->lasso_algo == 1) {
-            std::cout << "  LASSO_LAMBDA = " << alm->lasso->l2_lambda << std::endl;
-            std::cout << "  LASSO_ZERO_THR = " << std::setw(15) << alm->lasso->lasso_zero_thr << std::endl;
-            std::cout << "  LASSO_MAXITER_CG = " << std::setw(5) << alm->lasso->maxiter_cg << std::endl;
-            std::cout << "  LASSO_PCG = " << std::setw(5) << alm->lasso->lasso_pcg << std::endl;
+        std::cout << "  LASSO_ALPHA = " << alm->fitting->l1_alpha << std::endl;
+        std::cout << "  LASSO_MINALPHA = " << alm->fitting->l1_alpha_min;
+        std::cout << "; LASSO_MAXALPHA = " << alm->fitting->l1_alpha_max << std::endl;
+        std::cout << "  LASSO_NALPHA = " << alm->fitting->num_l1_alpha << std::endl;
+        std::cout << "  STANDARDIZE = " << alm->fitting->standardize << std::endl;
+        std::cout << "  LASSO_DNORM = " << alm->fitting->disp_norm << std::endl;
+        std::cout << "  LASSO_TOL = " << alm->fitting->lasso_tol << std::endl;
+        std::cout << "  LASSO_MAXITER = " << alm->fitting->maxiter << std::endl;
+        std::cout << "  LASSO_CV = " << std::setw(5) << alm->fitting->lasso_cv << std::endl;
+        std::cout << "  LASSO_FREQ = " << std::setw(5) << alm->fitting->output_frequency << std::endl;
+        std::cout << "  LASSO_ALGO = " << std::setw(5) << alm->fitting->lasso_algo << std::endl;
+        if (alm->fitting->lasso_algo == 1) {
+            std::cout << "  LASSO_LAMBDA = " << alm->fitting->l2_lambda << std::endl;
+            std::cout << "  LASSO_ZERO_THR = " << std::setw(15) << alm->fitting->lasso_zero_thr << std::endl;
+            std::cout << "  LASSO_MAXITER_CG = " << std::setw(5) << alm->fitting->maxiter_cg << std::endl;
+            std::cout << "  LASSO_PCG = " << std::setw(5) << alm->fitting->lasso_pcg << std::endl;
         }
         std::cout << std::endl;
     }
