@@ -135,7 +135,7 @@ void Writer::writeall(ALM *alm)
     if (alm->files->print_hessian) write_hessian(alm);
     //   write_in_QEformat(alm);
 
-    bool print_thirdorderpy_fc3 = true;
+    const bool print_thirdorderpy_fc3 = false;
     if (alm->interaction->maxorder > 1 && print_thirdorderpy_fc3) {
         write_fc3_thirdorderpy_format(alm);
     }
@@ -236,33 +236,33 @@ void Writer::write_force_constants(ALM *alm) const
 
     ofs_fcs << std::endl;
 
-  /*  if (alm->constraint->extra_constraint_from_symmetry) {
-
-        ofs_fcs << " -------------- Constraints from crystal symmetry --------------" << std::endl << std::endl;
-        for (order = 0; order < maxorder; ++order) {
-            int nparam = alm->fcs->nequiv[order].size();
-
-
-            for (auto p = alm->constraint->const_symmetry[order].begin();
-                 p != alm->constraint->const_symmetry[order].end();
-                 ++p) {
-                ofs_fcs << "   0 = " << std::scientific << std::setprecision(6);
-                auto const_pointer = *p;
-                for (j = 0; j < nparam; ++j) {
-                    if (std::abs(const_pointer.w_const[j]) > eps8) {
-                        str_tmp = " * (FC" + std::to_string(order + 2)
-                            + "_" + std::to_string(j + 1) + ")";
-                        ofs_fcs << std::setw(10) << std::right
-                            << std::showpos << const_pointer.w_const[j];
-                        ofs_fcs << std::setw(12) << std::left << str_tmp;
-                    }
-                }
-                ofs_fcs << std::endl;
-            }
-            ofs_fcs << std::endl;
-        }
-        ofs_fcs << std::endl;
-    }*/
+    /*  if (alm->constraint->extra_constraint_from_symmetry) {
+  
+          ofs_fcs << " -------------- Constraints from crystal symmetry --------------" << std::endl << std::endl;
+          for (order = 0; order < maxorder; ++order) {
+              int nparam = alm->fcs->nequiv[order].size();
+  
+  
+              for (auto p = alm->constraint->const_symmetry[order].begin();
+                   p != alm->constraint->const_symmetry[order].end();
+                   ++p) {
+                  ofs_fcs << "   0 = " << std::scientific << std::setprecision(6);
+                  auto const_pointer = *p;
+                  for (j = 0; j < nparam; ++j) {
+                      if (std::abs(const_pointer.w_const[j]) > eps8) {
+                          str_tmp = " * (FC" + std::to_string(order + 2)
+                              + "_" + std::to_string(j + 1) + ")";
+                          ofs_fcs << std::setw(10) << std::right
+                              << std::showpos << const_pointer.w_const[j];
+                          ofs_fcs << std::setw(12) << std::left << str_tmp;
+                      }
+                  }
+                  ofs_fcs << std::endl;
+              }
+              ofs_fcs << std::endl;
+          }
+          ofs_fcs << std::endl;
+      }*/
 
     ofs_fcs.unsetf(std::ios::showpos);
 
@@ -811,7 +811,7 @@ void Writer::write_in_QEformat(ALM *alm) const
     deallocate(hessian);
 }
 
-void Writer::write_fc3_thirdorderpy_format(ALM *alm)
+void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
 {
     int i, j, k, l, itran, ip;
     int pair_tmp[3], coord_tmp[3];
@@ -832,7 +832,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm)
     atom_tmp.resize(2);
     cell_dummy.resize(2);
 
-    allocate(fc3, 3*natmin, nat3, nat3);
+    allocate(fc3, 3 * natmin, nat3, nat3);
     allocate(has_element, natmin, nat, nat);
 
     for (i = 0; i < 3 * natmin; ++i) {
@@ -856,7 +856,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm)
     for (auto it = alm->fcs->fc_table[1].begin(); it != alm->fcs->fc_table[1].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother + ishift;
-        
+
         for (i = 0; i < 3; ++i) {
             pair_tmp[i] = fctmp.elems[i] / 3;
             coord_tmp[i] = fctmp.elems[i] % 3;
@@ -884,7 +884,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm)
                 nelems += (*iter_cluster).cell.size();
                 has_element[j][pair_tmp[2]][pair_tmp[1]] = 1;
             }
-             fc3[3 * j + coord_tmp[0]][fctmp.elems[2]][fctmp.elems[1]] = alm->fitting->params[ip] * fctmp.sign;
+            fc3[3 * j + coord_tmp[0]][fctmp.elems[2]][fctmp.elems[1]] = alm->fitting->params[ip] * fctmp.sign;
         }
     }
 
@@ -898,19 +898,19 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm)
     ofs_fc3.open(file_fc3.c_str(), std::ios::out);
     if (!ofs_fc3) exit("write_fc3_thirdorderpy_format", "cannot create the file");
     ofs_fc3 << nelems << std::endl;
-    
+
 
     bool swapped;
     double vec1[3], vec2[3];
     int ielem = 0;
-    double factor = Ryd / 1.6021766208e-19 / std::pow(Bohr_in_Angstrom, 3); 
+    double factor = Ryd / 1.6021766208e-19 / std::pow(Bohr_in_Angstrom, 3);
 
     for (i = 0; i < natmin; ++i) {
         for (jtran = 0; jtran < ntran; ++jtran) {
             for (j = 0; j < natmin; ++j) {
                 for (ktran = 0; ktran < ntran; ++ktran) {
                     for (k = 0; k < natmin; ++k) {
-    
+
                         jat = alm->symmetry->map_p2s[j][jtran];
                         kat = alm->symmetry->map_p2s[k][ktran];
 
@@ -926,7 +926,8 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm)
                             swapped = false;
                         }
 
-                        iter_cluster = alm->interaction->interaction_cluster[1][i].find(InteractionCluster(atom_tmp, cell_dummy));
+                        iter_cluster = alm->interaction->interaction_cluster[1][i].find(
+                            InteractionCluster(atom_tmp, cell_dummy));
                         if (iter_cluster == alm->interaction->interaction_cluster[1][i].end()) {
                             exit("write_misc_xml", "This cannot happen.");
                         }
@@ -938,16 +939,16 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm)
 
                         for (auto imult = 0; imult < multiplicity; ++imult) {
                             std::vector<int> cell_now = (*iter_cluster).cell[imult];
-                            
+
                             for (auto m = 0; m < 3; ++m) {
-                                vec1[m] = (alm->system->x_image[0][atom_tmp[0]][m] 
-                                         - alm->system->x_image[0][jat0][m] 
-                                         + alm->system->x_image[cell_now[0]][0][m] 
-                                        - alm->system->x_image[0][0][m]) * Bohr_in_Angstrom;
-                                vec2[m] = (alm->system->x_image[0][atom_tmp[1]][m] 
-                                         - alm->system->x_image[0][kat0][m] 
-                                         + alm->system->x_image[cell_now[1]][0][m] 
-                                        - alm->system->x_image[0][0][m]) * Bohr_in_Angstrom;
+                                vec1[m] = (alm->system->x_image[0][atom_tmp[0]][m]
+                                    - alm->system->x_image[0][jat0][m]
+                                    + alm->system->x_image[cell_now[0]][0][m]
+                                    - alm->system->x_image[0][0][m]) * Bohr_in_Angstrom;
+                                vec2[m] = (alm->system->x_image[0][atom_tmp[1]][m]
+                                    - alm->system->x_image[0][kat0][m]
+                                    + alm->system->x_image[cell_now[1]][0][m]
+                                    - alm->system->x_image[0][0][m]) * Bohr_in_Angstrom;
                             }
 
                             ++ielem;
@@ -956,11 +957,15 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm)
                             ofs_fc3 << std::scientific;
                             ofs_fc3 << std::setprecision(10);
                             if (swapped) {
-                                ofs_fc3 << std::setw(20) << vec2[0] << std::setw(20) << vec2[1] << std::setw(20) << vec2[2] << std::endl;
-                                ofs_fc3 << std::setw(20) << vec1[0] << std::setw(20) << vec1[1] << std::setw(20) << vec1[2] << std::endl;
+                                ofs_fc3 << std::setw(20) << vec2[0] << std::setw(20) << vec2[1] << std::setw(20) << vec2
+                                    [2] << std::endl;
+                                ofs_fc3 << std::setw(20) << vec1[0] << std::setw(20) << vec1[1] << std::setw(20) << vec1
+                                    [2] << std::endl;
                             } else {
-                                ofs_fc3 << std::setw(20) << vec1[0] << std::setw(20) << vec1[1] << std::setw(20) << vec1[2] << std::endl;
-                                ofs_fc3 << std::setw(20) << vec2[0] << std::setw(20) << vec2[1] << std::setw(20) << vec2[2] << std::endl;
+                                ofs_fc3 << std::setw(20) << vec1[0] << std::setw(20) << vec1[1] << std::setw(20) << vec1
+                                    [2] << std::endl;
+                                ofs_fc3 << std::setw(20) << vec2[0] << std::setw(20) << vec2[1] << std::setw(20) << vec2
+                                    [2] << std::endl;
                             }
                             ofs_fc3 << std::setw(5) << i + 1;
                             ofs_fc3 << std::setw(5) << j + 1;
@@ -972,9 +977,9 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm)
                                         ofs_fc3 << std::setw(2) << ii + 1;
                                         ofs_fc3 << std::setw(3) << jj + 1;
                                         ofs_fc3 << std::setw(3) << kk + 1;
-                                        ofs_fc3 << std::setw(20) 
-                                        << fc3[3 * i + ii][3 * jat + jj][3 * kat + kk] 
-                                        * factor / static_cast<double>(multiplicity) << std::endl;
+                                        ofs_fc3 << std::setw(20)
+                                            << fc3[3 * i + ii][3 * jat + jj][3 * kat + kk]
+                                            * factor / static_cast<double>(multiplicity) << std::endl;
                                     }
                                 }
                             }
