@@ -906,7 +906,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
     std::string str_tmp;
     std::string::size_type pos_first_comment_tag;
     std::vector<std::string> str_v, pos_line;
-    double **xeq;
+    double (*xeq)[3];
     int *kd;
 
     if (from_stdin) {
@@ -962,7 +962,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
              "The number of entries for atomic positions should be NAT");
     }
 
-    allocate(xeq, nat, 3);
+    allocate(xeq, nat);
     allocate(kd, nat);
 
 

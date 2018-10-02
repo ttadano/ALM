@@ -39,10 +39,6 @@ ALM::ALM()
 
 ALM::~ALM()
 {
-    if (system->magmom) {
-        deallocate(system->magmom);
-    }
-    system->magmom = nullptr;
     if (interaction->nbody_include) {
         deallocate(interaction->nbody_include);
     }
@@ -164,21 +160,12 @@ void ALM::set_cell(const int nat,
         }
     }
 
-    if (system->magmom) {
-        deallocate(system->magmom);
-    }
-    allocate(system->magmom, nat, 3);
-    for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
-            system->magmom[i][j] = 0.0;
-        }
-    }
-
     // Generate the information of the supercell
-    system->set_supercell(lavec, nat, nkd, kd, xcoord, kdname);
+    system->set_supercell(lavec, nat, nkd, kd, xcoord);
+    system->set_kdname(kdname);
 }
 
-void ALM::set_magnetic_params(const double *magmom,
+void ALM::set_magnetic_params(const double (*magmom)[3],
                               // MAGMOM
                               const bool lspin,
                               const int noncollinear,
@@ -187,22 +174,11 @@ void ALM::set_magnetic_params(const double *magmom,
                               // TREVSYM
                               const std::string str_magmom) const // MAGMOM
 {
-    const auto nat = system->get_supercell().number_of_atoms;
-    system->lspin = lspin;
-    system->noncollinear = noncollinear;
-    system->str_magmom = str_magmom;
-    system->trev_sym_mag = trev_sym_mag;
-
-    if (system->magmom) {
-        deallocate(system->magmom);
-    }
-    allocate(system->magmom, nat, 3);
-
-    for (int i = 0; i < nat; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            system->magmom[i][j] = magmom[i * 3 + j];
-        }
-    }
+    system->set_spin_variables(lspin,
+                               noncollinear,
+                               trev_sym_mag,
+                               magmom);
+    system->set_str_magmom(str_magmom);
 }
 
 void ALM::set_displacement_and_force(const double *u_in,

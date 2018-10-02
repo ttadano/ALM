@@ -35,16 +35,34 @@ InputSetter::InputSetter() {
         }
     }
     xcoord = nullptr;
+    is_periodic[0] = 1;
+    is_periodic[1] = 1;
+    is_periodic[2] = 1;
+
+    lspin = false;
+    magmom = nullptr;
+    noncollinear = 0;
+    trevsym = 1;
+    str_magmom = "";
 }
 
-InputSetter::~InputSetter() {}
+InputSetter::~InputSetter() {
+    if (kdname) {
+        deallocate(kdname);
+    }
+    if (xcoord) {
+        deallocate(xcoord);
+    }
+    if (kd) {
+        deallocate(kd);
+    }
+    if (magmom) {
+        deallocate(magmom);
+    }
+}
 
 void InputSetter::deallocator(ALM *alm) const
 {
-    if (alm->system->magmom) {
-        deallocate(alm->system->magmom);
-    }
-    alm->system->magmom = nullptr;
     if (alm->interaction->nbody_include) {
         deallocate(alm->interaction->nbody_include);
     }
@@ -66,12 +84,12 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const int printsymmetry,
                                    const int is_periodic_in[3],
                                    const bool trim_dispsign_for_evenfunc,
-                                   const bool lspin,
+                                   const bool lspin_in,
                                    const bool print_hessian,
-                                   const int noncollinear,
-                                   const int trevsym,
+                                   const int noncollinear_in,
+                                   const int trevsym_in,
                                    const std::string *kdname_in,
-                                   const double * const *magmom,
+                                   const double * const *magmom_in,
                                    const double tolerance,
                                    const double tolerance_constraint)
 {
@@ -82,33 +100,35 @@ void InputSetter::set_general_vars(ALM *alm,
     alm->set_verbosity(verbosity);
     nat = nat_in;
     nkd = nkd_in;
-    alm->system->str_magmom = str_magmom;
     alm->symmetry->printsymmetry = printsymmetry;
     alm->symmetry->tolerance = tolerance;
 
     if (kdname) {
         deallocate(kdname);
     }
-    kdname = nullptr;
-    allocate(kdname, nkd_in);
-    for (i = 0; i < nkd_in; ++i) {
+    allocate(kdname, nkd);
+    for (i = 0; i < nkd; ++i) {
         kdname[i] = kdname_in[i];
     }
 
-    allocate(alm->system->magmom, nat_in, 3);
+    if (magmom) {
+        deallocate(magmom);
+    }
+    allocate(magmom, nat);
+
+    for (i = 0; i < nat; i ++) {
+        for (j = 0; j < 3; j++) {
+            magmom[i][j] = magmom_in[i][j];
+        }
+    }
+    lspin = lspin_in;
+    noncollinear = noncollinear_in;
+    trevsym = trevsym_in;
 
     for (i = 0; i < 3; i++) {
         is_periodic[i] = is_periodic_in[i];
     }
 
-    for (i = 0; i < nat_in; ++i) {
-        for (j = 0; j < 3; ++j) {
-            alm->system->magmom[i][j] = magmom[i][j];
-        }
-    }
-    alm->system->lspin = lspin;
-    alm->system->noncollinear = noncollinear;
-    alm->system->trev_sym_mag = trevsym;
     alm->files->print_hessian = print_hessian;
     alm->constraint->tolerance_constraint = tolerance_constraint;
 
@@ -247,7 +267,7 @@ void InputSetter::set_lasso_vars(ALM *alm,
 
 void InputSetter::set_atomic_positions(const int nat_in,
                                        const int *kd_in,
-                                       const double * const *xcoord_in)
+                                       const double (*xcoord_in)[3])
 {
     int i, j;
 
@@ -272,4 +292,5 @@ void InputSetter::set_geometric_structure(ALM *alm) const
 {
     alm->set_cell(nat, lavec, xcoord, kd, kdname);
     alm->set_periodicity(is_periodic);
+    alm->set_magnetic_params(magmom, lspin, noncollinear, trevsym, str_magmom);
 }

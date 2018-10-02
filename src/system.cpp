@@ -37,17 +37,10 @@ void System::init(const int verbosity,
 
     timer->start_clock("system");
 
-    // Generate the information of spins
-    set_spin_variable(lspin, noncollinear, trev_sym_mag,
-                      nat, magmom);
-
     // Set atomic types (kind + magmom)
     set_atomtype_group();
 
-    if (! is_periodic) {
-    }
-
-    int nneib = 27;
+    const int nneib = 27;
     if (x_image) {
         deallocate(x_image);
     }
@@ -60,10 +53,9 @@ void System::init(const int verbosity,
 
     generate_coordinate_of_periodic_images();
 
-
     if (verbosity > 0) {
         print_structure_stdout(supercell);
-        if (lspin) print_magmom_stdout();
+        if (spin.lspin) print_magmom_stdout();
         timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
         std::cout << std::endl;
@@ -76,8 +68,7 @@ void System::set_supercell(const double lavec_in[3][3],
                            const unsigned int nat_in,
                            const unsigned int nkd_in,
                            const int *kd_in,
-                           const double xf_in[][3],
-                           const std::string kdname_in[])
+                           const double xf_in[][3])
 {
     unsigned int i, j;
 
@@ -120,12 +111,14 @@ void System::set_supercell(const double lavec_in[3][3],
         supercell.x_cartesian.push_back(xtmp);
     }
 
-    if (kdname) {
-        deallocate(kdname);
-    }
-    allocate(kdname, nkd_in);
-    for (i = 0; i < nkd_in; ++i) {
-        kdname[i] = kdname_in[i];
+    // This is needed to avoid segmentation fault.
+    spin.magmom.clear();
+    std::vector<double> vec(3);
+    for (i = 0; i < nat_in; ++i) {
+        for (j = 0; j < 3; ++j) {
+            vec[j] = 0;
+        }
+        spin.magmom.push_back(vec);
     }
 }
 
@@ -157,6 +150,19 @@ void System::set_periodicity(const int is_periodic_in[3])
 int * System::get_periodicity() const
 {
     return is_periodic;
+}
+
+void System::set_kdname(const std::string * kdname_in)
+{
+    const int nkd = supercell.number_of_elems;
+
+    if (kdname) {
+        deallocate(kdname);
+    }
+    allocate(kdname, nkd);
+    for (unsigned int i = 0; i < nkd; ++i) {
+        kdname[i] = kdname_in[i];
+    }
 }
 
 std::string * System::get_kdname() const
@@ -260,6 +266,9 @@ void System::set_default_variables()
 {
     kdname = nullptr;
 
+    supercell.number_of_atoms = 0;
+    supercell.number_of_elems = 0;
+
     allocate(is_periodic, 3);
     is_periodic[0] = 1;
     is_periodic[1] = 1;
@@ -268,19 +277,16 @@ void System::set_default_variables()
     x_image = nullptr;
     exist_image = nullptr;
     str_magmom = "";
-    lspin = false;
-    noncollinear = 0;
-    magmom = nullptr;
-    trev_sym_mag = 1;
+
+    spin.lspin = false;
+    spin.noncollinear = 0;
+    spin.time_reversal_symm = 1;
 }
 
 void System::deallocate_variables()
 {
     if (kdname) {
         deallocate(kdname);
-    }
-    if (magmom) {
-        deallocate(magmom);
     }
     if (x_image) {
         deallocate(x_image);
@@ -293,16 +299,19 @@ void System::deallocate_variables()
     }
 }
 
-void System::set_spin_variable(const bool lspin_in,
-                               const int noncol_in,
-                               const int trev_sym_in,
-                               const unsigned int nat,
-                               double **magmom_in)
+void System::set_spin_variables(const bool lspin_in,
+                                const int noncol_in,
+                                const int trev_sym_in,
+                                const double (*magmom_in)[3])
 {
+    const unsigned int nat = supercell.number_of_atoms;
+
     spin.lspin = lspin_in;
     spin.noncollinear = noncol_in;
     spin.time_reversal_symm = trev_sym_in;
     spin.magmom.clear();
+
+    std::cout << nat << std::endl;
 
     std::vector<double> vec(3);
     for (auto i = 0; i < nat; ++i) {
@@ -311,6 +320,28 @@ void System::set_spin_variable(const bool lspin_in,
         }
         spin.magmom.push_back(vec);
     }
+}
+
+Spin System::get_spin() const
+{
+    return spin;
+}
+
+
+void System::set_str_magmom(std::string str_magmom_in)
+{
+    str_magmom = str_magmom_in;
+}
+
+std::string System::get_str_magmom() const
+{
+    return str_magmom;
+}
+
+std::vector<std::vector<unsigned int>> System::get_atomtype_group() const
+{
+    return atomtype_group;
+
 }
 
 
@@ -331,8 +362,8 @@ void System::set_atomtype_group()
     for (i = 0; i < supercell.number_of_atoms; ++i) {
         type_tmp.element = supercell.kind[i];
 
-        if (noncollinear == 0) {
-            type_tmp.magmom = magmom[i][2];
+        if (spin.noncollinear == 0) {
+            type_tmp.magmom = spin.magmom[i][2];
         } else {
             type_tmp.magmom = 0.0;
         }
@@ -345,13 +376,13 @@ void System::set_atomtype_group()
     for (i = 0; i < supercell.number_of_atoms; ++i) {
         int count = 0;
         for (auto it : set_type) {
-            if (noncollinear) {
+            if (spin.noncollinear) {
                 if (supercell.kind[i] == it.element) {
                     atomtype_group[count].push_back(i);
                 }
             } else {
                 if ((supercell.kind[i] == it.element)
-                    && (std::abs(magmom[i][2] - it.magmom) < eps6)) {
+                    && (std::abs(spin.magmom[i][2] - it.magmom) < eps6)) {
                     atomtype_group[count].push_back(i);
                 }
             }
@@ -504,17 +535,17 @@ void System::print_magmom_stdout() const
     cout << "  MAGMOM is given. The magnetic moments of each atom are as follows:" << endl;
     for (auto i = 0; i < supercell.number_of_atoms; ++i) {
         cout << setw(6) << i + 1;
-        cout << setw(5) << magmom[i][0];
-        cout << setw(5) << magmom[i][1];
-        cout << setw(5) << magmom[i][2];
+        cout << setw(5) << spin.magmom[i][0];
+        cout << setw(5) << spin.magmom[i][1];
+        cout << setw(5) << spin.magmom[i][2];
         cout << endl;
     }
     cout << endl;
-    if (noncollinear == 0) {
+    if (spin.noncollinear == 0) {
         cout << "  NONCOLLINEAR = 0: magnetic moments are considered as scalar variables." << endl;
-    } else if (noncollinear == 1) {
+    } else if (spin.noncollinear == 1) {
         cout << "  NONCOLLINEAR = 1: magnetic moments are considered as vector variables." << endl;
-        if (trev_sym_mag) {
+        if (spin.time_reversal_symm) {
             cout << "  TREVSYM = 1: Time-reversal symmetry will be considered for generating magnetic space group"
                 << endl;
         } else {

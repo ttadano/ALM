@@ -92,7 +92,7 @@ namespace ALM_NS
                             std::string ffile_test) const;
         void set_atomic_positions(const int nat_in,
                                   const int *kd_in,
-                                  const double * const *xcoord_in);
+                                  const double (*xcoord_in)[3]);
         void set_geometric_structure(ALM *alm) const;
 
     private:
@@ -103,5 +103,10 @@ namespace ALM_NS
         std::string *kdname;
         int is_periodic[3];
 
+        bool lspin;
+        double (*magmom)[3];
+        int noncollinear;
+        int trevsym;
+        std::string str_magmom;
     };
 }

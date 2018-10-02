@@ -23,7 +23,7 @@ extern "C" {
                       const int kd[]);
     void alm_set_verbosity(const int id,
                            const int verbosity);
-    // void set_magnetic_params(const double* magmom,
+    // void set_magnetic_params(const double* const * magmom,
     //   		       const bool lspin,
     //   		       const int noncollinear,
     //   		       const int trev_sym_mag,

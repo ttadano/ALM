@@ -69,41 +69,40 @@ namespace ALM_NS
                            const unsigned int,
                            const unsigned int,
                            const int *,
-                           const double [][3],
-                           const std::string []);
+                           const double [][3]);
         Cell get_supercell() const;
         double *** get_x_image() const;
         int * get_exist_image() const;
         void set_periodicity(const int [3]);
         int * get_periodicity() const;
         std::string * get_kdname() const;
+        void set_kdname(const std::string *);
+        void set_periodicity(bool);
 
-        void set_spin_variable(const bool,
-                               const int,
-                               const int,
-                               const unsigned int,
-                               double **);
+        void set_spin_variables(const bool,
+                                const int,
+                                const int,
+                                const double (*)[3]);
+        Spin get_spin() const;
+        void set_str_magmom(std::string);
+        std::string get_str_magmom() const;
 
-        Spin spin;
-
-        // concatenate atomic kind and magmom (only for collinear case)
-        std::vector<std::vector<unsigned int>> atomtype_group;
-
-        // Variables for spins
-
-        bool lspin;
-        int trev_sym_mag;
-        int noncollinear;
-        double **magmom;
-        std::string str_magmom;
+        std::vector<std::vector<unsigned int>> get_atomtype_group() const;
 
     private:
+        // Variables for geometric structure
         Cell supercell;
         std::string *kdname;
         int *is_periodic;  // is_periodic[3];
-
         double ***x_image;
         int *exist_image;
+
+        // Variables for spins
+        Spin spin;
+        std::string str_magmom;
+
+        // concatenate atomic kind and magmom (only for collinear case)
+        std::vector<std::vector<unsigned int>> atomtype_group;
 
         enum LatticeType { Direct, Reciprocal };
 

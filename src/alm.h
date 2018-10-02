@@ -58,11 +58,11 @@ namespace ALM_NS
                       const double xcoord[][3],
                       const int kd[],
                       const std::string kdname[]) const;
-        void set_magnetic_params(const double *magmom,
-                                 bool lspin,
-                                 int noncollinear,
-                                 int trev_sym_mag,
-                                 std::string str_magmom) const;
+        void set_magnetic_params(const double (*magmom)[3],
+                                 const bool lspin,
+                                 const int noncollinear,
+                                 const int trev_sym_mag,
+                                 const std::string str_magmom) const;
         void set_displacement_and_force(const double *u_in,
                                         const double *f_in,
                                         int nat,

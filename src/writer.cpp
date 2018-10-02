@@ -60,7 +60,7 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << "  PERIODIC = ";
     for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->system->get_periodicity()[i];
     std::cout << std::endl;
-    std::cout << "  MAGMOM = " << alm->system->str_magmom << std::endl;
+    std::cout << "  MAGMOM = " << alm->system->get_str_magmom() << std::endl;
     std::cout << "  HESSIAN = " << alm->files->print_hessian << std::endl;
     std::cout << std::endl;
 
@@ -458,13 +458,13 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    if (alm->system->lspin) {
+    if (alm->system->get_spin().lspin) {
         pt.put("Data.MagneticMoments", "");
-        pt.put("Data.MagneticMoments.Noncollinear", alm->system->noncollinear);
-        pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm->system->trev_sym_mag);
+        pt.put("Data.MagneticMoments.Noncollinear", alm->system->get_spin().noncollinear);
+        pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm->system->get_spin().time_reversal_symm);
         for (i = 0; i < system_structure.nat; ++i) {
             str_tmp.clear();
-            for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->magmom[i][j], 5);
+            for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->get_spin().magmom[i][j], 5);
             ptree &child = pt.add("Data.MagneticMoments.mag", str_tmp);
             child.put("<xmlattr>.index", i + 1);
         }

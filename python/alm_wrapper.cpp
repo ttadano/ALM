@@ -124,7 +124,7 @@ extern "C" {
         alm[id]->set_verbosity(verbosity);
     }
 
-    // void set_magnetic_params(const double* magmom,
+    // void set_magnetic_params(const double* const * magmom,
     //   		       const bool lspin,
     //   		       const int noncollinear,
     //   		       const int trev_sym_mag,
