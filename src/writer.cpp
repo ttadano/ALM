@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory
+ Please see the file 'LICENCE.txt' in the root directory 
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -138,6 +138,11 @@ void Writer::writeall(ALM *alm)
     write_misc_xml(alm);
     if (alm->files->print_hessian) write_hessian(alm);
     //   write_in_QEformat(alm);
+
+    const bool print_thirdorderpy_fc3 = false;
+    if (alm->interaction->maxorder > 1 && print_thirdorderpy_fc3) {
+        write_fc3_thirdorderpy_format(alm);
+    }
 
     alm->timer->stop_clock("writer");
 }
@@ -808,6 +813,190 @@ void Writer::write_in_QEformat(ALM *alm) const
     }
     ofs_hes.close();
     deallocate(hessian);
+}
+
+void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
+{
+    int i, j, k, l, itran, ip;
+    int pair_tmp[3], coord_tmp[3];
+    int pair_tran[3];
+    std::ofstream ofs_fc3;
+    double ***fc3;
+    int ***has_element;
+    int nelems = 0;
+    int nat3 = 3 * alm->system->supercell.number_of_atoms;
+    int natmin = alm->symmetry->nat_prim;
+    int nat = alm->system->nat;
+    int ntran = alm->symmetry->ntran;
+
+    std::vector<int> atom_tmp;
+    std::vector<std::vector<int>> cell_dummy;
+    std::set<InteractionCluster>::iterator iter_cluster;
+    int multiplicity;
+    atom_tmp.resize(2);
+    cell_dummy.resize(2);
+
+    allocate(fc3, 3 * natmin, nat3, nat3);
+    allocate(has_element, natmin, nat, nat);
+
+    for (i = 0; i < 3 * natmin; ++i) {
+        for (j = 0; j < nat3; ++j) {
+            for (k = 0; k < nat3; ++k) {
+                fc3[i][j][k] = 0.0;
+
+            }
+        }
+    }
+    for (i = 0; i < natmin; ++i) {
+        for (j = 0; j < nat; ++j) {
+            for (k = 0; k < nat; ++k) {
+                has_element[i][j][k] = 0;
+            }
+        }
+    }
+
+    int ishift = alm->fcs->nequiv[0].size();
+
+    for (auto it = alm->fcs->fc_table[1].begin(); it != alm->fcs->fc_table[1].end(); ++it) {
+        FcProperty fctmp = *it;
+        ip = fctmp.mother + ishift;
+
+        for (i = 0; i < 3; ++i) {
+            pair_tmp[i] = fctmp.elems[i] / 3;
+            coord_tmp[i] = fctmp.elems[i] % 3;
+        }
+
+        j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+
+        if (pair_tmp[1] > pair_tmp[2]) {
+            atom_tmp[0] = pair_tmp[2];
+            atom_tmp[1] = pair_tmp[1];
+        } else {
+            atom_tmp[0] = pair_tmp[1];
+            atom_tmp[1] = pair_tmp[2];
+        }
+        iter_cluster = alm->interaction->interaction_cluster[1][j].find(InteractionCluster(atom_tmp, cell_dummy));
+
+        if (!has_element[j][pair_tmp[1]][pair_tmp[2]]) {
+            nelems += (*iter_cluster).cell.size();
+            has_element[j][pair_tmp[1]][pair_tmp[2]] = 1;
+        }
+        fc3[3 * j + coord_tmp[0]][fctmp.elems[1]][fctmp.elems[2]] = alm->fitting->params[ip] * fctmp.sign;
+
+        if (fctmp.elems[1] != fctmp.elems[2]) {
+            if (!has_element[j][pair_tmp[2]][pair_tmp[1]]) {
+                nelems += (*iter_cluster).cell.size();
+                has_element[j][pair_tmp[2]][pair_tmp[1]] = 1;
+            }
+            fc3[3 * j + coord_tmp[0]][fctmp.elems[2]][fctmp.elems[1]] = alm->fitting->params[ip] * fctmp.sign;
+        }
+    }
+
+
+    int jtran, ktran;
+    int jat, kat;
+    int jat0, kat0;
+
+    std::string file_fc3 = alm->files->job_title + ".FORCE_CONSTANT_3RD";
+
+    ofs_fc3.open(file_fc3.c_str(), std::ios::out);
+    if (!ofs_fc3) exit("write_fc3_thirdorderpy_format", "cannot create the file");
+    ofs_fc3 << nelems << std::endl;
+
+
+    bool swapped;
+    double vec1[3], vec2[3];
+    int ielem = 0;
+    double factor = Ryd / 1.6021766208e-19 / std::pow(Bohr_in_Angstrom, 3);
+
+    for (i = 0; i < natmin; ++i) {
+        for (jtran = 0; jtran < ntran; ++jtran) {
+            for (j = 0; j < natmin; ++j) {
+                for (ktran = 0; ktran < ntran; ++ktran) {
+                    for (k = 0; k < natmin; ++k) {
+
+                        jat = alm->symmetry->map_p2s[j][jtran];
+                        kat = alm->symmetry->map_p2s[k][ktran];
+
+                        if (!has_element[i][jat][kat]) continue;
+
+                        if (jat > kat) {
+                            atom_tmp[0] = kat;
+                            atom_tmp[1] = jat;
+                            swapped = true;
+                        } else {
+                            atom_tmp[0] = jat;
+                            atom_tmp[1] = kat;
+                            swapped = false;
+                        }
+
+                        iter_cluster = alm->interaction->interaction_cluster[1][i].find(
+                            InteractionCluster(atom_tmp, cell_dummy));
+                        if (iter_cluster == alm->interaction->interaction_cluster[1][i].end()) {
+                            exit("write_misc_xml", "This cannot happen.");
+                        }
+
+                        multiplicity = (*iter_cluster).cell.size();
+
+                        jat0 = alm->symmetry->map_p2s[alm->symmetry->map_s2p[atom_tmp[0]].atom_num][0];
+                        kat0 = alm->symmetry->map_p2s[alm->symmetry->map_s2p[atom_tmp[1]].atom_num][0];
+
+                        for (auto imult = 0; imult < multiplicity; ++imult) {
+                            std::vector<int> cell_now = (*iter_cluster).cell[imult];
+
+                            for (auto m = 0; m < 3; ++m) {
+                                vec1[m] = (alm->system->x_image[0][atom_tmp[0]][m]
+                                    - alm->system->x_image[0][jat0][m]
+                                    + alm->system->x_image[cell_now[0]][0][m]
+                                    - alm->system->x_image[0][0][m]) * Bohr_in_Angstrom;
+                                vec2[m] = (alm->system->x_image[0][atom_tmp[1]][m]
+                                    - alm->system->x_image[0][kat0][m]
+                                    + alm->system->x_image[cell_now[1]][0][m]
+                                    - alm->system->x_image[0][0][m]) * Bohr_in_Angstrom;
+                            }
+
+                            ++ielem;
+                            ofs_fc3 << std::endl;
+                            ofs_fc3 << ielem << std::endl;
+                            ofs_fc3 << std::scientific;
+                            ofs_fc3 << std::setprecision(10);
+                            if (swapped) {
+                                ofs_fc3 << std::setw(20) << vec2[0] << std::setw(20) << vec2[1] << std::setw(20) << vec2
+                                    [2] << std::endl;
+                                ofs_fc3 << std::setw(20) << vec1[0] << std::setw(20) << vec1[1] << std::setw(20) << vec1
+                                    [2] << std::endl;
+                            } else {
+                                ofs_fc3 << std::setw(20) << vec1[0] << std::setw(20) << vec1[1] << std::setw(20) << vec1
+                                    [2] << std::endl;
+                                ofs_fc3 << std::setw(20) << vec2[0] << std::setw(20) << vec2[1] << std::setw(20) << vec2
+                                    [2] << std::endl;
+                            }
+                            ofs_fc3 << std::setw(5) << i + 1;
+                            ofs_fc3 << std::setw(5) << j + 1;
+                            ofs_fc3 << std::setw(5) << k + 1 << std::endl;
+
+                            for (auto ii = 0; ii < 3; ++ii) {
+                                for (auto jj = 0; jj < 3; ++jj) {
+                                    for (auto kk = 0; kk < 3; ++kk) {
+                                        ofs_fc3 << std::setw(2) << ii + 1;
+                                        ofs_fc3 << std::setw(3) << jj + 1;
+                                        ofs_fc3 << std::setw(3) << kk + 1;
+                                        ofs_fc3 << std::setw(20)
+                                            << fc3[3 * i + ii][3 * jat + jj][3 * kat + kk]
+                                            * factor / static_cast<double>(multiplicity) << std::endl;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    ofs_fc3.close();
+    deallocate(fc3);
+    deallocate(has_element);
 }
 
 std::string Writer::easyvizint(const int n) const

@@ -69,6 +69,7 @@ namespace ALM_NS
         void write_misc_xml(ALM *);
         void write_hessian(ALM *) const;
         void write_in_QEformat(ALM *) const;
+        void write_fc3_thirdorderpy_format(ALM *) const;
         std::string easyvizint(int) const;
 
         std::string double2string(double, int nprec = 15) const;
