@@ -106,7 +106,7 @@ namespace ALM_NS
     {
         const int len1 = obj1.size();
         const int len2 = obj2.size();
-        const int min = std::min(len1, len2);
+        const int min = (std::min)(len1, len2);
 
         for (int i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
@@ -158,7 +158,7 @@ namespace ALM_NS
     {
         const int len1 = obj1.size();
         const int len2 = obj2.size();
-        const int min = std::min(len1, len2);
+        const int min = (std::min)(len1, len2);
 
         for (int i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
