@@ -824,9 +824,9 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
     double ***fc3;
     int ***has_element;
     int nelems = 0;
-    int nat3 = 3 * alm->system->supercell.number_of_atoms;
+    int nat3 = 3 * alm->system->get_supercell().number_of_atoms;
     int natmin = alm->symmetry->nat_prim;
-    int nat = alm->system->nat;
+    int nat = alm->system->get_supercell().number_of_atoms;
     int ntran = alm->symmetry->ntran;
 
     std::vector<int> atom_tmp;
