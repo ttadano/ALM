@@ -189,7 +189,7 @@ void InputParser::parse_input(ALM *alm)
              "&position entry not found in the input file");
     }
     parse_atomic_positions(alm);
-    input_setter->set_cell(alm);
+    input_setter->set_geometric_structure(alm);
 
     if (!locate_tag("&interaction")) {
         exit("parse_input",

@@ -126,14 +126,14 @@ void Interaction::init(const System *system,
                            symmetry->nat_prim,
                            symmetry->map_p2s,
                            system->get_supercell().kind,
-                           system->kdname);
+                           system->get_kdname());
     }
 
     if (verbosity > 1) {
         print_interaction_information(symmetry->nat_prim,
                                       symmetry->map_p2s,
                                       system->get_supercell().kind,
-                                      system->kdname,
+                                      system->get_kdname(),
                                       interaction_pair);
     }
 
@@ -588,10 +588,10 @@ bool Interaction::satisfy_nbody_rule(const int nelem,
 
 void Interaction::calc_interaction_clusters(const int natmin,
                                             const std::vector<int> &kd,
-                                            int **map_p2s,
-                                            std::vector<int> **interaction_pair_in,
-                                            double ***x_image,
-                                            int *exist,
+                                            const int * const *map_p2s,
+                                            const std::vector<int> * const *interaction_pair_in,
+                                            const double * const * const *x_image,
+                                            const int *exist,
                                             std::set<InteractionCluster> **interaction_cluster_out)
 {
     //

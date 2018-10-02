@@ -61,17 +61,22 @@ namespace ALM_NS
     public:
         System();
         ~System();
-        void init(const int verbosity,
-                  Timer *timer);
+        void init(const int,
+                  Timer *);
         void frac2cart(double **) const;
 
         void set_supercell(const double [3][3],
                            const unsigned int,
                            const unsigned int,
                            const int *,
-                           const double [][3]);
-
+                           const double [][3],
+                           const std::string []);
         Cell get_supercell() const;
+        double *** get_x_image() const;
+        int * get_exist_image() const;
+        void set_periodicity(const int [3]);
+        int * get_periodicity() const;
+        std::string * get_kdname() const;
 
         void set_spin_variable(const bool,
                                const int,
@@ -81,10 +86,8 @@ namespace ALM_NS
 
         Spin spin;
 
-        std::string *kdname;
         // concatenate atomic kind and magmom (only for collinear case)
         std::vector<std::vector<unsigned int>> atomtype_group;
-        int is_periodic[3];
         double ***x_image;
         int *exist_image;
 
@@ -98,6 +101,8 @@ namespace ALM_NS
 
     private:
         Cell supercell;
+        std::string *kdname;
+        int *is_periodic;  // is_periodic[3];
 
         enum LatticeType { Direct, Reciprocal };
 
@@ -108,11 +113,7 @@ namespace ALM_NS
         double volume(const double [3][3], LatticeType) const;
         void set_atomtype_group();
 
-        void generate_coordinate_of_periodic_images(const unsigned int,
-                                                    const std::vector<std::vector<double>> &,
-                                                    const int [3],
-                                                    double ***,
-                                                    int *) const;
+        void generate_coordinate_of_periodic_images();
         void print_structure_stdout(const Cell &);
         void print_magmom_stdout() const;
     };

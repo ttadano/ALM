@@ -64,7 +64,7 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const int nat_in,
                                    const int nkd_in,
                                    const int printsymmetry,
-                                   const int is_periodic[3],
+                                   const int is_periodic_in[3],
                                    const bool trim_dispsign_for_evenfunc,
                                    const bool lspin,
                                    const bool print_hessian,
@@ -97,9 +97,10 @@ void InputSetter::set_general_vars(ALM *alm,
 
     allocate(alm->system->magmom, nat_in, 3);
 
-    for (i = 0; i < 3; ++i) {
-        alm->system->is_periodic[i] = is_periodic[i];
+    for (i = 0; i < 3; i++) {
+        is_periodic[i] = is_periodic_in[i];
     }
+
     for (i = 0; i < nat_in; ++i) {
         for (j = 0; j < 3; ++j) {
             alm->system->magmom[i][j] = magmom[i][j];
@@ -267,7 +268,8 @@ void InputSetter::set_atomic_positions(const int nat_in,
     }
 }
 
-void InputSetter::set_cell(ALM *alm) const
+void InputSetter::set_geometric_structure(ALM *alm) const
 {
     alm->set_cell(nat, lavec, xcoord, kd, kdname);
+    alm->set_periodicity(is_periodic);
 }

@@ -39,10 +39,6 @@ ALM::ALM()
 
 ALM::~ALM()
 {
-    if (system->kdname) {
-        deallocate(system->kdname);
-    }
-    system->kdname = nullptr;
     if (system->magmom) {
         deallocate(system->magmom);
     }
@@ -139,9 +135,7 @@ void ALM::set_displacement_basis(const std::string str_disp_basis) const // DBAS
 
 void ALM::set_periodicity(const int is_periodic[3]) const // PERIODIC
 {
-    for (int i = 0; i < 3; ++i) {
-        system->is_periodic[i] = is_periodic[i];
-    }
+    system->set_periodicity(is_periodic);
 }
 
 void ALM::set_cell(const int nat,
@@ -170,14 +164,6 @@ void ALM::set_cell(const int nat,
         }
     }
 
-    if (system->kdname) {
-        deallocate(system->kdname);
-    }
-    allocate(system->kdname, nkd);
-    for (i = 0; i < nkd; ++i) {
-        system->kdname[i] = kdname[i];
-    }
-
     if (system->magmom) {
         deallocate(system->magmom);
     }
@@ -189,7 +175,7 @@ void ALM::set_cell(const int nat,
     }
 
     // Generate the information of the supercell
-    system->set_supercell(lavec, nat, nkd, kd, xcoord);
+    system->set_supercell(lavec, nat, nkd, kd, xcoord, kdname);
 }
 
 void ALM::set_magnetic_params(const double *magmom,

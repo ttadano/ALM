@@ -44,6 +44,9 @@ void System::init(const int verbosity,
     // Set atomic types (kind + magmom)
     set_atomtype_group();
 
+    if (! is_periodic) {
+    }
+
     int nneib = 27;
     if (x_image) {
         deallocate(x_image);
@@ -55,11 +58,8 @@ void System::init(const int verbosity,
     }
     allocate(exist_image, nneib);
 
-    generate_coordinate_of_periodic_images(nat,
-                                           supercell.x_fractional,
-                                           is_periodic,
-                                           x_image,
-                                           exist_image);
+    generate_coordinate_of_periodic_images();
+
 
     if (verbosity > 0) {
         print_structure_stdout(supercell);
@@ -76,7 +76,8 @@ void System::set_supercell(const double lavec_in[3][3],
                            const unsigned int nat_in,
                            const unsigned int nkd_in,
                            const int *kd_in,
-                           const double xf_in[][3])
+                           const double xf_in[][3],
+                           const std::string kdname_in[])
 {
     unsigned int i, j;
 
@@ -118,11 +119,49 @@ void System::set_supercell(const double lavec_in[3][3],
         }
         supercell.x_cartesian.push_back(xtmp);
     }
+
+    if (kdname) {
+        deallocate(kdname);
+    }
+    allocate(kdname, nkd_in);
+    for (i = 0; i < nkd_in; ++i) {
+        kdname[i] = kdname_in[i];
+    }
 }
 
 Cell System::get_supercell() const
 {
     return supercell;
+}
+
+double *** System::get_x_image() const
+{
+    return x_image;
+}
+
+int * System::get_exist_image() const
+{
+    return exist_image;
+}
+
+void System::set_periodicity(const int is_periodic_in[3])
+{
+    if (! is_periodic) {  // This should be already allocated though.
+        allocate(is_periodic, 3);
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        is_periodic[i] = is_periodic_in[i];
+    }
+}
+
+int * System::get_periodicity() const
+{
+    return is_periodic;
+}
+
+std::string * System::get_kdname() const
+{
+    return kdname;
 }
 
 void System::set_reciprocal_latt(const double aa[3][3],
@@ -219,11 +258,13 @@ double System::volume(const double latt_in[3][3],
 
 void System::set_default_variables()
 {
-    // Default values
     kdname = nullptr;
+
+    allocate(is_periodic, 3);
     is_periodic[0] = 1;
     is_periodic[1] = 1;
     is_periodic[2] = 1;
+
     x_image = nullptr;
     exist_image = nullptr;
     str_magmom = "";
@@ -243,6 +284,9 @@ void System::deallocate_variables()
     }
     if (x_image) {
         deallocate(x_image);
+    }
+    if (is_periodic) {
+        deallocate(is_periodic);
     }
     if (exist_image) {
         deallocate(exist_image);
@@ -318,11 +362,7 @@ void System::set_atomtype_group()
 }
 
 
-void System::generate_coordinate_of_periodic_images(const unsigned int nat,
-                                                    const std::vector<std::vector<double>> &xf_in,
-                                                    const int periodic_flag[3],
-                                                    double ***xc_out,
-                                                    int *is_allowed) const
+void System::generate_coordinate_of_periodic_images()
 {
     //
     // Generate Cartesian coordinates of atoms in the neighboring 27 supercells
@@ -332,14 +372,17 @@ void System::generate_coordinate_of_periodic_images(const unsigned int nat,
     int ia, ja, ka;
     int icell;
 
+    const unsigned int nat = supercell.number_of_atoms;
+    const std::vector<std::vector<double>> xf_in = supercell.x_fractional;
+
     icell = 0;
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
-            xc_out[0][i][j] = xf_in[i][j];
+            x_image[0][i][j] = xf_in[i][j];
         }
     }
     // Convert to Cartesian coordinate
-    frac2cart(xc_out[0]);
+    frac2cart(x_image[0]);
 
     for (ia = -1; ia <= 1; ++ia) {
         for (ja = -1; ja <= 1; ++ja) {
@@ -349,18 +392,18 @@ void System::generate_coordinate_of_periodic_images(const unsigned int nat,
 
                 ++icell;
                 for (i = 0; i < nat; ++i) {
-                    xc_out[icell][i][0] = xf_in[i][0] + static_cast<double>(ia);
-                    xc_out[icell][i][1] = xf_in[i][1] + static_cast<double>(ja);
-                    xc_out[icell][i][2] = xf_in[i][2] + static_cast<double>(ka);
+                    x_image[icell][i][0] = xf_in[i][0] + static_cast<double>(ia);
+                    x_image[icell][i][1] = xf_in[i][1] + static_cast<double>(ja);
+                    x_image[icell][i][2] = xf_in[i][2] + static_cast<double>(ka);
                 }
                 // Convert to Cartesian coordinate
-                frac2cart(xc_out[icell]);
+                frac2cart(x_image[icell]);
             }
         }
     }
 
     icell = 0;
-    is_allowed[0] = 1;
+    exist_image[0] = 1;
 
     for (ia = -1; ia <= 1; ++ia) {
         for (ja = -1; ja <= 1; ++ja) {
@@ -372,15 +415,15 @@ void System::generate_coordinate_of_periodic_images(const unsigned int nat,
 
                 // When periodic flag is zero along an axis,
                 // periodic images along that axis cannot be considered.
-                if (((std::abs(ia) == 1) && (periodic_flag[0] == 0)) ||
-                    ((std::abs(ja) == 1) && (periodic_flag[1] == 0)) ||
-                    ((std::abs(ka) == 1) && (periodic_flag[2] == 0))) {
+                if (((std::abs(ia) == 1) && (is_periodic[0] == 0)) ||
+                    ((std::abs(ja) == 1) && (is_periodic[1] == 0)) ||
+                    ((std::abs(ka) == 1) && (is_periodic[2] == 0))) {
 
-                    is_allowed[icell] = 0;
+                    exist_image[icell] = 0;
 
                 } else {
 
-                    is_allowed[icell] = 1;
+                    exist_image[icell] = 1;
                 }
             }
         }
@@ -391,7 +434,7 @@ void System::generate_coordinate_of_periodic_images(const unsigned int nat,
 void System::print_structure_stdout(const Cell &cell)
 {
     using namespace std;
-    int i, j;
+    int i;
 
     cout << " SYSTEM" << endl;
     cout << " ======" << endl << endl;

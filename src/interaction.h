@@ -257,10 +257,10 @@ namespace ALM_NS
 
         void calc_interaction_clusters(const int,
                                        const std::vector<int> &,
-                                       int **,
-                                       std::vector<int> **,
-                                       double ***,
-                                       int *,
+                                       const int * const *,
+                                       const std::vector<int> * const *,
+                                       const double * const *const *,
+                                       const int *,
                                        std::set<InteractionCluster> **);
 
         void set_interaction_cluster(const int,

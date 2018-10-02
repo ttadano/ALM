@@ -51,7 +51,7 @@ void Symmetry::init(const System *system,
 
 
     setup_symmetry_operation(system->get_supercell(),
-                             system->is_periodic,
+                             system->get_periodicity(),
                              system->atomtype_group,
                              system->spin,
                              verbosity,
