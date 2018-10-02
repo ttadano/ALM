@@ -62,6 +62,7 @@ void ALMCUI::run(int narg,
     if (alm->get_run_mode() == "fitting" || alm->get_run_mode() == "lasso") {
         input_parser->parse_displacement_and_force(alm);
     }
+
     delete input_parser;
 
     alm->run();

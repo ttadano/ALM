@@ -61,50 +61,48 @@ namespace ALM_NS
     public:
         System();
         ~System();
-        void init(const int verbosity,
-                  Timer *timer);
+        void init(const int,
+                  Timer *);
         void frac2cart(double **) const;
 
         void set_supercell(const double [3][3],
                            const unsigned int,
                            const unsigned int,
                            const int *,
-                           const double * const *);
-
+                           const double [][3]);
         Cell get_supercell() const;
+        double *** get_x_image() const;
+        int * get_exist_image() const;
+        void set_periodicity(const int [3]);
+        int * get_periodicity() const;
+        std::string * get_kdname() const;
+        void set_kdname(const std::string *);
+        void set_periodicity(bool);
 
-        void set_spin_variable(const bool,
-                               const int,
-                               const int,
-                               const unsigned int,
-                               double **);
+        void set_spin_variables(const bool,
+                                const int,
+                                const int,
+                                const double (*)[3]);
+        Spin get_spin() const;
+        void set_str_magmom(std::string);
+        std::string get_str_magmom() const;
 
-        Spin spin;
+        std::vector<std::vector<unsigned int>> get_atomtype_group() const;
 
+    private:
+        // Variables for geometric structure
+        Cell supercell;
         std::string *kdname;
-        // concatenate atomic kind and magmom (only for collinear case)
-        std::vector<std::vector<unsigned int>> atomtype_group;
-        int is_periodic[3];
+        int *is_periodic;  // is_periodic[3];
         double ***x_image;
         int *exist_image;
 
         // Variables for spins
-
-        bool lspin;
-        int trev_sym_mag;
-        int noncollinear;
-        double **magmom;
+        Spin spin;
         std::string str_magmom;
 
-        // Referenced from input_setter, writer
-
-        int nat, nkd;
-        int *kd;
-        double lavec[3][3];
-        double **xcoord; // fractional coordinate
-
-    private:
-        Cell supercell;
+        // concatenate atomic kind and magmom (only for collinear case)
+        std::vector<std::vector<unsigned int>> atomtype_group;
 
         enum LatticeType { Direct, Reciprocal };
 
@@ -115,11 +113,7 @@ namespace ALM_NS
         double volume(const double [3][3], LatticeType) const;
         void set_atomtype_group();
 
-        void generate_coordinate_of_periodic_images(const unsigned int,
-                                                    const std::vector<std::vector<double>> &,
-                                                    const int [3],
-                                                    double ***,
-                                                    int *) const;
+        void generate_coordinate_of_periodic_images();
         void print_structure_stdout(const Cell &);
         void print_magmom_stdout() const;
     };
