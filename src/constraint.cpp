@@ -1218,7 +1218,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                     for (j = 0; j < nsize_equiv; ++j) {
                                         for (int k = 0; k < 3; ++k) {
                                             vec_for_rot[k]
-                                                += system->x_image[(*iter_cluster).cell[j][0]][jat][k];
+                                                += system->get_x_image()[(*iter_cluster).cell[j][0]][jat][k];
                                         }
                                     }
 
@@ -1358,7 +1358,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
                                                 for (j = 0; j < nsize_equiv; ++j) {
                                                     for (int k = 0; k < 3; ++k) {
-                                                        vec_for_rot[k] += system->x_image[(*iter_cluster).cell[j][
+                                                        vec_for_rot[k] += system->get_x_image()[(*iter_cluster).cell[j][
                                                             iloc]][jat][k];
                                                     }
                                                 }

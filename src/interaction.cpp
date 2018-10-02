@@ -80,8 +80,8 @@ void Interaction::init(const System *system,
     allocate(cluster_list, maxorder);
 
     get_pairs_of_minimum_distance(nat,
-                                  system->x_image,
-                                  system->exist_image);
+                                  system->get_x_image(),
+                                  system->get_exist_image());
 
     set_interaction_by_cutoff(system->get_supercell().number_of_atoms,
                               system->get_supercell().kind,
@@ -94,8 +94,8 @@ void Interaction::init(const System *system,
                               system->get_supercell().kind,
                               symmetry->map_p2s,
                               interaction_pair,
-                              system->x_image,
-                              system->exist_image,
+                              system->get_x_image(),
+                              system->get_exist_image(),
                               interaction_cluster);
 
     generate_pairs(symmetry->nat_prim,

@@ -88,8 +88,6 @@ namespace ALM_NS
 
         // concatenate atomic kind and magmom (only for collinear case)
         std::vector<std::vector<unsigned int>> atomtype_group;
-        double ***x_image;
-        int *exist_image;
 
         // Variables for spins
 
@@ -103,6 +101,9 @@ namespace ALM_NS
         Cell supercell;
         std::string *kdname;
         int *is_periodic;  // is_periodic[3];
+
+        double ***x_image;
+        int *exist_image;
 
         enum LatticeType { Direct, Reciprocal };
 
