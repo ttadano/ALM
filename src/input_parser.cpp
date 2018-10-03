@@ -59,7 +59,7 @@ void InputParser::run(ALM *alm,
 
 void InputParser::parse_displacement_and_force(ALM *alm) const
 {
-    int nat = alm->system->get_supercell().number_of_atoms;
+    int nat = alm->get_supercell().number_of_atoms;
     int ndata = alm->fitting->ndata;
     int nstart = alm->fitting->nstart;
     int nend = alm->fitting->nend;
