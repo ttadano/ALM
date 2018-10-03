@@ -4,7 +4,7 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
@@ -40,8 +40,8 @@ void Writer::write_input_vars(const ALM *alm) const
     unsigned int i;
     int nat, nkd;
 
-    nat = alm->system->get_supercell().number_of_atoms;
-    nkd = alm->system->get_supercell().number_of_elems;
+    nat = alm->get_supercell().number_of_atoms;
+    nkd = alm->get_supercell().number_of_elems;
 
     alm->timer->start_clock("writer");
 
@@ -55,12 +55,12 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << "  PRINTSYM = " << alm->symmetry->printsymmetry
         << "; TOLERANCE = " << alm->symmetry->tolerance << std::endl;
     std::cout << "  KD = ";
-    for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->system->get_kdname()[i];
+    for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->get_kdname()[i];
     std::cout << std::endl;
     std::cout << "  PERIODIC = ";
-    for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->system->get_periodicity()[i];
+    for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->get_periodicity()[i];
     std::cout << std::endl;
-    std::cout << "  MAGMOM = " << alm->system->get_str_magmom() << std::endl;
+    std::cout << "  MAGMOM = " << alm->get_str_magmom() << std::endl;
     std::cout << "  HESSIAN = " << alm->files->print_hessian << std::endl;
     std::cout << std::endl;
 
@@ -384,22 +384,22 @@ void Writer::write_misc_xml(ALM *alm)
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
             system_structure.lattice_vector[i][j]
-                = alm->system->get_supercell().lattice_vector[i][j];
+                = alm->get_supercell().lattice_vector[i][j];
         }
     }
 
-    system_structure.nat = alm->system->get_supercell().number_of_atoms;
+    system_structure.nat = alm->get_supercell().number_of_atoms;
     system_structure.natmin = alm->symmetry->nat_prim;
     system_structure.ntran = alm->symmetry->ntran;
-    system_structure.nspecies = alm->system->get_supercell().number_of_elems;
+    system_structure.nspecies = alm->get_supercell().number_of_elems;
 
     AtomProperty prop_tmp;
 
-    for (i = 0; i < alm->system->get_supercell().number_of_atoms; ++i) {
-        prop_tmp.x = alm->system->get_supercell().x_fractional[i][0];
-        prop_tmp.y = alm->system->get_supercell().x_fractional[i][1];
-        prop_tmp.z = alm->system->get_supercell().x_fractional[i][2];
-        prop_tmp.kind = alm->system->get_supercell().kind[i];
+    for (i = 0; i < alm->get_supercell().number_of_atoms; ++i) {
+        prop_tmp.x = alm->get_supercell().x_fractional[i][0];
+        prop_tmp.y = alm->get_supercell().x_fractional[i][1];
+        prop_tmp.z = alm->get_supercell().x_fractional[i][2];
+        prop_tmp.kind = alm->get_supercell().kind[i];
         prop_tmp.atom = alm->symmetry->map_s2p[i].atom_num + 1;
         prop_tmp.tran = alm->symmetry->map_s2p[i].tran_num + 1;
 
@@ -421,7 +421,7 @@ void Writer::write_misc_xml(ALM *alm)
 
     for (i = 0; i < system_structure.nspecies; ++i) {
         ptree &child = pt.add("Data.Structure.AtomicElements.element",
-                              alm->system->get_kdname()[i]);
+                              alm->get_kdname()[i]);
         child.put("<xmlattr>.number", i + 1);
     }
 
@@ -437,9 +437,9 @@ void Writer::write_misc_xml(ALM *alm)
     pt.put("Data.Structure.LatticeVector.a3", str_pos[2]);
 
     std::stringstream ss;
-    ss << alm->system->get_periodicity()[0] << " "
-        << alm->system->get_periodicity()[1] << " "
-        << alm->system->get_periodicity()[2];
+    ss << alm->get_periodicity()[0] << " "
+        << alm->get_periodicity()[1] << " "
+        << alm->get_periodicity()[2];
     pt.put("Data.Structure.Periodicity", ss.str());
 
     pt.put("Data.Structure.Position", "");
@@ -447,10 +447,10 @@ void Writer::write_misc_xml(ALM *alm)
 
     for (i = 0; i < system_structure.nat; ++i) {
         str_tmp.clear();
-        for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->get_supercell().x_fractional[i][j]);
+        for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->get_supercell().x_fractional[i][j]);
         ptree &child = pt.add("Data.Structure.Position.pos", str_tmp);
         child.put("<xmlattr>.index", i + 1);
-        child.put("<xmlattr>.element", alm->system->get_kdname()[alm->system->get_supercell().kind[i] - 1]);
+        child.put("<xmlattr>.element", alm->get_kdname()[alm->get_supercell().kind[i] - 1]);
     }
 
     pt.put("Data.Symmetry.NumberOfTranslations", alm->symmetry->ntran);
@@ -463,13 +463,13 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    if (alm->system->get_spin().lspin) {
+    if (alm->get_spin().lspin) {
         pt.put("Data.MagneticMoments", "");
-        pt.put("Data.MagneticMoments.Noncollinear", alm->system->get_spin().noncollinear);
-        pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm->system->get_spin().time_reversal_symm);
+        pt.put("Data.MagneticMoments.Noncollinear", alm->get_spin().noncollinear);
+        pt.put("Data.MagneticMoments.TimeReversalSymmetry", alm->get_spin().time_reversal_symm);
         for (i = 0; i < system_structure.nat; ++i) {
             str_tmp.clear();
-            for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->system->get_spin().magmom[i][j], 5);
+            for (j = 0; j < 3; ++j) str_tmp += " " + double2string(alm->get_spin().magmom[i][j], 5);
             ptree &child = pt.add("Data.MagneticMoments.mag", str_tmp);
             child.put("<xmlattr>.index", i + 1);
         }
@@ -699,7 +699,7 @@ void Writer::write_hessian(ALM *alm) const
     double **hessian;
 
     //ALMCore *alm = alm->get_alm();
-    int nat3 = 3 * alm->system->get_supercell().number_of_atoms;
+    int nat3 = 3 * alm->get_supercell().number_of_atoms;
 
     allocate(hessian, nat3, nat3);
 
@@ -765,7 +765,7 @@ void Writer::write_in_QEformat(ALM *alm) const
     int pair_tran[2];
     std::ofstream ofs_hes;
     double **hessian;
-    int nat3 = 3 * alm->system->get_supercell().number_of_atoms;
+    int nat3 = 3 * alm->get_supercell().number_of_atoms;
 
     allocate(hessian, nat3, nat3);
 
@@ -797,8 +797,8 @@ void Writer::write_in_QEformat(ALM *alm) const
     ofs_hes << "  1  1  1" << std::endl;
     for (int icrd = 0; icrd < 3; ++icrd) {
         for (int jcrd = 0; jcrd < 3; ++jcrd) {
-            for (i = 0; i < alm->system->get_supercell().number_of_atoms; ++i) {
-                for (j = 0; j < alm->system->get_supercell().number_of_atoms; ++j) {
+            for (i = 0; i < alm->get_supercell().number_of_atoms; ++i) {
+                for (j = 0; j < alm->get_supercell().number_of_atoms; ++j) {
                     ofs_hes << std::setw(3) << icrd + 1;
                     ofs_hes << std::setw(3) << jcrd + 1;
                     ofs_hes << std::setw(3) << i + 1;
@@ -817,16 +817,15 @@ void Writer::write_in_QEformat(ALM *alm) const
 
 void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
 {
-    int i, j, k, l, itran, ip;
+    int i, j, k, ip;
     int pair_tmp[3], coord_tmp[3];
-    int pair_tran[3];
     std::ofstream ofs_fc3;
     double ***fc3;
     int ***has_element;
     int nelems = 0;
-    int nat3 = 3 * alm->system->get_supercell().number_of_atoms;
+    int nat3 = 3 * alm->get_supercell().number_of_atoms;
     int natmin = alm->symmetry->nat_prim;
-    int nat = alm->system->get_supercell().number_of_atoms;
+    int nat = alm->get_supercell().number_of_atoms;
     int ntran = alm->symmetry->ntran;
 
     std::vector<int> atom_tmp;
@@ -836,7 +835,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
     atom_tmp.resize(2);
     cell_dummy.resize(2);
 
-    double ***x_image = alm->system->get_x_image();
+    double ***x_image = alm->get_x_image();
 
     allocate(fc3, 3 * natmin, nat3, nat3);
     allocate(has_element, natmin, nat, nat);

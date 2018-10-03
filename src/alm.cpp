@@ -208,11 +208,6 @@ void ALM::set_displacement_and_force(const double *u_in,
     deallocate(f);
 }
 
-int ALM::get_ndata_used() const
-{
-    return fitting->get_ndata_used();
-}
-
 void ALM::set_constraint_type(const int constraint_flag) const // ICONST
 {
     constraint->constraint_mode = constraint_flag;
@@ -302,6 +297,41 @@ void ALM::set_cutoff_radii(const double *rcs) const
     }
 }
 
+
+int ALM::get_ndata_used() const
+{
+    return fitting->get_ndata_used();
+}
+
+Cell ALM::get_supercell() const
+{
+    return system->get_supercell();
+}
+
+std::string * ALM::get_kdname() const
+{
+    return system->get_kdname();
+}
+
+Spin ALM::get_spin() const
+{
+    return system->get_spin();
+}
+
+std::string ALM::get_str_magmom() const
+{
+    return system->get_str_magmom();
+}
+
+double *** ALM::get_x_image() const
+{
+    return system->get_x_image();
+}
+
+int * ALM::get_periodicity() const
+{
+    return system->get_periodicity();
+}
 
 int ALM::get_atom_mapping_by_pure_translations(int *map_p2s) const
 {
