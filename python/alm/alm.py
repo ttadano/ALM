@@ -36,7 +36,7 @@ class ALM:
         self._kd = np.array(kd, dtype='intc', order='C')
         self._iconst = 11
         self._verbosity = 0
-        self._norder = 1
+        self._maxorder = 1
 
     def __enter__(self):
         self.alm_new()
@@ -155,27 +155,27 @@ class ALM:
             np.array(u, dtype='double', order='C'),
             np.array(f, dtype='double', order='C'))
 
-    def define(self, norder, rcs, nbody=None):
+    def define(self, maxorder, rcs, nbody=None):
         """Define the Taylor expansion potential.
 
         Parameters
         ----------
-        norder : int
+        maxorder : int
             Maximum order of the Taylor expansion potential.
 
-            - If ``norder = 1``, only harmonic (2nd-order) terms are considered.
-            - If ``norder = 2``, both harmonic and cubic terms are considered.
+            - If ``maxorder = 1``, only harmonic (2nd-order) terms are considered.
+            - If ``maxorder = 2``, both harmonic and cubic terms are considered.
 
         rcs : array_like
             Cutoff radii defined for each order.
             When a negative value is provided, the cutoff radius is not used.
             dtype='double'
-            shape=(norder, num_elems, num_elems)
+            shape=(maxorder, num_elems, num_elems)
 
         nbody : array_like, default = None
             Option to neglect multi-body interactions.
             dtype='intc'
-            shape=(norder,)
+            shape=(maxorder,)
 
         """
 
@@ -184,16 +184,16 @@ class ALM:
 
         if nbody is None:
             nbody = []
-            for i in range(norder):
+            for i in range(maxorder):
                 nbody.append(i + 2)
 
         else:
-            if len(nbody) != norder:
-                print("The size of nbody must be equal to norder.")
+            if len(nbody) != maxorder:
+                print("The size of nbody must be equal to maxorder.")
                 raise RuntimeError
 
-        self._norder = norder
-        self._set_norder()
+        self._maxorder = maxorder
+        self._set_maxorder()
         alm.set_cutoff_radii(self._id,
                              np.array(rcs, dtype='double', order='C'))
         alm.set_nbody_rule(self._id, np.array(nbody, dtype='intc'))
@@ -295,8 +295,8 @@ class ALM:
         if self._id is None:
             self._show_error_message()
 
-        if fc_order > self._norder:
-            print("The fc_order must not be larger than the maximum order (norder).")
+        if fc_order > self._maxorder:
+            print("The fc_order must not be larger than the maximum order (maxorder).")
             raise ValueError
 
         numbers = self._get_number_of_displaced_atoms(fc_order)
@@ -360,8 +360,8 @@ class ALM:
         if self._id is None:
             self._show_error_message()
 
-        if fc_order > self._norder:
-            print("The fc_order must not be larger than the maximum order (norder).")
+        if fc_order > self._maxorder:
+            print("The fc_order must not be larger than the maximum order (maxorder).")
             raise ValueError
 
         if mode == "origin":
@@ -426,9 +426,9 @@ class ALM:
         if self._id is None:
             self._show_error_message()
 
-        norder = self._norder
+        maxorder = self._maxorder
         fc_length_irred = 0
-        for i in range(norder):
+        for i in range(maxorder):
             fc_length_irred += self._get_number_of_irred_fc_elements(i + 1)
 
         if fc_length_irred != len(fc_in):
@@ -461,12 +461,12 @@ class ALM:
         if self._id is None:
             self._show_error_message()
 
-        norder = self._norder
+        maxorder = self._maxorder
         nat = len(self._xcoord)
         ndata_used = self._get_ndata_used()
 
         fc_length = 0
-        for i in range(norder):
+        for i in range(maxorder):
             fc_length += self._get_number_of_irred_fc_elements(i + 1)
 
         amat = np.zeros(3 * nat * ndata_used * fc_length, dtype='double')
@@ -482,12 +482,12 @@ class ALM:
 
         alm.set_cell(self._id, self._lavec, self._xcoord, self._kd)
 
-    def _set_norder(self):
+    def _set_maxorder(self):
         """Private method to set the maximum order of the Taylor expansion"""
         if self._id is None:
             self._show_error_message()
 
-        alm.set_norder(self._id, self._norder)
+        alm.set_maxorder(self._id, self._maxorder)
 
     def _get_ndata_used(self):
         """Private method to return the number of training data sets"""

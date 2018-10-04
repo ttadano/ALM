@@ -154,10 +154,10 @@ extern "C" {
     // void set_fitting_filenames(const std::string dfile,
     //   			 const std::string ffile);
 
-    void alm_set_norder(const int id,
+    void alm_set_maxorder(const int id,
                         const int maxorder)
     {
-        alm[id]->set_norder(maxorder);
+        alm[id]->set_maxorder(maxorder);
     }
 
     void alm_set_nbody_include(const int id,

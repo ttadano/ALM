@@ -18,7 +18,7 @@ static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
 static PyObject * py_get_ndata_used(PyObject *self, PyObject *args);
 static PyObject * py_set_constraint_type(PyObject *self, PyObject *args);
-static PyObject * py_set_norder(PyObject *self, PyObject *args);
+static PyObject * py_set_maxorder(PyObject *self, PyObject *args);
 static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args);
 static PyObject * py_set_nbody_rule(PyObject *self, PyObject *args);
 static PyObject * py_generate_force_constant(PyObject *self, PyObject *args);
@@ -64,7 +64,7 @@ static PyMethodDef _alm_methods[] = {
   {"set_verbosity", py_set_verbosity, METH_VARARGS, ""},
   {"set_displacement_and_force", py_set_displacement_and_force, METH_VARARGS, ""},
   {"set_constraint_type", py_set_constraint_type, METH_VARARGS, ""},
-  {"set_norder", py_set_norder, METH_VARARGS, ""},
+  {"set_maxorder", py_set_maxorder, METH_VARARGS, ""},
   {"set_cutoff_radii", py_set_cutoff_radii, METH_VARARGS, ""},
   {"set_nbody_rule", py_set_nbody_rule, METH_VARARGS, ""},
   {"generate_force_constant", py_generate_force_constant, METH_VARARGS, ""},
@@ -269,16 +269,16 @@ static PyObject * py_set_constraint_type(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_set_norder(PyObject *self, PyObject *args)
+static PyObject * py_set_maxorder(PyObject *self, PyObject *args)
 {
-  int id, norder;
+  int id, maxorder;
   if (!PyArg_ParseTuple(args, "ii",
                               &id,
-                              &norder)) {
+                              &maxorder)) {
     return NULL;
   }
 
-  alm_set_norder(id, norder);
+  alm_set_maxorder(id, maxorder);
 
   Py_RETURN_NONE;
 }

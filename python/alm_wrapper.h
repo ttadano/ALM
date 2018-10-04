@@ -39,8 +39,8 @@ extern "C" {
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
     // void set_fitting_filenames(const std::string dfile,
     //   			 const std::string ffile);
-    void alm_set_norder(const int id,
-                        const int maxorder);
+    void alm_set_maxorder(const int id,
+                          const int maxorder);
     void alm_set_nbody_include(const int id,
 			       const int *nbody_include);
     void alm_set_cutoff_radii(const int id,
