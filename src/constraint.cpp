@@ -1204,10 +1204,10 @@ void Constraint::generate_rotational_constraint(const System *system,
                                 atom_tmp.clear();
                                 atom_tmp.push_back(jat);
                                 cell_dummy.clear();
-                                iter_cluster = interaction->interaction_cluster[order][i].find(
+                                iter_cluster = interaction->get_interaction_cluster(order, i).find(
                                     InteractionCluster(atom_tmp, cell_dummy));
 
-                                if (iter_cluster == interaction->interaction_cluster[order][i].end()) {
+                                if (iter_cluster == interaction->get_interaction_cluster(order, i).end()) {
                                     exit("generate_rotational_constraint",
                                          "interaction not found ...");
                                 } else {
@@ -1334,10 +1334,10 @@ void Constraint::generate_rotational_constraint(const System *system,
                                             }
                                             std::sort(atom_tmp.begin(), atom_tmp.end());
 
-                                            iter_cluster = interaction->interaction_cluster[order][i].find(
+                                            iter_cluster = interaction->get_interaction_cluster(order, i).find(
                                                 InteractionCluster(atom_tmp,
                                                                    cell_dummy));
-                                            if (iter_cluster != interaction->interaction_cluster[order][i].end()) {
+                                            if (iter_cluster != interaction->get_interaction_cluster(order, i).end()) {
 
                                                 int iloc = -1;
 

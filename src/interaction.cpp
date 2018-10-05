@@ -535,20 +535,26 @@ int * Interaction::get_nbody_include() const
     return nbody_include;
 }
 
-std::string Interaction::get_ordername(const unsigned int order) const
+const std::string &Interaction::get_ordername(const unsigned int order) const
 {
     return str_order[order];
 }
 
-std::set<IntList> Interaction::get_cluster_list(const unsigned int order) const
+const std::set<IntList> &Interaction::get_cluster_list(const unsigned int order) const
 {
     return cluster_list[order];
 }
 
-std::vector<int> Interaction::get_interaction_pair(const unsigned int order,
-                                                   const unsigned int atom_index) const
+const std::vector<int> &Interaction::get_interaction_pair(const unsigned int order,
+                                                          const unsigned int atom_index) const
 {
     return interaction_pair[order][atom_index];
+}
+
+const std::set<InteractionCluster> &Interaction::get_interaction_cluster(const unsigned int order,
+                                                                         const unsigned int atom_index) const
+{
+    return interaction_cluster[order][atom_index];
 }
 
 void Interaction::print_interaction_information(const int natmin,
