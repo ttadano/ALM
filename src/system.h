@@ -79,14 +79,14 @@ namespace ALM_NS
                                 const double (*)[3]);
         void set_str_magmom(std::string);
 
-        Cell get_supercell() const;
+        const Cell &get_supercell() const;
         double *** get_x_image() const;
         int * get_exist_image() const;
         std::string * get_kdname() const;
         int * get_periodicity() const;
-        Spin get_spin() const;
-        std::string get_str_magmom() const;
-        std::vector<std::vector<unsigned int>> get_atomtype_group() const;
+        const Spin &get_spin() const;
+        const std::string &get_str_magmom() const;
+        const std::vector<std::vector<unsigned int>> &get_atomtype_group() const;
 
     private:
         // Variables for geometric structure

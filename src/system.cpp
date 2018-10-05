@@ -125,7 +125,7 @@ void System::set_supercell(const double lavec_in[3][3],
     }
 }
 
-Cell System::get_supercell() const
+const Cell &System::get_supercell() const
 {
     return supercell;
 }
@@ -322,7 +322,7 @@ void System::set_spin_variables(const unsigned int nat_in,
     }
 }
 
-Spin System::get_spin() const
+const Spin &System::get_spin() const
 {
     return spin;
 }
@@ -333,12 +333,12 @@ void System::set_str_magmom(std::string str_magmom_in)
     str_magmom = str_magmom_in;
 }
 
-std::string System::get_str_magmom() const
+const std::string &System::get_str_magmom() const
 {
     return str_magmom;
 }
 
-std::vector<std::vector<unsigned int>> System::get_atomtype_group() const
+const std::vector<std::vector<unsigned int>> &System::get_atomtype_group() const
 {
     return atomtype_group;
 
