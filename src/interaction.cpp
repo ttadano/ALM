@@ -535,6 +535,11 @@ int * Interaction::get_nbody_include() const
     return nbody_include;
 }
 
+std::string Interaction::get_ordername(const unsigned int order) const
+{
+    return str_order[order];
+}
+
 void Interaction::print_interaction_information(const int natmin,
                                                 const int * const *map_p2s,
                                                 const std::vector<int> &kd,

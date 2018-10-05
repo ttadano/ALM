@@ -127,8 +127,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     if (verbosity > 0) {
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of free" << std::setw(9)
-                << interaction->str_order[order] << " FCs : "
-                << index_bimap_tmp[order].size() << std::endl;
+                      << interaction->get_ordername(order) << " FCs : "
+                      << index_bimap_tmp[order].size() << std::endl;
         }
         std::cout << std::endl;
     }
@@ -206,8 +206,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
 
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of disp. patterns for " << std::setw(9)
-                << interaction->str_order[order] << " : "
-                << pattern_all[order].size() << std::endl;
+                      << interaction->get_ordername(order) << " : "
+                      << pattern_all[order].size() << std::endl;
         }
         std::cout << std::endl;
     }

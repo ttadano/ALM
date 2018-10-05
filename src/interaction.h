@@ -186,7 +186,6 @@ namespace ALM_NS
         Interaction();
         ~Interaction();
 
-        std::vector<std::string> str_order;
         std::set<IntList> *cluster_list;
         std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **interaction_cluster;
@@ -225,12 +224,14 @@ namespace ALM_NS
                     const double * const * const *);
         int get_maxorder() const;
         int * get_nbody_include() const;
+        std::string get_ordername(const unsigned int order) const;
 
     private:
 
         int maxorder;
         int *nbody_include;
         double ***cutoff_radii;
+        std::vector<std::string> str_order;
 
         std::vector<DistInfo> **distall; // Distance of all pairs (i,j) under the PBC
         std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance

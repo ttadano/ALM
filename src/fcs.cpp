@@ -88,8 +88,8 @@ void Fcs::init(const Interaction *interaction,
         std::cout << std::endl;
         for (i = 0; i < maxorder; ++i) {
             std::cout << "  Number of " << std::setw(9)
-                << interaction->str_order[i]
-                << " FCs : " << nequiv[i].size();
+                      << interaction->get_ordername(i)
+                      << " FCs : " << nequiv[i].size();
             std::cout << std::endl;
         }
         std::cout << std::endl;

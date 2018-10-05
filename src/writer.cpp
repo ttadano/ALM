@@ -366,8 +366,8 @@ void Writer::write_displacement_pattern(ALM *alm) const
         ofs_pattern.close();
 
         if (alm->get_verbosity() > 0) {
-            std::cout << "  " << alm->interaction->str_order[order]
-                << " : " << file_disp_pattern << std::endl;
+            std::cout << "  " << alm->interaction->get_ordername(order)
+                      << " : " << file_disp_pattern << std::endl;
         }
 
     }

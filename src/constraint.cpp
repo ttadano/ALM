@@ -366,7 +366,7 @@ void Constraint::setup(const System *system,
             if (impose_inv_T || impose_inv_R) {
                 std::cout << "  Number of constraints [T-inv, R-inv (self), R-inv (cross)]:" << std::endl;
                 for (order = 0; order < maxorder; ++order) {
-                    std::cout << "   " << std::setw(8) << interaction->str_order[order];
+                    std::cout << "   " << std::setw(8) << interaction->get_ordername(order);
                     std::cout << std::setw(5) << const_translation[order].size();
                     std::cout << std::setw(5) << const_rotation_self[order].size();
                     std::cout << std::setw(5) << const_rotation_cross[order].size();
@@ -379,7 +379,7 @@ void Constraint::setup(const System *system,
                 std::cout << "  There are constraints from crystal symmetry." << std::endl;
                 std::cout << "  The number of such constraints for each order:" << std::endl;
                 for (order = 0; order < maxorder; ++order) {
-                    std::cout << "   " << std::setw(8) << interaction->str_order[order];
+                    std::cout << "   " << std::setw(8) << interaction->get_ordername(order);
                     std::cout << std::setw(5) << const_symmetry[order].size();
                     std::cout << std::endl;
                 }
@@ -397,7 +397,7 @@ void Constraint::setup(const System *system,
             std::cout << "  Number of inequivalent constraints (self, cross) : " << std::endl;
 
             for (order = 0; order < maxorder; ++order) {
-                std::cout << "   " << std::setw(8) << interaction->str_order[order];
+                std::cout << "   " << std::setw(8) << interaction->get_ordername(order);
                 std::cout << std::setw(5) << const_self[order].size();
                 std::cout << std::setw(5) << const_rotation_cross[order].size();
                 std::cout << std::endl;
@@ -415,7 +415,7 @@ void Constraint::setup(const System *system,
                 }
 
                 for (order = 0; order < maxorder; ++order) {
-                    std::cout << "  Number of free" << std::setw(9) << interaction->str_order[order]
+                    std::cout << "  Number of free" << std::setw(9) << interaction->get_ordername(order)
                         << " FCs : " << index_bimap[order].size() << std::endl;
                 }
                 std::cout << std::endl;
@@ -700,7 +700,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
 
     for (int order = 0; order < maxorder; ++order) {
         if (has_constraint_from_symm) {
-            std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
+            std::cout << "   " << std::setw(8) << interaction->get_ordername(order) << " ...";
         }
 
         fcs->get_constraint_symmetry(nat,
@@ -740,7 +740,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
     for (int order = 0; order < interaction->get_maxorder(); ++order) {
 
         if (verbosity > 0)
-            std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
+            std::cout << "   " << std::setw(8) << interaction->get_ordername(order) << " ...";
 
         int nparams = fcs->nequiv[order].size();
 
@@ -1126,15 +1126,15 @@ void Constraint::generate_rotational_constraint(const System *system,
             if (verbosity > 0) {
                 std::cout << "   Constraints between " << std::setw(8)
                     << "1st-order IFCs (which are zero) and "
-                    << std::setw(8) << interaction->str_order[order] << " ...";
+                    << std::setw(8) << interaction->get_ordername(order) << " ...";
             }
 
             nparam_sub = nparams[order];
         } else {
             if (verbosity > 0) {
                 std::cout << "   Constraints between " << std::setw(8)
-                    << interaction->str_order[order - 1] << " and "
-                    << std::setw(8) << interaction->str_order[order] << " ...";
+                          << interaction->get_ordername(order - 1) << " and "
+                          << std::setw(8) << interaction->get_ordername(order) << " ...";
             }
 
             nparam_sub = nparams[order] + nparams[order - 1];
