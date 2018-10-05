@@ -75,7 +75,7 @@ void Fcs::init(const Interaction *interaction,
     for (i = 0; i < maxorder; ++i) {
         generate_force_constant_table(i,
                                       number_of_atoms,
-                                      interaction->cluster_list[i],
+                                      interaction->get_cluster_list(i),
                                       symmetry,
                                       "Cartesian",
                                       fc_table[i],

@@ -186,7 +186,6 @@ namespace ALM_NS
         Interaction();
         ~Interaction();
 
-        std::set<IntList> *cluster_list;
         std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **interaction_cluster;
         // Interaction many-body clusters with mirrow image information
@@ -225,6 +224,7 @@ namespace ALM_NS
         int get_maxorder() const;
         int * get_nbody_include() const;
         std::string get_ordername(const unsigned int order) const;
+        std::set<IntList> get_cluster_list(const unsigned int order) const;
 
     private:
 
@@ -232,6 +232,7 @@ namespace ALM_NS
         int *nbody_include;
         double ***cutoff_radii;
         std::vector<std::string> str_order;
+        std::set<IntList> *cluster_list;
 
         std::vector<DistInfo> **distall; // Distance of all pairs (i,j) under the PBC
         std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
