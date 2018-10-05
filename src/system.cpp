@@ -83,8 +83,11 @@ void System::set_supercell(const double lavec_in[3][3],
     supercell.volume = volume(supercell.lattice_vector, Direct);
     supercell.number_of_atoms = nat_in;
     supercell.number_of_elems = nkd_in;
+    supercell.kind.clear();
     supercell.kind.shrink_to_fit();
+    supercell.x_fractional.clear();
     supercell.x_fractional.shrink_to_fit();
+    supercell.x_cartesian.clear();
     supercell.x_cartesian.shrink_to_fit();
 
     std::vector<double> xtmp;
@@ -299,22 +302,19 @@ void System::deallocate_variables()
     }
 }
 
-void System::set_spin_variables(const bool lspin_in,
+void System::set_spin_variables(const unsigned int nat_in,
+                                const bool lspin_in,
                                 const int noncol_in,
                                 const int trev_sym_in,
                                 const double (*magmom_in)[3])
 {
-    const unsigned int nat = supercell.number_of_atoms;
-
     spin.lspin = lspin_in;
     spin.noncollinear = noncol_in;
     spin.time_reversal_symm = trev_sym_in;
     spin.magmom.clear();
 
-    std::cout << nat << std::endl;
-
     std::vector<double> vec(3);
-    for (auto i = 0; i < nat; ++i) {
+    for (auto i = 0; i < nat_in; ++i) {
         for (auto j = 0; j < 3; ++j) {
             vec[j] = magmom_in[i][j];
         }

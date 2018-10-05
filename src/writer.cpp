@@ -65,10 +65,10 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << std::endl;
 
     std::cout << " Interaction:" << std::endl;
-    std::cout << "  NORDER = " << alm->interaction->maxorder << std::endl;
+    std::cout << "  NORDER = " << alm->interaction->get_maxorder() << std::endl;
     std::cout << "  NBODY = ";
-    for (i = 0; i < alm->interaction->maxorder; ++i)
-        std::cout << std::setw(3) << alm->interaction->nbody_include[i];
+    for (i = 0; i < alm->interaction->get_maxorder(); ++i)
+        std::cout << std::setw(3) << alm->get_nbody_include()[i];
 
     std::cout << std::endl << std::endl;
 
@@ -140,7 +140,7 @@ void Writer::writeall(ALM *alm)
     //   write_in_QEformat(alm);
 
     const bool print_thirdorderpy_fc3 = false;
-    if (alm->interaction->maxorder > 1 && print_thirdorderpy_fc3) {
+    if (alm->interaction->get_maxorder() > 1 && print_thirdorderpy_fc3) {
         write_fc3_thirdorderpy_format(alm);
     }
 
@@ -160,7 +160,7 @@ void Writer::write_force_constants(ALM *alm) const
     std::vector<std::vector<int>> cell_dummy;
     std::set<InteractionCluster>::iterator iter_cluster;
 
-    int maxorder = alm->interaction->maxorder;
+    int maxorder = alm->interaction->get_maxorder();
 
     ofs_fcs.open(alm->files->file_fcs.c_str(), std::ios::out);
     if (!ofs_fcs) exit("write_force_constants", "cannot open fcs file");
@@ -322,7 +322,7 @@ void Writer::write_force_constants(ALM *alm) const
 
 void Writer::write_displacement_pattern(ALM *alm) const
 {
-    int maxorder = alm->interaction->maxorder;
+    int maxorder = alm->interaction->get_maxorder();
 
     std::ofstream ofs_pattern;
     std::string file_disp_pattern;
@@ -482,7 +482,7 @@ void Writer::write_misc_xml(ALM *alm)
 
     int ihead = 0;
     int k = 0;
-    int nelem = alm->interaction->maxorder + 1;
+    int nelem = alm->interaction->get_maxorder() + 1;
     int *pair_tmp;
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
@@ -523,7 +523,7 @@ void Writer::write_misc_xml(ALM *alm)
     ihead = 0;
 
 
-    if (alm->interaction->maxorder > 1) {
+    if (alm->interaction->get_maxorder() > 1) {
 
         pt.put("Data.ForceConstants.CubicUnique.NFC3", alm->fcs->nequiv[1].size());
 
@@ -613,7 +613,7 @@ void Writer::write_misc_xml(ALM *alm)
 
 
     int order;
-    for (order = 1; order < alm->interaction->maxorder; ++order) {
+    for (order = 1; order < alm->interaction->get_maxorder(); ++order) {
 
         std::sort(alm->fcs->fc_table[order].begin(), alm->fcs->fc_table[order].end());
 

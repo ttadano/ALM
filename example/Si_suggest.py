@@ -5,7 +5,7 @@
 #
 
 from alm import ALM
-import numpy as np 
+import numpy as np
 lavec = [[20.406, 0, 0],
          [0, 20.406, 0],
          [0, 0, 20.406]]
@@ -74,11 +74,11 @@ xcoord = [[ 0.0000000000000000, 0.0000000000000000, 0.0000000000000000],
           [ 0.8750000000000000, 0.8750000000000000, 0.1250000000000000],
           [ 0.8750000000000000, 0.8750000000000000, 0.6250000000000000]]
 
-kd = [14] * 64 
+kd = [14] * 64
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
 with ALM(lavec, xcoord, kd) as alm:
-    alm.define(1, [-1])
+    alm.define(1)
     alm.suggest()
     print(alm.getmap_primitive_to_supercell())
     print(alm.get_displacement_patterns(1))

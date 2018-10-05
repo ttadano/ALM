@@ -18,9 +18,7 @@ static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
 static PyObject * py_get_ndata_used(PyObject *self, PyObject *args);
 static PyObject * py_set_constraint_type(PyObject *self, PyObject *args);
-static PyObject * py_set_maxorder(PyObject *self, PyObject *args);
-static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args);
-static PyObject * py_set_nbody_rule(PyObject *self, PyObject *args);
+static PyObject * py_define(PyObject *self, PyObject *args);
 static PyObject * py_generate_force_constant(PyObject *self, PyObject *args);
 static PyObject * py_get_atom_mapping_by_pure_translations
 (PyObject *self, PyObject *args);
@@ -64,9 +62,7 @@ static PyMethodDef _alm_methods[] = {
   {"set_verbosity", py_set_verbosity, METH_VARARGS, ""},
   {"set_displacement_and_force", py_set_displacement_and_force, METH_VARARGS, ""},
   {"set_constraint_type", py_set_constraint_type, METH_VARARGS, ""},
-  {"set_maxorder", py_set_maxorder, METH_VARARGS, ""},
-  {"set_cutoff_radii", py_set_cutoff_radii, METH_VARARGS, ""},
-  {"set_nbody_rule", py_set_nbody_rule, METH_VARARGS, ""},
+  {"define", py_define, METH_VARARGS, ""},
   {"generate_force_constant", py_generate_force_constant, METH_VARARGS, ""},
   {"get_atom_mapping_by_pure_translations", py_get_atom_mapping_by_pure_translations,
    METH_VARARGS, ""},
@@ -269,50 +265,36 @@ static PyObject * py_set_constraint_type(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_set_maxorder(PyObject *self, PyObject *args)
+static PyObject * py_define(PyObject *self, PyObject *args)
 {
   int id, maxorder;
-  if (!PyArg_ParseTuple(args, "ii",
-                              &id,
-                              &maxorder)) {
+
+  PyArrayObject* py_nbody_include;
+  PyArrayObject* py_cutoff_radii;
+
+  unsigned int nkd;
+  double *cutoff_radii;
+
+  if (!PyArg_ParseTuple(args, "iiOO",
+                        &id,
+                        &maxorder,
+                        &py_nbody_include,
+                        &py_cutoff_radii)) {
     return NULL;
   }
 
-  alm_set_maxorder(id, maxorder);
 
-  Py_RETURN_NONE;
-}
-
-static PyObject * py_set_cutoff_radii(PyObject *self, PyObject *args)
-{
-  int id;
-  PyArrayObject* py_rcs;
-  if (!PyArg_ParseTuple(args, "iO",
-                              &id,
-                              &py_rcs)) {
-    return NULL;
+  if ((PyObject*)py_cutoff_radii == Py_None) {
+    cutoff_radii = NULL;
+    nkd = 0;
+  } else {
+    nkd = PyArray_DIMS(py_cutoff_radii)[1];
+    cutoff_radii = (double*)PyArray_DATA(py_cutoff_radii);
   }
 
-  double *rcs = (double(*))PyArray_DATA(py_rcs);
+  const int *nbody_include = (int*)PyArray_DATA(py_nbody_include);
 
-  alm_set_cutoff_radii(id, rcs);
-
-  Py_RETURN_NONE;
-}
-
-static PyObject * py_set_nbody_rule(PyObject *self, PyObject *args)
-{
-  int id;
-  PyArrayObject* py_nbody;
-  if (!PyArg_ParseTuple(args, "iO",
-                              &id,
-                              &py_nbody)) {
-    return NULL;
-  }
-
-  int *nbody = (int(*))PyArray_DATA(py_nbody);
-
-  alm_set_nbody_include(id, nbody);
+  alm_define(id, maxorder, nkd, nbody_include, cutoff_radii);
 
   Py_RETURN_NONE;
 }
@@ -342,7 +324,7 @@ static PyObject * py_get_atom_mapping_by_pure_translations
     return NULL;
   }
 
-  int *map_p2s = (int(*))PyArray_DATA(py_map_p2s);
+  int *map_p2s = (int*)PyArray_DATA(py_map_p2s);
   const int num_trans = alm_get_atom_mapping_by_pure_translations(id, map_p2s);
 
   return PyLong_FromLong((long) num_trans);
@@ -378,7 +360,7 @@ static PyObject * py_get_number_of_displaced_atoms(PyObject *self, PyObject *arg
     return NULL;
   }
 
-  int (*numbers) = (int(*))PyArray_DATA(py_numbers);
+  int (*numbers) = (int*)PyArray_DATA(py_numbers);
 
   alm_get_number_of_displaced_atoms(id, numbers, fc_order);
 
@@ -399,8 +381,8 @@ static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  int (*atom_indices) = (int(*))PyArray_DATA(py_atom_indices);
-  double (*disp_patterns) = (double(*))PyArray_DATA(py_disp_patterns);
+  int (*atom_indices) = (int*)PyArray_DATA(py_atom_indices);
+  double (*disp_patterns) = (double*)PyArray_DATA(py_disp_patterns);
 
   const int disp_basis = alm_get_displacement_patterns(id,
                                                        atom_indices,
@@ -467,8 +449,8 @@ static PyObject * py_get_fc_origin(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  double (*fc_values) = (double(*))PyArray_DATA(py_fc_values);
-  int (*elem_indices) = (int(*))PyArray_DATA(py_elem_indices);
+  double (*fc_values) = (double*)PyArray_DATA(py_fc_values);
+  int (*elem_indices) = (int*)PyArray_DATA(py_elem_indices);
   const int fc_order = PyArray_DIMS(py_elem_indices)[1] - 1;
 
   alm_get_fc_origin(id, fc_values, elem_indices, fc_order);
@@ -489,8 +471,8 @@ static PyObject * py_get_fc_irreducible(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  double (*fc_values) = (double(*))PyArray_DATA(py_fc_values);
-  int (*elem_indices) = (int(*))PyArray_DATA(py_elem_indices);
+  double (*fc_values) = (double*)PyArray_DATA(py_fc_values);
+  int (*elem_indices) = (int*)PyArray_DATA(py_elem_indices);
   const int fc_order = PyArray_DIMS(py_elem_indices)[1] - 1;
 
   alm_get_fc_irreducible(id, fc_values, elem_indices, fc_order);
@@ -511,8 +493,8 @@ static PyObject * py_get_fc_all(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  double (*fc_values) = (double(*))PyArray_DATA(py_fc_values);
-  int (*elem_indices) = (int(*))PyArray_DATA(py_elem_indices);
+  double (*fc_values) = (double*)PyArray_DATA(py_fc_values);
+  int (*elem_indices) = (int*)PyArray_DATA(py_elem_indices);
   const int fc_order = PyArray_DIMS(py_elem_indices)[1] - 1;
 
   alm_get_fc_all(id, fc_values, elem_indices, fc_order);
@@ -531,7 +513,7 @@ static PyObject * py_set_fc(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  double *fc_in = (double(*))PyArray_DATA(py_fc_in);
+  double *fc_in = (double*)PyArray_DATA(py_fc_in);
 
   alm_set_fc(id, fc_in);
 
@@ -553,8 +535,8 @@ static PyObject * py_get_matrix_elements(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  double (*amat) = (double(*))PyArray_DATA(py_amat);
-  double (*bvec) = (double(*))PyArray_DATA(py_bvec);
+  double (*amat) = (double*)PyArray_DATA(py_amat);
+  double (*bvec) = (double*)PyArray_DATA(py_bvec);
 
   alm_get_matrix_elements(id, ndata_used, amat, bvec);
 

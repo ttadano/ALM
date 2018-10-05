@@ -155,7 +155,7 @@ class ALM:
             np.array(u, dtype='double', order='C'),
             np.array(f, dtype='double', order='C'))
 
-    def define(self, maxorder, rcs, nbody=None):
+    def define(self, maxorder, rcs=None, nbody=None):
         """Define the Taylor expansion potential.
 
         Parameters
@@ -163,10 +163,12 @@ class ALM:
         maxorder : int
             Maximum order of the Taylor expansion potential.
 
-            - If ``maxorder = 1``, only harmonic (2nd-order) terms are considered.
-            - If ``maxorder = 2``, both harmonic and cubic terms are considered.
+            - If ``maxorder = 1``, only harmonic (2nd-order) terms are
+              considered.
+            - If ``maxorder = 2``, both harmonic and cubic terms are
+              considered.
 
-        rcs : array_like
+        rcs : array_like, default = None
             Cutoff radii defined for each order.
             When a negative value is provided, the cutoff radius is not used.
             dtype='double'
@@ -192,11 +194,26 @@ class ALM:
                 print("The size of nbody must be equal to maxorder.")
                 raise RuntimeError
 
+        if rcs is None:
+            _rcs = None
+        else:
+            _rcs = np.array(rcs, dtype='double', order='C')
+            nelem = len(_rcs.ravel())
+            if (nelem // maxorder) * maxorder != nelem:
+                print("The array shape of rcs is wrong.")
+                raise RuntimeError
+            nkd = int(round(np.sqrt(nelem // maxorder)))
+            if nkd ** 2 - nelem // maxorder != 0:
+                print("The array shape of rcs is wrong.")
+                raise RuntimeError
+            _rcs = np.reshape(_rcs, (maxorder, nkd, nkd), order='C')
+
         self._maxorder = maxorder
-        self._set_maxorder()
-        alm.set_cutoff_radii(self._id,
-                             np.array(rcs, dtype='double', order='C'))
-        alm.set_nbody_rule(self._id, np.array(nbody, dtype='intc'))
+
+        alm.define(self._id,
+                   maxorder,
+                   np.array(nbody, dtype='intc'),
+                   _rcs)
 
         alm.generate_force_constant(self._id)
 
@@ -257,8 +274,11 @@ class ALM:
 
         Returns
         -------
-        map_p2s : array_like, dtype='intc', shape = (num_trans, num_atoms_primitive)
-            The mapping information of atoms from the primitive cell to the supercell.
+        map_p2s : array_like
+            The mapping information of atoms from the primitive cell to the
+            supercell.
+            dtype='intc'
+            shape = (num_trans, num_atoms_primitive)
 
         """
 
@@ -277,9 +297,11 @@ class ALM:
         fc_order : int
             The order of force constants to get the displacement patterns.
 
-            - If ``fc_order = 1``, returns patterns for harmonic force constants.
+            - If ``fc_order = 1``, returns patterns for harmonic force
+              constants.
             - If ``fc_order = 2``, returns patterns for cubic force constants.
-            - If ``fc_order = 3``, returns patterns for quartic force constants.
+            - If ``fc_order = 3``, returns patterns for quartic force
+              constants.
             - ...
 
         Returns
@@ -481,13 +503,6 @@ class ALM:
             self._show_error_message()
 
         alm.set_cell(self._id, self._lavec, self._xcoord, self._kd)
-
-    def _set_maxorder(self):
-        """Private method to set the maximum order of the Taylor expansion"""
-        if self._id is None:
-            self._show_error_message()
-
-        alm.set_maxorder(self._id, self._maxorder)
 
     def _get_ndata_used(self):
         """Private method to return the number of training data sets"""

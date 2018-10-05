@@ -22,7 +22,20 @@ namespace ALM_NS
         InputSetter();
         ~InputSetter();
 
-        void deallocator(ALM *alm) const;
+        void set_cell_parameter(const double a,
+                                const double lavec_in[3][3]);
+        void set_atomic_positions(const int nat_in,
+                                  const int *kd_in,
+                                  const double (*xcoord_in)[3]);
+        void set_geometric_structure(ALM *alm);
+
+        void set_interaction_vars(const int maxorder_in,
+                                  const int *nbody_include_in);
+        void set_cutoff_radii(const int maxorder_in,
+                              const unsigned int nkd_in,
+                              const double * const * const * cutoff_radii_in);
+        void define(ALM *alm);
+
         void set_general_vars(ALM *alm,
                               std::string prefix,
                               std::string mode,
@@ -42,15 +55,6 @@ namespace ALM_NS
                               const double * const *magmom,
                               double tolerance,
                               double tolerance_constraint);
-        void set_cell_parameter(const double a,
-                                const double lavec_in[3][3]);
-        void set_interaction_vars(ALM *alm,
-                                  int maxorder,
-                                  const int *nbody_include) const;
-        void set_cutoff_radii(ALM *alm,
-                              int maxorder,
-                              int nkd_in,
-                              const double * const * const *rcs) const;
         void set_fitting_vars(ALM *alm,
                               int ndata,
                               int nstart,
@@ -90,10 +94,6 @@ namespace ALM_NS
                             int nend_test,
                             std::string dfile_test,
                             std::string ffile_test) const;
-        void set_atomic_positions(const int nat_in,
-                                  const int *kd_in,
-                                  const double (*xcoord_in)[3]);
-        void set_geometric_structure(ALM *alm) const;
 
     private:
         int nat, nkd;
@@ -108,5 +108,10 @@ namespace ALM_NS
         int noncollinear;
         int trevsym;
         std::string str_magmom;
+
+        int maxorder;
+        int *nbody_include;
+        double ***cutoff_radii;
+
     };
 }

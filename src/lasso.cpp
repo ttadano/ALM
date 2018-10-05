@@ -74,7 +74,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
     int i, j, k;
 
     const auto natmin = symmetry->nat_prim;
-    const int maxorder = interaction->maxorder;
+    const int maxorder = interaction->get_maxorder();
     const int ndata = fitting->ndata;
     const int nstart = fitting->nstart;
     const int nend = fitting->nend;

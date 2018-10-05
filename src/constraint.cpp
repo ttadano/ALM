@@ -109,7 +109,7 @@ void Constraint::setup(const System *system,
 
     constraint_algebraic = constraint_mode / 10;
     constraint_mode = constraint_mode % 10;
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
 
     if (alm_mode == "lasso") {
         if (constraint_mode > 1) {
@@ -207,7 +207,7 @@ void Constraint::setup(const System *system,
                                    const_fix[0]);
     }
 
-    fix_cubic = fix_cubic & (interaction->maxorder > 1);
+    fix_cubic = fix_cubic & (interaction->get_maxorder() > 1);
     if (fix_cubic) {
 
         if (verbosity > 0) {
@@ -237,7 +237,7 @@ void Constraint::setup(const System *system,
 
     extra_constraint_from_symmetry = false;
 
-    for (int order = 0; order < interaction->maxorder; ++order) {
+    for (int order = 0; order < interaction->get_maxorder(); ++order) {
         if (!const_symmetry[order].empty()) extra_constraint_from_symmetry = true;
     }
 
@@ -681,7 +681,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
 {
     // Create constraint matrices arising from the crystal symmetry.
 
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
     bool has_constraint_from_symm = false;
     std::vector<std::vector<double>> const_tmp;
 
@@ -737,7 +737,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
         std::cout << "  Generating constraints for translational invariance ..." << std::endl;
     }
 
-    for (int order = 0; order < interaction->maxorder; ++order) {
+    for (int order = 0; order < interaction->get_maxorder(); ++order) {
 
         if (verbosity > 0)
             std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
@@ -1072,7 +1072,7 @@ void Constraint::generate_rotational_constraint(const System *system,
     int iat, jat;
     int icrd, jcrd;
     int order;
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
     int natmin = symmetry->nat_prim;
     int mu, nu;
     int ixyz, nxyz, nxyz2;

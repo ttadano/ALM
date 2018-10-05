@@ -47,7 +47,7 @@ void Fcs::init(const Interaction *interaction,
                Timer *timer)
 {
     int i;
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
 
     timer->start_clock("fcs");
 

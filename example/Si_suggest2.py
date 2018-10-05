@@ -80,6 +80,7 @@ kd = [14] * 64
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
 with ALM(lavec, xcoord, kd) as alm:
     alm.define(2, [-1, 7.3])
+    #alm.define(2)
     alm.suggest()
     print(alm.getmap_primitive_to_supercell())
     for fc_order in (1, 2):

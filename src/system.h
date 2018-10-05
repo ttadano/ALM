@@ -70,23 +70,22 @@ namespace ALM_NS
                            const unsigned int,
                            const int *,
                            const double [][3]);
-        Cell get_supercell() const;
-        double *** get_x_image() const;
-        int * get_exist_image() const;
-        void set_periodicity(const int [3]);
-        int * get_periodicity() const;
-        std::string * get_kdname() const;
         void set_kdname(const std::string *);
-        void set_periodicity(bool);
-
-        void set_spin_variables(const bool,
+        void set_periodicity(const int [3]);
+        void set_spin_variables(const unsigned int nat,
+                                const bool,
                                 const int,
                                 const int,
                                 const double (*)[3]);
-        Spin get_spin() const;
         void set_str_magmom(std::string);
-        std::string get_str_magmom() const;
 
+        Cell get_supercell() const;
+        double *** get_x_image() const;
+        int * get_exist_image() const;
+        std::string * get_kdname() const;
+        int * get_periodicity() const;
+        Spin get_spin() const;
+        std::string get_str_magmom() const;
         std::vector<std::vector<unsigned int>> get_atomtype_group() const;
 
     private:

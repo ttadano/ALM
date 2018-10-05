@@ -44,7 +44,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
                                         const int verbosity)
 {
     int i, j, m, order;
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
     std::string preferred_basis;
     std::vector<int> group_tmp;
     std::vector<std::map<unsigned int, double>> *constsym;
