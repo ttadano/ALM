@@ -545,6 +545,12 @@ std::set<IntList> Interaction::get_cluster_list(const unsigned int order) const
     return cluster_list[order];
 }
 
+std::vector<int> Interaction::get_interaction_pair(const unsigned int order,
+                                                   const unsigned int atom_index) const
+{
+    return interaction_pair[order][atom_index];
+}
+
 void Interaction::print_interaction_information(const int natmin,
                                                 const int * const *map_p2s,
                                                 const std::vector<int> &kd,

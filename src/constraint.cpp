@@ -893,7 +893,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
 
             // Anharmonic cases
 
-            std::vector<int> intlist(interaction->interaction_pair[order][i]);
+            std::vector<int> intlist(interaction->get_interaction_pair(order, i));
             std::sort(intlist.begin(), intlist.end());
 
             data_vec.clear();
@@ -1175,7 +1175,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
             if (order == 0) {
 
-                std::vector<int> interaction_list_now(interaction->interaction_pair[order][i]);
+                std::vector<int> interaction_list_now(interaction->get_interaction_pair(order, i));
                 std::sort(interaction_list_now.begin(), interaction_list_now.end());
 
                 // Special treatment for harmonic force constants
@@ -1265,8 +1265,8 @@ void Constraint::generate_rotational_constraint(const System *system,
 
                 // Constraint between different orders
 
-                std::vector<int> interaction_list_now(interaction->interaction_pair[order][i]);
-                std::vector<int> interaction_list_old(interaction->interaction_pair[order - 1][i]);
+                std::vector<int> interaction_list_now(interaction->get_interaction_pair(order, i));
+                std::vector<int> interaction_list_old(interaction->get_interaction_pair(order - 1, i));
                 std::sort(interaction_list_now.begin(), interaction_list_now.end());
                 std::sort(interaction_list_old.begin(), interaction_list_old.end());
 
@@ -1496,7 +1496,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
             if (order == maxorder - 1 && !exclude_last_R) {
 
-                std::vector<int> interaction_list_now(interaction->interaction_pair[order][i]);
+                std::vector<int> interaction_list_now(interaction->get_interaction_pair(order, i));
                 std::sort(interaction_list_now.begin(), interaction_list_now.end());
 
                 nxyz2 = static_cast<int>(pow(static_cast<double>(3), order + 1));
