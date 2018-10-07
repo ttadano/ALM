@@ -108,7 +108,7 @@ void Constraint::setup(const System *system,
 
     constraint_algebraic = constraint_mode / 10;
     constraint_mode = constraint_mode % 10;
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
 
     if (alm_mode == "lasso") {
         if (constraint_mode > 1) {
@@ -206,7 +206,7 @@ void Constraint::setup(const System *system,
                                    const_fix[0]);
     }
 
-    fix_cubic = fix_cubic & (interaction->maxorder > 1);
+    fix_cubic = fix_cubic & (interaction->get_maxorder() > 1);
     if (fix_cubic) {
 
         if (verbosity > 0) {
@@ -236,7 +236,7 @@ void Constraint::setup(const System *system,
 
     extra_constraint_from_symmetry = false;
 
-    for (int order = 0; order < interaction->maxorder; ++order) {
+    for (int order = 0; order < interaction->get_maxorder(); ++order) {
         if (!const_symmetry[order].empty()) extra_constraint_from_symmetry = true;
     }
 
@@ -365,7 +365,7 @@ void Constraint::setup(const System *system,
             if (impose_inv_T || impose_inv_R) {
                 std::cout << "  Number of constraints [T-inv, R-inv (self), R-inv (cross)]:" << std::endl;
                 for (order = 0; order < maxorder; ++order) {
-                    std::cout << "   " << std::setw(8) << interaction->str_order[order];
+                    std::cout << "   " << std::setw(8) << interaction->get_ordername(order);
                     std::cout << std::setw(5) << const_translation[order].size();
                     std::cout << std::setw(5) << const_rotation_self[order].size();
                     std::cout << std::setw(5) << const_rotation_cross[order].size();
@@ -378,7 +378,7 @@ void Constraint::setup(const System *system,
                 std::cout << "  There are constraints from crystal symmetry." << std::endl;
                 std::cout << "  The number of such constraints for each order:" << std::endl;
                 for (order = 0; order < maxorder; ++order) {
-                    std::cout << "   " << std::setw(8) << interaction->str_order[order];
+                    std::cout << "   " << std::setw(8) << interaction->get_ordername(order);
                     std::cout << std::setw(5) << const_symmetry[order].size();
                     std::cout << std::endl;
                 }
@@ -396,7 +396,7 @@ void Constraint::setup(const System *system,
             std::cout << "  Number of inequivalent constraints (self, cross) : " << std::endl;
 
             for (order = 0; order < maxorder; ++order) {
-                std::cout << "   " << std::setw(8) << interaction->str_order[order];
+                std::cout << "   " << std::setw(8) << interaction->get_ordername(order);
                 std::cout << std::setw(5) << const_self[order].size();
                 std::cout << std::setw(5) << const_rotation_cross[order].size();
                 std::cout << std::endl;
@@ -414,7 +414,7 @@ void Constraint::setup(const System *system,
                 }
 
                 for (order = 0; order < maxorder; ++order) {
-                    std::cout << "  Number of free" << std::setw(9) << interaction->str_order[order]
+                    std::cout << "  Number of free" << std::setw(9) << interaction->get_ordername(order)
                         << " FCs : " << index_bimap[order].size() << std::endl;
                 }
                 std::cout << std::endl;
@@ -680,7 +680,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
 {
     // Create constraint matrices arising from the crystal symmetry.
 
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
     bool has_constraint_from_symm = false;
     std::vector<std::vector<double>> const_tmp;
 
@@ -699,13 +699,13 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
 
     for (int order = 0; order < maxorder; ++order) {
         if (has_constraint_from_symm) {
-            std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
+            std::cout << "   " << std::setw(8) << interaction->get_ordername(order) << " ...";
         }
 
         fcs->get_constraint_symmetry(nat,
                                      symmetry,
                                      order,
-                                     interaction->cluster_list[order],
+                                     interaction->get_cluster_list(order),
                                      "Cartesian",
                                      fcs->fc_table[order],
                                      fcs->nequiv[order].size(),
@@ -736,10 +736,10 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
         std::cout << "  Generating constraints for translational invariance ..." << std::endl;
     }
 
-    for (int order = 0; order < interaction->maxorder; ++order) {
+    for (int order = 0; order < interaction->get_maxorder(); ++order) {
 
         if (verbosity > 0)
-            std::cout << "   " << std::setw(8) << interaction->str_order[order] << " ...";
+            std::cout << "   " << std::setw(8) << interaction->get_ordername(order) << " ...";
 
         int nparams = fcs->nequiv[order].size();
 
@@ -892,7 +892,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
 
             // Anharmonic cases
 
-            std::vector<int> intlist(interaction->interaction_pair[order][i]);
+            std::vector<int> intlist(interaction->get_interaction_pair(order, i));
             std::sort(intlist.begin(), intlist.end());
 
             data_vec.clear();
@@ -1071,7 +1071,7 @@ void Constraint::generate_rotational_constraint(const System *system,
     int iat, jat;
     int icrd, jcrd;
     int order;
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
     int natmin = symmetry->nat_prim;
     int mu, nu;
     int ixyz, nxyz, nxyz2;
@@ -1125,15 +1125,15 @@ void Constraint::generate_rotational_constraint(const System *system,
             if (verbosity > 0) {
                 std::cout << "   Constraints between " << std::setw(8)
                     << "1st-order IFCs (which are zero) and "
-                    << std::setw(8) << interaction->str_order[order] << " ...";
+                    << std::setw(8) << interaction->get_ordername(order) << " ...";
             }
 
             nparam_sub = nparams[order];
         } else {
             if (verbosity > 0) {
                 std::cout << "   Constraints between " << std::setw(8)
-                    << interaction->str_order[order - 1] << " and "
-                    << std::setw(8) << interaction->str_order[order] << " ...";
+                          << interaction->get_ordername(order - 1) << " and "
+                          << std::setw(8) << interaction->get_ordername(order) << " ...";
             }
 
             nparam_sub = nparams[order] + nparams[order - 1];
@@ -1174,7 +1174,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
             if (order == 0) {
 
-                std::vector<int> interaction_list_now(interaction->interaction_pair[order][i]);
+                std::vector<int> interaction_list_now(interaction->get_interaction_pair(order, i));
                 std::sort(interaction_list_now.begin(), interaction_list_now.end());
 
                 // Special treatment for harmonic force constants
@@ -1203,10 +1203,10 @@ void Constraint::generate_rotational_constraint(const System *system,
                                 atom_tmp.clear();
                                 atom_tmp.push_back(jat);
                                 cell_dummy.clear();
-                                iter_cluster = interaction->interaction_cluster[order][i].find(
+                                iter_cluster = interaction->get_interaction_cluster(order, i).find(
                                     InteractionCluster(atom_tmp, cell_dummy));
 
-                                if (iter_cluster == interaction->interaction_cluster[order][i].end()) {
+                                if (iter_cluster == interaction->get_interaction_cluster(order, i).end()) {
                                     exit("generate_rotational_constraint",
                                          "interaction not found ...");
                                 } else {
@@ -1264,8 +1264,8 @@ void Constraint::generate_rotational_constraint(const System *system,
 
                 // Constraint between different orders
 
-                std::vector<int> interaction_list_now(interaction->interaction_pair[order][i]);
-                std::vector<int> interaction_list_old(interaction->interaction_pair[order - 1][i]);
+                std::vector<int> interaction_list_now(interaction->get_interaction_pair(order, i));
+                std::vector<int> interaction_list_old(interaction->get_interaction_pair(order - 1, i));
                 std::sort(interaction_list_now.begin(), interaction_list_now.end());
                 std::sort(interaction_list_old.begin(), interaction_list_old.end());
 
@@ -1333,10 +1333,10 @@ void Constraint::generate_rotational_constraint(const System *system,
                                             }
                                             std::sort(atom_tmp.begin(), atom_tmp.end());
 
-                                            iter_cluster = interaction->interaction_cluster[order][i].find(
+                                            iter_cluster = interaction->get_interaction_cluster(order, i).find(
                                                 InteractionCluster(atom_tmp,
                                                                    cell_dummy));
-                                            if (iter_cluster != interaction->interaction_cluster[order][i].end()) {
+                                            if (iter_cluster != interaction->get_interaction_cluster(order, i).end()) {
 
                                                 int iloc = -1;
 
@@ -1495,7 +1495,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
             if (order == maxorder - 1 && !exclude_last_R) {
 
-                std::vector<int> interaction_list_now(interaction->interaction_pair[order][i]);
+                std::vector<int> interaction_list_now(interaction->get_interaction_pair(order, i));
                 std::sort(interaction_list_now.begin(), interaction_list_now.end());
 
                 nxyz2 = static_cast<int>(pow(static_cast<double>(3), order + 1));

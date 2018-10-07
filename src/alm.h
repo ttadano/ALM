@@ -29,7 +29,6 @@ namespace ALM_NS
         ALM();
         ~ALM();
 
-        class System *system;
         class Interaction *interaction;
         class Fcs *fcs;
         class Symmetry *symmetry;
@@ -56,7 +55,8 @@ namespace ALM_NS
                       const double xcoord[][3],
                       const int kd[],
                       const std::string kdname[]) const;
-        void set_magnetic_params(const double (*magmom)[3],
+        void set_magnetic_params(const unsigned int nat,
+                                 const double (*magmom)[3],
                                  const bool lspin,
                                  const int noncollinear,
                                  const int trev_sym_mag,
@@ -65,17 +65,28 @@ namespace ALM_NS
                                         const double *f_in,
                                         int nat,
                                         int ndata_used) const;
-        int get_ndata_used() const;
         void set_constraint_type(int constraint_flag) const;
         void set_rotation_axis(std::string rotation_axis) const;
         void set_sparse_mode(int sparse_mode) const;
         void set_fitting_filenames(std::string dfile,
                                    std::string ffile) const;
-        void set_norder(int maxorder) const;
-        void set_nbody_include(const int *nbody_include) const;
-        void set_cutoff_radii(const double *rcs) const;
+        void define(const int maxorder,
+                    const unsigned int nkd,
+                    const int *nbody_include,
+                    const double * const * const * cutoff_radii);
+        int get_ndata_used() const;
+        Cell get_supercell() const;
+        std::string * get_kdname() const;
+        Spin get_spin() const;
+        void set_str_magmom(std::string);
+        std::string get_str_magmom() const;
+        double *** get_x_image() const;
+        int * get_periodicity() const;
 
         int get_atom_mapping_by_pure_translations(int *map_p2s) const;
+        int get_maxorder() const;
+        int * get_nbody_include() const;
+
         int get_number_of_displacement_patterns(int fc_order) const; // harmonic=1, ...
         void get_number_of_displaced_atoms(int *numbers,
                                            int fc_order) const; // harmonic=1, ...
@@ -114,6 +125,8 @@ namespace ALM_NS
         void run();
 
     private:
+        class System *system;
+
         std::string mode;
         int verbosity;
 

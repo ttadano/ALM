@@ -1,4 +1,5 @@
 #include "../src/alm.h"
+#include "../src/memory.h"
 #include "alm_wrapper.h"
 #include <cstdlib>
 #include <string>
@@ -124,11 +125,12 @@ extern "C" {
         alm[id]->set_verbosity(verbosity);
     }
 
-    // void set_magnetic_params(const double* const * magmom,
-    //   		       const bool lspin,
-    //   		       const int noncollinear,
-    //   		       const int trev_sym_mag,
-    //   		       const std::string str_magmom);
+    // void set_magnetic_params(const unsigned int nat,
+    //                          const double* const * magmom,
+    //                          const bool lspin,
+    //                          const int noncollinear,
+    //                          const int trev_sym_mag,
+    //                          const std::string str_magmom);
 
     void alm_set_displacement_and_force(const int id,
                                         const double* u_in,
@@ -152,24 +154,40 @@ extern "C" {
 
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
     // void set_fitting_filenames(const std::string dfile,
-    //   			 const std::string ffile);
+    //                            const std::string ffile);
 
-    void alm_set_norder(const int id,
-                        const int maxorder)
+    void alm_define(const int id,
+                    const int maxorder,
+                    const unsigned int nkd,
+                    const int *nbody_include,
+                    const double *cutoff_radii_in)
     {
-        alm[id]->set_norder(maxorder);
-    }
+        double ***cutoff_radii;
+        int count;
 
-    void alm_set_nbody_include(const int id,
-                               const int *nbody_include)
-    {
-        alm[id]->set_nbody_include(nbody_include);
-    }
+        if (nkd > 0) {
+            ALM_NS::allocate(cutoff_radii, maxorder, nkd, nkd);
+            count = 0;
+            for (int i = 0; i < maxorder; i++) {
+                for (unsigned int j = 0; j < nkd; j++) {
+                    for (unsigned int k = 0; k < nkd; k++) {
+                        cutoff_radii[i][j][k] = cutoff_radii_in[count];
+                        count++;
+                    }
+                }
+            }
+        } else {
+            cutoff_radii = nullptr;
+        }
 
-    void alm_set_cutoff_radii(const int id,
-                              const double * rcs)
-    {
-        alm[id]->set_cutoff_radii(rcs);
+        alm[id]->define(maxorder,
+                        nkd,
+                        nbody_include,
+                        cutoff_radii);
+
+        if (nkd > 0) {
+            ALM_NS::deallocate(cutoff_radii);
+        }
     }
 
     void alm_generate_force_constant(const int id)
@@ -202,8 +220,8 @@ extern "C" {
                                       const int fc_order) // harmonic=1,
     {
         return alm[id]->get_displacement_patterns(atom_indices,
-                                              disp_patterns,
-                                              fc_order);
+                                                  disp_patterns,
+                                                  fc_order);
     }
 
     int alm_get_number_of_fc_elements(const int id,
@@ -219,17 +237,17 @@ extern "C" {
     }
 
     void alm_get_fc_origin(const int id,
-                    double *fc_values,
-                    int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
-                    const int fc_order)
+                           double *fc_values,
+                           int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
+                           const int fc_order)
     {
         alm[id]->get_fc_origin(fc_values, elem_indices, fc_order);
     }
 
     void alm_get_fc_irreducible(const int id,
-                    double *fc_values,
-                    int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
-                    const int fc_order)
+                                double *fc_values,
+                                int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
+                                const int fc_order)
     {
         alm[id]->get_fc_irreducible(fc_values, elem_indices, fc_order);
     }
@@ -237,7 +255,7 @@ extern "C" {
     void alm_get_fc_all(const int id,
                         double *fc_values,
                         int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
-                       const int fc_order)
+                        const int fc_order)
     {
         alm[id]->get_fc_all(fc_values, elem_indices, fc_order);
     }

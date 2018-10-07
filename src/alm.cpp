@@ -38,15 +38,6 @@ ALM::ALM()
 
 ALM::~ALM()
 {
-    if (interaction->nbody_include) {
-        deallocate(interaction->nbody_include);
-    }
-    interaction->nbody_include = nullptr;
-    if (interaction->cutoff_radii) {
-        deallocate(interaction->cutoff_radii);
-    }
-    interaction->cutoff_radii = nullptr;
-
     delete files;
     delete system;
     delete interaction;
@@ -162,7 +153,8 @@ void ALM::set_cell(const int nat,
     system->set_kdname(kdname);
 }
 
-void ALM::set_magnetic_params(const double (*magmom)[3],
+void ALM::set_magnetic_params(const unsigned int nat,
+                              const double (*magmom)[3],
                               // MAGMOM
                               const bool lspin,
                               const int noncollinear,
@@ -171,7 +163,8 @@ void ALM::set_magnetic_params(const double (*magmom)[3],
                               // TREVSYM
                               const std::string str_magmom) const // MAGMOM
 {
-    system->set_spin_variables(lspin,
+    system->set_spin_variables(nat,
+                               lspin,
                                noncollinear,
                                trev_sym_mag,
                                magmom);
@@ -205,11 +198,6 @@ void ALM::set_displacement_and_force(const double *u_in,
     deallocate(f);
 }
 
-int ALM::get_ndata_used() const
-{
-    return fitting->get_ndata_used();
-}
-
 void ALM::set_constraint_type(const int constraint_flag) const // ICONST
 {
     constraint->constraint_mode = constraint_flag;
@@ -233,72 +221,53 @@ void ALM::set_fitting_filenames(const std::string dfile,
     files->file_force = ffile;
 }
 
-void ALM::set_norder(const int maxorder) const // NORDER harmonic=1
+void ALM::define(const int maxorder,
+                 const unsigned int nkd,
+                 const int *nbody_include,
+                 const double * const * const * cutoff_radii)
 {
-    int i, j, k, nkd;
-
-    interaction->maxorder = maxorder;
-    if (interaction->nbody_include) {
-        deallocate(interaction->nbody_include);
-    }
-    allocate(interaction->nbody_include, maxorder);
-
-    for (i = 0; i < maxorder; ++i) {
-        interaction->nbody_include[i] = i + 2;
-    }
-
-    nkd = system->get_supercell().number_of_elems;
-    if (interaction->cutoff_radii) {
-        deallocate(interaction->cutoff_radii);
-    }
-    allocate(interaction->cutoff_radii, maxorder, nkd, nkd);
-
-    for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < nkd; ++j) {
-            for (k = 0; k < nkd; ++k) {
-                interaction->cutoff_radii[i][j][k] = -1.0;
-            }
-        }
-    }
+    // nkd = 0 means cutoff_radii undefined (hopefully nullptr).
+    interaction->define(maxorder,
+                        nkd,
+                        nbody_include,
+                        cutoff_radii);
 }
 
-void ALM::set_nbody_include(const int *nbody_include) const // NBODY
+
+int ALM::get_ndata_used() const
 {
-    int maxorder = interaction->maxorder;
-    if (maxorder > 0) {
-        if (interaction->nbody_include) {
-            deallocate(interaction->nbody_include);
-        }
-        allocate(interaction->nbody_include, maxorder);
-        for (int i = 0; i < maxorder; ++i) {
-            interaction->nbody_include[i] = nbody_include[i];
-        }
-    }
+    return fitting->get_ndata_used();
 }
 
-void ALM::set_cutoff_radii(const double *rcs) const
+Cell ALM::get_supercell() const
 {
-    const int nkd = system->get_supercell().number_of_elems;
-    const auto maxorder = interaction->maxorder;
-
-    if (maxorder > 0) {
-        if (interaction->cutoff_radii) {
-            deallocate(interaction->cutoff_radii);
-        }
-        allocate(interaction->cutoff_radii, maxorder, nkd, nkd);
-    }
-
-    auto count = 0;
-    for (int i = 0; i < maxorder; ++i) {
-        for (int j = 0; j < nkd; ++j) {
-            for (int k = 0; k < nkd; ++k) {
-                interaction->cutoff_radii[i][j][k] = rcs[count];
-                count++;
-            }
-        }
-    }
+    return system->get_supercell();
 }
 
+std::string * ALM::get_kdname() const
+{
+    return system->get_kdname();
+}
+
+Spin ALM::get_spin() const
+{
+    return system->get_spin();
+}
+
+std::string ALM::get_str_magmom() const
+{
+    return system->get_str_magmom();
+}
+
+double *** ALM::get_x_image() const
+{
+    return system->get_x_image();
+}
+
+int * ALM::get_periodicity() const
+{
+    return system->get_periodicity();
+}
 
 int ALM::get_atom_mapping_by_pure_translations(int *map_p2s) const
 {
@@ -313,6 +282,15 @@ int ALM::get_atom_mapping_by_pure_translations(int *map_p2s) const
     return ntran;
 }
 
+int ALM::get_maxorder() const
+{
+    return interaction->get_maxorder();
+}
+
+int * ALM::get_nbody_include() const
+{
+    return interaction->get_nbody_include();
+}
 
 int ALM::get_number_of_displacement_patterns(const int fc_order) const
 // harmonic=1, ...
@@ -412,7 +390,7 @@ void ALM::get_fc_origin(double *fc_values,
 
     int i;
 
-    const auto maxorder = interaction->maxorder;
+    const auto maxorder = interaction->get_maxorder();
     if (fc_order > maxorder) {
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
         exit(EXIT_FAILURE);
@@ -453,7 +431,7 @@ void ALM::get_fc_irreducible(double *fc_values,
     int i;
     double fc_elem;
 
-    const auto maxorder = interaction->maxorder;
+    const auto maxorder = interaction->get_maxorder();
     if (fc_order > maxorder) {
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
         exit(EXIT_FAILURE);
@@ -505,7 +483,7 @@ void ALM::get_fc_all(double *fc_values,
     double fc_elem;
     const int ntran = symmetry->ntran;
 
-    const auto maxorder = interaction->maxorder;
+    const auto maxorder = interaction->get_maxorder();
     if (fc_order > maxorder) {
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
         exit(EXIT_FAILURE);
@@ -554,7 +532,7 @@ void ALM::get_fc_all(double *fc_values,
 
 void ALM::set_fc(double *fc_in) const
 {
-    fitting->set_fcs_values(interaction->maxorder,
+    fitting->set_fcs_values(interaction->get_maxorder(),
                             fc_in,
                             fcs->nequiv,
                             constraint);
@@ -564,7 +542,7 @@ void ALM::get_matrix_elements(const int ndata_used,
                               double *amat,
                               double *bvec) const
 {
-    const auto maxorder = interaction->maxorder;
+    const auto maxorder = interaction->get_maxorder();
     double fnorm;
 
     fitting->get_matrix_elements_algebraic_constraint(maxorder,
@@ -616,7 +594,7 @@ int ALM::optimize()
     int info = fitting->optimize_main(symmetry,
                                       constraint,
                                       fcs,
-                                      interaction->maxorder,
+                                      interaction->get_maxorder(),
                                       system->get_supercell().number_of_atoms,
                                       verbosity,
                                       files->file_disp,

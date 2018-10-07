@@ -43,6 +43,9 @@ InputSetter::InputSetter() {
     noncollinear = 0;
     trevsym = 1;
     str_magmom = "";
+
+    nbody_include = nullptr;
+    cutoff_radii = nullptr;
 }
 
 InputSetter::~InputSetter() {
@@ -58,18 +61,54 @@ InputSetter::~InputSetter() {
     if (magmom) {
         deallocate(magmom);
     }
+    if (nbody_include) {
+        deallocate(nbody_include);
+    }
+    if (cutoff_radii) {
+        deallocate(cutoff_radii);
+    }
 }
 
-void InputSetter::deallocator(ALM *alm) const
+void InputSetter::set_cell_parameter(const double a,
+                                     const double lavec_in[3][3])
 {
-    if (alm->interaction->nbody_include) {
-        deallocate(alm->interaction->nbody_include);
+    int i, j;
+
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            lavec[i][j] = a * lavec_in[i][j];
+        }
     }
-    alm->interaction->nbody_include = nullptr;
-    if (alm->interaction->cutoff_radii) {
-        deallocate(alm->interaction->cutoff_radii);
+}
+
+void InputSetter::set_interaction_vars(const int maxorder_in,
+                                       const int *nbody_include_in)
+{
+    maxorder = maxorder_in;
+    if (nbody_include) {
+        deallocate(nbody_include);
     }
-    alm->interaction->cutoff_radii = nullptr;
+    allocate(nbody_include, maxorder);
+    for (unsigned int i = 0; i < maxorder; i++) {
+        nbody_include[i] = nbody_include_in[i];
+    }
+}
+
+void InputSetter::set_cutoff_radii(const int maxorder_in,
+                                   const unsigned int nkd_in,
+                                   const double * const * const * cutoff_radii_in)
+{
+    if (cutoff_radii) {
+        deallocate(cutoff_radii);
+    }
+    allocate(cutoff_radii, maxorder_in, nkd_in, nkd_in);
+    for (unsigned int i = 0; i < maxorder_in; i++) {
+        for (unsigned int j = 0; j < nkd_in; j++) {
+            for (unsigned int k = 0; k < nkd_in; k++) {
+                cutoff_radii[i][j][k] = cutoff_radii_in[i][j][k];
+            }
+        }
+    }
 }
 
 void InputSetter::set_general_vars(ALM *alm,
@@ -137,48 +176,12 @@ void InputSetter::set_general_vars(ALM *alm,
     }
 }
 
-void InputSetter::set_cell_parameter(const double a,
-                                     const double lavec_in[3][3])
+void InputSetter::define(ALM *alm)
 {
-    int i, j;
-
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
-            lavec[i][j] = a * lavec_in[i][j];
-        }
-    }
-}
-
-void InputSetter::set_interaction_vars(ALM *alm,
-                                       const int maxorder,
-                                       const int *nbody_include) const
-{
-    int i;
-
-    alm->interaction->maxorder = maxorder;
-    allocate(alm->interaction->nbody_include, maxorder);
-
-    for (i = 0; i < maxorder; ++i) {
-        alm->interaction->nbody_include[i] = nbody_include[i];
-    }
-}
-
-void InputSetter::set_cutoff_radii(ALM *alm,
-                                   const int maxorder,
-                                   const int nkd_in,
-                                   const double * const * const *rcs) const
-{
-    int i, j, k;
-
-    allocate(alm->interaction->cutoff_radii, maxorder, nkd_in, nkd_in);
-
-    for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < nkd_in; ++j) {
-            for (k = 0; k < nkd_in; ++k) {
-                alm->interaction->cutoff_radii[i][j][k] = rcs[i][j][k];
-            }
-        }
-    }
+    alm->define(maxorder,
+                nkd,
+                nbody_include,
+                cutoff_radii);
 }
 
 void InputSetter::set_fitting_vars(ALM *alm,
@@ -277,9 +280,9 @@ void InputSetter::set_atomic_positions(const int nat_in,
     }
 }
 
-void InputSetter::set_geometric_structure(ALM *alm) const
+void InputSetter::set_geometric_structure(ALM *alm)
 {
     alm->set_cell(nat, lavec, xcoord, kd, kdname);
     alm->set_periodicity(is_periodic);
-    alm->set_magnetic_params(magmom, lspin, noncollinear, trevsym, str_magmom);
+    alm->set_magnetic_params(nat, magmom, lspin, noncollinear, trevsym, str_magmom);
 }

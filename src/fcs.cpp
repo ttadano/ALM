@@ -47,7 +47,7 @@ void Fcs::init(const Interaction *interaction,
                Timer *timer)
 {
     int i;
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
 
     timer->start_clock("fcs");
 
@@ -75,7 +75,7 @@ void Fcs::init(const Interaction *interaction,
     for (i = 0; i < maxorder; ++i) {
         generate_force_constant_table(i,
                                       number_of_atoms,
-                                      interaction->cluster_list[i],
+                                      interaction->get_cluster_list(i),
                                       symmetry,
                                       "Cartesian",
                                       fc_table[i],
@@ -88,8 +88,8 @@ void Fcs::init(const Interaction *interaction,
         std::cout << std::endl;
         for (i = 0; i < maxorder; ++i) {
             std::cout << "  Number of " << std::setw(9)
-                << interaction->str_order[i]
-                << " FCs : " << nequiv[i].size();
+                      << interaction->get_ordername(i)
+                      << " FCs : " << nequiv[i].size();
             std::cout << std::endl;
         }
         std::cout << std::endl;
