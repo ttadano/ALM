@@ -202,6 +202,7 @@ void InputParser::parse_input(ALM *alm)
              "&cutoff entry not found in the input file");
     }
     parse_cutoff_radii(alm);
+    input_setter->define(alm);
 
     if (mode == "fitting" || mode == "lasso") {
         if (!locate_tag("&fitting")) {
@@ -625,7 +626,7 @@ void InputParser::parse_interaction_vars(ALM *alm)
     }
 
 
-    input_setter->set_interaction_vars(alm, maxorder, nbody_include);
+    input_setter->set_interaction_vars(maxorder, nbody_include);
 
     deallocate(nbody_include);
 
@@ -1171,7 +1172,7 @@ void InputParser::parse_cutoff_radii(ALM *alm)
     }
     deallocate(undefined_cutoff);
 
-    input_setter->set_cutoff_radii(alm, maxorder, nkd, rcs);
+    input_setter->set_cutoff_radii(maxorder, nkd, rcs);
 
     deallocate(rcs);
 }

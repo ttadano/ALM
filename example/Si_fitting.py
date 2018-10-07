@@ -81,7 +81,7 @@ disp = np.loadtxt("disp.dat").reshape((-1, 64, 3))[[0]]
 
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
 with ALM(lavec, xcoord, kd) as alm:
-    alm.define(1, [-1])
+    alm.define(1)
     #alm.set_constraint(translation=False)
     alm.set_displacement_and_force(disp, force)
     info = alm.optimize()
@@ -93,4 +93,3 @@ with ALM(lavec, xcoord, kd) as alm:
         v2 = elem[1] // 3
         c2 = elem[1] % 3
         print("%f %d%s %d%s" % ((fc, v1 + 1, c[c1], v2 + 1, c[c2])))
-

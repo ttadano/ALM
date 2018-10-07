@@ -44,7 +44,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
                                         const int verbosity)
 {
     int i, j, m, order;
-    int maxorder = interaction->maxorder;
+    int maxorder = interaction->get_maxorder();
     std::string preferred_basis;
     std::vector<int> group_tmp;
     std::vector<std::map<unsigned int, double>> *constsym;
@@ -96,7 +96,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
 
         fcs->generate_force_constant_table(order,
                                            system->get_supercell().number_of_atoms,
-                                           interaction->cluster_list[order],
+                                           interaction->get_cluster_list(order),
                                            symmetry, preferred_basis,
                                            fc_table[order], nequiv[order],
                                            fc_zeros[order], false);
@@ -104,7 +104,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
         fcs->get_constraint_symmetry(system->get_supercell().number_of_atoms,
                                      symmetry,
                                      order,
-                                     interaction->cluster_list[order],
+                                     interaction->get_cluster_list(order),
                                      preferred_basis,
                                      fc_table[order],
                                      nequiv[order].size(),
@@ -127,8 +127,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     if (verbosity > 0) {
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of free" << std::setw(9)
-                << interaction->str_order[order] << " FCs : "
-                << index_bimap_tmp[order].size() << std::endl;
+                      << interaction->get_ordername(order) << " FCs : "
+                      << index_bimap_tmp[order].size() << std::endl;
         }
         std::cout << std::endl;
     }
@@ -206,8 +206,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
 
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of disp. patterns for " << std::setw(9)
-                << interaction->str_order[order] << " : "
-                << pattern_all[order].size() << std::endl;
+                      << interaction->get_ordername(order) << " : "
+                      << pattern_all[order].size() << std::endl;
         }
         std::cout << std::endl;
     }

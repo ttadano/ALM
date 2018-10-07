@@ -24,10 +24,10 @@ extern "C" {
     void alm_set_verbosity(const int id,
                            const int verbosity);
     // void set_magnetic_params(const double* const * magmom,
-    //   		       const bool lspin,
-    //   		       const int noncollinear,
-    //   		       const int trev_sym_mag,
-    //   		       const std::string str_magmom);
+    //                         const bool lspin,
+    //                         const int noncollinear,
+    //                         const int trev_sym_mag,
+    //                         const std::string str_magmom);
     void alm_set_displacement_and_force(const int id,
                                         const double* u_in,
                                         const double* f_in,
@@ -38,13 +38,12 @@ extern "C" {
                                  const int constraint_flag); // ICONST
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
     // void set_fitting_filenames(const std::string dfile,
-    //   			 const std::string ffile);
-    void alm_set_norder(const int id,
-                        const int maxorder);
-    void alm_set_nbody_include(const int id,
-			       const int *nbody_include);
-    void alm_set_cutoff_radii(const int id,
-                              const double * rcs);
+    //                           const std::string ffile);
+    void alm_define(const int id,
+                    const int maxorder,
+                    const unsigned int nkd,
+                    const int *nbody_include,
+                    const double *cutoff_radii);
     void alm_generate_force_constant(const int id);
     int alm_get_atom_mapping_by_pure_translations(const int id,
                                                   int *map_p2s);

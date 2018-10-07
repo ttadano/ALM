@@ -74,7 +74,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
     int i, j, k;
 
     const auto natmin = symmetry->nat_prim;
-    const int maxorder = interaction->maxorder;
+    const int maxorder = interaction->get_maxorder();
     const int ndata = fitting->ndata;
     const int nstart = fitting->nstart;
     const int nend = fitting->nend;
@@ -573,7 +573,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
 
         std::cout << "  RESIDUAL (%): " << std::sqrt(res1) * 100.0 << std::endl;
         for (int order = 0; order < maxorder; ++order) {
-            std::cout << "  Number of non-zero " << std::setw(9) << interaction->str_order[order] << " FCs : "
+            std::cout << "  Number of non-zero " << std::setw(9) << interaction->get_ordername(order) << " FCs : "
                 << constraint->index_bimap[order].size() - nzero_lasso[order] << std::endl;
         }
         std::cout << std::endl;

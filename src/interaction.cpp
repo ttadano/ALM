@@ -44,8 +44,8 @@ void Interaction::init(const System *system,
     timer->start_clock("interaction");
 
     int i, j, k;
-    int nat = system->get_supercell().number_of_atoms;
-    int nkd = system->get_supercell().number_of_elems;
+    const unsigned int nat = system->get_supercell().number_of_atoms;
+    const unsigned int nkd = system->get_supercell().number_of_elems;
 
     if (verbosity > 0) {
         std::cout << " INTERACTION" << std::endl;
@@ -78,6 +78,24 @@ void Interaction::init(const System *system,
         deallocate(cluster_list);
     }
     allocate(cluster_list, maxorder);
+
+    // Default values of cutoof_radii and nbody_include
+    if (! cutoff_radii) {
+        allocate(cutoff_radii, maxorder, nkd, nkd);
+        for (i = 0; i < maxorder; ++i) {
+            for (j = 0; j < nkd; ++j) {
+                for (k = 0; k < nkd; ++k) {
+                    cutoff_radii[i][j][k] = -1.0;
+                }
+            }
+        }
+    }
+    if (! nbody_include) {
+        allocate(nbody_include, maxorder);
+        for (i = 0; i < maxorder; ++i) {
+            nbody_include[i] = i + 2;
+        }
+    }
 
     get_pairs_of_minimum_distance(nat,
                                   system->get_x_image(),
@@ -207,20 +225,33 @@ void Interaction::set_default_variables()
 
 void Interaction::deallocate_variables()
 {
+    if (nbody_include) {
+        deallocate(nbody_include);
+        nbody_include = nullptr;
+    }
+    if (cutoff_radii) {
+        deallocate(cutoff_radii);
+        cutoff_radii = nullptr;
+    }
     if (cluster_list) {
         deallocate(cluster_list);
+        cluster_list = nullptr;
     }
     if (mindist_pairs) {
         deallocate(mindist_pairs);
+        mindist_pairs = nullptr;
     }
     if (interaction_pair) {
         deallocate(interaction_pair);
+        interaction_pair = nullptr;
     }
     if (interaction_cluster) {
         deallocate(interaction_cluster);
+        interaction_cluster = nullptr;
     }
     if (distall) {
         deallocate(distall);
+        distall = nullptr;
     }
 }
 
@@ -459,6 +490,71 @@ void Interaction::set_interaction_by_cutoff(const unsigned int nat,
                                                    rcs[order],
                                                    interaction_pair_out[order]);
     }
+}
+
+int Interaction::get_maxorder() const
+{
+    return maxorder;
+}
+
+void Interaction::define(const int maxorder_in,
+                         const unsigned int nkd,
+                         const int *nbody_include_in,
+                         const double * const * const * cutoff_radii_in)
+{
+    maxorder = maxorder_in;
+    if (nbody_include) {
+        deallocate(nbody_include);
+    }
+    allocate(nbody_include, maxorder);
+
+    for (int i = 0; i < maxorder; ++i) {
+        nbody_include[i] = nbody_include_in[i];
+    }
+
+    // nkd == 0: Use current values, which are probably default values
+    // defined at Interaction::init().
+    if (nkd > 0) {
+        if (cutoff_radii) {
+            deallocate(cutoff_radii);
+        }
+        allocate(cutoff_radii, maxorder, nkd, nkd);
+    }
+
+    for (int i = 0; i < maxorder; ++i) {
+        for (unsigned int j = 0; j < nkd; ++j) {
+            for (unsigned int k = 0; k < nkd; ++k) {
+                cutoff_radii[i][j][k] = cutoff_radii_in[i][j][k];
+            }
+        }
+    }
+}
+
+int * Interaction::get_nbody_include() const
+{
+    return nbody_include;
+}
+
+const std::string &Interaction::get_ordername(const unsigned int order) const
+{
+    return str_order[order];
+}
+
+const std::set<IntList> &Interaction::get_cluster_list(const unsigned int order) const
+{
+    return cluster_list[order];
+}
+
+const std::vector<int> &Interaction::get_interaction_pair(const unsigned int order,
+                                                          const unsigned int atom_index) const
+{
+    return interaction_pair[order][atom_index];
+}
+
+const std::set<InteractionCluster> &Interaction::get_interaction_cluster(const unsigned int order,
+                                                                         const unsigned int atom_index) const
+{
+    return interaction_cluster[order][atom_index];
 }
 
 void Interaction::print_interaction_information(const int natmin,
