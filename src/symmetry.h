@@ -104,7 +104,7 @@ namespace ALM_NS
                   const int verbosity,
                   Timer *timer);
 
-        unsigned int nsym, ntran, nat_prim;
+        size_t nsym, ntran, nat_prim;
         std::vector<int> symnum_tran;
 
         double tolerance;

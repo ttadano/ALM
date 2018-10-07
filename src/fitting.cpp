@@ -57,24 +57,9 @@ void Fitting::set_default_variables()
     skip_e = 0;
     ndata_used = 0;
     use_sparseQR = 0;
-
-    // moved from lasso.cpp
-    disp_norm = 1.0;
-    l1_alpha = 1.0;
-    lasso_tol = 1.0e-7;
-    maxiter = 100000;
-    lasso_cv = 0;
-    lasso_cvset = 10;
-    output_frequency = 1000;
-    l1_alpha_min = 1.0e-3;
-    l1_alpha_max = 1.0;
-    num_l1_alpha = 100;
-    standardize = 1;
     ndata_test = 0;
     nstart_test = 0;
     nend_test = 0;
-    save_solution_path = 0;
-    debias_ols = 0;
 }
 
 void Fitting::deallocate_variables()
@@ -103,16 +88,16 @@ int Fitting::optimize_main(const Symmetry *symmetry,
     timer->start_clock("fitting");
 
     const int natmin = symmetry->nat_prim;
-    const int nconsts = constraint->number_of_constraints;
-    const int ndata_used = nend - nstart + 1;
+    const auto nconsts = constraint->number_of_constraints;
+    const auto ndata_used = nend - nstart + 1;
     const int ntran = symmetry->ntran;
     int info_fitting;
 
-    int N = 0;
+    auto N = 0;
     for (auto i = 0; i < maxorder; ++i) {
         N += fcs->nequiv[i].size();
     }
-    int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
+    const int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
 
     if (verbosity > 0) {
         std::cout << " FITTING" << std::endl;
@@ -160,7 +145,8 @@ int Fitting::optimize_main(const Symmetry *symmetry,
 
         if (use_sparseQR) {
 
-            // Use a solver for sparse matrix (Requires less memory for sparse inputs.)
+            // Use a solver for sparse matrix 
+            // (Requires less memory for sparse inputs.)
 
 #ifdef WITH_SPARSE_SOLVER
             SpMat sp_amat(nrows, ncols);
@@ -303,8 +289,8 @@ void Fitting::set_displacement_and_force(const double * const *disp_in,
     }
     allocate(f_in, ndata_used, 3 * nat);
 
-    for (int i = 0; i < ndata_used; i++) {
-        for (int j = 0; j < 3 * nat; j++) {
+    for (auto i = 0; i < ndata_used; i++) {
+        for (auto j = 0; j < 3 * nat; j++) {
             u_in[i][j] = disp_in[i][j];
             f_in[i][j] = force_in[i][j];
         }
@@ -321,8 +307,8 @@ void Fitting::set_fcs_values(const int maxorder,
 
     int i;
 
-    int N = 0;
-    int Nirred = 0;
+    auto N = 0;
+    auto Nirred = 0;
     for (i = 0; i < maxorder; ++i) {
         N += nequiv[i].size();
         Nirred += constraint->index_bimap[i].size();
@@ -1149,11 +1135,11 @@ void Fitting::data_multiplier(double **data_in,
 int Fitting::inprim_index(const int n,
                           const Symmetry *symmetry) const
 {
-    int in = -1;
+    auto in = -1;
     const auto atmn = n / 3;
     const auto crdn = n % 3;
 
-    for (int i = 0; i < symmetry->nat_prim; ++i) {
+    for (auto i = 0; i < symmetry->nat_prim; ++i) {
         if (symmetry->map_p2s[i][0] == atmn) {
             in = 3 * i + crdn;
             break;
@@ -1399,11 +1385,6 @@ void Fitting::lasso_main(const Symmetry *symmetry,
 
     const auto natmin = symmetry->nat_prim;
     const int maxorder = interaction->get_maxorder();
-    const int ndata = fitting->ndata;
-    const int nstart = fitting->nstart;
-    const int nend = fitting->nend;
-    const int skip_s = fitting->skip_s;
-    const int skip_e = fitting->skip_e;
     const int ntran = symmetry->ntran;
     const int ndata_used = nend - nstart + 1 - skip_e + skip_s;
 
@@ -1489,7 +1470,7 @@ void Fitting::lasso_main(const Symmetry *symmetry,
 
     // Scale displacements
 
-    const double inv_dnorm = 1.0 / disp_norm;
+    const auto inv_dnorm = 1.0 / optcontrol.displacement_scaling_factor;
     for (i = 0; i < ndata_used; ++i) {
         for (j = 0; j < 3 * nat; ++j) {
             u[i][j] *= inv_dnorm;
@@ -1504,7 +1485,7 @@ void Fitting::lasso_main(const Symmetry *symmetry,
 
     // Scale force constants
     for (i = 0; i < maxorder; ++i) {
-        scale_factor = std::pow(disp_norm, i + 1);
+        scale_factor = std::pow(optcontrol.displacement_scaling_factor, i + 1);
         for (j = 0; j < constraint->const_fix[i].size(); ++j) {
             constraint->const_fix[i][j].val_to_fix *= scale_factor;
         }
@@ -1523,16 +1504,16 @@ void Fitting::lasso_main(const Symmetry *symmetry,
     amat_1D.resize(nrows * ncols, 0.0);
     bvec.resize(nrows, 0.0);
 
-    fitting->set_displacement_and_force(u, f, nat, ndata_used);
+    set_displacement_and_force(u, f, nat, ndata_used);
 
-    fitting->get_matrix_elements_algebraic_constraint(maxorder,
-                                                      ndata_used,
-                                                      &amat_1D[0],
-                                                      &bvec[0],
-                                                      fnorm,
-                                                      symmetry,
-                                                      fcs,
-                                                      constraint);
+    get_matrix_elements_algebraic_constraint(maxorder,
+                                             ndata_used,
+                                             &amat_1D[0],
+                                             &bvec[0],
+                                             fnorm,
+                                             symmetry,
+                                             fcs,
+                                             constraint);
 
     deallocate(u);
     deallocate(f);
@@ -1544,16 +1525,16 @@ void Fitting::lasso_main(const Symmetry *symmetry,
     amat_1D_test.resize(nrows * ncols, 0.0);
     bvec_test.resize(nrows, 0.0);
 
-    fitting->set_displacement_and_force(u_test, f_test, nat, ndata_used_test);
+    set_displacement_and_force(u_test, f_test, nat, ndata_used_test);
 
-    fitting->get_matrix_elements_algebraic_constraint(maxorder,
-                                                      ndata_used_test,
-                                                      &amat_1D_test[0],
-                                                      &bvec_test[0],
-                                                      fnorm_test,
-                                                      symmetry,
-                                                      fcs,
-                                                      constraint);
+    get_matrix_elements_algebraic_constraint(maxorder,
+                                             ndata_used_test,
+                                             &amat_1D_test[0],
+                                             &bvec_test[0],
+                                             fnorm_test,
+                                             symmetry,
+                                             fcs,
+                                             constraint);
 
     deallocate(u_test);
     deallocate(f_test);
@@ -1561,7 +1542,7 @@ void Fitting::lasso_main(const Symmetry *symmetry,
     // Scale back force constants
 
     for (i = 0; i < maxorder; ++i) {
-        scale_factor = 1.0 / std::pow(disp_norm, i + 1);
+        scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
         for (j = 0; j < constraint->const_fix[i].size(); ++j) {
             constraint->const_fix[i][j].val_to_fix *= scale_factor;
         }
@@ -1615,7 +1596,7 @@ void Fitting::lasso_main(const Symmetry *symmetry,
 
     double Minv = 1.0 / static_cast<double>(M);
 
-    if (standardize) {
+    if (optcontrol.standardize) {
         double sum1, sum2;
 
         std::cout << " STANDARDIZE = 1 : Standardization will be performed for matrix A and vector b." << std::endl;
@@ -1660,17 +1641,17 @@ void Fitting::lasso_main(const Symmetry *symmetry,
         }
     }
 
-    if (lasso_cv == 1) {
+    if (optcontrol.cross_validation_mode == 1) {
 
         // Cross-validation mode
 
         std::cout << "  Lasso validation with the following parameters:" << std::endl;
-        std::cout << "   LASSO_MINALPHA = " << std::setw(15) << l1_alpha_min;
-        std::cout << " LASSO_MAXALPHA = " << std::setw(15) << l1_alpha_max << std::endl;
-        std::cout << "   LASSO_NALPHA = " << std::setw(5) << num_l1_alpha << std::endl;
-        std::cout << "   LASSO_TOL = " << std::setw(15) << lasso_tol << std::endl;
-        std::cout << "   LASSO_MAXITER = " << std::setw(5) << maxiter << std::endl;
-        std::cout << "   LASSO_DBASIS = " << std::setw(15) << disp_norm << std::endl;
+        std::cout << "   LASSO_MINALPHA = " << std::setw(15) << optcontrol.l1_alpha_min;
+        std::cout << " LASSO_MAXALPHA = " << std::setw(15) << optcontrol.l1_alpha_max << std::endl;
+        std::cout << "   LASSO_NALPHA = " << std::setw(5) << optcontrol.num_l1_alpha << std::endl;
+        std::cout << "   LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+        std::cout << "   LASSO_MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
+        std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
         std::cout << std::endl;
 
         std::ofstream ofs_cv, ofs_coef;
@@ -1680,8 +1661,8 @@ void Fitting::lasso_main(const Symmetry *symmetry,
         ofs_cv.open(file_cv.c_str(), std::ios::out);
 
         ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
-        ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << disp_norm << std::endl;
-        ofs_cv << "# LASSO_TOL = " << std::setw(15) << lasso_tol << std::endl;
+        ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
+        ofs_cv << "# LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
         ofs_cv << "# L1 ALPHA, Fitting error, Validation error, Num. zero IFCs (2nd, 3rd, ...) " << std::endl;
 
 
@@ -1690,18 +1671,20 @@ void Fitting::lasso_main(const Symmetry *symmetry,
         std::vector<int> nzero_lasso(maxorder);
         std::vector<double> params_tmp;
 
-        if (save_solution_path) {
+        if (optcontrol.save_solution_path) {
             ofs_coef.open(file_coef.c_str(), std::ios::out);
             ofs_coef << "# L1 ALPHA, coefficients" << std::endl;
             params_tmp.resize(N_new);
         }
 
+        double l1_alpha;
 
-        for (int ialpha = 0; ialpha <= num_l1_alpha; ++ialpha) {
+        for (int ialpha = 0; ialpha <= optcontrol.num_l1_alpha; ++ialpha) {
 
-            l1_alpha = l1_alpha_min * std::pow(l1_alpha_max / l1_alpha_min,
-                                               static_cast<double>(num_l1_alpha - ialpha) / static_cast<double>(
-                                                   num_l1_alpha));
+            l1_alpha = optcontrol.l1_alpha_min * std::pow(optcontrol.l1_alpha_max / optcontrol.l1_alpha_min,
+                                                          static_cast<double>(optcontrol.num_l1_alpha - ialpha) /
+                                                          static_cast<double>(
+                                                              optcontrol.num_l1_alpha));
 
             std::cout << "-----------------------------------------------------------------" << std::endl;
             std::cout << "  L1_ALPHA = " << std::setw(15) << l1_alpha << std::endl;
@@ -1714,9 +1697,14 @@ void Fitting::lasso_main(const Symmetry *symmetry,
                 initialize_mode = 1;
             }
 
-            coordinate_descent(M, N_new, l1_alpha, lasso_tol, initialize_mode, maxiter,
-                               x, A, b, C, has_prod, Prod, grad, fnorm, output_frequency,
-                               scale_beta, standardize);
+            coordinate_descent(M, N_new, l1_alpha,
+                               optcontrol.tolerance_iteration,
+                               initialize_mode,
+                               optcontrol.maxnum_iteration,
+                               x, A, b, C, has_prod, Prod, grad, fnorm,
+                               optcontrol.output_frequency,
+                               scale_beta,
+                               optcontrol.standardize);
 
             for (i = 0; i < N_new; ++i) param[i] = x[i];
 
@@ -1745,13 +1733,13 @@ void Fitting::lasso_main(const Symmetry *symmetry,
             }
             ofs_cv << std::endl;
 
-            if (save_solution_path) {
+            if (optcontrol.save_solution_path) {
                 ofs_coef << std::setw(15) << l1_alpha;
 
                 for (i = 0; i < N_new; ++i) params_tmp[i] = param[i];
                 k = 0;
                 for (i = 0; i < maxorder; ++i) {
-                    scale_factor = 1.0 / std::pow(disp_norm, i + 1);
+                    scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
 
                     for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
                         params_tmp[k] *= scale_factor * factor_std[k];
@@ -1764,26 +1752,30 @@ void Fitting::lasso_main(const Symmetry *symmetry,
                 ofs_coef << std::endl;
             }
         }
-        if (save_solution_path) ofs_coef.close();
+        if (optcontrol.save_solution_path) ofs_coef.close();
         ofs_cv.close();
 
-    } else if (lasso_cv == 0) {
+    } else if (optcontrol.cross_validation_mode == 0) {
 
         double res1;
         std::vector<int> nzero_lasso(maxorder);
 
         std::cout << "  Lasso minimization with the following parameters:" << std::endl;
-        std::cout << "   LASSO_ALPHA  (L1) = " << std::setw(15) << l1_alpha << std::endl;
-        std::cout << "   LASSO_TOL = " << std::setw(15) << lasso_tol << std::endl;
-        std::cout << "   LASSO_MAXITER = " << std::setw(5) << maxiter << std::endl;
-        std::cout << "   LASSO_DBASIS = " << std::setw(15) << disp_norm << std::endl;
+        std::cout << "   LASSO_ALPHA  (L1) = " << std::setw(15) << optcontrol.l1_alpha << std::endl;
+        std::cout << "   LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+        std::cout << "   LASSO_MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
+        std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
 
         std::cout << std::endl;
 
         // Coordinate Descent Method
-        coordinate_descent(M, N_new, l1_alpha, lasso_tol, 0, maxiter,
+        coordinate_descent(M, N_new, optcontrol.l1_alpha,
+                           optcontrol.tolerance_iteration, 0,
+                           optcontrol.maxnum_iteration,
                            x, A, b, C, has_prod, Prod, grad, fnorm,
-                           output_frequency, scale_beta, standardize);
+                           optcontrol.output_frequency,
+                           scale_beta,
+                           optcontrol.standardize);
 
         for (i = 0; i < N_new; ++i) param[i] = x[i] * factor_std[i];
 
@@ -1814,7 +1806,7 @@ void Fitting::lasso_main(const Symmetry *symmetry,
     }
 
 
-    if (debias_ols) {
+    if (optcontrol.debiase_after_l1opt) {
         // Perform OLS fitting to the features selected by LASSO for reducing the bias.
 
         std::cout << " DEBIAS_OLS = 1: Attempt to reduce the bias of LASSO by performing OLS fitting" << std::endl;
@@ -1830,7 +1822,7 @@ void Fitting::lasso_main(const Symmetry *symmetry,
             }
         }
 
-        int N_nonzero = nonzero_index.size();
+        const int N_nonzero = nonzero_index.size();
         Eigen::MatrixXd A_nonzero(M, N_nonzero);
 
         for (i = 0; i < N_nonzero; ++i) {
@@ -1846,7 +1838,7 @@ void Fitting::lasso_main(const Symmetry *symmetry,
 
     k = 0;
     for (i = 0; i < maxorder; ++i) {
-        scale_factor = 1.0 / std::pow(disp_norm, i + 1);
+        scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
 
         for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
             param[k] *= scale_factor;
@@ -1879,6 +1871,15 @@ void Fitting::lasso_main(const Symmetry *symmetry,
     std::cout << " --------------------------------------------------------------" << std::endl;
 }
 
+void Fitting::set_optimizer_control(const OptimizerControl &optcontrol_in)
+{
+    optcontrol = optcontrol_in;
+}
+
+OptimizerControl& Fitting::get_optimizer_control()
+{
+    return optcontrol;
+}
 
 void Fitting::calculate_residual(const int M,
                                  const int N,
@@ -2079,16 +2080,16 @@ void Fitting::get_prefactor_force(const int maxorder,
                                   const Fitting *fitting,
                                   std::vector<double> &prefactor) const
 {
-    int i, j;
-    int ishift2 = 0;
-    int iparam2 = 0;
+    int j;
+    auto ishift2 = 0;
+    auto iparam2 = 0;
     int inew2, iold2;
     int iold2_dup;
 
     int *ind;
 
     allocate(ind, maxorder + 1);
-    for (i = 0; i < maxorder; ++i) {
+    for (auto i = 0; i < maxorder; ++i) {
         for (const auto &it : constraint->index_bimap[i]) {
             inew2 = it.left + iparam2;
             iold2 = it.right;

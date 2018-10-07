@@ -652,6 +652,22 @@ void InputParser::parse_fitting_vars(ALM *alm)
     int skip_s = 0;
     int skip_e = 0;
     std::string str_skip, dfile_test, ffile_test;
+    OptimizerControl optcontrol;
+
+    double lasso_dnorm = 0.2;
+    double lasso_alpha = 1.0;
+    double lasso_tol = 1.0e-7;
+    int lasso_maxiter = 100000;
+    int lasso_cv = 0;
+    int lasso_cvset = 10;
+    int lasso_freq = 1000;
+    double lasso_min_alpha = 1.0e-3;
+    double lasso_max_alpha = 1.0;
+    int lasso_num_alpha = 20;
+    int standardize = 1;
+    int save_solution_path = 0;
+    int debias_ols = 0;
+
 
     if (from_stdin) {
         std::cin.ignore();
@@ -730,8 +746,98 @@ void InputParser::parse_fitting_vars(ALM *alm)
 
     if (!fitting_var_dict["SPARSE"].empty()) {
         assign_val(flag_sparse, "SPARSE", fitting_var_dict);
+        optcontrol.use_sparse_solver = flag_sparse;
     }
 
+    if (!fitting_var_dict["LASSO_DNORM"].empty()) {
+        lasso_dnorm = boost::lexical_cast<double>(fitting_var_dict["LASSO_DNORM"]);
+        optcontrol.displacement_scaling_factor
+            = boost::lexical_cast<double>(fitting_var_dict["LASSO_DNORM"]);
+    }
+    if (!fitting_var_dict["LASSO_ALPHA"].empty()) {
+        lasso_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_ALPHA"]);
+        optcontrol.l1_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_ALPHA"]);
+    }
+    if (!fitting_var_dict["LASSO_MINALPHA"].empty()) {
+        lasso_min_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_MINALPHA"]);
+        optcontrol.l1_alpha_min = boost::lexical_cast<double>(fitting_var_dict["LASSO_MINALPHA"]);
+    }
+    if (!fitting_var_dict["LASSO_MAXALPHA"].empty()) {
+        lasso_max_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_MAXALPHA"]);
+        optcontrol.l1_alpha_max = boost::lexical_cast<double>(fitting_var_dict["LASSO_MAXALPHA"]);
+    }
+    if (!fitting_var_dict["LASSO_NALPHA"].empty()) {
+        lasso_num_alpha = boost::lexical_cast<int>(fitting_var_dict["LASSO_NALPHA"]);
+        optcontrol.num_l1_alpha = boost::lexical_cast<int>(fitting_var_dict["LASSO_NALPHA"]);
+    }
+    if (!fitting_var_dict["LASSO_TOL"].empty()) {
+        lasso_tol = boost::lexical_cast<double>(fitting_var_dict["LASSO_TOL"]);
+        optcontrol.tolerance_iteration = boost::lexical_cast<double>(fitting_var_dict["LASSO_TOL"]);
+    }
+    if (!fitting_var_dict["LASSO_MAXITER"].empty()) {
+        lasso_maxiter = boost::lexical_cast<int>(fitting_var_dict["LASSO_MAXITER"]);
+        optcontrol.maxnum_iteration = boost::lexical_cast<int>(fitting_var_dict["LASSO_MAXITER"]);
+    }
+    if (!fitting_var_dict["LASSO_CV"].empty()) {
+        lasso_cv = boost::lexical_cast<int>(fitting_var_dict["LASSO_CV"]);
+        optcontrol.cross_validation_mode = boost::lexical_cast<int>(fitting_var_dict["LASSO_CV"]);
+    }
+    if (!fitting_var_dict["LASSO_CVSET"].empty()) {
+        lasso_cvset = boost::lexical_cast<int>(fitting_var_dict["LASSO_CVSET"]);
+        optcontrol.nset_cross_validation = boost::lexical_cast<int>(fitting_var_dict["LASSO_CVSET"]);
+    }
+    if (!fitting_var_dict["LASSO_FREQ"].empty()) {
+        lasso_freq = boost::lexical_cast<int>(fitting_var_dict["LASSO_FREQ"]);
+        optcontrol.output_frequency = boost::lexical_cast<int>(fitting_var_dict["LASSO_FREQ"]);
+    }
+    if (!fitting_var_dict["STANDARDIZE"].empty()) {
+        standardize = boost::lexical_cast<int>(fitting_var_dict["STANDARDIZE"]);
+        optcontrol.standardize = boost::lexical_cast<int>(fitting_var_dict["STANDARDIZE"]);
+    }
+    if (!fitting_var_dict["SOLUTION_PATH"].empty()) {
+        save_solution_path = boost::lexical_cast<int>(fitting_var_dict["SOLUTION_PATH"]);
+        optcontrol.save_solution_path = boost::lexical_cast<int>(fitting_var_dict["SOLUTION_PATH"]);
+    }
+    if (!fitting_var_dict["DEBIAS_OLS"].empty()) {
+        debias_ols = boost::lexical_cast<int>(fitting_var_dict["DEBIAS_OLS"]);
+        optcontrol.debiase_after_l1opt = boost::lexical_cast<int>(fitting_var_dict["DEBIAS_OLS"]);
+    }
+
+    ndata_test = ndata;
+
+    if (!fitting_var_dict["NDATA_TEST"].empty()) {
+        ndata_test = boost::lexical_cast<int>(fitting_var_dict["NDATA_TEST"]);
+    }
+
+    if (fitting_var_dict["NSTART_TEST"].empty()) {
+        nstart_test = 1;
+    } else {
+        nstart_test = boost::lexical_cast<int>(fitting_var_dict["NSTART_TEST"]);
+    }
+    if (fitting_var_dict["NEND_TEST"].empty()) {
+        nend_test = 1;
+    } else {
+        nend_test = boost::lexical_cast<int>(fitting_var_dict["NEND_TEST"]);
+    }
+
+    if (fitting_var_dict["DFILE_TEST"].empty()) {
+        dfile_test = dfile;
+    } else {
+        dfile_test = fitting_var_dict["DFILE_TEST"];
+    }
+
+    if (fitting_var_dict["FFILE_TEST"].empty()) {
+        ffile_test = ffile;
+    } else {
+        ffile_test = fitting_var_dict["FFILE_TEST"];
+    }
+
+    if (ndata_test <= 0 || nstart_test <= 0 || nend_test <= 0
+        || nstart_test > ndata_test || nend_test > ndata_test || nstart_test > nend_test) {
+        exit("parse_fitting_vars",
+             "ndata_test, nstart_test, nend_test are not consistent with each other");
+    }
+/*
     input_setter->set_fitting_vars(alm,
                                    ndata,
                                    nstart,
@@ -748,117 +854,51 @@ void InputParser::parse_fitting_vars(ALM *alm)
                                    fix_cubic,
                                    flag_sparse);
 
-    if (alm->get_run_mode() == "lasso") {
 
-        double lasso_dnorm = 0.2;
-        double lasso_alpha = 1.0;
-        double lasso_tol = 1.0e-7;
-        int lasso_maxiter = 100000;
-        int lasso_cv = 0;
-        int lasso_cvset = 10;
-        int lasso_freq = 1000;
-        double lasso_min_alpha = 1.0e-3;
-        double lasso_max_alpha = 1.0;
-        int lasso_num_alpha = 20;
-        int standardize = 1;
-        int save_solution_path = 0;
-        int debias_ols = 0;
+    input_setter->set_lasso_vars(alm,
+                                 lasso_alpha,
+                                 lasso_min_alpha,
+                                 lasso_max_alpha,
+                                 lasso_num_alpha,
+                                 lasso_tol,
+                                 lasso_maxiter,
+                                 lasso_freq,
+                                 standardize,
+                                 lasso_dnorm,
+                                 lasso_cv,
+                                 lasso_cvset,
+                                 save_solution_path,
+                                 debias_ols,
+                                 ndata_test,
+                                 nstart_test,
+                                 nend_test,
+                                 dfile_test,
+                                 ffile_test);
+    */
 
-        if (!fitting_var_dict["LASSO_DNORM"].empty()) {
-            lasso_dnorm = boost::lexical_cast<double>(fitting_var_dict["LASSO_DNORM"]);
-        }
-        if (!fitting_var_dict["LASSO_ALPHA"].empty()) {
-            lasso_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_ALPHA"]);
-        }
-        if (!fitting_var_dict["LASSO_MINALPHA"].empty()) {
-            lasso_min_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_MINALPHA"]);
-        }
-        if (!fitting_var_dict["LASSO_MAXALPHA"].empty()) {
-            lasso_max_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_MAXALPHA"]);
-        }
-        if (!fitting_var_dict["LASSO_NALPHA"].empty()) {
-            lasso_num_alpha = boost::lexical_cast<int>(fitting_var_dict["LASSO_NALPHA"]);
-        }
-        if (!fitting_var_dict["LASSO_TOL"].empty()) {
-            lasso_tol = boost::lexical_cast<double>(fitting_var_dict["LASSO_TOL"]);
-        }
-        if (!fitting_var_dict["LASSO_MAXITER"].empty()) {
-            lasso_maxiter = boost::lexical_cast<int>(fitting_var_dict["LASSO_MAXITER"]);
-        }
-        if (!fitting_var_dict["LASSO_CV"].empty()) {
-            lasso_cv = boost::lexical_cast<int>(fitting_var_dict["LASSO_CV"]);
-        }
-        if (!fitting_var_dict["LASSO_CVSET"].empty()) {
-            lasso_cvset = boost::lexical_cast<int>(fitting_var_dict["LASSO_CVSET"]);
-        }
-        if (!fitting_var_dict["LASSO_FREQ"].empty()) {
-            lasso_freq = boost::lexical_cast<int>(fitting_var_dict["LASSO_FREQ"]);
-        }
-        if (!fitting_var_dict["STANDARDIZE"].empty()) {
-            standardize = boost::lexical_cast<int>(fitting_var_dict["STANDARDIZE"]);
-        }
-        if (!fitting_var_dict["SOLUTION_PATH"].empty()) {
-            save_solution_path = boost::lexical_cast<int>(fitting_var_dict["SOLUTION_PATH"]);
-        }
-        if (!fitting_var_dict["DEBIAS_OLS"].empty()) {
-            debias_ols = boost::lexical_cast<int>(fitting_var_dict["DEBIAS_OLS"]);
-        }
+    input_setter->set_optimize_vars(alm,
+                                    ndata,
+                                    nstart,
+                                    nend,
+                                    skip_s,
+                                    skip_e,
+                                    dfile,
+                                    ffile,
+                                    ndata_test,
+                                    nstart_test,
+                                    nend_test,
+                                    dfile_test,
+                                    ffile_test,
+                                    flag_sparse,
+                                    optcontrol);
 
-        ndata_test = ndata;
-
-        if (!fitting_var_dict["NDATA_TEST"].empty()) {
-            ndata_test = boost::lexical_cast<int>(fitting_var_dict["NDATA_TEST"]);
-        }
-
-        if (fitting_var_dict["NSTART_TEST"].empty()) {
-            nstart_test = 1;
-        } else {
-            nstart_test = boost::lexical_cast<int>(fitting_var_dict["NSTART_TEST"]);
-        }
-        if (fitting_var_dict["NEND_TEST"].empty()) {
-            nend_test = 1;
-        } else {
-            nend_test = boost::lexical_cast<int>(fitting_var_dict["NEND_TEST"]);
-        }
-
-        if (fitting_var_dict["DFILE_TEST"].empty()) {
-            dfile_test = dfile;
-        } else {
-            dfile_test = fitting_var_dict["DFILE_TEST"];
-        }
-
-        if (fitting_var_dict["FFILE_TEST"].empty()) {
-            ffile_test = ffile;
-        } else {
-            ffile_test = fitting_var_dict["FFILE_TEST"];
-        }
-
-        if (ndata_test <= 0 || nstart_test <= 0 || nend_test <= 0
-            || nstart_test > ndata_test || nend_test > ndata_test || nstart_test > nend_test) {
-            exit("parse_fitting_vars",
-                 "ndata_test, nstart_test, nend_test are not consistent with each other");
-        }
-
-        input_setter->set_lasso_vars(alm,
-                                     lasso_alpha,
-                                     lasso_min_alpha,
-                                     lasso_max_alpha,
-                                     lasso_num_alpha,
-                                     lasso_tol,
-                                     lasso_maxiter,
-                                     lasso_freq,
-                                     standardize,
-                                     lasso_dnorm,
-                                     lasso_cv,
-                                     lasso_cvset,
-                                     save_solution_path,
-                                     debias_ols,
-                                     ndata_test,
-                                     nstart_test,
-                                     nend_test,
-                                     dfile_test,
-                                     ffile_test);
-    }
+    input_setter->set_constraint_vars(alm,
+                                      constraint_flag,
+                                      rotation_axis,
+                                      fc2_file,
+                                      fc3_file,
+                                      fix_harmonic,
+                                      fix_cubic);
 
     fitting_var_dict.clear();
 }

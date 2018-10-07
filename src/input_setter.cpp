@@ -22,7 +22,8 @@
 
 using namespace ALM_NS;
 
-InputSetter::InputSetter() {
+InputSetter::InputSetter()
+{
     nat = 0;
     nkd = 0;
     kd = nullptr;
@@ -48,7 +49,8 @@ InputSetter::InputSetter() {
     cutoff_radii = nullptr;
 }
 
-InputSetter::~InputSetter() {
+InputSetter::~InputSetter()
+{
     if (kdname) {
         deallocate(kdname);
     }
@@ -96,7 +98,7 @@ void InputSetter::set_interaction_vars(const int maxorder_in,
 
 void InputSetter::set_cutoff_radii(const int maxorder_in,
                                    const unsigned int nkd_in,
-                                   const double * const * const * cutoff_radii_in)
+                                   const double * const * const *cutoff_radii_in)
 {
     if (cutoff_radii) {
         deallocate(cutoff_radii);
@@ -184,31 +186,51 @@ void InputSetter::define(ALM *alm)
                 cutoff_radii);
 }
 
-void InputSetter::set_fitting_vars(ALM *alm,
-                                   const int ndata,
-                                   const int nstart,
-                                   const int nend,
-                                   const int skip_s,
-                                   const int skip_e,
-                                   const std::string dfile,
-                                   const std::string ffile,
-                                   const int constraint_flag,
-                                   const std::string rotation_axis,
-                                   const std::string fc2_file,
-                                   const std::string fc3_file,
-                                   const bool fix_harmonic,
-                                   const bool fix_cubic,
-                                   const int flag_sparse) const
+
+void InputSetter::set_optimize_vars(ALM *alm,
+                                    const int ndata,
+                                    const int nstart,
+                                    const int nend,
+                                    const int skip_s,
+                                    const int skip_e,
+                                    const std::string dfile,
+                                    const std::string ffile,
+                                    const int ndata_test,
+                                    const int nstart_test,
+                                    const int nend_test,
+                                    const std::string dfile_test,
+                                    const std::string ffile_test,
+                                    const int flag_sparse,
+                                    const OptimizerControl &optcontrol_in) const
 {
     alm->fitting->ndata = ndata;
     alm->fitting->nstart = nstart;
     alm->fitting->nend = nend;
     alm->fitting->skip_s = skip_s;
     alm->fitting->skip_e = skip_e;
-    alm->fitting->use_sparseQR = flag_sparse;
 
     alm->files->file_disp = dfile;
     alm->files->file_force = ffile;
+    alm->fitting->ndata_test = ndata_test;
+    alm->fitting->nstart_test = nstart_test;
+    alm->fitting->nend_test = nend_test;
+    alm->fitting->dfile_test = dfile_test;
+    alm->fitting->ffile_test = ffile_test;
+
+    // use_sparseQR is redundant because the same informatio is
+    // included in the optcontrol
+    alm->fitting->use_sparseQR = flag_sparse;
+    alm->fitting->set_optimizer_control(optcontrol_in);
+}
+
+void InputSetter::set_constraint_vars(ALM *alm,
+                                      const int constraint_flag,
+                                      const std::string rotation_axis,
+                                      const std::string fc2_file,
+                                      const std::string fc3_file,
+                                      const bool fix_harmonic,
+                                      const bool fix_cubic) const
+{
     alm->constraint->constraint_mode = constraint_flag;
     alm->constraint->rotation_axis = rotation_axis;
     alm->constraint->fc2_file = fc2_file;
@@ -217,45 +239,6 @@ void InputSetter::set_fitting_vars(ALM *alm,
     alm->constraint->fix_cubic = fix_cubic;
 }
 
-void InputSetter::set_lasso_vars(ALM *alm,
-                                 const double lasso_alpha,
-                                 const double lasso_min_alpha,
-                                 const double lasso_max_alpha,
-                                 const int lasso_num_alpha,
-                                 const double lasso_tol,
-                                 const int lasso_maxiter,
-                                 const int lasso_freq,
-                                 const int standardize,
-                                 const double lasso_dnorm,
-                                 const int lasso_cv,
-                                 const int lasso_cvset,
-                                 const int save_solution_path,
-                                 const int debias_ols,
-                                 const int ndata_test,
-                                 const int nstart_test,
-                                 const int nend_test,
-                                 const std::string dfile_test,
-                                 const std::string ffile_test) const
-{
-    alm->fitting->disp_norm = lasso_dnorm;
-    alm->fitting->l1_alpha = lasso_alpha;
-    alm->fitting->l1_alpha_min = lasso_min_alpha;
-    alm->fitting->l1_alpha_max = lasso_max_alpha;
-    alm->fitting->num_l1_alpha = lasso_num_alpha;
-    alm->fitting->lasso_tol = lasso_tol;
-    alm->fitting->maxiter = lasso_maxiter;
-    alm->fitting->lasso_cv = lasso_cv;
-    alm->fitting->lasso_cvset = lasso_cvset;
-    alm->fitting->save_solution_path = save_solution_path;
-    alm->fitting->output_frequency = lasso_freq;
-    alm->fitting->debias_ols = debias_ols;
-    alm->fitting->ndata_test = ndata_test;
-    alm->fitting->nstart_test = nstart_test;
-    alm->fitting->nend_test = nend_test;
-    alm->fitting->dfile_test = dfile_test;
-    alm->fitting->ffile_test = ffile_test;
-    alm->fitting->standardize = standardize;
-}
 
 void InputSetter::set_atomic_positions(const int nat_in,
                                        const int *kd_in,

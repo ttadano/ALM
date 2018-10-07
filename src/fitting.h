@@ -26,6 +26,55 @@ typedef Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t> SpMat;
 
 namespace ALM_NS
 {
+    class OptimizerControl
+    {
+    public:
+        // General optimization options
+        int optimizer;
+        int use_sparse_solver;
+        int maxnum_iteration;
+        double tolerance_iteration;
+        int output_frequency;
+
+        // Options related to L1-regularized optimization
+        int standardize;
+        double displacement_scaling_factor;
+        int debiase_after_l1opt;
+
+        // cross-validation related variables
+        int cross_validation_mode;
+        int nset_cross_validation;
+        double l1_alpha;
+        double l1_alpha_min;
+        double l1_alpha_max;
+        int num_l1_alpha;
+        int save_solution_path;
+
+        OptimizerControl()
+        {
+            optimizer = 0;
+            use_sparse_solver = 0;
+            maxnum_iteration = 10000;
+            tolerance_iteration = 1.0e-7;
+            output_frequency = 1000;
+            standardize = 1;
+            displacement_scaling_factor = 1.0;
+            debiase_after_l1opt = 0;
+            cross_validation_mode = 0;
+            nset_cross_validation = 1;
+            l1_alpha = 0.0;
+            l1_alpha_min = 1.0e-4;
+            l1_alpha_max = 1.0;
+            num_l1_alpha = 1;
+            save_solution_path = 0;
+        }
+        ~OptimizerControl() = default;
+
+        OptimizerControl(const OptimizerControl &obj) = default;
+        OptimizerControl& operator=(const OptimizerControl &obj) = default;
+
+    };
+
     class Fitting
     {
     public:
@@ -73,27 +122,11 @@ namespace ALM_NS
 
 
         int get_ndata_used() const;
-        double gamma(const int,
-                     const int *) const;
 
-
-        // moved from lasso.h
-        double disp_norm;
-        double l1_alpha;
-        double l1_alpha_min, l1_alpha_max;
-        double lasso_tol;
-        int lasso_cv;
-        int lasso_cvset;
-        int maxiter;
-        int output_frequency;
-        int num_l1_alpha;
-        int standardize;
 
         int ndata_test, nstart_test, nend_test;
         std::string dfile_test, ffile_test;
 
-        int save_solution_path;
-        int debias_ols;
 
         void lasso_main(const Symmetry *symmetry,
                         const Interaction *interaction,
@@ -105,8 +138,12 @@ namespace ALM_NS
                         Fitting *fitting,
                         Timer *timer);
 
+        void set_optimizer_control(const OptimizerControl &);
+        OptimizerControl& get_optimizer_control();
+
     private:
 
+        OptimizerControl optcontrol;
         int ndata_used;
 
         void set_default_variables();
@@ -187,6 +224,9 @@ namespace ALM_NS
                     const int,
                     double *,
                     const double) const;
+
+        double gamma(const int,
+                     const int *) const;
 
 
         // Moved from lasso.h

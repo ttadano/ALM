@@ -100,17 +100,18 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  FC2XML = " << alm->constraint->fc2_file << std::endl;
         std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
         std::cout << std::endl;
+        OptimizerControl optctrl = alm->fitting->get_optimizer_control();
         std::cout << " Lasso:" << std::endl;
-        std::cout << "  LASSO_ALPHA = " << alm->fitting->l1_alpha << std::endl;
-        std::cout << "  LASSO_MINALPHA = " << alm->fitting->l1_alpha_min;
-        std::cout << "; LASSO_MAXALPHA = " << alm->fitting->l1_alpha_max << std::endl;
-        std::cout << "  LASSO_NALPHA = " << alm->fitting->num_l1_alpha << std::endl;
-        std::cout << "  STANDARDIZE = " << alm->fitting->standardize << std::endl;
-        std::cout << "  LASSO_DNORM = " << alm->fitting->disp_norm << std::endl;
-        std::cout << "  LASSO_TOL = " << alm->fitting->lasso_tol << std::endl;
-        std::cout << "  LASSO_MAXITER = " << alm->fitting->maxiter << std::endl;
-        std::cout << "  LASSO_CV = " << std::setw(5) << alm->fitting->lasso_cv << std::endl;
-        std::cout << "  LASSO_FREQ = " << std::setw(5) << alm->fitting->output_frequency << std::endl;
+        std::cout << "  LASSO_ALPHA = " << optctrl.l1_alpha << std::endl;
+        std::cout << "  LASSO_MINALPHA = " << optctrl.l1_alpha_min;
+        std::cout << "; LASSO_MAXALPHA = " << optctrl.l1_alpha_max << std::endl;
+        std::cout << "  LASSO_NALPHA = " << optctrl.num_l1_alpha << std::endl;
+        std::cout << "  STANDARDIZE = " << optctrl.standardize << std::endl;
+        std::cout << "  LASSO_DNORM = " << optctrl.displacement_scaling_factor << std::endl;
+        std::cout << "  LASSO_TOL = " << optctrl.tolerance_iteration << std::endl;
+        std::cout << "  LASSO_MAXITER = " << optctrl.maxnum_iteration << std::endl;
+        std::cout << "  LASSO_CV = " << std::setw(5) << optctrl.cross_validation_mode << std::endl;
+        std::cout << "  LASSO_FREQ = " << std::setw(5) << optctrl.output_frequency << std::endl;
         std::cout << std::endl;
     }
     std::cout << " -------------------------------------------------------------------" << std::endl;
