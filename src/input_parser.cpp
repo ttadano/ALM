@@ -27,11 +27,13 @@
 
 using namespace ALM_NS;
 
-InputParser::InputParser() {
+InputParser::InputParser()
+{
     input_setter = new InputSetter();
 }
 
-InputParser::~InputParser() {
+InputParser::~InputParser()
+{
     delete input_setter;
 }
 
@@ -59,23 +61,24 @@ void InputParser::run(ALM *alm,
 
 void InputParser::parse_displacement_and_force(ALM *alm) const
 {
-    int nat = alm->get_supercell().number_of_atoms;
-    int ndata = alm->fitting->ndata;
-    int nstart = alm->fitting->nstart;
-    int nend = alm->fitting->nend;
-    int skip_s = alm->fitting->skip_s;
-    int skip_e = alm->fitting->skip_e;
-    int ndata_used = nend - nstart + 1 - skip_e + skip_s;
+    const int nat = alm->get_supercell().number_of_atoms;
+    const auto ndata = alm->fitting->ndata;
+    const auto nstart = alm->fitting->nstart;
+    const auto nend = alm->fitting->nend;
+    const auto skip_s = alm->fitting->skip_s;
+    const auto skip_e = alm->fitting->skip_e;
+    const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
     double **u;
     double **f;
 
     // Read displacement-force training data set from files
-    std::string file_disp = alm->files->file_disp;
-    std::string file_force = alm->files->file_force;
+    const auto file_disp = alm->files->file_disp;
+    const auto file_force = alm->files->file_force;
 
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
-    parse_displacement_and_force_files(u, f, nat, ndata, nstart, nend,
+    parse_displacement_and_force_files(u, f, nat,
+                                       ndata, nstart, nend,
                                        skip_s, skip_e,
                                        file_disp, file_force);
     alm->fitting->set_displacement_and_force(u, f, nat, ndata_used);
@@ -97,12 +100,7 @@ void InputParser::parse_displacement_and_force_files(double **u,
                                                      const std::string file_disp,
                                                      const std::string file_force) const
 {
-    int i, j, k;
-    int idata;
     double u_in, f_in;
-    unsigned int nline_f, nline_u;
-    unsigned int nreq;
-
     std::ifstream ifs_disp, ifs_force;
 
     ifs_disp.open(file_disp.c_str(), std::ios::in);
@@ -110,13 +108,13 @@ void InputParser::parse_displacement_and_force_files(double **u,
     ifs_force.open(file_force.c_str(), std::ios::in);
     if (!ifs_force) exit("openfiles", "cannot open force file");
 
-    nreq = 3 * nat_in * ndata;
+    const unsigned int nreq = 3 * nat_in * ndata;
 
     std::vector<double> u_tmp(nreq), f_tmp(nreq);
 
     // Read displacements from DFILE
 
-    nline_u = 0;
+    unsigned int nline_u = 0;
     while (ifs_disp >> u_in) {
         u_tmp[nline_u++] = u_in;
         if (nline_u == nreq) break;
@@ -128,7 +126,7 @@ void InputParser::parse_displacement_and_force_files(double **u,
 
     // Read forces from FFILE
 
-    nline_f = 0;
+    unsigned int nline_f = 0;
     while (ifs_force >> f_in) {
         f_tmp[nline_f++] = f_in;
         if (nline_f == nreq) break;
@@ -138,14 +136,14 @@ void InputParser::parse_displacement_and_force_files(double **u,
              "The number of lines in FFILE is too small for the given NDATA = ",
              ndata);
 
-    idata = 0;
-    for (i = 0; i < ndata; ++i) {
+    auto idata = 0;
+    for (auto i = 0; i < ndata; ++i) {
         if (i < nstart - 1) continue;
         if (i >= skip_s && i < skip_e) continue;
         if (i > nend - 1) break;
 
-        for (j = 0; j < nat_in; ++j) {
-            for (k = 0; k < 3; ++k) {
+        for (auto j = 0; j < nat_in; ++j) {
+            for (auto k = 0; k < 3; ++k) {
                 u[idata][3 * j + k] = u_tmp[3 * nat_in * i + 3 * j + k];
                 f[idata][3 * j + k] = f_tmp[3 * nat_in * i + 3 * j + k];
             }
@@ -218,11 +216,10 @@ void InputParser::parse_input(ALM *alm)
 void InputParser::parse_general_vars(ALM *alm)
 {
     int i, j;
-    std::string prefix, str_tmp, str_disp_basis;
+    std::string str_tmp, str_disp_basis;
     int printsymmetry, is_periodic[3];
     int icount, ncount;
-    bool trim_dispsign_for_evenfunc = true;
-    bool lspin;
+    auto trim_dispsign_for_evenfunc = true;
     bool print_hessian;
     int noncollinear, trevsym;
     double **magmom, magmag;
@@ -256,7 +253,7 @@ void InputParser::parse_general_vars(ALM *alm)
         }
     }
 
-    prefix = general_var_dict["PREFIX"];
+    const auto prefix = general_var_dict["PREFIX"];
     mode = general_var_dict["MODE"];
 
     std::transform(mode.begin(), mode.end(), mode.begin(), tolower);
@@ -326,7 +323,7 @@ void InputParser::parse_general_vars(ALM *alm)
 
     // Convert MAGMOM input to array
     allocate(magmom, nat, 3);
-    lspin = false;
+    auto lspin = false;
 
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < 3; ++j) {
@@ -358,7 +355,7 @@ void InputParser::parse_general_vars(ALM *alm)
             split_str_by_space(general_var_dict["MAGMOM"], magmom_v);
             for (std::vector<std::string>::const_iterator it = magmom_v.begin();
                  it != magmom_v.end(); ++it) {
-                if ((*it).find("*") != std::string::npos) {
+                if ((*it).find('*') != std::string::npos) {
                     exit("parse_general_vars",
                          "Wild card '*' is not supported when NONCOLLINEAR = 1.");
                 } else {
@@ -381,7 +378,7 @@ void InputParser::parse_general_vars(ALM *alm)
             for (std::vector<std::string>::const_iterator it = magmom_v.begin();
                  it != magmom_v.end(); ++it) {
 
-                if ((*it).find("*") != std::string::npos) {
+                if ((*it).find('*') != std::string::npos) {
                     if ((*it) == "*") {
                         exit("parse_general_vars",
                              "Please place '*' without space for the MAGMOM-tag.");
@@ -473,7 +470,7 @@ void InputParser::parse_general_vars(ALM *alm)
 
 void InputParser::parse_cell_parameter(ALM *alm)
 {
-    double a = 0.0;
+    auto a = 0.0;
     double lavec_tmp[3][3];
     std::string line;
     std::string line_wo_comment, line_tmp;
@@ -530,7 +527,7 @@ void InputParser::parse_cell_parameter(ALM *alm)
                                             The number of valid lines for the &cell field should be 4.");
     }
 
-    for (int i = 0; i < 4; ++i) {
+    for (auto i = 0; i < 4; ++i) {
 
         line = line_vec[i];
         boost::split(line_split, line, boost::is_any_of("\t "), boost::token_compress_on);
@@ -547,7 +544,7 @@ void InputParser::parse_cell_parameter(ALM *alm)
         } else {
             // Lattice vectors a1, a2, a3
             if (line_split.size() == 3) {
-                for (int j = 0; j < 3; ++j) {
+                for (auto j = 0; j < 3; ++j) {
                     lavec_tmp[j][i - 1] = boost::lexical_cast<double>(line_split[j]);
                 }
             } else {
@@ -639,7 +636,7 @@ void InputParser::parse_fitting_vars(ALM *alm)
 {
     int ndata, nstart, nend;
     int constraint_flag;
-    int flag_sparse = 0;
+    auto flag_sparse = 0;
     std::string rotation_axis;
     std::string str_allowed_list =
         "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML SPARSE \
@@ -651,7 +648,7 @@ void InputParser::parse_fitting_vars(ALM *alm)
     std::vector<std::string> no_defaults;
     std::map<std::string, std::string> fitting_var_dict;
 
-    int ndata_test, nstart_test, nend_test;
+    int nstart_test, nend_test;
     int skip_s, skip_e;
     std::string str_skip, dfile_test, ffile_test;
 
@@ -836,7 +833,7 @@ void InputParser::parse_fitting_vars(ALM *alm)
             exit("parse_fitting_vars", "LASSO_ALGO should be 0 or 1.");
         }
 
-        ndata_test = ndata;
+        int ndata_test = ndata;
 
         if (!fitting_var_dict["NDATA_TEST"].empty()) {
             ndata_test = boost::lexical_cast<int>(fitting_var_dict["NDATA_TEST"]);
@@ -1055,7 +1052,6 @@ void InputParser::parse_cutoff_radii(ALM *alm)
     }
 
     int i, j, k;
-    int ikd, jkd;
     int order;
     std::vector<std::string> cutoff_line;
     std::set<std::string> element_allowed;
@@ -1063,7 +1059,7 @@ void InputParser::parse_cutoff_radii(ALM *alm)
     std::map<std::string, int> kd_map;
 
     double cutoff_tmp;
-    double ***rcs;
+    double ***cutoff_radii_tmp;
     bool ***undefined_cutoff;
 
     allocate(undefined_cutoff, maxorder, nkd, nkd);
@@ -1076,7 +1072,7 @@ void InputParser::parse_cutoff_radii(ALM *alm)
         }
     }
 
-    allocate(rcs, maxorder, nkd, nkd);
+    allocate(cutoff_radii_tmp, maxorder, nkd, nkd);
 
     element_allowed.clear();
 
@@ -1112,8 +1108,8 @@ void InputParser::parse_cutoff_radii(ALM *alm)
             }
         }
 
-        ikd = kd_map[str_pair[0]];
-        jkd = kd_map[str_pair[1]];
+        const auto ikd = kd_map[str_pair[0]];
+        const auto jkd = kd_map[str_pair[1]];
 
         for (order = 0; order < maxorder; ++order) {
             // Accept any strings starting with 'N' or 'n' as 'None'
@@ -1128,27 +1124,27 @@ void InputParser::parse_cutoff_radii(ALM *alm)
             if (ikd == -1 && jkd == -1) {
                 for (i = 0; i < nkd; ++i) {
                     for (j = 0; j < nkd; ++j) {
-                        rcs[order][i][j] = cutoff_tmp;
+                        cutoff_radii_tmp[order][i][j] = cutoff_tmp;
                         undefined_cutoff[order][i][j] = false;
                     }
                 }
             } else if (ikd == -1) {
                 for (i = 0; i < nkd; ++i) {
-                    rcs[order][i][jkd] = cutoff_tmp;
-                    rcs[order][jkd][i] = cutoff_tmp;
+                    cutoff_radii_tmp[order][i][jkd] = cutoff_tmp;
+                    cutoff_radii_tmp[order][jkd][i] = cutoff_tmp;
                     undefined_cutoff[order][i][jkd] = false;
                     undefined_cutoff[order][jkd][i] = false;
                 }
             } else if (jkd == -1) {
                 for (j = 0; j < nkd; ++j) {
-                    rcs[order][j][ikd] = cutoff_tmp;
-                    rcs[order][ikd][j] = cutoff_tmp;
+                    cutoff_radii_tmp[order][j][ikd] = cutoff_tmp;
+                    cutoff_radii_tmp[order][ikd][j] = cutoff_tmp;
                     undefined_cutoff[order][j][ikd] = false;
                     undefined_cutoff[order][ikd][j] = false;
                 }
             } else {
-                rcs[order][ikd][jkd] = cutoff_tmp;
-                rcs[order][jkd][ikd] = cutoff_tmp;
+                cutoff_radii_tmp[order][ikd][jkd] = cutoff_tmp;
+                cutoff_radii_tmp[order][jkd][ikd] = cutoff_tmp;
                 undefined_cutoff[order][ikd][jkd] = false;
                 undefined_cutoff[order][jkd][ikd] = false;
             }
@@ -1172,9 +1168,11 @@ void InputParser::parse_cutoff_radii(ALM *alm)
     }
     deallocate(undefined_cutoff);
 
-    input_setter->set_cutoff_radii(maxorder, nkd, rcs);
+    input_setter->set_cutoff_radii(maxorder,
+                                   nkd,
+                                   cutoff_radii_tmp);
 
-    deallocate(rcs);
+    deallocate(cutoff_radii_tmp);
 }
 
 void InputParser::get_var_dict(const std::string keywords,
@@ -1215,7 +1213,7 @@ void InputParser::get_var_dict(const std::string keywords,
 
                 // Split the input entry by '='
 
-                std::string str_tmp = boost::trim_copy(it);
+                auto str_tmp = boost::trim_copy(it);
 
                 if (!str_tmp.empty()) {
 
@@ -1311,7 +1309,7 @@ void InputParser::get_var_dict(const std::string keywords,
 
 int InputParser::locate_tag(const std::string key)
 {
-    int ret = 0;
+    auto ret = 0;
     std::string line;
 
     if (from_stdin) {

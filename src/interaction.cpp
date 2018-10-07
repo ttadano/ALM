@@ -479,7 +479,7 @@ void Interaction::set_interaction_by_cutoff(const unsigned int nat,
                                             const std::vector<int> &kd,
                                             const unsigned int nat_prim,
                                             const int * const * map_p2s_in,
-                                            const double * const * const *rcs,
+                                            const double * const * const *cutoff_radii_in,
                                             std::vector<int> **interaction_pair_out) const
 {
     for (int order = 0; order < maxorder; ++order) {
@@ -487,7 +487,7 @@ void Interaction::set_interaction_by_cutoff(const unsigned int nat,
                                                    nat_prim,
                                                    kd,
                                                    map_p2s_in,
-                                                   rcs[order],
+                                                   cutoff_radii_in[order],
                                                    interaction_pair_out[order]);
     }
 }
