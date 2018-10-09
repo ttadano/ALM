@@ -120,7 +120,7 @@ namespace ALM_NS
                                  double *bvec) const;
         void generate_force_constant();
         int optimize();
-        int optimize_lasso();
+   //     int optimize_lasso();
         void run_suggest() const;
         void run();
 

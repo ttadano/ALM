@@ -566,13 +566,11 @@ void ALM::run()
 {
     generate_force_constant();
 
-    if (mode == "fitting") {
+    if (mode == "fitting" || mode == "lasso") {
         optimize();
     } else if (mode == "suggest") {
         run_suggest();
-    } else if (mode == "lasso") {
-        optimize_lasso();
-    }
+    } 
 }
 
 int ALM::optimize()
@@ -613,35 +611,35 @@ void ALM::run_suggest() const
                                        verbosity);
 }
 
-int ALM::optimize_lasso()
-{
-    if (!structure_initialized) {
-        std::cout << "initialize_structure must be called beforehand." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    if (!ready_to_fit) {
-        constraint->setup(system,
-                          fcs,
-                          interaction,
-                          symmetry,
-                          mode,
-                          verbosity,
-                          timer);
-        ready_to_fit = true;
-    }
-    fitting->lasso_main(symmetry,
-                        interaction,
-                        fcs,
-                        constraint,
-                        system->get_supercell().number_of_atoms,
-                        files,
-                        verbosity,
-                        fitting,
-                        timer);
-
-    int info = 1;
-    return info;
-}
+//int ALM::optimize_lasso()
+//{
+//    if (!structure_initialized) {
+//        std::cout << "initialize_structure must be called beforehand." << std::endl;
+//        exit(EXIT_FAILURE);
+//    }
+//    if (!ready_to_fit) {
+//        constraint->setup(system,
+//                          fcs,
+//                          interaction,
+//                          symmetry,
+//                          mode,
+//                          verbosity,
+//                          timer);
+//        ready_to_fit = true;
+//    }
+//    fitting->elastic_net(symmetry,
+//                        interaction,
+//                        fcs,
+//                        constraint,
+//                        system->get_supercell().number_of_atoms,
+//                        files,
+//                        verbosity,
+//                        fitting,
+//                        timer);
+//
+//    int info = 1;
+//    return info;
+//}
 
 
 void ALM::initialize_structure()

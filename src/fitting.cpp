@@ -9,6 +9,7 @@
 */
 
 #include "fitting.h"
+#include "files.h"
 #include "constants.h"
 #include "constraint.h"
 #include "error.h"
@@ -88,8 +89,9 @@ int Fitting::optimize_main(const Symmetry *symmetry,
     timer->start_clock("fitting");
 
     const int natmin = symmetry->nat_prim;
-    const auto nconsts = constraint->number_of_constraints;
-    const auto ndata_used = nend - nstart + 1;
+    const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
+    const auto ndata_used_test = nend_test - nstart_test + 1;
+
     const int ntran = symmetry->ntran;
     int info_fitting;
 
@@ -98,41 +100,158 @@ int Fitting::optimize_main(const Symmetry *symmetry,
         N += fcs->nequiv[i].size();
     }
     const int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
+    const int M_test = 3 * natmin * ndata_used_test * ntran;
+    auto N_new = 0;
+    for (auto i = 0; i < maxorder; ++i) {
+        N += fcs->nequiv[i].size();
+    }
+
+    if (constraint->constraint_algebraic) {
+        for (auto i = 0; i < maxorder; ++i) {
+            N_new += constraint->index_bimap[i].size();
+        }
+    }
+
 
     if (verbosity > 0) {
-        std::cout << " FITTING" << std::endl;
-        std::cout << " =======" << std::endl << std::endl;
+        std::cout << " OPTIMIZATION" << std::endl;
+        std::cout << " ============" << std::endl << std::endl;
 
         std::cout << "  Reference files" << std::endl;
         std::cout << "   Displacement: " << file_disp << std::endl;
         std::cout << "   Force       : " << file_force << std::endl;
         std::cout << std::endl;
 
-        std::cout << "  NSTART = " << nstart << "; NEND = " << nend << std::endl;
-        std::cout << "  " << ndata_used << " entries will be used for fitting."
-            << std::endl << std::endl;
+        std::cout << "  NSTART = " << nstart << "; NEND = " << nend;
+        if (skip_s < skip_e) std::cout << ": SKIP = " << skip_s + 1 << "-" << skip_e;
+        std::cout << std::endl;
+        std::cout << "  " << ndata_used
+            << " entries will be used for optimization." << std::endl << std::endl;
 
-        std::cout << "  Total Number of Parameters : " << N
-            << std::endl << std::endl;
+        if (optcontrol.cross_validation_mode == 2) {
+            std::cout << "  Validation test files" << std::endl;
+            std::cout << "   Displacement: " << dfile_test << std::endl;
+            std::cout << "   Force       : " << ffile_test << std::endl;
+            std::cout << std::endl;
+
+            std::cout << "  NSTART = " << nstart_test << "; NEND = " << nend_test << std::endl;
+            std::cout << "  " << ndata_used_test
+                << " entries will be used for validation." << std::endl << std::endl;
+        }
+
+        std::cout << "  Total Number of Parameters : " << N << std::endl;
+        std::cout << "  Total Number of Free Parameters : " << N_new << std::endl << std::endl;
     }
+
+    // Parse displacement and force data sets from files
+    double **u = nullptr;
+    double **f = nullptr;
+    double **u_test = nullptr;
+    double **f_test = nullptr;
+
+    allocate(u, ndata_used, 3 * nat);
+    allocate(f, ndata_used, 3 * nat);
+
+    auto input_parser = new InputParser();
+
+    input_parser->parse_displacement_and_force_files(u,
+                                                     f,
+                                                     nat,
+                                                     ndata,
+                                                     nstart,
+                                                     nend,
+                                                     skip_s,
+                                                     skip_e,
+                                                     file_disp,
+                                                     file_force);
+
+    if (optcontrol.cross_validation_mode == 2) {
+
+        allocate(u_test, ndata_used_test, 3 * nat);
+        allocate(f_test, ndata_used_test, 3 * nat);
+
+
+        input_parser->parse_displacement_and_force_files(u_test,
+                                                         f_test,
+                                                         nat,
+                                                         ndata_test,
+                                                         nstart_test,
+                                                         nend_test,
+                                                         0,
+                                                         0,
+                                                         dfile_test,
+                                                         ffile_test);
+    }
+
+
+    delete input_parser;
+
+
+    std::vector<double> param_tmp(N);
+
+    if (optcontrol.optimizer == 1) {
+
+        // Use ordinary least-squares
+
+        info_fitting = least_squares(maxorder,
+                                     natmin,
+                                     ntran,
+                                     N,
+                                     N_new,
+                                     M,
+                                     verbosity,
+                                     symmetry,
+                                     fcs,
+                                     constraint,
+                                     param_tmp);
+
+    } else if (optcontrol.optimizer == 2) {
+
+        // Use Elastic net (currently only LASSO is supported)
+
+    }
+
+    // Copy force constants to public variable "params"
+    if (params) {
+        deallocate(params);
+    }
+    allocate(params, N);
+    for (auto i = 0; i < N; ++i) params[i] = param_tmp[i];
+
+    if (verbosity > 0) {
+        std::cout << std::endl;
+        timer->print_elapsed();
+        std::cout << " -------------------------------------------------------------------" << std::endl;
+        std::cout << std::endl;
+    }
+
+    timer->stop_clock("fitting");
+
+    return info_fitting;
+}
+
+int Fitting::least_squares(const int maxorder,
+                           const int natmin,
+                           const int ntran,
+                           const int N,
+                           const int N_new,
+                           const int M,
+                           const int verbosity,
+                           const Symmetry *symmetry,
+                           const Fcs *fcs,
+                           const Constraint *constraint,
+                           std::vector<double> &param_out)
+{
+    auto info_fitting = 0;
+
 
     std::vector<double> amat;
     std::vector<double> bvec;
-    std::vector<double> param_tmp(N);
 
     if (constraint->constraint_algebraic) {
 
         // Apply constraints algebraically. (ICONST = 2, 3 is not supported.)
         // SPARSE = 1 is used only when the constraints are considered algebraically.
-
-        int N_new = 0;
-        for (auto i = 0; i < maxorder; ++i) {
-            N_new += constraint->index_bimap[i].size();
-        }
-        if (verbosity > 0) {
-            std::cout << "  Total Number of Free Parameters : "
-                << N_new << std::endl << std::endl;
-        }
 
         // Calculate matrix elements for fitting
 
@@ -143,7 +262,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
 
         const unsigned long ncols = static_cast<long>(N_new);
 
-        if (use_sparseQR) {
+        if (optcontrol.use_sparse_solver) {
 
             // Use a solver for sparse matrix 
             // (Requires less memory for sparse inputs.)
@@ -165,7 +284,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
 
             info_fitting = run_eigen_sparseQR(sp_amat,
                                               sp_bvec,
-                                              param_tmp,
+                                              param_out,
                                               fnorm,
                                               maxorder,
                                               fcs,
@@ -195,10 +314,13 @@ int Fitting::optimize_main(const Symmetry *symmetry,
             // Perform fitting with SVD
 
             info_fitting
-                = fit_algebraic_constraints(N_new, M,
-                                            &amat[0], &bvec[0],
-                                            param_tmp,
-                                            fnorm, maxorder,
+                = fit_algebraic_constraints(N_new,
+                                            M,
+                                            &amat[0],
+                                            &bvec[0],
+                                            param_out,
+                                            fnorm,
+                                            maxorder,
                                             fcs,
                                             constraint,
                                             verbosity);
@@ -208,7 +330,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
 
         // Apply constraints numerically (ICONST=2 is supported)
 
-        if (use_sparseQR) {
+        if (optcontrol.use_sparse_solver) {
             std::cout << "  WARNING: SPARSE = 1 works only with ICONST = 10 or ICONST = 11." << std::endl;
             std::cout << "  Use a solver for dense matrix." << std::endl;
         }
@@ -238,39 +360,608 @@ int Fitting::optimize_main(const Symmetry *symmetry,
 
         if (constraint->exist_constraint) {
             info_fitting
-                = fit_with_constraints(N, M, nconsts,
-                                       &amat[0], &bvec[0],
-                                       &param_tmp[0],
+                = fit_with_constraints(N,
+                                       M,
+                                       constraint->number_of_constraints,
+                                       &amat[0],
+                                       &bvec[0],
+                                       &param_out[0],
                                        constraint->const_mat,
                                        constraint->const_rhs,
                                        verbosity);
         } else {
             info_fitting
-                = fit_without_constraints(N, M,
-                                          &amat[0], &bvec[0],
-                                          &param_tmp[0],
+                = fit_without_constraints(N,
+                                          M,
+                                          &amat[0],
+                                          &bvec[0],
+                                          &param_out[0],
                                           verbosity);
         }
     }
 
-    // Copy force constants to public variable "params"
-    if (params) {
-        deallocate(params);
-    }
-    allocate(params, N);
-    for (auto i = 0; i < N; ++i) params[i] = param_tmp[i];
-
-    if (verbosity > 0) {
-        std::cout << std::endl;
-        timer->print_elapsed();
-        std::cout << " -------------------------------------------------------------------" << std::endl;
-        std::cout << std::endl;
-    }
-
-    timer->stop_clock("fitting");
 
     return info_fitting;
 }
+
+
+void Fitting::elastic_net(const int maxorder,
+                          const int natmin,
+                          const int ntran,
+                          const int N,
+                          const int N_new,
+                          const int M,
+                          const int M_test,
+                          double **u,
+                          double **f,
+                          double **u_test,
+                          double **f_test,
+                          const Symmetry *symmetry,
+                          const Interaction *interaction,
+                          const Fcs *fcs,
+                          const Constraint *constraint,
+                          const unsigned int nat,
+                          const int verbosity,
+                          Timer *timer)
+{
+    int i, j, k;
+    double fnorm, fnorm_test;
+    const auto ndata_used_test = nend_test - nstart_test + 1;
+
+    unsigned long nrows = 3 * static_cast<long>(natmin)
+        * static_cast<long>(ndata_used)
+        * static_cast<long>(ntran);
+
+    const unsigned long ncols = static_cast<long>(N_new);
+
+    const int scale_displacement
+        = std::abs(optcontrol.displacement_scaling_factor - 1.0) > eps
+        && optcontrol.standardize == 0;
+
+    // Scale displacements if DNORM is not 1 and the data is not standardized.
+    if (scale_displacement) {
+        const auto inv_dnorm = 1.0 / optcontrol.displacement_scaling_factor;
+        for (i = 0; i < ndata_used; ++i) {
+            for (j = 0; j < 3 * nat; ++j) {
+                u[i][j] *= inv_dnorm;
+            }
+        }
+
+        // Scale force constants
+        for (i = 0; i < maxorder; ++i) {
+            const auto scale_factor = std::pow(optcontrol.displacement_scaling_factor, i + 1);
+            for (j = 0; j < constraint->const_fix[i].size(); ++j) {
+                constraint->const_fix[i][j].val_to_fix *= scale_factor;
+            }
+        }
+    }
+
+    std::vector<double> amat_1D, amat_1D_test;
+    std::vector<double> bvec, bvec_test;
+
+    amat_1D.resize(nrows * ncols, 0.0);
+    bvec.resize(nrows, 0.0);
+
+    set_displacement_and_force(u,
+                               f,
+                               nat,
+                               ndata_used);
+
+    get_matrix_elements_algebraic_constraint(maxorder,
+                                             ndata_used,
+                                             &amat_1D[0],
+                                             &bvec[0],
+                                             fnorm,
+                                             symmetry,
+                                             fcs,
+                                             constraint);
+
+    deallocate(u);
+    u = nullptr;
+    deallocate(f);
+    f = nullptr;
+
+    if (optcontrol.cross_validation_mode == 2) {
+        nrows = 3 * static_cast<long>(natmin)
+            * static_cast<long>(ndata_used_test)
+            * static_cast<long>(ntran);
+
+        amat_1D_test.resize(nrows * ncols, 0.0);
+        bvec_test.resize(nrows, 0.0);
+
+        if (scale_displacement) {
+            const auto inv_dnorm = 1.0 / optcontrol.displacement_scaling_factor;
+            for (i = 0; i < ndata_used_test; ++i) {
+                for (j = 0; j < 3 * nat; ++j) {
+                    u_test[i][j] *= inv_dnorm;
+                }
+            }
+        }
+
+
+        set_displacement_and_force(u_test,
+                                   f_test,
+                                   nat,
+                                   ndata_used_test);
+
+        get_matrix_elements_algebraic_constraint(maxorder,
+                                                 ndata_used_test,
+                                                 &amat_1D_test[0],
+                                                 &bvec_test[0],
+                                                 fnorm_test,
+                                                 symmetry,
+                                                 fcs,
+                                                 constraint);
+
+        deallocate(u_test);
+        u_test = nullptr;
+        deallocate(f_test);
+        f_test = nullptr;
+    }
+
+
+    // Scale back force constants
+    if (scale_displacement) {
+        for (i = 0; i < maxorder; ++i) {
+            const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
+            for (j = 0; j < constraint->const_fix[i].size(); ++j) {
+                constraint->const_fix[i][j].val_to_fix *= scale_factor;
+            }
+        }
+    }
+
+
+    if (optcontrol.cross_validation_mode > 0) {
+
+        run_elastic_net_crossvalidation(maxorder,
+                                        M,
+                                        M_test,
+                                        N_new,
+                                        amat_1D,
+                                        bvec,
+                                        amat_1D_test,
+                                        bvec_test,
+                                        constraint);
+
+    } else if (optcontrol.cross_validation_mode == 0) {
+
+        run_elastic_net_optimization(maxorder,
+                                     M,
+                                     N_new,
+                                     amat_1D,
+                                     bvec,
+                                     constraint,
+                                     interaction);
+    }
+
+
+    std::vector<double> param(N_new);
+
+    set_fcs_values(maxorder,
+                   &param[0],
+                   fcs->nequiv,
+                   constraint);
+
+
+    timer->print_elapsed();
+    std::cout << " --------------------------------------------------------------" << std::endl;
+}
+
+void Fitting::run_elastic_net_crossvalidation(const int maxorder,
+                                              const int M,
+                                              const int M_test,
+                                              const int N_new,
+                                              std::vector<double> &amat_1D,
+                                              std::vector<double> &bvec,
+                                              std::vector<double> &amat_1D_test,
+                                              std::vector<double> &bvec_test,
+                                              const Constraint *constraint)
+{
+    // Cross-validation mode
+
+    double fnorm, fnorm_test;
+    std::vector<double> param(N_new);
+
+    bool *has_prod;
+
+    Eigen::MatrixXd Prod;
+    Eigen::VectorXd grad0, grad, x;
+    Eigen::VectorXd scale_beta;
+    Eigen::VectorXd factor_std;
+    Eigen::VectorXd fdiff, fdiff_test;
+
+    // Coordinate descent
+
+    Eigen::MatrixXd A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], M, N_new);
+    Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(&bvec[0], M);
+    Eigen::MatrixXd A_test = Eigen::Map<Eigen::MatrixXd>(&amat_1D_test[0], M_test, N_new);
+    Eigen::VectorXd b_test = Eigen::Map<Eigen::VectorXd>(&bvec_test[0], M_test);
+
+    Prod.setZero(N_new, N_new);
+    grad0.resize(N_new);
+    grad.resize(N_new);
+    x.setZero(N_new);
+    scale_beta.resize(N_new);
+    factor_std.resize(N_new);
+    fdiff.resize(M);
+    fdiff_test.resize(M);
+
+    allocate(has_prod, N_new);
+
+    std::cout << "  Lasso validation with the following parameters:" << std::endl;
+    std::cout << "   LASSO_MINALPHA = " << std::setw(15) << optcontrol.l1_alpha_min;
+    std::cout << " LASSO_MAXALPHA = " << std::setw(15) << optcontrol.l1_alpha_max << std::endl;
+    std::cout << "   LASSO_NALPHA = " << std::setw(5) << optcontrol.num_l1_alpha << std::endl;
+    std::cout << "   LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+    std::cout << "   LASSO_MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
+    std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
+    std::cout << std::endl;
+
+    std::ofstream ofs_cv, ofs_coef;
+
+    std::string file_cv = "hoge.lasso_cv";
+    std::string file_coef = "hoge.lasso_coef";
+    ofs_cv.open(file_cv.c_str(), std::ios::out);
+
+    ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
+    ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
+    ofs_cv << "# LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+    ofs_cv << "# L1 ALPHA, Fitting error, Validation error, Num. zero IFCs (2nd, 3rd, ...) " << std::endl;
+
+    if (optcontrol.standardize) {
+        std::cout << " STANDARDIZE = 1 : Standardization will be performed for matrix A and vector b." << std::endl;
+        std::cout << "                   The LASSO_DNORM-tag will be neglected." << std::endl;
+        Eigen::VectorXd mean, dev;
+        get_standardizer(A, mean, dev, factor_std, scale_beta);
+        apply_standardizer(A, mean, dev);
+        apply_standardizer(A_test, mean, dev);
+
+    } else {
+        std::cout << " STANDARDIZE = 0 : No standardization of matrix A and vector b." << std::endl;
+        std::cout << "                   Columns of matrix A will be scaled by the LASSO_DNORM value." << std::endl;
+        Eigen::VectorXd mean, dev;
+        get_standardizer(A, mean, dev, factor_std, scale_beta);
+    }
+
+
+    std::cout << " Recommended LASSO_MAXALPHA = " 
+    << get_esimated_max_alpha(A, b) << std::endl << std::endl;
+
+    grad0 = A.transpose() * b;
+    grad = grad0;
+
+    int initialize_mode;
+    std::vector<int> nzero_lasso(maxorder);
+    std::vector<double> params_tmp;
+
+    if (optcontrol.save_solution_path) {
+        ofs_coef.open(file_coef.c_str(), std::ios::out);
+        ofs_coef << "# L1 ALPHA, coefficients" << std::endl;
+        params_tmp.resize(N_new);
+    }
+
+    double l1_alpha;
+
+    for (int ialpha = 0; ialpha <= optcontrol.num_l1_alpha; ++ialpha) {
+
+        l1_alpha = optcontrol.l1_alpha_min * std::pow(optcontrol.l1_alpha_max / optcontrol.l1_alpha_min,
+                                                      static_cast<double>(optcontrol.num_l1_alpha - ialpha) /
+                                                      static_cast<double>(
+                                                          optcontrol.num_l1_alpha));
+
+        std::cout << "-----------------------------------------------------------------" << std::endl;
+        std::cout << "  L1_ALPHA = " << std::setw(15) << l1_alpha << std::endl;
+
+        ofs_cv << std::setw(15) << l1_alpha;
+
+        if (ialpha == 0) {
+            initialize_mode = 0;
+        } else {
+            initialize_mode = 1;
+        }
+
+        coordinate_descent(M, N_new, l1_alpha,
+                           optcontrol.tolerance_iteration,
+                           initialize_mode,
+                           optcontrol.maxnum_iteration,
+                           x, A, b, grad0, has_prod, Prod, grad, fnorm,
+                           optcontrol.output_frequency,
+                           scale_beta,
+                           optcontrol.standardize);
+
+        for (auto i = 0; i < N_new; ++i) param[i] = x[i];
+
+        fdiff = A * x - b;
+        fdiff_test = A_test * x - b_test;
+        const auto res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
+        const auto res2 = fdiff_test.dot(fdiff_test) / (fnorm_test * fnorm_test);
+
+        // Count the number of zero parameters
+        int iparam = 0;
+
+        for (auto i = 0; i < maxorder; ++i) {
+            nzero_lasso[i] = 0;
+            for (const auto &it : constraint->index_bimap[i]) {
+                int inew = it.left + iparam;
+                if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
+
+            }
+            iparam += constraint->index_bimap[i].size();
+        }
+
+        ofs_cv << std::setw(15) << std::sqrt(res1);
+        ofs_cv << std::setw(15) << std::sqrt(res2);
+        for (auto i = 0; i < maxorder; ++i) {
+            ofs_cv << std::setw(10) << nzero_lasso[i];
+        }
+        ofs_cv << std::endl;
+
+        if (optcontrol.save_solution_path) {
+            ofs_coef << std::setw(15) << l1_alpha;
+
+            for (auto i = 0; i < N_new; ++i) params_tmp[i] = param[i];
+            auto k = 0;
+            for (auto i = 0; i < maxorder; ++i) {
+                const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
+
+                for (auto j = 0; j < constraint->index_bimap[i].size(); ++j) {
+                    params_tmp[k] *= scale_factor * factor_std(k);
+                    ++k;
+                }
+            }
+            for (auto i = 0; i < N_new; ++i) {
+                ofs_coef << std::setw(15) << params_tmp[i];
+            }
+            ofs_coef << std::endl;
+        }
+    }
+    if (optcontrol.save_solution_path) ofs_coef.close();
+    ofs_cv.close();
+}
+
+
+void Fitting::run_elastic_net_optimization(const int maxorder,
+                                           const int M,
+                                           const int N_new,
+                                           std::vector<double> &amat_1D,
+                                           std::vector<double> &bvec,
+                                           const Constraint *constraint,
+                                           const Interaction *interaction)
+{
+    // Start Lasso optimization
+    int i, j;
+    std::vector<double> param(N_new);
+
+    double *factor_std;
+    bool *has_prod;
+    double fnorm;
+
+    Eigen::MatrixXd A, Prod;
+    Eigen::VectorXd b, grad0, grad, x;
+    Eigen::VectorXd scale_beta;
+    Eigen::VectorXd fdiff;
+
+    // Coordinate descent
+
+    A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], M, N_new);
+    b = Eigen::Map<Eigen::VectorXd>(&bvec[0], M);
+
+    Prod.setZero(N_new, N_new);
+    grad0.resize(N_new);
+    grad.resize(N_new);
+    x.resize(N_new);
+    scale_beta.resize(N_new);
+    fdiff.resize(M);
+
+    allocate(has_prod, N_new);
+    allocate(factor_std, N_new);
+
+    for (i = 0; i < N_new; ++i) {
+        param[i] = 0.0;
+        x[i] = 0.0;
+        has_prod[i] = false;
+    }
+
+    // Standardize if necessary
+
+    double Minv = 1.0 / static_cast<double>(M);
+
+    if (optcontrol.standardize) {
+        double sum1, sum2;
+
+        std::cout << " STANDARDIZE = 1 : Standardization will be performed for matrix A and vector b." << std::endl;
+        std::cout << "                   The LASSO_DNORM-tag will be neglected." << std::endl;
+        for (j = 0; j < N_new; ++j) {
+            sum1 = A.col(j).sum() * Minv;
+            sum2 = A.col(j).dot(A.col(j)) * Minv;
+
+            for (i = 0; i < M; ++i) {
+                A(i, j) = (A(i, j) - sum1) / std::sqrt(sum2 - sum1 * sum1);
+            }
+            factor_std[j] = 1.0 / std::sqrt(sum2 - sum1 * sum1);
+            scale_beta(j) = 1.0;
+        }
+
+    } else {
+        double sum2;
+        std::cout << " STANDARDIZE = 0 : No standardization of matrix A and vector b." << std::endl;
+        std::cout << "                   Columns of matrix A will be scaled by the LASSO_DNORM value." << std::endl;
+        for (j = 0; j < N_new; ++j) {
+            factor_std[j] = 1.0;
+            sum2 = A.col(j).dot(A.col(j)) * Minv;
+            scale_beta(j) = 1.0 / sum2;
+        }
+    }
+
+
+    std::cout << std::endl;
+    std::cout << " Recommended LASSO_MAXALPHA = "
+        << get_esimated_max_alpha(A, b) << std::endl << std::endl;
+
+    grad0 = A.transpose() * b;
+    grad = grad0;
+
+    std::vector<int> nzero_lasso(maxorder);
+
+    std::cout << "  Lasso minimization with the following parameters:" << std::endl;
+    std::cout << "   LASSO_ALPHA  (L1) = " << std::setw(15) << optcontrol.l1_alpha << std::endl;
+    std::cout << "   LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+    std::cout << "   LASSO_MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
+    std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
+
+    std::cout << std::endl;
+
+    // Coordinate Descent Method
+    coordinate_descent(M, N_new, optcontrol.l1_alpha,
+                       optcontrol.tolerance_iteration, 0,
+                       optcontrol.maxnum_iteration,
+                       x, A, b, grad0, has_prod, Prod, grad, fnorm,
+                       optcontrol.output_frequency,
+                       scale_beta,
+                       optcontrol.standardize);
+
+    for (i = 0; i < N_new; ++i) {
+        param[i] = x[i] * factor_std[i];
+    }
+
+    fdiff = A * x - b;
+    auto res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
+
+    auto iparam = 0;
+
+    for (i = 0; i < maxorder; ++i) {
+        nzero_lasso[i] = 0;
+        for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
+             it != constraint->index_bimap[i].end(); ++it) {
+            auto inew = (*it).left + iparam;
+            if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
+
+        }
+        iparam += constraint->index_bimap[i].size();
+    }
+
+    std::cout << "  RESIDUAL (%): " << std::sqrt(res1) * 100.0 << std::endl;
+    for (auto order = 0; order < maxorder; ++order) {
+        std::cout << "  Number of non-zero " << std::setw(9) << interaction->get_ordername(order) << " FCs : "
+            << constraint->index_bimap[order].size() - nzero_lasso[order] << std::endl;
+    }
+    std::cout << std::endl;
+
+    if (optcontrol.debiase_after_l1opt) {
+        // Perform OLS fitting to the features selected by LASSO for reducing the bias.
+
+        std::cout << " DEBIAS_OLS = 1: Attempt to reduce the bias of LASSO by performing OLS fitting" << std::endl;
+        std::cout << "                 with features selected by LASSO." << std::endl;
+
+        std::vector<int> nonzero_index, zero_index;
+
+        for (i = 0; i < N_new; ++i) {
+            if (std::abs(param[i]) >= eps) {
+                nonzero_index.push_back(i);
+            } else {
+                zero_index.push_back(i);
+            }
+        }
+
+        const int N_nonzero = nonzero_index.size();
+        Eigen::MatrixXd A_nonzero(M, N_nonzero);
+
+        for (i = 0; i < N_nonzero; ++i) {
+            A_nonzero.col(i) = A.col(nonzero_index[i]);
+        }
+        Eigen::VectorXd x_nonzero = A_nonzero.colPivHouseholderQr().solve(b);
+
+        for (i = 0; i < N_new; ++i) param[i] = 0.0;
+        for (i = 0; i < N_nonzero; ++i) {
+            param[nonzero_index[i]] = x_nonzero[i] * factor_std[nonzero_index[i]];
+        }
+    }
+
+
+    auto k = 0;
+    for (i = 0; i < maxorder; ++i) {
+        const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
+
+        for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
+            param[k] *= scale_factor;
+            ++k;
+        }
+    }
+
+    deallocate(has_prod);
+    deallocate(factor_std);
+}
+
+
+void Fitting::get_standardizer(const Eigen::MatrixXd &Amat,
+                               Eigen::VectorXd &mean,
+                               Eigen::VectorXd &dev,
+                               Eigen::VectorXd &factor_std,
+                               Eigen::VectorXd &scale_beta)
+{
+    const auto nrows = Amat.rows();
+    const auto ncols = Amat.cols();
+
+    if (mean.size() != ncols) mean.resize(ncols);
+    if (dev.size() != ncols) dev.resize(ncols);
+    if (factor_std.size() != ncols) factor_std.resize(ncols);
+    if (scale_beta.size() != ncols) scale_beta.resize(ncols);
+
+    const auto inv_nrows = 1.0 / static_cast<double>(nrows);
+    double sum1, sum2;
+
+    if (optcontrol.standardize) {
+        for (auto j = 0; j < ncols; ++j) {
+            sum1 = Amat.col(j).sum() * inv_nrows;
+            sum2 = Amat.col(j).dot(Amat.col(j)) * inv_nrows;
+            mean(j) = sum1;
+            dev(j) = std::sqrt(sum2 - sum1 * sum1);
+            factor_std(j) = 1.0 / dev(j);
+            scale_beta(j) = 1.0;
+        }
+    } else {
+        for (auto j = 0; j < ncols; ++j) {
+            sum2 = Amat.col(j).dot(Amat.col(j)) * inv_nrows;
+            mean(j) = 0.0;
+            dev(j) = 1.0;
+            factor_std(j) = 1.0;
+            scale_beta(j) = 1.0 / sum2;
+        }
+    }
+}
+
+void Fitting::apply_standardizer(Eigen::MatrixXd &Amat,
+                                 const Eigen::VectorXd &mean,
+                                 const Eigen::VectorXd &dev)
+{
+    const auto ncols = Amat.cols();
+    const auto nrows = Amat.rows();
+    if (mean.cols() != ncols || dev.cols() != ncols) {
+        exit("apply_standardizer", "The number of colums is inconsistent.");
+    }
+
+    for (auto i = 0; i < nrows; ++i) {
+        for (auto j = 0; j < ncols; ++j) {
+            Amat(i, j) = (Amat(i, j) - mean(j)) / dev(j);
+        }
+    }
+}
+
+double Fitting::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
+                                       const Eigen::VectorXd &bvec) const
+{
+    const auto ncols = Amat.cols();
+    Eigen::MatrixXd C = Amat.transpose() * bvec;
+    auto lambda_max = 0.0;
+
+    for (auto i = 0; i < ncols; ++i) {
+        lambda_max = std::max<double>(lambda_max, std::abs(C(i)));
+    }
+    lambda_max /= static_cast<double>(Amat.rows());
+
+    return lambda_max;
+}
+
 
 void Fitting::set_displacement_and_force(const double * const *disp_in,
                                          const double * const *force_in,
@@ -336,6 +1027,7 @@ int Fitting::get_ndata_used() const
 {
     return ndata_used;
 }
+
 
 int Fitting::fit_without_constraints(int N,
                                      int M,
@@ -1025,9 +1717,9 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 
             for (i = 0; i < natmin3; ++i) {
                 for (j = 0; j < ncols_new; ++j) {
-                   if (std::abs(amat_mod_tmp[i][j]) > eps) {
-                       nonzero_omp.emplace_back(T(idata + i,j,amat_mod_tmp[i][j]));
-                   }
+                    if (std::abs(amat_mod_tmp[i][j]) > eps) {
+                        nonzero_omp.emplace_back(T(idata + i, j, amat_mod_tmp[i][j]));
+                    }
                 }
             }
         }
@@ -1270,20 +1962,20 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
                                 const Constraint *constraint,
                                 const int verbosity)
 {
-//    Eigen::BenchTimer t;
+    //    Eigen::BenchTimer t;
 
     SpMat AtA;
 
-//    std::cout << "Start calculating AtA ..." << std::endl;
-    AtA = sp_mat.transpose()*sp_mat;
-//    std::cout << sp_mat.rows() << "x" << sp_mat.cols() << "\n";
+    //    std::cout << "Start calculating AtA ..." << std::endl;
+    AtA = sp_mat.transpose() * sp_mat;
+    //    std::cout << sp_mat.rows() << "x" << sp_mat.cols() << "\n";
 
 //    std::cout << "done." << std::endl;
 
 //   std::cout << "Start calculating AtB ..." << std::endl;
- //   Eigen::VectorXd AtB, x;
-    auto AtB = sp_mat.transpose()*sp_bvec;
- //   std::cout << "done." << std::endl;
+    //   Eigen::VectorXd AtB, x;
+    auto AtB = sp_mat.transpose() * sp_bvec;
+    //   std::cout << "done." << std::endl;
 
     if (verbosity > 0) {
         std::cout << "  Solve least-squares problem by sparse LDLT." << std::endl;
@@ -1297,11 +1989,11 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 // t.stop();
 // std::cout << "sqr   : " << qr.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
-//    t.reset(); t.start();
+    //    t.reset(); t.start();
     Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
- //   x.setZero();
+    //   x.setZero();
     auto x = ldlt.solve(AtB);
-//    t.stop();
+    //    t.stop();
 //std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
 
@@ -1341,7 +2033,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
     }
 
     if (ldlt.info() == Eigen::Success) {
-    // Recover reducible set of force constants
+        // Recover reducible set of force constants
 
         recover_original_forceconstants(maxorder,
                                         param_irred,
@@ -1365,511 +2057,10 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 
         return 1;
     }
-
 }
 
 #endif
 
-
-void Fitting::lasso_main(const Symmetry *symmetry,
-                         const Interaction *interaction,
-                         const Fcs *fcs,
-                         const Constraint *constraint,
-                         const unsigned int nat,
-                         const Files *files,
-                         const int verbosity,
-                         Fitting *fitting,
-                         Timer *timer)
-{
-    int i, j, k;
-
-    const auto natmin = symmetry->nat_prim;
-    const int maxorder = interaction->get_maxorder();
-    const int ntran = symmetry->ntran;
-    const int ndata_used = nend - nstart + 1 - skip_e + skip_s;
-
-    double scale_factor;
-    double **u, **f;
-
-    double *bvec_breg, *dvec_breg;
-    // for LASSO validation
-    double **u_test, **f_test;
-
-    double fnorm, fnorm_test;
-    int ndata_used_test = nend_test - nstart_test + 1;
-
-    int N = 0;
-    int N_new = 0;
-    for (i = 0; i < maxorder; ++i) {
-        N += fcs->nequiv[i].size();
-        N_new += constraint->index_bimap[i].size();
-    }
-
-    int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
-    int M_test = 3 * natmin * ndata_used_test * ntran;
-
-    if (verbosity > 0) {
-        std::cout << " LASSO" << std::endl;
-        std::cout << " =====" << std::endl << std::endl;
-
-        std::cout << "  Reference files" << std::endl;
-        std::cout << "   Displacement: " << files->file_disp << std::endl;
-        std::cout << "   Force       : " << files->file_force << std::endl;
-        std::cout << std::endl;
-
-        std::cout << "  NSTART = " << nstart << "; NEND = " << nend;
-        if (skip_s < skip_e) std::cout << ": SKIP = " << skip_s + 1 << "-" << skip_e;
-        std::cout << std::endl;
-        std::cout << "  " << ndata_used
-            << " entries will be used for lasso." << std::endl << std::endl;
-
-        std::cout << "  Validation test files" << std::endl;
-        std::cout << "   Displacement: " << dfile_test << std::endl;
-        std::cout << "   Force       : " << ffile_test << std::endl;
-        std::cout << std::endl;
-
-        std::cout << "  NSTART = " << nstart_test << "; NEND = " << nend_test << std::endl;
-        std::cout << "  " << ndata_used_test
-            << " entries will be used for lasso validation." << std::endl << std::endl;
-
-        std::cout << "  Total Number of Parameters : " << N << std::endl;
-        std::cout << "  Total Number of Free Parameters : " << N_new << std::endl << std::endl;
-    }
-
-    // Parse displacement and force
-    allocate(u, ndata_used, 3 * nat);
-    allocate(f, ndata_used, 3 * nat);
-    allocate(u_test, ndata_used_test, 3 * nat);
-    allocate(f_test, ndata_used_test, 3 * nat);
-
-    InputParser *input_parser = new InputParser();
-
-    input_parser->parse_displacement_and_force_files(u,
-                                                     f,
-                                                     nat,
-                                                     ndata,
-                                                     nstart,
-                                                     nend,
-                                                     skip_s,
-                                                     skip_e,
-                                                     files->file_disp,
-                                                     files->file_force);
-
-    input_parser->parse_displacement_and_force_files(u_test,
-                                                     f_test,
-                                                     nat,
-                                                     ndata_test,
-                                                     nstart_test,
-                                                     nend_test,
-                                                     0,
-                                                     0,
-                                                     dfile_test,
-                                                     ffile_test);
-
-    delete input_parser;
-
-    // Scale displacements
-
-    const auto inv_dnorm = 1.0 / optcontrol.displacement_scaling_factor;
-    for (i = 0; i < ndata_used; ++i) {
-        for (j = 0; j < 3 * nat; ++j) {
-            u[i][j] *= inv_dnorm;
-        }
-    }
-
-    for (i = 0; i < ndata_used_test; ++i) {
-        for (j = 0; j < 3 * nat; ++j) {
-            u_test[i][j] *= inv_dnorm;
-        }
-    }
-
-    // Scale force constants
-    for (i = 0; i < maxorder; ++i) {
-        scale_factor = std::pow(optcontrol.displacement_scaling_factor, i + 1);
-        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-            constraint->const_fix[i][j].val_to_fix *= scale_factor;
-        }
-    }
-
-
-    unsigned long nrows = 3 * static_cast<long>(natmin)
-        * static_cast<long>(ndata_used)
-        * static_cast<long>(ntran);
-
-    const unsigned long ncols = static_cast<long>(N_new);
-
-    std::vector<double> amat_1D, amat_1D_test;
-    std::vector<double> bvec, bvec_test;
-
-    amat_1D.resize(nrows * ncols, 0.0);
-    bvec.resize(nrows, 0.0);
-
-    set_displacement_and_force(u, f, nat, ndata_used);
-
-    get_matrix_elements_algebraic_constraint(maxorder,
-                                             ndata_used,
-                                             &amat_1D[0],
-                                             &bvec[0],
-                                             fnorm,
-                                             symmetry,
-                                             fcs,
-                                             constraint);
-
-    deallocate(u);
-    deallocate(f);
-
-    nrows = 3 * static_cast<long>(natmin)
-        * static_cast<long>(ndata_used_test)
-        * static_cast<long>(ntran);
-
-    amat_1D_test.resize(nrows * ncols, 0.0);
-    bvec_test.resize(nrows, 0.0);
-
-    set_displacement_and_force(u_test, f_test, nat, ndata_used_test);
-
-    get_matrix_elements_algebraic_constraint(maxorder,
-                                             ndata_used_test,
-                                             &amat_1D_test[0],
-                                             &bvec_test[0],
-                                             fnorm_test,
-                                             symmetry,
-                                             fcs,
-                                             constraint);
-
-    deallocate(u_test);
-    deallocate(f_test);
-
-    // Scale back force constants
-
-    for (i = 0; i < maxorder; ++i) {
-        scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
-        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-            constraint->const_fix[i][j].val_to_fix *= scale_factor;
-        }
-    }
-
-    // Start Lasso optimization
-
-    std::vector<double> param(N_new);
-
-    double *factor_std;
-    bool *has_prod;
-
-    Eigen::MatrixXd A, Prod;
-    Eigen::VectorXd b, C, grad, x;
-    Eigen::VectorXd scale_beta;
-    Eigen::MatrixXd A_test;
-    Eigen::VectorXd b_test;
-    Eigen::VectorXd fdiff, fdiff_test;
-
-    double **amat = nullptr;
-    double *fsum = nullptr;
-    double **amat_test = nullptr;
-    double *fsum_test = nullptr;
-
-
-    // Coordinate descent
-
-    A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], M, N_new);
-    b = Eigen::Map<Eigen::VectorXd>(&bvec[0], M);
-    A_test = Eigen::Map<Eigen::MatrixXd>(&amat_1D_test[0], M_test, N_new);
-    b_test = Eigen::Map<Eigen::VectorXd>(&bvec_test[0], M_test);
-
-    Prod.resize(N_new, N_new);
-    C.resize(N_new);
-    grad.resize(N_new);
-    x.resize(N_new);
-    scale_beta.resize(N_new);
-    fdiff.resize(M);
-    fdiff_test.resize(M);
-
-    allocate(has_prod, N_new);
-    allocate(factor_std, N_new);
-
-    for (i = 0; i < N_new; ++i) {
-        param[i] = 0.0;
-        x[i] = 0.0;
-        has_prod[i] = false;
-    }
-
-    // Standardize if necessary
-
-    double Minv = 1.0 / static_cast<double>(M);
-
-    if (optcontrol.standardize) {
-        double sum1, sum2;
-
-        std::cout << " STANDARDIZE = 1 : Standardization will be performed for matrix A and vector b." << std::endl;
-        std::cout << "                   The LASSO_DNORM-tag will be neglected." << std::endl;
-        for (j = 0; j < N_new; ++j) {
-            sum1 = A.col(j).sum() * Minv;
-            sum2 = A.col(j).dot(A.col(j)) * Minv;
-
-            for (i = 0; i < M; ++i) {
-                A(i, j) = (A(i, j) - sum1) / std::sqrt(sum2 - sum1 * sum1);
-            }
-            for (i = 0; i < M_test; ++i) {
-                A_test(i, j) = (A_test(i, j) - sum1) / std::sqrt(sum2 - sum1 * sum1);
-            }
-            factor_std[j] = 1.0 / std::sqrt(sum2 - sum1 * sum1);
-            scale_beta(j) = 1.0;
-        }
-
-    } else {
-        double sum2;
-        std::cout << " STANDARDIZE = 0 : No standardization of matrix A and vector b." << std::endl;
-        std::cout << "                   Columns of matrix A will be scaled by the LASSO_DNORM value." << std::endl;
-        for (j = 0; j < N_new; ++j) {
-            factor_std[j] = 1.0;
-            sum2 = A.col(j).dot(A.col(j)) * Minv;
-            scale_beta(j) = 1.0 / sum2;
-        }
-    }
-
-    C = A.transpose() * b;
-    auto lambda_max = 0.0;
-    for (i = 0; i < N_new; ++i) {
-        lambda_max = std::max<double>(lambda_max, std::abs(C(i)));
-    }
-    lambda_max /= static_cast<double>(M);
-    std::cout << std::endl;
-    std::cout << " Recommended LASSO_MAXALPHA = " << lambda_max << std::endl << std::endl;
-    grad = C;
-    for (i = 0; i < N_new; ++i) {
-        for (j = 0; j < N_new; ++j) {
-            Prod(i, j) = 0.0;
-        }
-    }
-
-    if (optcontrol.cross_validation_mode == 1) {
-
-        // Cross-validation mode
-
-        std::cout << "  Lasso validation with the following parameters:" << std::endl;
-        std::cout << "   LASSO_MINALPHA = " << std::setw(15) << optcontrol.l1_alpha_min;
-        std::cout << " LASSO_MAXALPHA = " << std::setw(15) << optcontrol.l1_alpha_max << std::endl;
-        std::cout << "   LASSO_NALPHA = " << std::setw(5) << optcontrol.num_l1_alpha << std::endl;
-        std::cout << "   LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
-        std::cout << "   LASSO_MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
-        std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
-        std::cout << std::endl;
-
-        std::ofstream ofs_cv, ofs_coef;
-
-        std::string file_cv = files->job_title + ".lasso_cv";
-        std::string file_coef = files->job_title + ".lasso_coef";
-        ofs_cv.open(file_cv.c_str(), std::ios::out);
-
-        ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
-        ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
-        ofs_cv << "# LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
-        ofs_cv << "# L1 ALPHA, Fitting error, Validation error, Num. zero IFCs (2nd, 3rd, ...) " << std::endl;
-
-
-        int initialize_mode;
-        double res1, res2;
-        std::vector<int> nzero_lasso(maxorder);
-        std::vector<double> params_tmp;
-
-        if (optcontrol.save_solution_path) {
-            ofs_coef.open(file_coef.c_str(), std::ios::out);
-            ofs_coef << "# L1 ALPHA, coefficients" << std::endl;
-            params_tmp.resize(N_new);
-        }
-
-        double l1_alpha;
-
-        for (int ialpha = 0; ialpha <= optcontrol.num_l1_alpha; ++ialpha) {
-
-            l1_alpha = optcontrol.l1_alpha_min * std::pow(optcontrol.l1_alpha_max / optcontrol.l1_alpha_min,
-                                                          static_cast<double>(optcontrol.num_l1_alpha - ialpha) /
-                                                          static_cast<double>(
-                                                              optcontrol.num_l1_alpha));
-
-            std::cout << "-----------------------------------------------------------------" << std::endl;
-            std::cout << "  L1_ALPHA = " << std::setw(15) << l1_alpha << std::endl;
-
-            ofs_cv << std::setw(15) << l1_alpha;
-
-            if (ialpha == 0) {
-                initialize_mode = 0;
-            } else {
-                initialize_mode = 1;
-            }
-
-            coordinate_descent(M, N_new, l1_alpha,
-                               optcontrol.tolerance_iteration,
-                               initialize_mode,
-                               optcontrol.maxnum_iteration,
-                               x, A, b, C, has_prod, Prod, grad, fnorm,
-                               optcontrol.output_frequency,
-                               scale_beta,
-                               optcontrol.standardize);
-
-            for (i = 0; i < N_new; ++i) param[i] = x[i];
-
-            fdiff = A * x - b;
-            fdiff_test = A_test * x - b_test;
-            res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
-            res2 = fdiff_test.dot(fdiff_test) / (fnorm_test * fnorm_test);
-
-            // Count the number of zero parameters
-            int iparam = 0;
-
-            for (i = 0; i < maxorder; ++i) {
-                nzero_lasso[i] = 0;
-                for (const auto &it : constraint->index_bimap[i]) {
-                    int inew = it.left + iparam;
-                    if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
-
-                }
-                iparam += constraint->index_bimap[i].size();
-            }
-
-            ofs_cv << std::setw(15) << std::sqrt(res1);
-            ofs_cv << std::setw(15) << std::sqrt(res2);
-            for (i = 0; i < maxorder; ++i) {
-                ofs_cv << std::setw(10) << nzero_lasso[i];
-            }
-            ofs_cv << std::endl;
-
-            if (optcontrol.save_solution_path) {
-                ofs_coef << std::setw(15) << l1_alpha;
-
-                for (i = 0; i < N_new; ++i) params_tmp[i] = param[i];
-                k = 0;
-                for (i = 0; i < maxorder; ++i) {
-                    scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
-
-                    for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
-                        params_tmp[k] *= scale_factor * factor_std[k];
-                        ++k;
-                    }
-                }
-                for (i = 0; i < N_new; ++i) {
-                    ofs_coef << std::setw(15) << params_tmp[i];
-                }
-                ofs_coef << std::endl;
-            }
-        }
-        if (optcontrol.save_solution_path) ofs_coef.close();
-        ofs_cv.close();
-
-    } else if (optcontrol.cross_validation_mode == 0) {
-
-        double res1;
-        std::vector<int> nzero_lasso(maxorder);
-
-        std::cout << "  Lasso minimization with the following parameters:" << std::endl;
-        std::cout << "   LASSO_ALPHA  (L1) = " << std::setw(15) << optcontrol.l1_alpha << std::endl;
-        std::cout << "   LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
-        std::cout << "   LASSO_MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
-        std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
-
-        std::cout << std::endl;
-
-        // Coordinate Descent Method
-        coordinate_descent(M, N_new, optcontrol.l1_alpha,
-                           optcontrol.tolerance_iteration, 0,
-                           optcontrol.maxnum_iteration,
-                           x, A, b, C, has_prod, Prod, grad, fnorm,
-                           optcontrol.output_frequency,
-                           scale_beta,
-                           optcontrol.standardize);
-
-        for (i = 0; i < N_new; ++i) param[i] = x[i] * factor_std[i];
-
-        fdiff = A * x - b;
-        res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
-
-        // Count the number of zero parameters
-        int iparam, inew;
-        iparam = 0;
-
-        for (i = 0; i < maxorder; ++i) {
-            nzero_lasso[i] = 0;
-            for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
-                 it != constraint->index_bimap[i].end(); ++it) {
-                inew = (*it).left + iparam;
-                if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
-
-            }
-            iparam += constraint->index_bimap[i].size();
-        }
-
-        std::cout << "  RESIDUAL (%): " << std::sqrt(res1) * 100.0 << std::endl;
-        for (int order = 0; order < maxorder; ++order) {
-            std::cout << "  Number of non-zero " << std::setw(9) << interaction->get_ordername(order) << " FCs : "
-                << constraint->index_bimap[order].size() - nzero_lasso[order] << std::endl;
-        }
-        std::cout << std::endl;
-    }
-
-
-    if (optcontrol.debiase_after_l1opt) {
-        // Perform OLS fitting to the features selected by LASSO for reducing the bias.
-
-        std::cout << " DEBIAS_OLS = 1: Attempt to reduce the bias of LASSO by performing OLS fitting" << std::endl;
-        std::cout << "                 with features selected by LASSO." << std::endl;
-
-        std::vector<int> nonzero_index, zero_index;
-
-        for (i = 0; i < N_new; ++i) {
-            if (std::abs(param[i]) >= eps) {
-                nonzero_index.push_back(i);
-            } else {
-                zero_index.push_back(i);
-            }
-        }
-
-        const int N_nonzero = nonzero_index.size();
-        Eigen::MatrixXd A_nonzero(M, N_nonzero);
-
-        for (i = 0; i < N_nonzero; ++i) {
-            A_nonzero.col(i) = A.col(nonzero_index[i]);
-        }
-        Eigen::VectorXd x_nonzero = A_nonzero.colPivHouseholderQr().solve(b);
-
-        for (i = 0; i < N_new; ++i) param[i] = 0.0;
-        for (i = 0; i < N_nonzero; ++i) {
-            param[nonzero_index[i]] = x_nonzero[i] * factor_std[nonzero_index[i]];
-        }
-    }
-
-    k = 0;
-    for (i = 0; i < maxorder; ++i) {
-        scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
-
-        for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
-            param[k] *= scale_factor;
-            ++k;
-        }
-    }
-
-    deallocate(has_prod);
-    deallocate(factor_std);
-
-    fitting->set_fcs_values(maxorder,
-                            &param[0],
-                            fcs->nequiv,
-                            constraint);
-
-    if (amat) {
-        deallocate(amat);
-    }
-    if (fsum) {
-        deallocate(fsum);
-    }
-    if (amat_test) {
-        deallocate(amat_test);
-    }
-    if (fsum_test) {
-        deallocate(fsum_test);
-    }
-
-    timer->print_elapsed();
-    std::cout << " --------------------------------------------------------------" << std::endl;
-}
 
 void Fitting::set_optimizer_control(const OptimizerControl &optcontrol_in)
 {
@@ -1920,7 +2111,7 @@ void Fitting::coordinate_descent(const int M,
                                  Eigen::VectorXd &x,
                                  const Eigen::MatrixXd &A,
                                  const Eigen::VectorXd &b,
-                                 const Eigen::VectorXd &C,
+                                 const Eigen::VectorXd &grad0,
                                  bool *has_prod,
                                  Eigen::MatrixXd &Prod,
                                  Eigen::VectorXd &grad,
@@ -1940,7 +2131,7 @@ void Fitting::coordinate_descent(const int M,
         for (i = 0; i < N; ++i) beta(i) = x[i];
     } else {
         for (i = 0; i < N; ++i) beta(i) = 0.0;
-        grad = C;
+        grad = grad0;
     }
 
     double Minv = 1.0 / static_cast<double>(M);

@@ -20,7 +20,6 @@ typedef Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t> SpMat;
 #include "symmetry.h"
 #include "fcs.h"
 #include "timer.h"
-#include "files.h"
 #include <Eigen/Dense>
 
 
@@ -52,7 +51,7 @@ namespace ALM_NS
 
         OptimizerControl()
         {
-            optimizer = 0;
+            optimizer = 1;
             use_sparse_solver = 0;
             maxnum_iteration = 10000;
             tolerance_iteration = 1.0e-7;
@@ -68,11 +67,11 @@ namespace ALM_NS
             num_l1_alpha = 1;
             save_solution_path = 0;
         }
+
         ~OptimizerControl() = default;
 
         OptimizerControl(const OptimizerControl &obj) = default;
         OptimizerControl& operator=(const OptimizerControl &obj) = default;
-
     };
 
     class Fitting
@@ -128,16 +127,6 @@ namespace ALM_NS
         std::string dfile_test, ffile_test;
 
 
-        void lasso_main(const Symmetry *symmetry,
-                        const Interaction *interaction,
-                        const Fcs *fcs,
-                        const Constraint *constraint,
-                        const unsigned int nat,
-                        const Files *files,
-                        const int verbosity,
-                        Fitting *fitting,
-                        Timer *timer);
-
         void set_optimizer_control(const OptimizerControl &);
         OptimizerControl& get_optimizer_control();
 
@@ -156,6 +145,70 @@ namespace ALM_NS
 
         int inprim_index(const int,
                          const Symmetry *) const;
+
+        int least_squares(const int maxorder,
+                          const int natmin,
+                          const int ntran,
+                          const int N,
+                          const int N_new,
+                          const int M,
+                          const int verbosity,
+                          const Symmetry *symmetry,
+                          const Fcs *fcs,
+                          const Constraint *constraint,
+                          std::vector<double> &param_out);
+
+        void elastic_net(const int maxorder,
+                         const int natmin,
+                         const int ntran,
+                         const int N,
+                         const int N_new,
+                         const int M,
+                         const int M_test,
+                         double **u,
+                         double **f,
+                         double **u_test,
+                         double **f_test,
+                         const Symmetry *symmetry,
+                         const Interaction *interaction,
+                         const Fcs *fcs,
+                         const Constraint *constraint,
+                         const unsigned int nat,
+                         const int verbosity,
+                         Timer *timer);
+
+
+        void run_elastic_net_crossvalidation(const int maxorder,
+                                             const int M,
+                                             const int M_test,
+                                             const int N_new,
+                                             std::vector<double> &amat_1D,
+                                             std::vector<double> &bvec,
+                                             std::vector<double> &amat_1D_test,
+                                             std::vector<double> &bvec_test,
+                                             const Constraint *constraint);
+
+        void run_elastic_net_optimization(const int maxorder,
+                                          const int M,
+                                          const int N_new,
+                                          std::vector<double> &amat_1D,
+                                          std::vector<double> &bvec,
+                                          const Constraint *constraint,
+                                          const Interaction *interaction);
+
+        void get_standardizer(const Eigen::MatrixXd &Amat,
+                              Eigen::VectorXd &mean,
+                              Eigen::VectorXd &dev,
+                              Eigen::VectorXd &factor_std,
+                              Eigen::VectorXd &scale_beta);
+
+        void apply_standardizer(Eigen::MatrixXd &Amat,
+                                const Eigen::VectorXd &mean,
+                                const Eigen::VectorXd &dev);
+
+        double get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
+                                      const Eigen::VectorXd &bvec) const;
+
 
         int fit_without_constraints(int,
                                     int,
@@ -310,30 +363,5 @@ namespace ALM_NS
                  double *work,
                  int *lwork,
                  int *info);
-    void dgemm_(const char *TRANSA,
-                const char *TRANSB,
-                int *M,
-                int *N,
-                int *K,
-                double *ALPHA,
-                double *A,
-                int *LDA,
-                double *B,
-                int *LDB,
-                double *BETA,
-                double *C,
-                int *LDC);
-
-    void dgemv_(const char *trans,
-                int *M,
-                int *N,
-                double *alpha,
-                double *a,
-                int *lda,
-                double *x,
-                int *incx,
-                double *beta,
-                double *y,
-                int *incy);
     }
 }
