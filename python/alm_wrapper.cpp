@@ -205,6 +205,7 @@ extern "C" {
         for (const auto &map_p2s_at_nat_prim : map_p2s_vv) {
             for (const auto trans : map_p2s_at_nat_prim) {
                 map_p2s[count] = trans;
+                count++;
             }
         }
 
