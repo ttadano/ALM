@@ -44,9 +44,9 @@ namespace ALM_NS
         std::string get_run_mode() const;
         void set_verbosity(int verbosity_in);
         int get_verbosity() const;
-        void set_output_filename_prefix(std::string prefix) const;
-        void set_is_print_symmetry(int printsymmetry) const;
-        void set_is_print_hessians(bool print_hessian) const;
+        void set_output_filename_prefix(std::string prefix);
+        void set_print_symmetry(int printsymmetry);
+        void set_print_hessian(bool print_hessian);
         void set_symmetry_param(int nsym) const;
         void set_symmetry_tolerance(double tolerance) const;
         void set_displacement_param(bool trim_dispsign_for_evenfunc) const;
@@ -85,7 +85,7 @@ namespace ALM_NS
         double *** get_x_image() const;
         int * get_periodicity() const;
 
-        int get_atom_mapping_by_pure_translations(int *map_p2s) const;
+        const std::vector<std::vector<int>> &get_atom_mapping_by_pure_translations() const;
         int get_maxorder() const;
         int * get_nbody_include() const;
 

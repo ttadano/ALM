@@ -73,14 +73,14 @@ void Lasso::lasso_main(const Symmetry *symmetry,
 {
     int i, j, k;
 
-    const auto natmin = symmetry->nat_prim;
+    const auto natmin = symmetry->get_nat_prim();
     const int maxorder = interaction->get_maxorder();
     const int ndata = fitting->ndata;
     const int nstart = fitting->nstart;
     const int nend = fitting->nend;
     const int skip_s = fitting->skip_s;
     const int skip_e = fitting->skip_e;
-    const int ntran = symmetry->ntran;
+    const int ntran = symmetry->get_ntran();
     const int ndata_used = nend - nstart + 1 - skip_e + skip_s;
 
     double scale_factor;
@@ -637,8 +637,6 @@ void Lasso::lasso_main(const Symmetry *symmetry,
         std::cout << "                 with features selected by LASSO." << std::endl;
 
         std::vector<int> nonzero_index, zero_index;
-        int iparam = 0;
-        int inew;
         for (i = 0; i < N_new; ++i) {
             if (std::abs(param[i]) >= eps) {
                 nonzero_index.push_back(i);

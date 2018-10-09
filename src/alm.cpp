@@ -85,29 +85,29 @@ int ALM::get_verbosity() const
     return verbosity;
 }
 
-void ALM::set_output_filename_prefix(const std::string prefix) const // PREFIX
+void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
 {
     files->job_title = prefix;
 }
 
-void ALM::set_is_print_symmetry(const int printsymmetry) const // PRINTSYM
+void ALM::set_print_symmetry(const int printsymmetry) // PRINTSYM
 {
-    symmetry->printsymmetry = printsymmetry;
+    symmetry->set_print_symmetry(printsymmetry);
 }
 
-void ALM::set_is_print_hessians(const bool print_hessian) const // HESSIAN
+void ALM::set_print_hessian(const bool print_hessian) // HESSIAN
 {
     files->print_hessian = print_hessian;
 }
 
 void ALM::set_symmetry_param(const int nsym) const // NSYM
 {
-    symmetry->nsym = nsym;
+    symmetry->set_nsym(nsym);
 }
 
 void ALM::set_symmetry_tolerance(const double tolerance) const // TOLERANCE
 {
-    symmetry->tolerance = tolerance;
+    symmetry->set_tolerance(tolerance);
 }
 
 void ALM::set_displacement_param(const bool trim_dispsign_for_evenfunc) const // TRIMEVEN
@@ -272,17 +272,9 @@ int * ALM::get_periodicity() const
     return system->get_periodicity();
 }
 
-int ALM::get_atom_mapping_by_pure_translations(int *map_p2s) const
+const std::vector<std::vector<int>> &ALM::get_atom_mapping_by_pure_translations() const
 {
-    const int ntran = symmetry->ntran;
-    const int natmin = symmetry->nat_prim;
-
-    for (int i = 0; i < ntran; ++i) {
-        for (int j = 0; j < natmin; ++j) {
-            map_p2s[i * natmin + j] = symmetry->map_p2s[j][i];
-        }
-    }
-    return ntran;
+    return symmetry->get_map_p2s();
 }
 
 int ALM::get_maxorder() const
@@ -484,7 +476,7 @@ void ALM::get_fc_all(double *fc_values,
 {
     int i;
     double fc_elem;
-    const int ntran = symmetry->ntran;
+    const unsigned int ntran = symmetry->get_ntran();
 
     const auto maxorder = interaction->get_maxorder();
     if (fc_order > maxorder) {
@@ -517,7 +509,7 @@ void ALM::get_fc_all(double *fc_values,
 
                 for (int itran = 0; itran < ntran; ++itran) {
                     for (i = 0; i < fc_order + 1; ++i) {
-                        pair_tran[i] = symmetry->map_sym[pair_tmp[i]][symmetry->symnum_tran[itran]];
+                        pair_tran[i] = symmetry->get_map_sym()[pair_tmp[i]][symmetry->get_symnum_tran()[itran]];
                     }
                     fc_values[id] = fc_elem;
                     for (i = 0; i < fc_order + 1; ++i) {

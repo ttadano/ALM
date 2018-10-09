@@ -198,7 +198,17 @@ extern "C" {
     int alm_get_atom_mapping_by_pure_translations(const int id,
                                                   int *map_p2s)
     {
-        return alm[id]->get_atom_mapping_by_pure_translations(map_p2s);
+        unsigned int count = 0;
+
+        const std::vector<std::vector<int>> map_p2s_vv = alm[id]->get_atom_mapping_by_pure_translations();
+
+        for (const auto &map_p2s_at_nat_prim : map_p2s_vv) {
+            for (const auto trans : map_p2s_at_nat_prim) {
+                map_p2s[count] = trans;
+            }
+        }
+
+        return map_p2s_vv[0].size();
     }
 
     int alm_get_number_of_displacement_patterns(const int id,
