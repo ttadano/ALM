@@ -47,7 +47,6 @@ namespace ALM_NS
         void set_output_filename_prefix(std::string prefix);
         void set_print_symmetry(int printsymmetry);
         void set_print_hessian(bool print_hessian);
-        void set_symmetry_param(int nsym) const;
         void set_symmetry_tolerance(double tolerance) const;
         void set_displacement_param(bool trim_dispsign_for_evenfunc) const;
         void set_displacement_basis(std::string str_disp_basis) const;

@@ -100,11 +100,6 @@ void ALM::set_print_hessian(const bool print_hessian) // HESSIAN
     files->print_hessian = print_hessian;
 }
 
-void ALM::set_symmetry_param(const int nsym) const // NSYM
-{
-    symmetry->set_nsym(nsym);
-}
-
 void ALM::set_symmetry_tolerance(const double tolerance) const // TOLERANCE
 {
     symmetry->set_tolerance(tolerance);

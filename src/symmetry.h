@@ -118,18 +118,17 @@ namespace ALM_NS
         const std::vector<Maps> &get_map_s2p() const;
         const std::vector<std::vector<int>> &get_map_p2s() const;
         const std::vector<SymmetryOperation> &get_SymmData() const;
-        int ** get_map_sym() const;
+        const std::vector<std::vector<int>> &get_map_sym() const;
         const std::vector<int> &get_symnum_tran() const;
         unsigned int get_nsym() const;
-        void set_nsym(const unsigned int);
         unsigned int get_ntran() const;
         unsigned int get_nat_prim() const;
 
     private:
         unsigned int nsym, ntran, nat_prim;
-        int **map_sym;
+        std::vector<std::vector<int>> map_sym; // [nat, nsym]
         std::vector<std::vector<int>> map_p2s;  // [nat_prim, ntran]
-        std::vector<Maps> map_s2p;  // [supercell.size()]
+        std::vector<Maps> map_s2p;  // [nat]
         std::vector<SymmetryOperation> SymmData;  // [nsym]
         std::vector<int> symnum_tran;  // [ntran]
 
@@ -146,24 +145,17 @@ namespace ALM_NS
                                       const int);
 
         void gen_mapping_information(const Cell &,
-                                     const std::vector<std::vector<unsigned int>> &,
-                                     const std::vector<SymmetryOperation> &,
-                                     const std::vector<int> &);
+                                     const std::vector<std::vector<unsigned int>> &);
 
         void findsym_alm(const Cell &,
                          const int [3],
                          const std::vector<std::vector<unsigned int>> &,
-                         const Spin &,
-                         std::vector<SymmetryOperation> &);
+                         const Spin &);
 
-
-        void findsym_spglib(const Cell &,
-                            const std::vector<std::vector<unsigned int>> &,
-                            const Spin &,
-                            double,
-                            std::vector<SymmetryOperation> &,
-                            int &,
-                            std::string &);
+        int findsym_spglib(const Cell &,
+                           const std::vector<std::vector<unsigned int>> &,
+                           const Spin &,
+                           std::string &);
 
         bool is_translation(const int [3][3]) const;
         bool is_proper(const double [3][3]) const;
@@ -186,8 +178,7 @@ namespace ALM_NS
                                    const std::vector<std::vector<unsigned int>> &,
                                    const int [3],
                                    const Spin &,
-                                   const std::vector<RotationMatrix> &,
-                                   std::vector<SymmetryOperation> &);
+                                   const std::vector<RotationMatrix> &);
 
         void set_primitive_lattice(const double [3][3],
                                    int,
