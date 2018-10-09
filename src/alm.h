@@ -40,7 +40,7 @@ namespace ALM_NS
         class Displace *displace;
         class Timer *timer;
 
-        void set_run_mode(std::string mode_in);
+        void set_run_mode(std::string run_mode_in);
         std::string get_run_mode() const;
         void set_verbosity(int verbosity_in);
         int get_verbosity() const;
@@ -129,7 +129,7 @@ namespace ALM_NS
     private:
         class System *system;
 
-        std::string mode;
+        std::string run_mode;
         int verbosity;
 
         bool structure_initialized;

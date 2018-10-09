@@ -34,7 +34,7 @@ ALM::ALM()
     ready_to_fit = false;
     ofs_alm = nullptr;
     coutbuf = nullptr;
-    mode = "suggest";
+    run_mode = "suggest";
 }
 
 ALM::~ALM()
@@ -65,14 +65,14 @@ void ALM::create()
     timer = new Timer();
 }
 
-void ALM::set_run_mode(const std::string mode_in)
+void ALM::set_run_mode(const std::string run_mode_in)
 {
-    mode = mode_in;
+    run_mode = run_mode_in;
 }
 
 std::string ALM::get_run_mode() const
 {
-    return mode;
+    return run_mode;
 }
 
 void ALM::set_verbosity(const int verbosity_in)
@@ -374,7 +374,7 @@ int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
                           fcs,
                           interaction,
                           symmetry,
-                          mode,
+                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -445,7 +445,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                           fcs,
                           interaction,
                           symmetry,
-                          mode,
+                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -569,11 +569,11 @@ void ALM::run()
 {
     generate_force_constant();
 
-    if (mode == "fitting") {
+    if (run_mode == "fitting") {
         optimize();
-    } else if (mode == "suggest") {
+    } else if (run_mode == "suggest") {
         run_suggest();
-    } else if (mode == "lasso") {
+    } else if (run_mode == "lasso") {
         optimize_lasso();
     }
 }
@@ -589,7 +589,7 @@ int ALM::optimize()
                           fcs,
                           interaction,
                           symmetry,
-                          mode,
+                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -627,7 +627,7 @@ int ALM::optimize_lasso()
                           fcs,
                           interaction,
                           symmetry,
-                          mode,
+                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
