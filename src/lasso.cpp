@@ -1862,7 +1862,7 @@ void Lasso::get_prefactor_force(const int maxorder,
             }
 
             for (j = 0; j < i + 2; ++j) {
-                ind[j] = fcs->fc_table[i][iold2_dup].elems[j];
+                ind[j] = fcs->get_fc_table()[i][iold2_dup].elems[j];
             }
             prefactor[inew2] = fitting->gamma(i + 2, ind);
         }

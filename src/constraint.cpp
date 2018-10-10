@@ -708,7 +708,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
                                      order,
                                      interaction->get_cluster_list(order),
                                      "Cartesian",
-                                     fcs->fc_table[order],
+                                     fcs->get_fc_table()[order],
                                      fcs->get_nequiv()[order].size(),
                                      tolerance_constraint,
                                      const_out[order], true);
@@ -754,7 +754,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
                                    interaction,
                                    fcs,
                                    order,
-                                   fcs->fc_table[order],
+                                   fcs->get_fc_table()[order],
                                    fcs->get_nequiv()[order].size(),
                                    const_out[order], true);
 
@@ -1159,7 +1159,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
         list_found.clear();
 
-        for (auto p = fcs->fc_table[order].begin(); p != fcs->fc_table[order].end(); ++p) {
+        for (auto p = fcs->get_fc_table()[order].begin(); p != fcs->get_fc_table()[order].end(); ++p) {
             for (i = 0; i < order + 2; ++i) {
                 ind[i] = (*p).elems[i];
             }
@@ -1810,7 +1810,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
 
     list_found.clear();
 
-    for (auto &list_tmp : fcs->fc_table[order]) {
+    for (auto &list_tmp : fcs->get_fc_table()[order]) {
         list_found.insert(FcProperty(list_tmp));
     }
 

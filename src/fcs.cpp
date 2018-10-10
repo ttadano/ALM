@@ -538,6 +538,11 @@ std::vector<int> * Fcs::get_nequiv() const
     return nequiv;
 }
 
+std::vector<FcProperty> * Fcs::get_fc_table() const
+{
+    return fc_table;
+}
+
 void Fcs::get_available_symmop(const unsigned int nat,
                                const Symmetry *symmetry,
                                const std::string basis,
@@ -629,7 +634,7 @@ int Fcs::get_minimum_index_in_primitive(const int n,
                                         const int *arr,
                                         const int nat,
                                         const int natmin,
-                                        int **map_p2s) const
+                                        const int * const *map_p2s) const
 {
     int i, j, atmnum;
 
@@ -662,7 +667,7 @@ int Fcs::get_minimum_index_in_primitive(const int n,
 bool Fcs::is_inprim(const int n,
                     const int *arr,
                     const int natmin,
-                    int **map_p2s) const
+                    const int * const *map_p2s) const
 {
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < natmin; ++j) {

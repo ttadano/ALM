@@ -203,9 +203,9 @@ void Writer::write_force_constants(ALM *alm) const
 
                 atom_tmp.clear();
                 for (l = 1; l < order + 2; ++l) {
-                    atom_tmp.push_back(alm->fcs->fc_table[order][m].elems[l] / 3);
+                    atom_tmp.push_back(alm->fcs->get_fc_table()[order][m].elems[l] / 3);
                 }
-                j = alm->symmetry->map_s2p[alm->fcs->fc_table[order][m].elems[0] / 3].atom_num;
+                j = alm->symmetry->map_s2p[alm->fcs->get_fc_table()[order][m].elems[0] / 3].atom_num;
                 std::sort(atom_tmp.begin(), atom_tmp.end());
 
                 iter_cluster = alm->interaction->get_interaction_cluster(order, j).find(
@@ -227,7 +227,7 @@ void Writer::write_force_constants(ALM *alm) const
 
                 for (l = 0; l < order + 2; ++l) {
                     ofs_fcs << std::setw(7)
-                        << easyvizint(alm->fcs->fc_table[order][m].elems[l]);
+                        << easyvizint(alm->fcs->get_fc_table()[order][m].elems[l]);
                 }
                 ofs_fcs << std::setw(12) << std::setprecision(3)
                     << std::fixed << distmax << std::endl;
@@ -298,10 +298,10 @@ void Writer::write_force_constants(ALM *alm) const
 
                 for (j = 0; j < alm->fcs->get_nequiv()[order][iuniq]; ++j) {
                     ofs_fcs << std::setw(5) << j + 1 << std::setw(12)
-                        << std::setprecision(5) << std::fixed << alm->fcs->fc_table[order][id].sign;
+                        << std::setprecision(5) << std::fixed << alm->fcs->get_fc_table()[order][id].sign;
                     for (k = 0; k < order + 2; ++k) {
                         ofs_fcs << std::setw(6)
-                            << easyvizint(alm->fcs->fc_table[order][id].elems[k]);
+                            << easyvizint(alm->fcs->get_fc_table()[order][id].elems[k]);
                     }
                     ofs_fcs << std::endl;
                     ++id;
@@ -495,7 +495,7 @@ void Writer::write_misc_xml(ALM *alm)
     for (unsigned int ui = 0; ui < alm->fcs->get_nequiv()[0].size(); ++ui) {
 
         for (i = 0; i < 2; ++i) {
-            pair_tmp[i] = alm->fcs->fc_table[0][ihead].elems[i] / 3;
+            pair_tmp[i] = alm->fcs->get_fc_table()[0][ihead].elems[i] / 3;
         }
         j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
 
@@ -514,8 +514,8 @@ void Writer::write_misc_xml(ALM *alm)
         ptree &child = pt.add("Data.ForceConstants.HarmonicUnique.FC2",
                               double2string(alm->fitting->params[k]));
         child.put("<xmlattr>.pairs",
-                  std::to_string(alm->fcs->fc_table[0][ihead].elems[0])
-                  + " " + std::to_string(alm->fcs->fc_table[0][ihead].elems[1]));
+                  std::to_string(alm->fcs->get_fc_table()[0][ihead].elems[0])
+                  + " " + std::to_string(alm->fcs->get_fc_table()[0][ihead].elems[1]));
         child.put("<xmlattr>.multiplicity", multiplicity);
         ihead += alm->fcs->get_nequiv()[0][ui];
         ++k;
@@ -529,7 +529,7 @@ void Writer::write_misc_xml(ALM *alm)
 
         for (unsigned int ui = 0; ui < alm->fcs->get_nequiv()[1].size(); ++ui) {
             for (i = 0; i < 3; ++i) {
-                pair_tmp[i] = alm->fcs->fc_table[1][ihead].elems[i] / 3;
+                pair_tmp[i] = alm->fcs->get_fc_table()[1][ihead].elems[i] / 3;
             }
             j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
 
@@ -551,9 +551,9 @@ void Writer::write_misc_xml(ALM *alm)
             ptree &child = pt.add("Data.ForceConstants.CubicUnique.FC3",
                                   double2string(alm->fitting->params[k]));
             child.put("<xmlattr>.pairs",
-                      std::to_string(alm->fcs->fc_table[1][ihead].elems[0])
-                      + " " + std::to_string(alm->fcs->fc_table[1][ihead].elems[1])
-                      + " " + std::to_string(alm->fcs->fc_table[1][ihead].elems[2]));
+                      std::to_string(alm->fcs->get_fc_table()[1][ihead].elems[0])
+                      + " " + std::to_string(alm->fcs->get_fc_table()[1][ihead].elems[1])
+                      + " " + std::to_string(alm->fcs->get_fc_table()[1][ihead].elems[2]));
             child.put("<xmlattr>.multiplicity", multiplicity);
             ihead += alm->fcs->get_nequiv()[1][ui];
             ++k;
@@ -564,9 +564,9 @@ void Writer::write_misc_xml(ALM *alm)
     int imult;
     std::string elementname = "Data.ForceConstants.HARMONIC.FC2";
 
-    std::sort(alm->fcs->fc_table[0].begin(), alm->fcs->fc_table[0].end());
+    std::sort(alm->fcs->get_fc_table()[0].begin(), alm->fcs->get_fc_table()[0].end());
 
-    for (auto it = alm->fcs->fc_table[0].begin(); it != alm->fcs->fc_table[0].end(); ++it) {
+    for (auto it = alm->fcs->get_fc_table()[0].begin(); it != alm->fcs->get_fc_table()[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
@@ -614,10 +614,10 @@ void Writer::write_misc_xml(ALM *alm)
     int order;
     for (order = 1; order < alm->interaction->get_maxorder(); ++order) {
 
-        std::sort(alm->fcs->fc_table[order].begin(), alm->fcs->fc_table[order].end());
+        std::sort(alm->fcs->get_fc_table()[order].begin(), alm->fcs->get_fc_table()[order].end());
 
-        for (auto it = alm->fcs->fc_table[order].begin();
-             it != alm->fcs->fc_table[order].end(); ++it) {
+        for (auto it = alm->fcs->get_fc_table()[order].begin();
+             it != alm->fcs->get_fc_table()[order].end(); ++it) {
             FcProperty fctmp = *it;
             ip = fctmp.mother + ishift;
 
@@ -707,8 +707,8 @@ void Writer::write_hessian(ALM *alm) const
         }
     }
 
-    for (auto it = alm->fcs->fc_table[0].begin();
-         it != alm->fcs->fc_table[0].end(); ++it) {
+    for (auto it = alm->fcs->get_fc_table()[0].begin();
+         it != alm->fcs->get_fc_table()[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
@@ -773,7 +773,7 @@ void Writer::write_in_QEformat(ALM *alm) const
         }
     }
 
-    for (auto it = alm->fcs->fc_table[0].begin(); it != alm->fcs->fc_table[0].end(); ++it) {
+    for (auto it = alm->fcs->get_fc_table()[0].begin(); it != alm->fcs->get_fc_table()[0].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother;
 
@@ -856,7 +856,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
 
     int ishift = alm->fcs->get_nequiv()[0].size();
 
-    for (auto it = alm->fcs->fc_table[1].begin(); it != alm->fcs->fc_table[1].end(); ++it) {
+    for (auto it = alm->fcs->get_fc_table()[1].begin(); it != alm->fcs->get_fc_table()[1].end(); ++it) {
         FcProperty fctmp = *it;
         ip = fctmp.mother + ishift;
 

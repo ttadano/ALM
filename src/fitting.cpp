@@ -665,14 +665,14 @@ void Fitting::get_matrix_elements(const int maxorder,
 
                 for (const auto &iter : fcs->get_nequiv()[order]) {
                     for (i = 0; i < iter; ++i) {
-                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        ind[0] = fcs->get_fc_table()[order][mm].elems[0];
                         k = inprim_index(ind[0], symmetry);
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
-                            ind[j] = fcs->fc_table[order][mm].elems[j];
-                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                            ind[j] = fcs->get_fc_table()[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->get_fc_table()[order][mm].elems[j]];
                         }
-                        amat_orig_tmp[k][iparam] -= gamma(order + 2, ind) * fcs->fc_table[order][mm].sign * amat_tmp;
+                        amat_orig_tmp[k][iparam] -= gamma(order + 2, ind) * fcs->get_fc_table()[order][mm].sign * amat_tmp;
                         ++mm;
                     }
                     ++iparam;
@@ -782,16 +782,16 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
                 for (const auto &iter : fcs->get_nequiv()[order]) {
                     for (i = 0; i < iter; ++i) {
-                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        ind[0] = fcs->get_fc_table()[order][mm].elems[0];
                         k = inprim_index(ind[0], symmetry);
 
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
-                            ind[j] = fcs->fc_table[order][mm].elems[j];
-                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                            ind[j] = fcs->get_fc_table()[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->get_fc_table()[order][mm].elems[j]];
                         }
                         amat_orig_tmp[k][iparam] -= gamma(order + 2, ind)
-                            * fcs->fc_table[order][mm].sign * amat_tmp;
+                            * fcs->get_fc_table()[order][mm].sign * amat_tmp;
                         ++mm;
                     }
                     ++iparam;
@@ -956,16 +956,16 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 
                 for (const auto &iter : fcs->get_nequiv()[order]) {
                     for (i = 0; i < iter; ++i) {
-                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        ind[0] = fcs->get_fc_table()[order][mm].elems[0];
                         k = inprim_index(ind[0], symmetry);
 
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
-                            ind[j] = fcs->fc_table[order][mm].elems[j];
-                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                            ind[j] = fcs->get_fc_table()[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->get_fc_table()[order][mm].elems[j]];
                         }
                         amat_orig_tmp[k][iparam] -= gamma(order + 2, ind)
-                            * fcs->fc_table[order][mm].sign * amat_tmp;
+                            * fcs->get_fc_table()[order][mm].sign * amat_tmp;
                         ++mm;
                     }
                     ++iparam;

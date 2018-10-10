@@ -409,7 +409,7 @@ void ALM::get_fc_origin(double *fc_values,
         auto id = 0;
 
         if (order == fc_order - 1) {
-            for (const auto &it : fcs->fc_table[order]) {
+            for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
                 fc_values[id] = fitting->params[ip] * it.sign;
@@ -467,7 +467,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                 fc_values[inew] = fc_elem;
                 for (i = 0; i < fc_order + 1; ++i) {
                     elem_indices[inew * (fc_order + 1) + i] =
-                        fcs->fc_table[order][it.right].elems[i];
+                        fcs->get_fc_table()[order][it.right].elems[i];
                 }
             }
         }
@@ -505,7 +505,7 @@ void ALM::get_fc_all(double *fc_values,
         auto id = 0;
 
         if (order == fc_order - 1) {
-            for (const auto &it : fcs->fc_table[order]) {
+            for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
                 fc_elem = fitting->params[ip] * it.sign;
