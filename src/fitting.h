@@ -13,7 +13,7 @@
 #include <vector>
 #ifdef WITH_SPARSE_SOLVER
 #include <Eigen/SparseCore>
-typedef Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t> SpMat;
+typedef Eigen::SparseMatrix<double, Eigen::ColMajor> SpMat;
 #endif
 
 #include "constraint.h"
@@ -29,8 +29,8 @@ namespace ALM_NS
     {
     public:
         // General optimization options
-        int optimizer;
-        int use_sparse_solver;
+        int optimizer; // 1 : least-squares, 2 : elastic net
+        int use_sparse_solver; // 0: No, 1: Yes
         int maxnum_iteration;
         double tolerance_iteration;
         int output_frequency;
@@ -43,7 +43,7 @@ namespace ALM_NS
         // cross-validation related variables
         int cross_validation_mode;
         int nset_cross_validation;
-        double l1_alpha;
+        double l1_alpha; // L1-regularization coefficient
         double l1_alpha_min;
         double l1_alpha_max;
         int num_l1_alpha;
@@ -54,7 +54,7 @@ namespace ALM_NS
             optimizer = 1;
             use_sparse_solver = 0;
             maxnum_iteration = 10000;
-            tolerance_iteration = 1.0e-7;
+            tolerance_iteration = 1.0e-15;
             output_frequency = 1000;
             standardize = 1;
             displacement_scaling_factor = 1.0;
@@ -84,6 +84,7 @@ namespace ALM_NS
                           const Constraint *constraint,
                           const Fcs *fcs,
                           const int maxorder,
+                          const std::vector<std::string> &str_order,
                           const unsigned int nat,
                           const int verbosity,
                           const std::string file_disp,
@@ -158,43 +159,55 @@ namespace ALM_NS
                           const Constraint *constraint,
                           std::vector<double> &param_out);
 
-        void elastic_net(const int maxorder,
-                         const int natmin,
-                         const int ntran,
-                         const int N,
-                         const int N_new,
-                         const int M,
-                         const int M_test,
-                         double **u,
-                         double **f,
-                         double **u_test,
-                         double **f_test,
-                         const Symmetry *symmetry,
-                         const Interaction *interaction,
-                         const Fcs *fcs,
-                         const Constraint *constraint,
-                         const unsigned int nat,
-                         const int verbosity,
-                         Timer *timer);
+        int elastic_net(const int maxorder,
+                        const int natmin,
+                        const int ntran,
+                        const int N,
+                        const int N_new,
+                        const int M,
+                        const int M_test,
+                        double **u,
+                        double **f,
+                        double **u_test,
+                        double **f_test,
+                        const Symmetry *symmetry,
+                        const std::vector<std::string> &str_order,
+                        const Fcs *fcs,
+                        const Constraint *constraint,
+                        const unsigned int nat,
+                        const int verbosity,
+                        std::vector<double> &param_out);
 
 
-        void run_elastic_net_crossvalidation(const int maxorder,
-                                             const int M,
-                                             const int M_test,
-                                             const int N_new,
-                                             std::vector<double> &amat_1D,
-                                             std::vector<double> &bvec,
-                                             std::vector<double> &amat_1D_test,
-                                             std::vector<double> &bvec_test,
-                                             const Constraint *constraint);
+        int run_elastic_net_crossvalidation(const int maxorder,
+                                            const int M,
+                                            const int M_test,
+                                            const int N_new,
+                                            std::vector<double> &amat_1D,
+                                            std::vector<double> &bvec,
+                                            const double fnorm,
+                                            std::vector<double> &amat_1D_test,
+                                            std::vector<double> &bvec_test,
+                                            const double fnorm_test,
+                                            const Constraint *constraint,
+                                            const int verbosity,
+                                            std::vector<double> &param_out);
 
-        void run_elastic_net_optimization(const int maxorder,
-                                          const int M,
-                                          const int N_new,
-                                          std::vector<double> &amat_1D,
-                                          std::vector<double> &bvec,
-                                          const Constraint *constraint,
-                                          const Interaction *interaction);
+        int run_elastic_net_optimization(const int maxorder,
+                                         const int M,
+                                         const int N_new,
+                                         std::vector<double> &amat_1D,
+                                         std::vector<double> &bvec,
+                                         const double fnorm,
+                                         const std::vector<std::string> &str_order,
+                                         const int verbosity,
+                                         std::vector<double> &param_out);
+
+        int run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
+                                                 const Eigen::VectorXd &b_in,
+                                                 const Eigen::VectorXd &factor_std,
+                                                 std::vector<double> &params,
+                                                 const int verbosity);
 
         void get_standardizer(const Eigen::MatrixXd &Amat,
                               Eigen::VectorXd &mean,
@@ -299,22 +312,8 @@ namespace ALM_NS
                                 double,
                                 int,
                                 Eigen::VectorXd,
-                                int) const;
-
-        void calculate_residual(int,
                                 int,
-                                double **,
-                                double *,
-                                double *,
-                                double,
-                                double &) const;
-
-
-        void get_prefactor_force(const int,
-                                 const Fcs *,
-                                 const Constraint *,
-                                 const Fitting *,
-                                 std::vector<double> &) const;
+                                const int verbosity) const;
     };
 
     inline double shrink(const double x,

@@ -219,7 +219,7 @@ void ALM::set_fitting_filenames(const std::string dfile,
 void ALM::define(const int maxorder,
                  const unsigned int nkd,
                  const int *nbody_include,
-                 const double * const * const * cutoff_radii)
+                 const double * const * const *cutoff_radii)
 {
     // nkd = 0 means cutoff_radii undefined (hopefully nullptr).
     interaction->define(maxorder,
@@ -239,7 +239,7 @@ Cell ALM::get_supercell() const
     return system->get_supercell();
 }
 
-std::string * ALM::get_kdname() const
+std::string* ALM::get_kdname() const
 {
     return system->get_kdname();
 }
@@ -254,17 +254,17 @@ std::string ALM::get_str_magmom() const
     return system->get_str_magmom();
 }
 
-double *** ALM::get_x_image() const
+double*** ALM::get_x_image() const
 {
     return system->get_x_image();
 }
 
-int * ALM::get_periodicity() const
+int* ALM::get_periodicity() const
 {
     return system->get_periodicity();
 }
 
-const std::vector<std::vector<int>> &ALM::get_atom_mapping_by_pure_translations() const
+const std::vector<std::vector<int>>& ALM::get_atom_mapping_by_pure_translations() const
 {
     return symmetry->get_map_p2s();
 }
@@ -274,7 +274,7 @@ int ALM::get_maxorder() const
     return interaction->get_maxorder();
 }
 
-int * ALM::get_nbody_include() const
+int* ALM::get_nbody_include() const
 {
     return interaction->get_nbody_include();
 }
@@ -576,10 +576,16 @@ int ALM::optimize()
                           timer);
         ready_to_fit = true;
     }
+    auto maxorder = interaction->get_maxorder();
+    std::vector<std::string> str_order(maxorder);
+    for (auto i = 0; i < maxorder; ++i) {
+        str_order[i] = interaction->get_ordername(i);
+    }
     int info = fitting->optimize_main(symmetry,
                                       constraint,
                                       fcs,
-                                      interaction->get_maxorder(),
+                                      maxorder,
+                                      str_order,
                                       system->get_supercell().number_of_atoms,
                                       verbosity,
                                       files->file_disp,
