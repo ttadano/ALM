@@ -86,8 +86,6 @@ namespace ALM_NS
                   const int verbosity,
                   Timer *timer);
 
-        std::vector<FcProperty> *fc_zeros; // zero force constants (due to space group symm.)
-
         void get_xyzcomponent(int, int **) const;
 
         void generate_force_constant_table(const int,
@@ -117,6 +115,7 @@ namespace ALM_NS
     private:
         std::vector<int> *nequiv; // stores duplicate number of irreducible force constants
         std::vector<FcProperty> *fc_table; // all force constants
+        std::vector<FcProperty> *fc_zeros; // zero force constants (due to space group symm.)
 
         bool store_zeros;
         void set_default_variables();
