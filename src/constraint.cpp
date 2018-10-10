@@ -685,8 +685,8 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
     bool has_constraint_from_symm = false;
     std::vector<std::vector<double>> const_tmp;
 
-    for (int isym = 0; isym < symmetry->nsym; ++isym) {
-        if (!symmetry->SymmData[isym].compatible_with_cartesian) {
+    for (int isym = 0; isym < symmetry->get_nsym(); ++isym) {
+        if (!symmetry->get_SymmData()[isym].compatible_with_cartesian) {
             has_constraint_from_symm = true;
             break;
         }
@@ -787,7 +787,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
     int **xyzcomponent;
 
     int ixyz, nxyz;
-    int natmin = symmetry->nat_prim;
+    int natmin = symmetry->get_nat_prim();
     int nat = supercell.number_of_atoms;
 
     unsigned int isize;
@@ -844,7 +844,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
 
     for (i = 0; i < natmin; ++i) {
 
-        iat = symmetry->map_p2s[i][0];
+        iat = symmetry->get_map_p2s()[i][0];
 
         // Generate atom pairs for each order
 
@@ -1073,7 +1073,7 @@ void Constraint::generate_rotational_constraint(const System *system,
     int icrd, jcrd;
     int order;
     int maxorder = interaction->get_maxorder();
-    int natmin = symmetry->nat_prim;
+    int natmin = symmetry->get_nat_prim();
     int mu, nu;
     int ixyz, nxyz, nxyz2;
     int mu_lambda, lambda;
@@ -1169,7 +1169,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
         for (i = 0; i < natmin; ++i) {
 
-            iat = symmetry->map_p2s[i][0];
+            iat = symmetry->get_map_p2s()[i][0];
 
             interaction_atom[0] = iat;
 
@@ -1742,7 +1742,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
         get_value_from_xml(pt, "Data.Symmetry.NumberOfTranslations"));
     int natmin_ref = nat_ref / ntran_ref;
 
-    if (natmin_ref != symmetry->nat_prim) {
+    if (natmin_ref != symmetry->get_nat_prim()) {
         exit("fix_forceconstants_to_file",
              "The number of atoms in the primitive cell is not consistent.");
     }

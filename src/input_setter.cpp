@@ -139,8 +139,8 @@ void InputSetter::set_general_vars(ALM *alm,
     alm->set_verbosity(verbosity);
     nat = nat_in;
     nkd = nkd_in;
-    alm->symmetry->printsymmetry = printsymmetry;
-    alm->symmetry->tolerance = tolerance;
+    alm->symmetry->set_print_symmetry(printsymmetry);
+    alm->symmetry->set_tolerance(tolerance);
 
     if (kdname) {
         deallocate(kdname);

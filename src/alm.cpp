@@ -34,7 +34,7 @@ ALM::ALM()
     ready_to_fit = false;
     ofs_alm = nullptr;
     coutbuf = nullptr;
-    mode = "suggest";
+    run_mode = "suggest";
 }
 
 ALM::~ALM()
@@ -65,14 +65,14 @@ void ALM::create()
     timer = new Timer();
 }
 
-void ALM::set_run_mode(const std::string mode_in)
+void ALM::set_run_mode(const std::string run_mode_in)
 {
-    mode = mode_in;
+    run_mode = run_mode_in;
 }
 
 std::string ALM::get_run_mode() const
 {
-    return mode;
+    return run_mode;
 }
 
 void ALM::set_verbosity(const int verbosity_in)
@@ -85,29 +85,24 @@ int ALM::get_verbosity() const
     return verbosity;
 }
 
-void ALM::set_output_filename_prefix(const std::string prefix) const // PREFIX
+void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
 {
     files->job_title = prefix;
 }
 
-void ALM::set_is_print_symmetry(const int printsymmetry) const // PRINTSYM
+void ALM::set_print_symmetry(const int printsymmetry) // PRINTSYM
 {
-    symmetry->printsymmetry = printsymmetry;
+    symmetry->set_print_symmetry(printsymmetry);
 }
 
-void ALM::set_is_print_hessians(const bool print_hessian) const // HESSIAN
+void ALM::set_print_hessian(const bool print_hessian) // HESSIAN
 {
     files->print_hessian = print_hessian;
 }
 
-void ALM::set_symmetry_param(const int nsym) const // NSYM
-{
-    symmetry->nsym = nsym;
-}
-
 void ALM::set_symmetry_tolerance(const double tolerance) const // TOLERANCE
 {
-    symmetry->tolerance = tolerance;
+    symmetry->set_tolerance(tolerance);
 }
 
 void ALM::set_displacement_param(const bool trim_dispsign_for_evenfunc) const // TRIMEVEN
@@ -272,17 +267,9 @@ int * ALM::get_periodicity() const
     return system->get_periodicity();
 }
 
-int ALM::get_atom_mapping_by_pure_translations(int *map_p2s) const
+const std::vector<std::vector<int>> &ALM::get_atom_mapping_by_pure_translations() const
 {
-    const int ntran = symmetry->ntran;
-    const int natmin = symmetry->nat_prim;
-
-    for (int i = 0; i < ntran; ++i) {
-        for (int j = 0; j < natmin; ++j) {
-            map_p2s[i * natmin + j] = symmetry->map_p2s[j][i];
-        }
-    }
-    return ntran;
+    return symmetry->get_map_p2s();
 }
 
 int ALM::get_maxorder() const
@@ -374,7 +361,7 @@ int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
                           fcs,
                           interaction,
                           symmetry,
-                          mode,
+                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -445,7 +432,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                           fcs,
                           interaction,
                           symmetry,
-                          mode,
+                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -484,7 +471,7 @@ void ALM::get_fc_all(double *fc_values,
 {
     int i;
     double fc_elem;
-    const int ntran = symmetry->ntran;
+    const unsigned int ntran = symmetry->get_ntran();
 
     const auto maxorder = interaction->get_maxorder();
     if (fc_order > maxorder) {
@@ -517,7 +504,7 @@ void ALM::get_fc_all(double *fc_values,
 
                 for (int itran = 0; itran < ntran; ++itran) {
                     for (i = 0; i < fc_order + 1; ++i) {
-                        pair_tran[i] = symmetry->map_sym[pair_tmp[i]][symmetry->symnum_tran[itran]];
+                        pair_tran[i] = symmetry->get_map_sym()[pair_tmp[i]][symmetry->get_symnum_tran()[itran]];
                     }
                     fc_values[id] = fc_elem;
                     for (i = 0; i < fc_order + 1; ++i) {
@@ -569,11 +556,11 @@ void ALM::run()
 {
     generate_force_constant();
 
-    if (mode == "fitting") {
+    if (run_mode == "fitting") {
         optimize();
-    } else if (mode == "suggest") {
+    } else if (run_mode == "suggest") {
         run_suggest();
-    } else if (mode == "lasso") {
+    } else if (run_mode == "lasso") {
         optimize_lasso();
     }
 }
@@ -589,7 +576,7 @@ int ALM::optimize()
                           fcs,
                           interaction,
                           symmetry,
-                          mode,
+                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -627,7 +614,7 @@ int ALM::optimize_lasso()
                           fcs,
                           interaction,
                           symmetry,
-                          mode,
+                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
