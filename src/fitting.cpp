@@ -123,7 +123,7 @@ int Fitting::fitmain(const Symmetry *symmetry,
 
         int N_new = 0;
         for (auto i = 0; i < maxorder; ++i) {
-            N_new += constraint->index_bimap[i].size();
+            N_new += constraint->get_index_bimap(i).size();
         }
         if (verbosity > 0) {
             std::cout << "  Total Number of Free Parameters : "
@@ -306,7 +306,7 @@ void Fitting::set_fcs_values(const int maxorder,
     int Nirred = 0;
     for (i = 0; i < maxorder; ++i) {
         N += nequiv[i].size();
-        Nirred += constraint->index_bimap[i].size();
+        Nirred += constraint->get_index_bimap(i).size();
     }
 
     std::vector<double> param_in(Nirred, 0.0);
@@ -717,7 +717,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
     for (i = 0; i < maxorder; ++i) {
         ncols += fcs->get_nequiv()[i].size();
-        ncols_new += constraint->index_bimap[i].size();
+        ncols_new += constraint->get_index_bimap(i).size();
     }
 
     const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
@@ -802,17 +802,17 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
             for (order = 0; order < maxorder; ++order) {
 
-                for (i = 0; i < constraint->const_fix[order].size(); ++i) {
+                for (i = 0; i < constraint->get_const_fix(order).size(); ++i) {
 
                     for (j = 0; j < natmin3; ++j) {
-                        bvec[j + idata] -= constraint->const_fix[order][i].val_to_fix
-                            * amat_orig_tmp[j][ishift + constraint->const_fix[order][i].p_index_target];
+                        bvec[j + idata] -= constraint->get_const_fix(order)[i].val_to_fix
+                            * amat_orig_tmp[j][ishift + constraint->get_const_fix(order)[i].p_index_target];
                     }
                 }
 
                 //                std::cout << "pass const_fix" << std::endl;
 
-                for (const auto &it : constraint->index_bimap[order]) {
+                for (const auto &it : constraint->get_index_bimap(order)) {
                     inew = it.left + iparam;
                     iold = it.right + ishift;
 
@@ -821,25 +821,25 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                     }
                 }
 
-                for (i = 0; i < constraint->const_relate[order].size(); ++i) {
+                for (i = 0; i < constraint->get_const_relate(order).size(); ++i) {
 
-                    iold = constraint->const_relate[order][i].p_index_target + ishift;
+                    iold = constraint->get_const_relate(order)[i].p_index_target + ishift;
 
-                    for (j = 0; j < constraint->const_relate[order][i].alpha.size(); ++j) {
+                    for (j = 0; j < constraint->get_const_relate(order)[i].alpha.size(); ++j) {
 
-                        inew = constraint->index_bimap[order].right.at(
-                                constraint->const_relate[order][i].p_index_orig[j]) +
+                        inew = constraint->get_index_bimap(order).right.at(
+                            constraint->get_const_relate(order)[i].p_index_orig[j]) +
                             iparam;
 
                         for (k = 0; k < natmin3; ++k) {
                             amat_mod_tmp[k][inew] -= amat_orig_tmp[k][iold]
-                                * constraint->const_relate[order][i].alpha[j];
+                                * constraint->get_const_relate(order)[i].alpha[j];
                         }
                     }
                 }
 
                 ishift += fcs->get_nequiv()[order].size();
-                iparam += constraint->index_bimap[order].size();
+                iparam += constraint->get_index_bimap(order).size();
             }
 
             for (i = 0; i < natmin3; ++i) {
@@ -889,7 +889,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 
     for (i = 0; i < maxorder; ++i) {
         ncols += fcs->get_nequiv()[i].size();
-        ncols_new += constraint->index_bimap[i].size();
+        ncols_new += constraint->get_index_bimap(i).size();
     }
 
     const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
@@ -976,15 +976,15 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 
             for (order = 0; order < maxorder; ++order) {
 
-                for (i = 0; i < constraint->const_fix[order].size(); ++i) {
+                for (i = 0; i < constraint->get_const_fix(order).size(); ++i) {
 
                     for (j = 0; j < natmin3; ++j) {
-                        sp_bvec(j + idata) -= constraint->const_fix[order][i].val_to_fix
-                            * amat_orig_tmp[j][ishift + constraint->const_fix[order][i].p_index_target];
+                        sp_bvec(j + idata) -= constraint->get_const_fix(order)[i].val_to_fix
+                            * amat_orig_tmp[j][ishift + constraint->get_const_fix(order)[i].p_index_target];
                     }
                 }
 
-                for (const auto &it : constraint->index_bimap[order]) {
+                for (const auto &it : constraint->get_index_bimap(order)) {
                     inew = it.left + iparam;
                     iold = it.right + ishift;
 
@@ -993,25 +993,25 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
                     }
                 }
 
-                for (i = 0; i < constraint->const_relate[order].size(); ++i) {
+                for (i = 0; i < constraint->get_const_relate(order).size(); ++i) {
 
-                    iold = constraint->const_relate[order][i].p_index_target + ishift;
+                    iold = constraint->get_const_relate(order)[i].p_index_target + ishift;
 
-                    for (j = 0; j < constraint->const_relate[order][i].alpha.size(); ++j) {
+                    for (j = 0; j < constraint->get_const_relate(order)[i].alpha.size(); ++j) {
 
-                        inew = constraint->index_bimap[order].right.at(
-                                constraint->const_relate[order][i].p_index_orig[j]) +
+                        inew = constraint->get_index_bimap(order).right.at(
+                            constraint->get_const_relate(order)[i].p_index_orig[j]) +
                             iparam;
 
                         for (k = 0; k < natmin3; ++k) {
                             amat_mod_tmp[k][inew] -= amat_orig_tmp[k][iold]
-                                * constraint->const_relate[order][i].alpha[j];
+                                * constraint->get_const_relate(order)[i].alpha[j];
                         }
                     }
                 }
 
                 ishift += fcs->get_nequiv()[order].size();
-                iparam += constraint->index_bimap[order].size();
+                iparam += constraint->get_index_bimap(order).size();
             }
 
             for (i = 0; i < natmin3; ++i) {
@@ -1068,30 +1068,30 @@ void Fitting::recover_original_forceconstants(const int maxorder,
     param_out.resize(nparams, 0.0);
 
     for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-            param_out[constraint->const_fix[i][j].p_index_target + ishift]
-                = constraint->const_fix[i][j].val_to_fix;
+        for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
+            param_out[constraint->get_const_fix(i)[j].p_index_target + ishift]
+                = constraint->get_const_fix(i)[j].val_to_fix;
         }
 
-        for (const auto &it : constraint->index_bimap[i]) {
+        for (const auto &it : constraint->get_index_bimap(i)) {
             inew = it.left + iparam;
             iold = it.right + ishift;
 
             param_out[iold] = param_in[inew];
         }
 
-        for (j = 0; j < constraint->const_relate[i].size(); ++j) {
+        for (j = 0; j < constraint->get_const_relate(i).size(); ++j) {
             tmp = 0.0;
 
-            for (k = 0; k < constraint->const_relate[i][j].alpha.size(); ++k) {
-                tmp += constraint->const_relate[i][j].alpha[k]
-                    * param_out[constraint->const_relate[i][j].p_index_orig[k] + ishift];
+            for (k = 0; k < constraint->get_const_relate(i)[j].alpha.size(); ++k) {
+                tmp += constraint->get_const_relate(i)[j].alpha[k]
+                    * param_out[constraint->get_const_relate(i)[j].p_index_orig[k] + ishift];
             }
-            param_out[constraint->const_relate[i][j].p_index_target + ishift] = -tmp;
+            param_out[constraint->get_const_relate(i)[j].p_index_target + ishift] = -tmp;
         }
 
         ishift += nequiv[i].size();
-        iparam += constraint->index_bimap[i].size();
+        iparam += constraint->get_index_bimap(i).size();
     }
 }
 

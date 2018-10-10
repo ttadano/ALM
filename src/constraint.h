@@ -81,7 +81,6 @@ namespace ALM_NS
         int n = a.size();
         int m = b.size();
         if (n != m) return false;
-        double res = 0.0;
         for (int i = 0; i < n; ++i) {
             if (std::abs(a[i] - b[i]) > eps12) return false;
         }
@@ -212,11 +211,6 @@ namespace ALM_NS
                    const int verbosity,
                    Timer *timer);
 
-        std::vector<ConstraintTypeFix> *const_fix;
-        std::vector<ConstraintTypeRelate> *const_relate;
-        std::vector<ConstraintTypeRelate> *const_relate_rotation;
-        boost::bimap<int, int> *index_bimap;
-
         void get_mapping_constraint(const int,
                                     std::vector<int> *,
                                     ConstraintSparseForm *,
@@ -247,7 +241,11 @@ namespace ALM_NS
         std::string get_rotation_axis() const;
         void set_rotation_axis(const std::string);
 
-        const ConstraintSparseForm &get_const_symmetry(const int order) const;
+        const ConstraintSparseForm &get_const_symmetry(const int) const;
+        const std::vector<ConstraintTypeFix> &get_const_fix(const int) const;
+        void set_const_fix_val_to_fix(const int, const int, const double);
+        const std::vector<ConstraintTypeRelate> &get_const_relate(const int) const;
+        const boost::bimap<int, int> &get_index_bimap(const int) const;
 
     private:
 
@@ -267,6 +265,10 @@ namespace ALM_NS
 
         std::string rotation_axis;
         ConstraintSparseForm *const_symmetry;
+        std::vector<ConstraintTypeFix> *const_fix;
+        std::vector<ConstraintTypeRelate> *const_relate;
+        std::vector<ConstraintTypeRelate> *const_relate_rotation;
+        boost::bimap<int, int> *index_bimap;
 
         bool impose_inv_T, impose_inv_R, exclude_last_R;
 

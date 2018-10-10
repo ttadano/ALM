@@ -64,10 +64,10 @@ void Lasso::set_default_variables()
 void Lasso::lasso_main(const Symmetry *symmetry,
                        const Interaction *interaction,
                        const Fcs *fcs,
-                       const Constraint *constraint,
                        const unsigned int nat,
                        const Files *files,
                        const int verbosity,
+                       Constraint *constraint,
                        Fitting *fitting,
                        Timer *timer)
 {
@@ -83,7 +83,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
     const int ntran = symmetry->get_ntran();
     const int ndata_used = nend - nstart + 1 - skip_e + skip_s;
 
-    double scale_factor;
+    double scale_factor, scaled_val;
     double **u, **f;
 
     double *bvec_breg, *dvec_breg;
@@ -97,7 +97,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
     int N_new = 0;
     for (i = 0; i < maxorder; ++i) {
         N += fcs->get_nequiv()[i].size();
-        N_new += constraint->index_bimap[i].size();
+        N_new += constraint->get_index_bimap(i).size();
     }
 
     int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
@@ -181,8 +181,9 @@ void Lasso::lasso_main(const Symmetry *symmetry,
     // Scale force constants
     for (i = 0; i < maxorder; ++i) {
         scale_factor = std::pow(disp_norm, i + 1);
-        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-            constraint->const_fix[i][j].val_to_fix *= scale_factor;
+        for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
+            scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
+            constraint->set_const_fix_val_to_fix(i, j, scaled_val);
         }
     }
 
@@ -238,8 +239,9 @@ void Lasso::lasso_main(const Symmetry *symmetry,
 
     for (i = 0; i < maxorder; ++i) {
         scale_factor = 1.0 / std::pow(disp_norm, i + 1);
-        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-            constraint->const_fix[i][j].val_to_fix *= scale_factor;
+        for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
+            scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
+            constraint->set_const_fix_val_to_fix(i, j, scaled_val);
         }
     }
 
@@ -480,12 +482,12 @@ void Lasso::lasso_main(const Symmetry *symmetry,
 
             for (i = 0; i < maxorder; ++i) {
                 nzero_lasso[i] = 0;
-                for (const auto &it : constraint->index_bimap[i]) {
+                for (const auto &it : constraint->get_index_bimap(i)) {
                     int inew = it.left + iparam;
                     if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
 
                 }
-                iparam += constraint->index_bimap[i].size();
+                iparam += constraint->get_index_bimap(i).size();
             }
 
             ofs_cv << std::setw(15) << std::sqrt(res1);
@@ -503,7 +505,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
                 for (i = 0; i < maxorder; ++i) {
                     scale_factor = 1.0 / std::pow(disp_norm, i + 1);
 
-                    for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
+                    for (j = 0; j < constraint->get_index_bimap(i).size(); ++j) {
                         params_tmp[k] *= scale_factor * factor_std[k];
                         ++k;
                     }
@@ -562,19 +564,19 @@ void Lasso::lasso_main(const Symmetry *symmetry,
 
         for (i = 0; i < maxorder; ++i) {
             nzero_lasso[i] = 0;
-            for (boost::bimap<int, int>::const_iterator it = constraint->index_bimap[i].begin();
-                 it != constraint->index_bimap[i].end(); ++it) {
+            for (boost::bimap<int, int>::const_iterator it = constraint->get_index_bimap(i).begin();
+                 it != constraint->get_index_bimap(i).end(); ++it) {
                 inew = (*it).left + iparam;
                 if (std::abs(param[inew]) < eps) ++nzero_lasso[i];
 
             }
-            iparam += constraint->index_bimap[i].size();
+            iparam += constraint->get_index_bimap(i).size();
         }
 
         std::cout << "  RESIDUAL (%): " << std::sqrt(res1) * 100.0 << std::endl;
         for (int order = 0; order < maxorder; ++order) {
             std::cout << "  Number of non-zero " << std::setw(9) << interaction->get_ordername(order) << " FCs : "
-                << constraint->index_bimap[order].size() - nzero_lasso[order] << std::endl;
+                      << constraint->get_index_bimap(order).size() - nzero_lasso[order] << std::endl;
         }
         std::cout << std::endl;
 
@@ -610,7 +612,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
                 for (i = 0; i < maxorder; ++i) {
                     nzero_lasso[i] = 0;
 
-                    for (const auto &it : constraint->index_bimap[i]) {
+                    for (const auto &it : constraint->get_index_bimap(i)) {
                         inew = it.left + iparam;
 
                         if (std::abs(param_copy[inew]) * prefactor_force[inew] < tolerance_tmp) {
@@ -618,7 +620,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
                             param_copy[inew] = 0.0;
                         }
                     }
-                    iparam += constraint->index_bimap[i].size();
+                    iparam += constraint->get_index_bimap(i).size();
 
                     std::cout << std::setw(10) << nzero_lasso[i];
                 }
@@ -663,7 +665,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
     for (i = 0; i < maxorder; ++i) {
         scale_factor = 1.0 / std::pow(disp_norm, i + 1);
 
-        for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
+        for (j = 0; j < constraint->get_index_bimap(i).size(); ++j) {
             param[k] *= scale_factor;
             ++k;
         }
@@ -1851,7 +1853,7 @@ void Lasso::get_prefactor_force(const int maxorder,
 
     allocate(ind, maxorder + 1);
     for (i = 0; i < maxorder; ++i) {
-        for (const auto &it : constraint->index_bimap[i]) {
+        for (const auto &it : constraint->get_index_bimap(i)) {
             inew2 = it.left + iparam2;
             iold2 = it.right;
             iold2_dup = 0;
@@ -1866,7 +1868,7 @@ void Lasso::get_prefactor_force(const int maxorder,
         }
 
         ishift2 += fcs->get_nequiv()[i].size();
-        iparam2 += constraint->index_bimap[i].size();
+        iparam2 += constraint->get_index_bimap(i).size();
     }
     deallocate(ind);
 }

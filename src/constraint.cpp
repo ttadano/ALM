@@ -484,7 +484,7 @@ void Constraint::calc_constraint_matrix(const int maxorder,
     int nshift2 = 0;
     for (order = 0; order < maxorder; ++order) {
         if (order > 0) {
-            int nparam2 = nequiv[order - 1].size() + nequiv[order].size();
+            // int nparam2 = nequiv[order - 1].size() + nequiv[order].size();
 
             if (const_fix[order - 1].empty() && const_fix[order].empty()) {
                 for (auto &p : const_rotation_cross[order]) {
@@ -780,6 +780,26 @@ void Constraint::set_rotation_axis(const std::string rotation_axis_in)
 const ConstraintSparseForm &Constraint::get_const_symmetry(const int order) const
 {
     return const_symmetry[order];
+}
+
+const std::vector<ConstraintTypeFix> &Constraint::get_const_fix(const int order) const
+{
+    return const_fix[order];
+}
+
+void Constraint::set_const_fix_val_to_fix(const int order, const int idx, const double val)
+{
+    const_fix[order][idx].val_to_fix = val;
+}
+
+const std::vector<ConstraintTypeRelate> &Constraint::get_const_relate(const int order) const
+{
+    return const_relate[order];
+}
+
+const boost::bimap<int, int> &Constraint::get_index_bimap(const int order) const
+{
+    return index_bimap[order];
 }
 
 void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,

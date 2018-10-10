@@ -366,7 +366,7 @@ int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
                           timer);
         ready_to_fit = true;
     }
-    return constraint->index_bimap[order].size();
+    return constraint->get_index_bimap(order).size();
 }
 
 void ALM::get_fc_origin(double *fc_values,
@@ -443,10 +443,10 @@ void ALM::get_fc_irreducible(double *fc_values,
 
     for (int order = 0; order < fc_order; ++order) {
 
-        if (constraint->index_bimap[order].empty()) { continue; }
+        if (constraint->get_index_bimap(order).empty()) { continue; }
 
         if (order == fc_order - 1) {
-            for (const auto &it : constraint->index_bimap[order]) {
+            for (const auto &it : constraint->get_index_bimap(order)) {
                 inew = it.left;
                 iold = it.right + ishift;
 
@@ -622,10 +622,10 @@ int ALM::optimize_lasso()
     lasso->lasso_main(symmetry,
                       interaction,
                       fcs,
-                      constraint,
                       system->get_supercell().number_of_atoms,
                       files,
                       verbosity,
+                      constraint,
                       fitting,
                       timer);
 

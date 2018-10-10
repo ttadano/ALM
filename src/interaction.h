@@ -206,7 +206,7 @@ namespace ALM_NS
                     const double * const * const *);
         int get_maxorder() const;
         int * get_nbody_include() const;
-        const std::string &get_ordername(const unsigned int order) const;
+        const std::string get_ordername(const unsigned int order) const;
         const std::set<IntList> &get_cluster_list(const unsigned int order) const;
         const std::vector<int> &get_interaction_pair(const unsigned int order,
                                                      const unsigned int atom_index) const;
