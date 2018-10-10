@@ -169,7 +169,7 @@ void InputSetter::set_general_vars(ALM *alm,
     }
 
     alm->files->print_hessian = print_hessian;
-    alm->constraint->tolerance_constraint = tolerance_constraint;
+    alm->constraint->set_tolerance_constraint(tolerance_constraint);
 
     if (mode == "suggest") {
         alm->displace->disp_basis = str_disp_basis;
@@ -210,12 +210,12 @@ void InputSetter::set_fitting_vars(ALM *alm,
 
     alm->files->file_disp = dfile;
     alm->files->file_force = ffile;
-    alm->constraint->constraint_mode = constraint_flag;
-    alm->constraint->rotation_axis = rotation_axis;
-    alm->constraint->fc2_file = fc2_file;
-    alm->constraint->fix_harmonic = fix_harmonic;
-    alm->constraint->fc3_file = fc3_file;
-    alm->constraint->fix_cubic = fix_cubic;
+    alm->constraint->set_constraint_mode(constraint_flag);
+    alm->constraint->set_rotation_axis(rotation_axis);
+    alm->constraint->set_fc_file(2, fc2_file);
+    alm->constraint->set_fix_harmonic(fix_harmonic);
+    alm->constraint->set_fc_file(3, fc3_file);
+    alm->constraint->set_fix_cubic(fix_cubic);
 }
 
 void InputSetter::set_lasso_vars(ALM *alm,

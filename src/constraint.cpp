@@ -671,6 +671,117 @@ void Constraint::get_mapping_constraint(const int nmax,
     deallocate(has_constraint);
 }
 
+int Constraint::get_constraint_mode() const
+{
+    return constraint_mode;
+}
+
+void Constraint::set_constraint_mode(const int constraint_mode_in)
+{
+    constraint_mode = constraint_mode_in;
+}
+
+int Constraint::get_number_of_constraints() const
+{
+    return number_of_constraints;
+}
+
+std::string Constraint::get_fc_file(const int order) const
+{
+    switch(order) {
+    case 2:
+        return fc2_file;
+    case 3:
+        return fc3_file;
+    default:
+        return "";
+    }
+}
+
+void Constraint::set_fc_file(const int order, const std::string fc_file)
+{
+    switch(order) {
+    case 2:
+        fc2_file = fc_file;
+        break;
+    case 3:
+        fc3_file = fc_file;
+        break;
+    default:
+        break;
+    }
+}
+
+bool Constraint::get_fix_harmonic() const
+{
+    return fix_harmonic;
+}
+
+void Constraint::set_fix_harmonic(const bool fix_harmonic_in)
+{
+    fix_harmonic = fix_harmonic_in;
+}
+
+bool Constraint::get_fix_cubic() const
+{
+    return fix_cubic;
+}
+
+void Constraint::set_fix_cubic(const bool fix_cubic_in)
+{
+    fix_cubic = fix_cubic_in;
+}
+
+int Constraint::get_constraint_algebraic() const
+{
+    return constraint_algebraic;
+}
+
+double ** Constraint::get_const_mat() const
+{
+    return const_mat;
+}
+
+double * Constraint::get_const_rhs() const
+{
+    return const_rhs;
+}
+
+double Constraint::get_tolerance_constraint() const
+{
+    return tolerance_constraint;
+}
+
+void Constraint::set_tolerance_constraint(const double tol)
+{
+    tolerance_constraint = tol;
+}
+
+bool Constraint::get_exist_constraint() const
+{
+    return exist_constraint;
+}
+
+bool Constraint::get_extra_constraint_from_symmetry() const
+{
+    return extra_constraint_from_symmetry;
+}
+
+std::string Constraint::get_rotation_axis() const
+{
+    return rotation_axis;
+}
+
+void Constraint::set_rotation_axis(const std::string rotation_axis_in)
+{
+    rotation_axis = rotation_axis_in;
+}
+
+const ConstraintSparseForm &Constraint::get_const_symmetry(const int order) const
+{
+    return const_symmetry[order];
+}
+
 void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
                                                            const Symmetry *symmetry,
                                                            const Interaction *interaction,

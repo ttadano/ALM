@@ -84,7 +84,7 @@ int Fitting::fitmain(const Symmetry *symmetry,
     timer->start_clock("fitting");
 
     const int natmin = symmetry->nat_prim;
-    const int nconsts = constraint->number_of_constraints;
+    const int nconsts = constraint->get_number_of_constraints();
     const int ndata_used = nend - nstart + 1;
     const int ntran = symmetry->ntran;
     int info_fitting;
@@ -116,7 +116,7 @@ int Fitting::fitmain(const Symmetry *symmetry,
     std::vector<double> bvec;
     std::vector<double> param_tmp(N);
 
-    if (constraint->constraint_algebraic) {
+    if (constraint->get_constraint_algebraic()) {
 
         // Apply constraints algebraically. (ICONST = 2, 3 is not supported.)
         // SPARSE = 1 is used only when the constraints are considered algebraically.
@@ -231,13 +231,13 @@ int Fitting::fitmain(const Symmetry *symmetry,
         assert(!amat.empty());
         assert(!bvec.empty());
 
-        if (constraint->exist_constraint) {
+        if (constraint->get_exist_constraint()) {
             info_fitting
                 = fit_with_constraints(N, M, nconsts,
                                        &amat[0], &bvec[0],
                                        &param_tmp[0],
-                                       constraint->const_mat,
-                                       constraint->const_rhs,
+                                       constraint->get_const_mat(),
+                                       constraint->get_const_rhs(),
                                        verbosity);
         } else {
             info_fitting

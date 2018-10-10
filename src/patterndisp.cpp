@@ -108,7 +108,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
                                      preferred_basis,
                                      fc_table[order],
                                      nequiv[order].size(),
-                                     constraint->tolerance_constraint,
+                                     constraint->get_tolerance_constraint(),
                                      constsym[order], do_rref);
 
     }

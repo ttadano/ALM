@@ -212,21 +212,6 @@ namespace ALM_NS
                    const int verbosity,
                    Timer *timer);
 
-        int constraint_mode;
-        int number_of_constraints;
-        std::string fc2_file, fc3_file;
-        bool fix_harmonic, fix_cubic;
-        int constraint_algebraic;
-
-        double **const_mat;
-        double *const_rhs;
-        double tolerance_constraint;
-
-        bool exist_constraint;
-        bool extra_constraint_from_symmetry;
-        std::string rotation_axis;
-
-        ConstraintSparseForm *const_symmetry;
         std::vector<ConstraintTypeFix> *const_fix;
         std::vector<ConstraintTypeRelate> *const_relate;
         std::vector<ConstraintTypeRelate> *const_relate_rotation;
@@ -239,7 +224,49 @@ namespace ALM_NS
                                     std::vector<ConstraintTypeRelate> *,
                                     boost::bimap<int, int> *) const;
 
+        int get_constraint_mode() const;
+        void set_constraint_mode(const int);
+        int get_number_of_constraints() const;
+        std::string get_fc_file(const int) const;
+        void set_fc_file(const int, const std::string);
+        bool get_fix_harmonic() const;
+        void set_fix_harmonic(const bool);
+        bool get_fix_cubic() const;
+        void set_fix_cubic(const bool);
+        int get_constraint_algebraic() const;
+
+        double ** get_const_mat() const;
+        double * get_const_rhs() const;
+
+        double get_tolerance_constraint() const;
+        void set_tolerance_constraint(const double);
+
+        bool get_exist_constraint() const;
+        bool get_extra_constraint_from_symmetry() const;
+
+        std::string get_rotation_axis() const;
+        void set_rotation_axis(const std::string);
+
+        const ConstraintSparseForm &get_const_symmetry(const int order) const;
+
     private:
+
+        int constraint_mode;
+        int number_of_constraints;
+        std::string fc2_file, fc3_file;
+        bool fix_harmonic, fix_cubic;
+        int constraint_algebraic;
+
+        double **const_mat;
+        double *const_rhs;
+
+        double tolerance_constraint;
+
+        bool exist_constraint;
+        bool extra_constraint_from_symmetry;
+
+        std::string rotation_axis;
+        ConstraintSparseForm *const_symmetry;
 
         bool impose_inv_T, impose_inv_R, exclude_last_R;
 

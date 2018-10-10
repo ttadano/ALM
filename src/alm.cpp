@@ -203,12 +203,12 @@ void ALM::set_displacement_and_force(const double *u_in,
 
 void ALM::set_constraint_type(const int constraint_flag) const // ICONST
 {
-    constraint->constraint_mode = constraint_flag;
+    constraint->set_constraint_mode(constraint_flag);
 }
 
 void ALM::set_rotation_axis(const std::string rotation_axis) const // ROTAXIS
 {
-    constraint->rotation_axis = rotation_axis;
+    constraint->set_rotation_axis(rotation_axis);
 }
 
 void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE

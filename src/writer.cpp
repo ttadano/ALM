@@ -83,10 +83,10 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  FFILE = " << alm->files->file_force << std::endl;
         std::cout << "  NDATA = " << alm->fitting->ndata << "; NSTART = " << alm->fitting->nstart
             << "; NEND = " << alm->fitting->nend << std::endl;
-        std::cout << "  ICONST = " << alm->constraint->constraint_mode << std::endl;
-        std::cout << "  ROTAXIS = " << alm->constraint->rotation_axis << std::endl;
-        std::cout << "  FC2XML = " << alm->constraint->fc2_file << std::endl;
-        std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
+        std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
+        std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
+        std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
+        std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << std::endl;
         std::cout << "  SPARSE = " << alm->fitting->use_sparseQR << std::endl;
         std::cout << std::endl;
     } else if (alm->get_run_mode() == "lasso") {
@@ -96,10 +96,10 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  NDATA = " << alm->fitting->ndata << "; NSTART = " << alm->fitting->nstart
             << "; NEND = " << alm->fitting->nend << std::endl;
         std::cout << "  SKIP = " << alm->fitting->skip_s + 1 << "-" << alm->fitting->skip_e << std::endl;
-        std::cout << "  ICONST = " << alm->constraint->constraint_mode << std::endl;
-        std::cout << "  ROTAXIS = " << alm->constraint->rotation_axis << std::endl;
-        std::cout << "  FC2XML = " << alm->constraint->fc2_file << std::endl;
-        std::cout << "  FC3XML = " << alm->constraint->fc3_file << std::endl;
+        std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
+        std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
+        std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
+        std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << std::endl;
         std::cout << std::endl;
         std::cout << " Lasso:" << std::endl;
         std::cout << "  LASSO_ALPHA = " << alm->lasso->l1_alpha << std::endl;
@@ -240,15 +240,15 @@ void Writer::write_force_constants(ALM *alm) const
 
     ofs_fcs << std::endl;
 
-    /*  if (alm->constraint->extra_constraint_from_symmetry) {
+    /*  if (alm->constraint->get_extra_constraint_from_symmetry()) {
 
           ofs_fcs << " -------------- Constraints from crystal symmetry --------------" << std::endl << std::endl;
           for (order = 0; order < maxorder; ++order) {
               int nparam = alm->fcs->get_nequiv()[order].size();
 
 
-              for (auto p = alm->constraint->const_symmetry[order].begin();
-                   p != alm->constraint->const_symmetry[order].end();
+              for (auto p = alm->constraint->get_const_symmetry(order).begin();
+                   p != alm->constraint->get_const_symmetry(order).end();
                    ++p) {
                   ofs_fcs << "   0 = " << std::scientific << std::setprecision(6);
                   auto const_pointer = *p;
@@ -414,7 +414,7 @@ void Writer::write_misc_xml(ALM *alm)
     pt.put("Data.ALM_version", ALAMODE_VERSION);
     pt.put("Data.Fitting.DisplaceFile", alm->files->file_disp);
     pt.put("Data.Fitting.ForceFile", alm->files->file_force);
-    pt.put("Data.Fitting.Constraint", alm->constraint->constraint_mode);
+    pt.put("Data.Fitting.Constraint", alm->constraint->get_constraint_mode());
 
     pt.put("Data.Structure.NumberOfAtoms", system_structure.nat);
     pt.put("Data.Structure.NumberOfElements", system_structure.nspecies);
