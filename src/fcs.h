@@ -86,7 +86,6 @@ namespace ALM_NS
                   const int verbosity,
                   Timer *timer);
 
-        std::vector<int> *nequiv; // stores duplicate number of irreducible force constants
         std::vector<FcProperty> *fc_table; // all force constants
         std::vector<FcProperty> *fc_zeros; // zero force constants (due to space group symm.)
 
@@ -128,7 +127,12 @@ namespace ALM_NS
                                      ConstraintSparseForm &,
                                      const bool do_rref = false) const;
 
+        std::vector<int> * get_nequiv() const;
+
+
     private:
+        std::vector<int> *nequiv; // stores duplicate number of irreducible force constants
+
         bool store_zeros;
         void set_default_variables();
         void deallocate_variables();

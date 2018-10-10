@@ -350,12 +350,12 @@ int ALM::get_number_of_fc_elements(const int fc_order) const
 {
     const auto order = fc_order - 1;
 
-    if (fcs->nequiv[order].empty()) { return 0; }
+    if (fcs->get_nequiv()[order].empty()) { return 0; }
     auto id = 0;
-    const int num_unique_elems = fcs->nequiv[order].size();
+    const int num_unique_elems = fcs->get_nequiv()[order].size();
 
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
-        const auto num_equiv_elems = fcs->nequiv[order][iuniq];
+        const auto num_equiv_elems = fcs->get_nequiv()[order][iuniq];
         id += num_equiv_elems;
     }
     return id;
@@ -404,7 +404,7 @@ void ALM::get_fc_origin(double *fc_values,
 
     for (int order = 0; order < fc_order; ++order) {
 
-        if (fcs->nequiv[order].empty()) { continue; }
+        if (fcs->get_nequiv()[order].empty()) { continue; }
 
         auto id = 0;
 
@@ -419,7 +419,7 @@ void ALM::get_fc_origin(double *fc_values,
                 ++id;
             }
         }
-        ishift += fcs->nequiv[order].size();
+        ishift += fcs->get_nequiv()[order].size();
     }
 }
 
@@ -471,7 +471,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                 }
             }
         }
-        ishift += fcs->nequiv[order].size();
+        ishift += fcs->get_nequiv()[order].size();
     }
 }
 
@@ -500,7 +500,7 @@ void ALM::get_fc_all(double *fc_values,
 
     for (int order = 0; order < fc_order; ++order) {
 
-        if (fcs->nequiv[order].empty()) { continue; }
+        if (fcs->get_nequiv()[order].empty()) { continue; }
 
         auto id = 0;
 
@@ -529,7 +529,7 @@ void ALM::get_fc_all(double *fc_values,
             }
         }
 
-        ishift += fcs->nequiv[order].size();
+        ishift += fcs->get_nequiv()[order].size();
     }
 }
 
@@ -537,7 +537,7 @@ void ALM::set_fc(double *fc_in) const
 {
     fitting->set_fcs_values(interaction->get_maxorder(),
                             fc_in,
-                            fcs->nequiv,
+                            fcs->get_nequiv(),
                             constraint);
 }
 

@@ -91,7 +91,7 @@ int Fitting::fitmain(const Symmetry *symmetry,
 
     int N = 0;
     for (auto i = 0; i < maxorder; ++i) {
-        N += fcs->nequiv[i].size();
+        N += fcs->get_nequiv()[i].size();
     }
     int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
 
@@ -589,7 +589,7 @@ int Fitting::fit_algebraic_constraints(int N,
     recover_original_forceconstants(maxorder,
                                     param_irred,
                                     param_out,
-                                    fcs->nequiv,
+                                    fcs->get_nequiv(),
                                     constraint);
 
     return INFO;
@@ -616,7 +616,7 @@ void Fitting::get_matrix_elements(const int maxorder,
     const int nrows = natmin3 * ndata_fit * symmetry->ntran;
     auto ncols = 0;
 
-    for (i = 0; i < maxorder; ++i) ncols += fcs->nequiv[i].size();
+    for (i = 0; i < maxorder; ++i) ncols += fcs->get_nequiv()[i].size();
 
     const long ncycle = static_cast<long>(ndata_fit) * symmetry->ntran;
 
@@ -663,7 +663,7 @@ void Fitting::get_matrix_elements(const int maxorder,
 
                 mm = 0;
 
-                for (const auto &iter : fcs->nequiv[order]) {
+                for (const auto &iter : fcs->get_nequiv()[order]) {
                     for (i = 0; i < iter; ++i) {
                         ind[0] = fcs->fc_table[order][mm].elems[0];
                         k = inprim_index(ind[0], symmetry);
@@ -720,7 +720,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
     auto ncols_new = 0;
 
     for (i = 0; i < maxorder; ++i) {
-        ncols += fcs->nequiv[i].size();
+        ncols += fcs->get_nequiv()[i].size();
         ncols_new += constraint->index_bimap[i].size();
     }
 
@@ -780,7 +780,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
                 mm = 0;
 
-                for (const auto &iter : fcs->nequiv[order]) {
+                for (const auto &iter : fcs->get_nequiv()[order]) {
                     for (i = 0; i < iter; ++i) {
                         ind[0] = fcs->fc_table[order][mm].elems[0];
                         k = inprim_index(ind[0], symmetry);
@@ -842,7 +842,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                     }
                 }
 
-                ishift += fcs->nequiv[order].size();
+                ishift += fcs->get_nequiv()[order].size();
                 iparam += constraint->index_bimap[order].size();
             }
 
@@ -892,7 +892,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
     auto ncols_new = 0;
 
     for (i = 0; i < maxorder; ++i) {
-        ncols += fcs->nequiv[i].size();
+        ncols += fcs->get_nequiv()[i].size();
         ncols_new += constraint->index_bimap[i].size();
     }
 
@@ -954,7 +954,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 
                 mm = 0;
 
-                for (const auto &iter : fcs->nequiv[order]) {
+                for (const auto &iter : fcs->get_nequiv()[order]) {
                     for (i = 0; i < iter; ++i) {
                         ind[0] = fcs->fc_table[order][mm].elems[0];
                         k = inprim_index(ind[0], symmetry);
@@ -1014,7 +1014,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
                     }
                 }
 
-                ishift += fcs->nequiv[order].size();
+                ishift += fcs->get_nequiv()[order].size();
                 iparam += constraint->index_bimap[order].size();
             }
 
@@ -1341,7 +1341,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
         recover_original_forceconstants(maxorder,
                                         param_irred,
                                         param_out,
-                                        fcs->nequiv,
+                                        fcs->get_nequiv(),
                                         constraint);
 
         if (verbosity > 0) {

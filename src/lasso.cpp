@@ -96,7 +96,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
     int N = 0;
     int N_new = 0;
     for (i = 0; i < maxorder; ++i) {
-        N += fcs->nequiv[i].size();
+        N += fcs->get_nequiv()[i].size();
         N_new += constraint->index_bimap[i].size();
     }
 
@@ -681,7 +681,7 @@ void Lasso::lasso_main(const Symmetry *symmetry,
 
     fitting->set_fcs_values(maxorder,
                             &param[0],
-                            fcs->nequiv,
+                            fcs->get_nequiv(),
                             constraint);
 
     if (amat) {
@@ -1858,7 +1858,7 @@ void Lasso::get_prefactor_force(const int maxorder,
             iold2 = it.right;
             iold2_dup = 0;
             for (j = 0; j < iold2; ++j) {
-                iold2_dup += fcs->nequiv[i][j];
+                iold2_dup += fcs->get_nequiv()[i][j];
             }
 
             for (j = 0; j < i + 2; ++j) {
@@ -1867,7 +1867,7 @@ void Lasso::get_prefactor_force(const int maxorder,
             prefactor[inew2] = fitting->gamma(i + 2, ind);
         }
 
-        ishift2 += fcs->nequiv[i].size();
+        ishift2 += fcs->get_nequiv()[i].size();
         iparam2 += constraint->index_bimap[i].size();
     }
     deallocate(ind);

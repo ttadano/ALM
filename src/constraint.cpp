@@ -279,7 +279,7 @@ void Constraint::setup(const System *system,
 
     for (int order = 0; order < maxorder; ++order) {
 
-        int nparam = fcs->nequiv[order].size();
+        int nparam = fcs->get_nequiv()[order].size();
 
         const_self[order].reserve(
             const_translation[order].size()
@@ -310,7 +310,7 @@ void Constraint::setup(const System *system,
     // }
 
     get_mapping_constraint(maxorder,
-                           fcs->nequiv,
+                           fcs->get_nequiv(),
                            const_self,
                            const_fix,
                            const_relate,
@@ -326,14 +326,14 @@ void Constraint::setup(const System *system,
         }
         if (fix_harmonic) {
             Pmax -= const_self[0].size();
-            Pmax += fcs->nequiv[0].size();
+            Pmax += fcs->get_nequiv()[0].size();
         }
         if (fix_cubic) {
             Pmax -= const_self[1].size();
-            Pmax += fcs->nequiv[1].size();
+            Pmax += fcs->get_nequiv()[1].size();
         }
         for (int order = 0; order < maxorder; ++order) {
-            nparams += fcs->nequiv[order].size();
+            nparams += fcs->get_nequiv()[order].size();
         }
 
         if (const_mat) {
@@ -347,7 +347,7 @@ void Constraint::setup(const System *system,
         allocate(const_rhs, Pmax);
 
         calc_constraint_matrix(maxorder,
-                               fcs->nequiv,
+                               fcs->get_nequiv(),
                                nparams,
                                number_of_constraints);
     }
@@ -709,7 +709,7 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
                                      interaction->get_cluster_list(order),
                                      "Cartesian",
                                      fcs->fc_table[order],
-                                     fcs->nequiv[order].size(),
+                                     fcs->get_nequiv()[order].size(),
                                      tolerance_constraint,
                                      const_out[order], true);
 
@@ -742,7 +742,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
         if (verbosity > 0)
             std::cout << "   " << std::setw(8) << interaction->get_ordername(order) << " ...";
 
-        int nparams = fcs->nequiv[order].size();
+        int nparams = fcs->get_nequiv()[order].size();
 
         if (nparams == 0) {
             if (verbosity > 0) std::cout << "  No parameters! Skipped." << std::endl;
@@ -755,7 +755,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
                                    fcs,
                                    order,
                                    fcs->fc_table[order],
-                                   fcs->nequiv[order].size(),
+                                   fcs->get_nequiv()[order].size(),
                                    const_out[order], true);
 
         if (verbosity > 0) std::cout << " done." << std::endl;
@@ -1120,7 +1120,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
     for (order = 0; order < maxorder; ++order) {
 
-        nparams[order] = fcs->nequiv[order].size();
+        nparams[order] = fcs->get_nequiv()[order].size();
 
         if (order == 0) {
             if (verbosity > 0) {
@@ -1747,7 +1747,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
              "The number of atoms in the primitive cell is not consistent.");
     }
 
-    int nfcs = fcs->nequiv[order].size();
+    int nfcs = fcs->get_nequiv()[order].size();
 
     if (order == 0) {
         int nfcs_ref = boost::lexical_cast<int>(

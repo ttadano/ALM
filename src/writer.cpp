@@ -191,11 +191,11 @@ void Writer::write_force_constants(ALM *alm) const
 
         m = 0;
 
-        if (!alm->fcs->nequiv[order].empty()) {
+        if (!alm->fcs->get_nequiv()[order].empty()) {
 
             ofs_fcs << std::endl << std::setw(6) << str_fcs[order] << std::endl;
 
-            for (ui = 0; ui < alm->fcs->nequiv[order].size(); ++ui) {
+            for (ui = 0; ui < alm->fcs->get_nequiv()[order].size(); ++ui) {
 
                 ofs_fcs << std::setw(8) << k + 1 << std::setw(8) << ui + 1
                     << std::setw(18) << std::setprecision(7)
@@ -232,7 +232,7 @@ void Writer::write_force_constants(ALM *alm) const
                 ofs_fcs << std::setw(12) << std::setprecision(3)
                     << std::fixed << distmax << std::endl;
 
-                m += alm->fcs->nequiv[order][ui];
+                m += alm->fcs->get_nequiv()[order][ui];
                 ++k;
             }
         }
@@ -244,7 +244,7 @@ void Writer::write_force_constants(ALM *alm) const
 
           ofs_fcs << " -------------- Constraints from crystal symmetry --------------" << std::endl << std::endl;
           for (order = 0; order < maxorder; ++order) {
-              int nparam = alm->fcs->nequiv[order].size();
+              int nparam = alm->fcs->get_nequiv()[order].size();
 
 
               for (auto p = alm->constraint->const_symmetry[order].begin();
@@ -284,19 +284,19 @@ void Writer::write_force_constants(ALM *alm) const
 
         id = 0;
 
-        if (!alm->fcs->nequiv[order].empty()) {
+        if (!alm->fcs->get_nequiv()[order].empty()) {
             ofs_fcs << std::endl << std::setw(6) << str_fcs[order] << std::endl;
 
-            for (unsigned int iuniq = 0; iuniq < alm->fcs->nequiv[order].size(); ++iuniq) {
+            for (unsigned int iuniq = 0; iuniq < alm->fcs->get_nequiv()[order].size(); ++iuniq) {
 
                 str_tmp = "  # FC" + std::to_string(order + 2) + "_";
                 str_tmp += std::to_string(iuniq + 1);
 
-                ofs_fcs << str_tmp << std::setw(5) << alm->fcs->nequiv[order][iuniq]
+                ofs_fcs << str_tmp << std::setw(5) << alm->fcs->get_nequiv()[order][iuniq]
                     << std::setw(16) << std::scientific
                     << std::setprecision(7) << alm->fitting->params[ip] << std::endl;
 
-                for (j = 0; j < alm->fcs->nequiv[order][iuniq]; ++j) {
+                for (j = 0; j < alm->fcs->get_nequiv()[order][iuniq]; ++j) {
                     ofs_fcs << std::setw(5) << j + 1 << std::setw(12)
                         << std::setprecision(5) << std::fixed << alm->fcs->fc_table[order][id].sign;
                     for (k = 0; k < order + 2; ++k) {
@@ -478,7 +478,7 @@ void Writer::write_misc_xml(ALM *alm)
     pt.put("Data.ForceConstants", "");
     str_tmp.clear();
 
-    pt.put("Data.ForceConstants.HarmonicUnique.NFC2", alm->fcs->nequiv[0].size());
+    pt.put("Data.ForceConstants.HarmonicUnique.NFC2", alm->fcs->get_nequiv()[0].size());
 
     int ihead = 0;
     int k = 0;
@@ -492,7 +492,7 @@ void Writer::write_misc_xml(ALM *alm)
 
     allocate(pair_tmp, nelem);
 
-    for (unsigned int ui = 0; ui < alm->fcs->nequiv[0].size(); ++ui) {
+    for (unsigned int ui = 0; ui < alm->fcs->get_nequiv()[0].size(); ++ui) {
 
         for (i = 0; i < 2; ++i) {
             pair_tmp[i] = alm->fcs->fc_table[0][ihead].elems[i] / 3;
@@ -517,7 +517,7 @@ void Writer::write_misc_xml(ALM *alm)
                   std::to_string(alm->fcs->fc_table[0][ihead].elems[0])
                   + " " + std::to_string(alm->fcs->fc_table[0][ihead].elems[1]));
         child.put("<xmlattr>.multiplicity", multiplicity);
-        ihead += alm->fcs->nequiv[0][ui];
+        ihead += alm->fcs->get_nequiv()[0][ui];
         ++k;
     }
     ihead = 0;
@@ -525,9 +525,9 @@ void Writer::write_misc_xml(ALM *alm)
 
     if (alm->interaction->get_maxorder() > 1) {
 
-        pt.put("Data.ForceConstants.CubicUnique.NFC3", alm->fcs->nequiv[1].size());
+        pt.put("Data.ForceConstants.CubicUnique.NFC3", alm->fcs->get_nequiv()[1].size());
 
-        for (unsigned int ui = 0; ui < alm->fcs->nequiv[1].size(); ++ui) {
+        for (unsigned int ui = 0; ui < alm->fcs->get_nequiv()[1].size(); ++ui) {
             for (i = 0; i < 3; ++i) {
                 pair_tmp[i] = alm->fcs->fc_table[1][ihead].elems[i] / 3;
             }
@@ -555,7 +555,7 @@ void Writer::write_misc_xml(ALM *alm)
                       + " " + std::to_string(alm->fcs->fc_table[1][ihead].elems[1])
                       + " " + std::to_string(alm->fcs->fc_table[1][ihead].elems[2]));
             child.put("<xmlattr>.multiplicity", multiplicity);
-            ihead += alm->fcs->nequiv[1][ui];
+            ihead += alm->fcs->get_nequiv()[1][ui];
             ++k;
         }
     }
@@ -607,7 +607,7 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    int ishift = alm->fcs->nequiv[0].size();
+    int ishift = alm->fcs->get_nequiv()[0].size();
 
     // Print anharmonic force constants to the xml file.
 
@@ -664,7 +664,7 @@ void Writer::write_misc_xml(ALM *alm)
                 exit("write_misc_xml", "This cannot happen.");
             }
         }
-        ishift += alm->fcs->nequiv[order].size();
+        ishift += alm->fcs->get_nequiv()[order].size();
     }
 
     using namespace boost::property_tree::xml_parser;
@@ -854,7 +854,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
         }
     }
 
-    int ishift = alm->fcs->nequiv[0].size();
+    int ishift = alm->fcs->get_nequiv()[0].size();
 
     for (auto it = alm->fcs->fc_table[1].begin(); it != alm->fcs->fc_table[1].end(); ++it) {
         FcProperty fctmp = *it;
