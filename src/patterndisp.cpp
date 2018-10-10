@@ -70,8 +70,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     // Decide preferred basis (Cartesian or Lattice)
     int ncompat_cart = 0;
     int ncompat_latt = 0;
-    for (auto it = symmetry->SymmData.begin();
-         it != symmetry->SymmData.end(); ++it) {
+    for (auto it = symmetry->get_SymmData().begin();
+         it != symmetry->get_SymmData().end(); ++it) {
         if ((*it).compatible_with_cartesian) ++ncompat_cart;
         if ((*it).compatible_with_lattice) ++ncompat_latt;
     }
@@ -398,7 +398,7 @@ void Displace::find_unique_sign_pairs(const int N,
     // Find symmetry operations which can be used to
     // reduce the number of sign patterns (+, -) of displacements
 
-    for (isym = 0; isym < symmetry->nsym; ++isym) {
+    for (isym = 0; isym < symmetry->get_nsym(); ++isym) {
 
         flag_avail = true;
         pair_tmp.clear();
@@ -406,7 +406,7 @@ void Displace::find_unique_sign_pairs(const int N,
         for (i = 0; i < N; ++i) {
             if (!flag_avail) break;
 
-            mapped_atom = symmetry->map_sym[pair_in[i] / 3][isym];
+            mapped_atom = symmetry->get_map_sym()[pair_in[i] / 3][isym];
             mapped_index = 3 * mapped_atom + pair_in[i] % 3;
 
             loc = std::find(pair_in.begin(), pair_in.end(), mapped_index);
@@ -428,7 +428,7 @@ void Displace::find_unique_sign_pairs(const int N,
             pair_tmp.clear();
 
             for (i = 0; i < list_disp_atom.size(); ++i) {
-                mapped_atom = symmetry->map_sym[list_disp_atom[i]][isym];
+                mapped_atom = symmetry->get_map_sym()[list_disp_atom[i]][isym];
 
                 for (j = 0; j < 3; ++j) {
                     disp_sym[mapped_atom][j] = 0.0;
@@ -436,12 +436,12 @@ void Displace::find_unique_sign_pairs(const int N,
                     if (preferred_basis == "Cartesian") {
                         for (k = 0; k < 3; ++k) {
                             disp_sym[mapped_atom][j]
-                                += symmetry->SymmData[isym].rotation_cart[j][k] * disp[list_disp_atom[i]][k];
+                                += symmetry->get_SymmData()[isym].rotation_cart[j][k] * disp[list_disp_atom[i]][k];
                         }
                     } else if (preferred_basis == "Lattice") {
                         for (k = 0; k < 3; ++k) {
                             disp_sym[mapped_atom][j]
-                                += static_cast<double>(symmetry->SymmData[isym].rotation[j][k])
+                                += static_cast<double>(symmetry->get_SymmData()[isym].rotation[j][k])
                                 * disp[list_disp_atom[i]][k];
                         }
                     } else {
@@ -492,20 +492,20 @@ void Displace::find_unique_sign_pairs(const int N,
             index_for_sort.clear();
 
             for (i = 0; i < list_disp_atom.size(); ++i) {
-                mapped_atom = symmetry->map_sym[list_disp_atom[i]][symnum_vec[isym]];
+                mapped_atom = symmetry->get_map_sym()[list_disp_atom[i]][symnum_vec[isym]];
 
                 for (j = 0; j < 3; ++j) {
                     disp_sym[mapped_atom][j] = 0.0;
                     if (preferred_basis == "Cartesian") {
                         for (k = 0; k < 3; ++k) {
                             disp_sym[mapped_atom][j]
-                                += symmetry->SymmData[symnum_vec[isym]].rotation_cart[j][k]
+                                += symmetry->get_SymmData()[symnum_vec[isym]].rotation_cart[j][k]
                                 * disp[list_disp_atom[i]][k];
                         }
                     } else if (preferred_basis == "Lattice") {
                         for (k = 0; k < 3; ++k) {
                             disp_sym[mapped_atom][j]
-                                += static_cast<double>(symmetry->SymmData[symnum_vec[isym]].rotation[j][k])
+                                += static_cast<double>(symmetry->get_SymmData()[symnum_vec[isym]].rotation[j][k])
                                 * disp[list_disp_atom[i]][k];
                         }
                     } else {

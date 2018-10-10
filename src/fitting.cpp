@@ -83,10 +83,10 @@ int Fitting::fitmain(const Symmetry *symmetry,
 {
     timer->start_clock("fitting");
 
-    const int natmin = symmetry->nat_prim;
+    const int natmin = symmetry->get_nat_prim();
     const int nconsts = constraint->get_number_of_constraints();
     const int ndata_used = nend - nstart + 1;
-    const int ntran = symmetry->ntran;
+    const int ntran = symmetry->get_ntran();
     int info_fitting;
 
     int N = 0;
@@ -339,7 +339,7 @@ int Fitting::fit_without_constraints(int N,
                                      double *param_out,
                                      const int verbosity) const
 {
-    int i, j;
+    int i;
     int nrhs = 1, nrank, INFO;
     auto rcond = -1.0;
     auto f_square = 0.0;
@@ -359,8 +359,6 @@ int Fitting::fit_without_constraints(int N,
     allocate(WORK, LWORK);
     allocate(S, LMIN);
     allocate(fsum2, LMAX);
-
-    unsigned long k = 0;
 
     for (i = 0; i < M; ++i) {
         fsum2[i] = bvec[i];
@@ -524,8 +522,7 @@ int Fitting::fit_algebraic_constraints(int N,
                                        const Constraint *constraint,
                                        const int verbosity) const
 {
-    int i, j;
-    unsigned long k;
+    int i;
     int nrhs = 1, nrank, INFO, LWORK;
     int LMIN, LMAX;
     double rcond = -1.0;
@@ -611,14 +608,13 @@ void Fitting::get_matrix_elements(const int maxorder,
     data_multiplier(u_in, u_multi, ndata_fit, symmetry);
     data_multiplier(f_in, f_multi, ndata_fit, symmetry);
 
-    const int natmin = symmetry->nat_prim;
+    const int natmin = symmetry->get_nat_prim();
     const int natmin3 = 3 * natmin;
-    const int nrows = natmin3 * ndata_fit * symmetry->ntran;
     auto ncols = 0;
 
     for (i = 0; i < maxorder; ++i) ncols += fcs->get_nequiv()[i].size();
 
-    const long ncycle = static_cast<long>(ndata_fit) * symmetry->ntran;
+    const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -641,7 +637,7 @@ void Fitting::get_matrix_elements(const int maxorder,
 
             // generate r.h.s vector B
             for (i = 0; i < natmin; ++i) {
-                iat = symmetry->map_p2s[i][0];
+                iat = symmetry->get_map_p2s()[i][0];
                 for (j = 0; j < 3; ++j) {
                     im = 3 * i + j + natmin3 * irow;
                     bvec[im] = f_multi[irow][3 * iat + j];
@@ -713,9 +709,9 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
     data_multiplier(u_in, u_multi, ndata_fit, symmetry);
     data_multiplier(f_in, f_multi, ndata_fit, symmetry);
 
-    const int natmin = symmetry->nat_prim;
+    const int natmin = symmetry->get_nat_prim();
     const int natmin3 = 3 * natmin;
-    const int nrows = natmin3 * ndata_fit * symmetry->ntran;
+    const int nrows = natmin3 * ndata_fit * symmetry->get_ntran();
     auto ncols = 0;
     auto ncols_new = 0;
 
@@ -724,7 +720,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
         ncols_new += constraint->index_bimap[i].size();
     }
 
-    const long ncycle = static_cast<long>(ndata_fit) * symmetry->ntran;
+    const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
 
     std::vector<double> bvec_orig(nrows, 0.0);
 
@@ -754,7 +750,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
             // generate r.h.s vector B
             for (i = 0; i < natmin; ++i) {
-                iat = symmetry->map_p2s[i][0];
+                iat = symmetry->get_map_p2s()[i][0];
                 for (j = 0; j < 3; ++j) {
                     im = 3 * i + j + natmin3 * irow;
                     bvec[im] = f_multi[irow][3 * iat + j];
@@ -885,9 +881,9 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
     data_multiplier(u_in, u_multi, ndata_fit, symmetry);
     data_multiplier(f_in, f_multi, ndata_fit, symmetry);
 
-    const int natmin = symmetry->nat_prim;
+    const int natmin = symmetry->get_nat_prim();
     const int natmin3 = 3 * natmin;
-    const int nrows = natmin3 * ndata_fit * symmetry->ntran;
+    const int nrows = natmin3 * ndata_fit * symmetry->get_ntran();
     auto ncols = 0;
     auto ncols_new = 0;
 
@@ -896,7 +892,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
         ncols_new += constraint->index_bimap[i].size();
     }
 
-    const long ncycle = static_cast<long>(ndata_fit) * symmetry->ntran;
+    const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
 
     std::vector<double> bvec_orig(nrows, 0.0);
 
@@ -928,7 +924,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 
             // generate r.h.s vector B
             for (i = 0; i < natmin; ++i) {
-                iat = symmetry->map_p2s[i][0];
+                iat = symmetry->get_map_p2s()[i][0];
                 for (j = 0; j < 3; ++j) {
                     im = 3 * i + j + natmin3 * irow;
                     sp_bvec(im) = f_multi[irow][3 * iat + j];
@@ -1108,15 +1104,15 @@ void Fitting::data_multiplier(double **data_in,
     int i, j, k;
     int n_mapped;
 
-    const int nat = symmetry->nat_prim * symmetry->ntran;
+    const int nat = symmetry->get_nat_prim() * symmetry->get_ntran();
 
     auto idata = 0;
     for (i = 0; i < ndata_used; ++i) {
         std::vector<double> data_tmp(3 * nat, 0.0);
 
-        for (int itran = 0; itran < symmetry->ntran; ++itran) {
+        for (int itran = 0; itran < symmetry->get_ntran(); ++itran) {
             for (j = 0; j < nat; ++j) {
-                n_mapped = symmetry->map_sym[j][symmetry->symnum_tran[itran]];
+                n_mapped = symmetry->get_map_sym()[j][symmetry->get_symnum_tran()[itran]];
                 for (k = 0; k < 3; ++k) {
                     data_tmp[3 * n_mapped + k] = data_in[i][3 * j + k];
                 }
@@ -1134,8 +1130,8 @@ int Fitting::inprim_index(const int n,
     const auto atmn = n / 3;
     const auto crdn = n % 3;
 
-    for (int i = 0; i < symmetry->nat_prim; ++i) {
-        if (symmetry->map_p2s[i][0] == atmn) {
+    for (int i = 0; i < symmetry->get_nat_prim(); ++i) {
+        if (symmetry->get_map_p2s()[i][0] == atmn) {
             in = 3 * i + crdn;
             break;
         }

@@ -94,6 +94,13 @@ namespace ALM_NS
         }
     };
 
+    class Maps
+    {
+    public:
+        int atom_num;
+        int tran_num;
+    };
+
     class Symmetry
     {
     public:
@@ -104,62 +111,51 @@ namespace ALM_NS
                   const int verbosity,
                   Timer *timer);
 
+        double get_tolerance() const;
+        void set_tolerance(const double);
+        int get_print_symmetry() const;
+        void set_print_symmetry(const int);
+        const std::vector<Maps> &get_map_s2p() const;
+        const std::vector<std::vector<int>> &get_map_p2s() const;
+        const std::vector<SymmetryOperation> &get_SymmData() const;
+        const std::vector<std::vector<int>> &get_map_sym() const;
+        const std::vector<int> &get_symnum_tran() const;
+        unsigned int get_nsym() const;
+        unsigned int get_ntran() const;
+        unsigned int get_nat_prim() const;
+
+    private:
         unsigned int nsym, ntran, nat_prim;
-        std::vector<int> symnum_tran;
+        std::vector<std::vector<int>> map_sym; // [nat, nsym]
+        std::vector<std::vector<int>> map_p2s;  // [nat_prim, ntran]
+        std::vector<Maps> map_s2p;  // [nat]
+        std::vector<SymmetryOperation> SymmData;  // [nsym]
+        std::vector<int> symnum_tran;  // [ntran]
 
         double tolerance;
         bool use_internal_symm_finder;
         int printsymmetry;
 
-        int **map_sym;
-        int **map_p2s;
-
-        class Maps
-        {
-        public:
-            int atom_num;
-            int tran_num;
-        };
-
-        std::vector<Maps> map_s2p;
-        std::vector<SymmetryOperation> SymmData;
-
-    private:
         void set_default_variables();
         void deallocate_variables();
         void setup_symmetry_operation(const Cell &,
                                       const int [3],
                                       const std::vector<std::vector<unsigned int>> &,
                                       const Spin &,
-                                      const int,
-                                      std::vector<SymmetryOperation> &,
-                                      unsigned int &,
-                                      unsigned int &,
-                                      unsigned int &,
-                                      std::vector<int> &);
+                                      const int);
 
         void gen_mapping_information(const Cell &,
-                                     const std::vector<std::vector<unsigned int>> &,
-                                     const std::vector<SymmetryOperation> &,
-                                     const std::vector<int> &,
-                                     int **,
-                                     int **,
-                                     std::vector<Maps> &) const;
+                                     const std::vector<std::vector<unsigned int>> &);
 
         void findsym_alm(const Cell &,
                          const int [3],
                          const std::vector<std::vector<unsigned int>> &,
-                         const Spin &,
-                         std::vector<SymmetryOperation> &);
+                         const Spin &);
 
-
-        void findsym_spglib(const Cell &,
-                            const std::vector<std::vector<unsigned int>> &,
-                            const Spin &,
-                            double,
-                            std::vector<SymmetryOperation> &,
-                            int &,
-                            std::string &);
+        int findsym_spglib(const Cell &,
+                           const std::vector<std::vector<unsigned int>> &,
+                           const Spin &,
+                           std::string &);
 
         bool is_translation(const int [3][3]) const;
         bool is_proper(const double [3][3]) const;
@@ -182,8 +178,7 @@ namespace ALM_NS
                                    const std::vector<std::vector<unsigned int>> &,
                                    const int [3],
                                    const Spin &,
-                                   const std::vector<RotationMatrix> &,
-                                   std::vector<SymmetryOperation> &);
+                                   const std::vector<RotationMatrix> &);
 
         void set_primitive_lattice(const double [3][3],
                                    int,

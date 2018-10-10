@@ -87,7 +87,6 @@ namespace ALM_NS
                   Timer *timer);
 
         void get_xyzcomponent(int, int **) const;
-
         void generate_force_constant_table(const int,
                                            const unsigned int nat,
                                            const std::set<IntList> &,
@@ -122,8 +121,12 @@ namespace ALM_NS
         void deallocate_variables();
         bool is_ascending(int, const int *) const;
         bool is_inprim(const int,
+                       const int *,
                        const int,
-                       int **) const;
+                       const std::vector<std::vector<int>> &) const;
+        bool is_inprim(const int,
+                       const int,
+                       const std::vector<std::vector<int>> &) const;
         bool is_allzero(const std::vector<double> &,
                         double,
                         int &) const;
@@ -134,15 +137,11 @@ namespace ALM_NS
                                   int **,
                                   double ***,
                                   const bool) const;
-        bool is_inprim(const int,
-                       const int *,
-                       const int,
-                       const int * const *) const;
         int get_minimum_index_in_primitive(const int,
                                            const int *,
                                            const int,
                                            const int,
-                                           const int * const *) const;
+                                           const std::vector<std::vector<int>> &map_p2s) const;
         double coef_sym(const int,
                         const double * const *,
                         const int *,

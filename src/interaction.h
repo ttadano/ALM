@@ -200,19 +200,6 @@ namespace ALM_NS
                          const int,
                          const std::vector<int> &) const;
 
-        void generate_interaction_information_by_cutoff(const int,
-                                                        const int,
-                                                        const std::vector<int> &,
-                                                        const int * const *,
-                                                        const double * const *,
-                                                        std::vector<int> *) const;
-
-        void set_interaction_by_cutoff(const unsigned int,
-                                       const std::vector<int> &,
-                                       const unsigned int,
-                                       const int * const *,
-                                       const double * const * const *,
-                                       std::vector<int> **) const;
         void define(const int,
                     const unsigned int,
                     const int *,
@@ -249,14 +236,26 @@ namespace ALM_NS
                                            const double * const * const *,
                                            const int *);
 
+        void generate_interaction_information_by_cutoff(const int,
+                                                        const int,
+                                                        const std::vector<int> &,
+                                                        const std::vector<std::vector<int>> &,
+                                                        const double * const *,
+                                                        std::vector<int> *) const;
+
+        void set_interaction_by_cutoff(const unsigned int,
+                                       const std::vector<int> &,
+                                       const unsigned int,
+                                       const std::vector<std::vector<int>> &);
+
         void print_neighborlist(const int,
                                 const int,
-                                const int * const *,
+                                const std::vector<std::vector<int>> &,
                                 const std::vector<int> &,
                                 const std::string *) const;
 
         void print_interaction_information(const int,
-                                           const int * const *,
+                                           const std::vector<std::vector<int>> &,
                                            const std::vector<int> &,
                                            const std::string *,
                                            const std::vector<int> * const *);
@@ -267,20 +266,18 @@ namespace ALM_NS
 
         void calc_interaction_clusters(const int,
                                        const std::vector<int> &,
-                                       const int * const *,
-                                       const std::vector<int> * const *,
+                                       const std::vector<std::vector<int>> &,
                                        const double * const *const *,
-                                       const int *,
-                                       std::set<InteractionCluster> **);
+                                       const int *);
 
         void set_interaction_cluster(const int,
                                      const int,
                                      const std::vector<int> &,
-                                     const int * const *,
+                                     const std::vector<std::vector<int>> &,
                                      const std::vector<int> *,
                                      const double * const * const*,
                                      const int *,
-                                     std::set<InteractionCluster> *) const;
+                                     std::set<InteractionCluster> *);
 
         void cell_combination(const std::vector<std::vector<int>> &,
                               const int,
@@ -288,7 +285,7 @@ namespace ALM_NS
                               std::vector<std::vector<int>> &) const;
 
         void generate_pairs(const int,
-                            const int * const *,
+                            const std::vector<std::vector<int>> &,
                             std::set<IntList> *,
                             const std::set<InteractionCluster> * const *) const;
     };
