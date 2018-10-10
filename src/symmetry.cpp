@@ -38,6 +38,67 @@ Symmetry::~Symmetry()
     deallocate_variables();
 }
 
+double Symmetry::get_tolerance() const
+{
+    return tolerance;
+}
+
+void Symmetry::set_tolerance(const double tolerance_in)
+{
+    tolerance = tolerance_in;
+}
+
+int Symmetry::get_print_symmetry() const
+{
+    return printsymmetry;
+}
+
+void Symmetry::set_print_symmetry(const int printsymmetry_in)
+{
+    printsymmetry = printsymmetry_in;
+}
+
+const std::vector<Maps> &Symmetry::get_map_s2p() const
+{
+    return map_s2p;
+}
+
+const std::vector<std::vector<int>> &Symmetry::get_map_p2s() const
+{
+    return map_p2s;
+}
+
+
+const std::vector<SymmetryOperation> &Symmetry::get_SymmData() const
+{
+    return SymmData;
+}
+
+const std::vector<std::vector<int>> & Symmetry::get_map_sym() const
+{
+    return map_sym;
+}
+
+const std::vector<int> &Symmetry::get_symnum_tran() const
+{
+    return symnum_tran;
+}
+
+unsigned int Symmetry::get_nsym() const
+{
+    return nsym;
+}
+
+unsigned int Symmetry::get_ntran() const
+{
+    return ntran;
+}
+
+unsigned int Symmetry::get_nat_prim() const
+{
+    return nat_prim;
+}
+
 void Symmetry::init(const System *system,
                     const int verbosity,
                     Timer *timer)
@@ -49,17 +110,13 @@ void Symmetry::init(const System *system,
         std::cout << " ========" << std::endl << std::endl;
     }
 
-
+    // nat_prim, ntran, nsym, SymmData, symnum_tran are set here.
+    // Symmdata[nsym], symnum_tran[ntran]
     setup_symmetry_operation(system->get_supercell(),
                              system->get_periodicity(),
                              system->get_atomtype_group(),
                              system->get_spin(),
-                             verbosity,
-                             SymmData,
-                             nsym,
-                             nat_prim,
-                             ntran,
-                             symnum_tran);
+                             verbosity);
 
 
     // set_primitive_lattice(system->lavec, system->supercell.number_of_atoms,
@@ -68,23 +125,16 @@ void Symmetry::init(const System *system,
     //                       kd_prim, xcoord_prim,
     //                       tolerance);
 
-    int nat = system->get_supercell().number_of_atoms;
+    map_sym.clear();
+    map_sym.shrink_to_fit();
+    map_sym.resize(system->get_supercell().number_of_atoms, std::vector<int>(nsym));
 
-    if (map_sym) {
-        deallocate(map_sym);
-    }
-    allocate(map_sym, nat, nsym);
-
-    if (map_p2s) {
-        deallocate(map_p2s);
-    }
-    allocate(map_p2s, nat_prim, ntran);
+    map_p2s.clear();
+    map_p2s.shrink_to_fit();
+    map_p2s.resize(nat_prim, std::vector<int>(ntran));
 
     gen_mapping_information(system->get_supercell(),
-                            system->get_atomtype_group(),
-                            SymmData,
-                            symnum_tran,
-                            map_sym, map_p2s, map_s2p);
+                            system->get_atomtype_group());
 
     if (verbosity > 0) {
         print_symminfo_stdout();
@@ -103,9 +153,7 @@ void Symmetry::set_default_variables()
 
     // Default values
     nsym = 0;
-    printsymmetry = 0;
-    map_sym = nullptr;
-    map_p2s = nullptr;
+    printsymmetry = false;
     ntran = 0;
     nat_prim = 0;
     tolerance = 1e-6;
@@ -114,35 +162,27 @@ void Symmetry::set_default_variables()
 
 void Symmetry::deallocate_variables()
 {
-    if (map_sym) {
-        deallocate(map_sym);
-    }
-    if (map_p2s) {
-        deallocate(map_p2s);
-    }
+    ;
 }
 
 void Symmetry::setup_symmetry_operation(const Cell &cell,
                                         const int is_periodic[3],
                                         const std::vector<std::vector<unsigned int>> &atomtype_group,
                                         const Spin &spin,
-                                        const int verbosity,
-                                        std::vector<SymmetryOperation> &SymmData_out,
-                                        unsigned int &nsym_out,
-                                        unsigned int &nat_prim_out,
-                                        unsigned int &ntran_out,
-                                        std::vector<int> &symnum_tran_out)
+                                        const int verbosity)
 {
     int i, j;
 
-    SymmData_out.clear();
+    SymmData.clear();
 
     if (use_internal_symm_finder) {
-        findsym_alm(cell, is_periodic, atomtype_group, spin, SymmData_out);
+        // SymmData is written.
+        findsym_alm(cell, is_periodic, atomtype_group, spin);
     } else {
         int spgnum;
         std::string spgsymbol;
-        findsym_spglib(cell, atomtype_group, spin, tolerance, SymmData_out, spgnum, spgsymbol);
+        // SymmData is written.
+        spgnum = findsym_spglib(cell, atomtype_group, spin, spgsymbol);
 
         if (verbosity > 0) {
             std::cout << "  Space group: " << spgsymbol << " (" << std::setw(3) << spgnum << ")" << std::endl;
@@ -150,10 +190,10 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
 
     }
 
-    // The order in SymmData_out changes for each run because it was generated
+    // The order in SymmData changes for each run because it was generated
     // with OpenMP. Therefore, we sort the list here to have the same result.
-    std::sort(SymmData_out.begin() + 1, SymmData_out.end());
-    nsym_out = SymmData_out.size();
+    std::sort(SymmData.begin() + 1, SymmData.end());
+    nsym = SymmData.size();
 
     if (printsymmetry) {
         std::ofstream ofs_sym;
@@ -165,7 +205,7 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
         ofs_sym.open(file_sym.c_str(), std::ios::out);
         ofs_sym << nsym << std::endl;
 
-        for (auto &p : SymmData_out) {
+        for (auto &p : SymmData) {
             for (i = 0; i < 3; ++i) {
                 for (j = 0; j < 3; ++j) {
                     ofs_sym << std::setw(4) << p.rotation[i][j];
@@ -181,29 +221,28 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
         ofs_sym.close();
     }
 
-    ntran_out = 0;
-    for (i = 0; i < nsym_out; ++i) {
-        if (SymmData_out[i].is_translation) ++ntran_out;
+    ntran = 0;
+    for (i = 0; i < nsym; ++i) {
+        if (SymmData[i].is_translation) ++ntran;
     }
 
-    nat_prim_out = cell.number_of_atoms / ntran_out;
+    nat_prim = cell.number_of_atoms / ntran;
 
-    if (cell.number_of_atoms % ntran_out) {
+    if (cell.number_of_atoms % ntran) {
         exit("setup_symmetry_operation",
              "nat != nat_prim * ntran. Something is wrong in the structure.");
     }
 
-    symnum_tran_out.clear();
-    for (i = 0; i < nsym_out; ++i) {
-        if (SymmData_out[i].is_translation) symnum_tran_out.push_back(i);
+    symnum_tran.clear();
+    for (i = 0; i < nsym; ++i) {
+        if (SymmData[i].is_translation) symnum_tran.push_back(i);
     }
 }
 
 void Symmetry::findsym_alm(const Cell &cell,
                            const int is_periodic[3],
                            const std::vector<std::vector<unsigned int>> &atomtype_group,
-                           const Spin &spin,
-                           std::vector<SymmetryOperation> &symop_all)
+                           const Spin &spin)
 {
     std::vector<RotationMatrix> LatticeSymmList;
 
@@ -212,13 +251,13 @@ void Symmetry::findsym_alm(const Cell &cell,
     find_lattice_symmetry(cell.lattice_vector, LatticeSymmList);
 
     // Generate all the space group operations with translational vectors
-    symop_all.clear();
+    // The data is stored in SymmData.
+    SymmData.clear();
     find_crystal_symmetry(cell,
                           atomtype_group,
                           is_periodic,
                           spin,
-                          LatticeSymmList,
-                          symop_all);
+                          LatticeSymmList);
 
     LatticeSymmList.clear();
 }
@@ -350,8 +389,7 @@ void Symmetry::find_crystal_symmetry(const Cell &cell,
                                      const std::vector<std::vector<unsigned int>> &atomtype_group,
                                      const int is_periodic[3],
                                      const Spin &spin,
-                                     const std::vector<RotationMatrix> &LatticeSymmList,
-                                     std::vector<SymmetryOperation> &CrystalSymmList)
+                                     const std::vector<RotationMatrix> &LatticeSymmList)
 {
     unsigned int i, j;
     unsigned int iat, jat, kat, lat;
@@ -389,12 +427,12 @@ void Symmetry::find_crystal_symmetry(const Cell &cell,
         tran[i] = 0.0;
     }
 
-    CrystalSymmList.emplace_back(rot_int,
-                                 tran,
-                                 rot_cart,
-                                 is_compatible(rot_int),
-                                 is_compatible(rot_cart),
-                                 is_translation(rot_int));
+    SymmData.emplace_back(rot_int,
+                          tran,
+                          rot_cart,
+                          is_compatible(rot_int),
+                          is_compatible(rot_cart),
+                          is_translation(rot_int));
 
     for (auto &it_latsym : LatticeSymmList) {
 
@@ -517,27 +555,24 @@ void Symmetry::find_crystal_symmetry(const Cell &cell,
 #ifdef _OPENMP
 #pragma omp critical
 #endif
-                CrystalSymmList.emplace_back(it_latsym.mat,
-                                             tran,
-                                             rot_cart,
-                                             is_compatible(it_latsym.mat),
-                                             is_compatible(rot_cart),
-                                             is_translation(it_latsym.mat));
+                SymmData.emplace_back(it_latsym.mat,
+                                      tran,
+                                      rot_cart,
+                                      is_compatible(it_latsym.mat),
+                                      is_compatible(rot_cart),
+                                      is_translation(it_latsym.mat));
             }
         }
 
     }
 }
 
-void Symmetry::findsym_spglib(const Cell &cell,
-                              const std::vector<std::vector<unsigned int>> &atomtype_group,
-                              const Spin &spin,
-                              const double symprec,
-                              std::vector<SymmetryOperation> &symop_all,
-                              int &spgnum,
-                              std::string &spgsymbol)
+int Symmetry::findsym_spglib(const Cell &cell,
+                             const std::vector<std::vector<unsigned int>> &atomtype_group,
+                             const Spin &spin,
+                             std::string &spgsymbol)
 {
-    int i, j;
+    int i, j, spgnum;
     double (*position)[3];
     double (*translation)[3];
     int (*rotation)[3][3];
@@ -579,7 +614,7 @@ void Symmetry::findsym_spglib(const Cell &cell,
     }
 
     // First find the number of symmetry operations
-    auto nsym = spg_get_multiplicity(aa_tmp, position, types_tmp, nat, symprec);
+    auto nsym = spg_get_multiplicity(aa_tmp, position, types_tmp, nat, tolerance);
 
     if (nsym == 0) exit("findsym_spglib", "Error occured in spg_get_multiplicity");
 
@@ -588,13 +623,13 @@ void Symmetry::findsym_spglib(const Cell &cell,
 
     // Store symmetry operations
     nsym = spg_get_symmetry(rotation, translation, nsym,
-                            aa_tmp, position, types_tmp, nat, symprec);
+                            aa_tmp, position, types_tmp, nat, tolerance);
 
-    spgnum = spg_get_international(symbol, aa_tmp, position, types_tmp, nat, symprec);
+    spgnum = spg_get_international(symbol, aa_tmp, position, types_tmp, nat, tolerance);
     spgsymbol = std::string(symbol);
 
     // Copy symmetry information
-    symop_all.clear();
+    SymmData.clear();
     double rot_cartesian[3][3];
 
     for (i = 0; i < nsym; ++i) {
@@ -604,12 +639,12 @@ void Symmetry::findsym_spglib(const Cell &cell,
                       cell.lattice_vector,
                       cell.reciprocal_lattice_vector);
 
-        symop_all.emplace_back(rotation[i],
-                               translation[i],
-                               rot_cartesian,
-                               is_compatible(rotation[i]),
-                               is_compatible(rot_cartesian),
-                               is_translation(rotation[i]));
+        SymmData.emplace_back(rotation[i],
+                              translation[i],
+                              rot_cartesian,
+                              is_compatible(rotation[i]),
+                              is_compatible(rot_cartesian),
+                              is_translation(rotation[i]));
 
     }
 
@@ -618,6 +653,8 @@ void Symmetry::findsym_spglib(const Cell &cell,
     deallocate(translation);
     deallocate(types_tmp);
     deallocate(position);
+
+    return spgnum;
 }
 
 void Symmetry::symop_in_cart(double rot_cart[3][3],
@@ -677,12 +714,7 @@ void Symmetry::print_symminfo_stdout() const
 }
 
 void Symmetry::gen_mapping_information(const Cell &cell,
-                                       const std::vector<std::vector<unsigned int>> &atomtype_group,
-                                       const std::vector<SymmetryOperation> &symmdata,
-                                       const std::vector<int> &symnum_tran,
-                                       int **map_sym,
-                                       int **map_p2s,
-                                       std::vector<Maps> &map_s2p) const
+                                       const std::vector<std::vector<unsigned int>> &atomtype_group)
 {
     int isym, iat, jat;
     int i, j;
@@ -693,11 +725,10 @@ void Symmetry::gen_mapping_information(const Cell &cell,
     double rot_double[3][3];
 
     for (iat = 0; iat < cell.number_of_atoms; ++iat) {
-        for (isym = 0; isym < symmdata.size(); ++isym) {
+        for (isym = 0; isym < SymmData.size(); ++isym) {
             map_sym[iat][isym] = -1;
         }
     }
-    int nsym = symmdata.size();
 
     // This part may be incompatible with the tolerance used in spglib
     auto natomtypes = atomtype_group.size();
@@ -709,7 +740,7 @@ void Symmetry::gen_mapping_information(const Cell &cell,
 
         for (i = 0; i < 3; ++i) {
             for (j = 0; j < 3; ++j) {
-                rot_double[i][j] = static_cast<double>(symmdata[isym].rotation[i][j]);
+                rot_double[i][j] = static_cast<double>(SymmData[isym].rotation[i][j]);
             }
         }
 
@@ -722,7 +753,7 @@ void Symmetry::gen_mapping_information(const Cell &cell,
                 for (i = 0; i < 3; ++i) x_tmp[i] = cell.x_fractional[iat][i];
                 rotvec(xnew, x_tmp, rot_double);
 
-                for (i = 0; i < 3; ++i) xnew[i] += symmdata[isym].tran[i];
+                for (i = 0; i < 3; ++i) xnew[i] += SymmData[isym].tran[i];
 
                 for (jj = 0; jj < atomtype_group[itype].size(); ++jj) {
 
@@ -755,7 +786,6 @@ void Symmetry::gen_mapping_information(const Cell &cell,
     for (i = 0; i < cell.number_of_atoms; ++i) is_checked[i] = false;
 
     jat = 0;
-    int ntran = symnum_tran.size();
     int atomnum_translated;
     for (iat = 0; iat < cell.number_of_atoms; ++iat) {
 
@@ -772,7 +802,6 @@ void Symmetry::gen_mapping_information(const Cell &cell,
 
     // Generate map_s2p (super --> primitive)
 
-    int nat_prim = cell.number_of_atoms / ntran;
     map_s2p.clear();
     map_s2p.resize(cell.number_of_atoms);
 

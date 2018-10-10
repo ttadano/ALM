@@ -51,8 +51,8 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << "  PREFIX = " << alm->files->job_title << std::endl;
     std::cout << "  MODE = " << alm->get_run_mode() << std::endl;
     std::cout << "  NAT = " << nat << "; NKD = " << nkd << std::endl;
-    std::cout << "  PRINTSYM = " << alm->symmetry->printsymmetry
-        << "; TOLERANCE = " << alm->symmetry->tolerance << std::endl;
+    std::cout << "  PRINTSYM = " << alm->symmetry->get_print_symmetry()
+              << "; TOLERANCE = " << alm->symmetry->get_tolerance() << std::endl;
     std::cout << "  KD = ";
     for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->get_kdname()[i];
     std::cout << std::endl;
@@ -198,7 +198,7 @@ void Writer::write_force_constants(ALM *alm) const
                 for (l = 1; l < order + 2; ++l) {
                     atom_tmp.push_back(alm->fcs->fc_table[order][m].elems[l] / 3);
                 }
-                j = alm->symmetry->map_s2p[alm->fcs->fc_table[order][m].elems[0] / 3].atom_num;
+                j = alm->symmetry->get_map_s2p()[alm->fcs->fc_table[order][m].elems[0] / 3].atom_num;
                 std::sort(atom_tmp.begin(), atom_tmp.end());
 
                 iter_cluster = alm->interaction->get_interaction_cluster(order, j).find(
@@ -382,8 +382,8 @@ void Writer::write_misc_xml(ALM *alm)
     }
 
     system_structure.nat = alm->get_supercell().number_of_atoms;
-    system_structure.natmin = alm->symmetry->nat_prim;
-    system_structure.ntran = alm->symmetry->ntran;
+    system_structure.natmin = alm->symmetry->get_nat_prim();
+    system_structure.ntran = alm->symmetry->get_ntran();
     system_structure.nspecies = alm->get_supercell().number_of_elems;
 
     AtomProperty prop_tmp;
@@ -393,8 +393,8 @@ void Writer::write_misc_xml(ALM *alm)
         prop_tmp.y = alm->get_supercell().x_fractional[i][1];
         prop_tmp.z = alm->get_supercell().x_fractional[i][2];
         prop_tmp.kind = alm->get_supercell().kind[i];
-        prop_tmp.atom = alm->symmetry->map_s2p[i].atom_num + 1;
-        prop_tmp.tran = alm->symmetry->map_s2p[i].tran_num + 1;
+        prop_tmp.atom = alm->symmetry->get_map_s2p()[i].atom_num + 1;
+        prop_tmp.tran = alm->symmetry->get_map_s2p()[i].tran_num + 1;
 
         system_structure.atoms.emplace_back(AtomProperty(prop_tmp));
     }
@@ -446,11 +446,11 @@ void Writer::write_misc_xml(ALM *alm)
         child.put("<xmlattr>.element", alm->get_kdname()[alm->get_supercell().kind[i] - 1]);
     }
 
-    pt.put("Data.Symmetry.NumberOfTranslations", alm->symmetry->ntran);
+    pt.put("Data.Symmetry.NumberOfTranslations", alm->symmetry->get_ntran());
     for (i = 0; i < system_structure.ntran; ++i) {
         for (j = 0; j < system_structure.natmin; ++j) {
             ptree &child = pt.add("Data.Symmetry.Translations.map",
-                                  alm->symmetry->map_p2s[j][i] + 1);
+                                  alm->symmetry->get_map_p2s()[j][i] + 1);
             child.put("<xmlattr>.tran", i + 1);
             child.put("<xmlattr>.atom", j + 1);
         }
@@ -490,7 +490,7 @@ void Writer::write_misc_xml(ALM *alm)
         for (i = 0; i < 2; ++i) {
             pair_tmp[i] = alm->fcs->fc_table[0][ihead].elems[i] / 3;
         }
-        j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+        j = alm->symmetry->get_map_s2p()[pair_tmp[0]].atom_num;
 
         atom_tmp.clear();
         atom_tmp.push_back(pair_tmp[1]);
@@ -524,7 +524,7 @@ void Writer::write_misc_xml(ALM *alm)
             for (i = 0; i < 3; ++i) {
                 pair_tmp[i] = alm->fcs->fc_table[1][ihead].elems[i] / 3;
             }
-            j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+            j = alm->symmetry->get_map_s2p()[pair_tmp[0]].atom_num;
 
             atom_tmp.clear();
             for (i = 1; i < 3; ++i) {
@@ -567,7 +567,7 @@ void Writer::write_misc_xml(ALM *alm)
             pair_tmp[k] = fctmp.elems[k] / 3;
         }
 
-        j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+        j = alm->symmetry->get_map_s2p()[pair_tmp[0]].atom_num;
 
         atom_tmp.clear();
         atom_tmp.push_back(pair_tmp[1]);
@@ -617,7 +617,7 @@ void Writer::write_misc_xml(ALM *alm)
             for (k = 0; k < order + 2; ++k) {
                 pair_tmp[k] = fctmp.elems[k] / 3;
             }
-            j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+            j = alm->symmetry->get_map_s2p()[pair_tmp[0]].atom_num;
 
             atom_tmp.clear();
 
@@ -706,9 +706,9 @@ void Writer::write_hessian(ALM *alm) const
         ip = fctmp.mother;
 
         for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
-        for (itran = 0; itran < alm->symmetry->ntran; ++itran) {
+        for (itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
             for (i = 0; i < 2; ++i) {
-                pair_tran[i] = alm->symmetry->map_sym[pair_tmp[i]][alm->symmetry->symnum_tran[itran]];
+                pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }
             hessian[3 * pair_tran[0] + fctmp.elems[0] % 3][3 * pair_tran[1] + fctmp.elems[1] % 3]
                 = alm->fitting->params[ip] * fctmp.sign;
@@ -771,9 +771,9 @@ void Writer::write_in_QEformat(ALM *alm) const
         ip = fctmp.mother;
 
         for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
-        for (itran = 0; itran < alm->symmetry->ntran; ++itran) {
+        for (itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
             for (i = 0; i < 2; ++i) {
-                pair_tran[i] = alm->symmetry->map_sym[pair_tmp[i]][alm->symmetry->symnum_tran[itran]];
+                pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }
             hessian[3 * pair_tran[0] + fctmp.elems[0] % 3][3 * pair_tran[1] + fctmp.elems[1] % 3]
                 = alm->fitting->params[ip] * fctmp.sign;
@@ -815,9 +815,9 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
     int ***has_element;
     int nelems = 0;
     int nat3 = 3 * alm->get_supercell().number_of_atoms;
-    int natmin = alm->symmetry->nat_prim;
+    int natmin = alm->symmetry->get_nat_prim();
     int nat = alm->get_supercell().number_of_atoms;
-    int ntran = alm->symmetry->ntran;
+    int ntran = alm->symmetry->get_ntran();
 
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
@@ -858,7 +858,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
             coord_tmp[i] = fctmp.elems[i] % 3;
         }
 
-        j = alm->symmetry->map_s2p[pair_tmp[0]].atom_num;
+        j = alm->symmetry->get_map_s2p()[pair_tmp[0]].atom_num;
 
         if (pair_tmp[1] > pair_tmp[2]) {
             atom_tmp[0] = pair_tmp[2];
@@ -907,8 +907,8 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
                 for (ktran = 0; ktran < ntran; ++ktran) {
                     for (k = 0; k < natmin; ++k) {
 
-                        jat = alm->symmetry->map_p2s[j][jtran];
-                        kat = alm->symmetry->map_p2s[k][ktran];
+                        jat = alm->symmetry->get_map_p2s()[j][jtran];
+                        kat = alm->symmetry->get_map_p2s()[k][ktran];
 
                         if (!has_element[i][jat][kat]) continue;
 
@@ -930,8 +930,8 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
 
                         multiplicity = (*iter_cluster).cell.size();
 
-                        jat0 = alm->symmetry->map_p2s[alm->symmetry->map_s2p[atom_tmp[0]].atom_num][0];
-                        kat0 = alm->symmetry->map_p2s[alm->symmetry->map_s2p[atom_tmp[1]].atom_num][0];
+                        jat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[0]].atom_num][0];
+                        kat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[1]].atom_num][0];
 
                         for (auto imult = 0; imult < multiplicity; ++imult) {
                             std::vector<int> cell_now = (*iter_cluster).cell[imult];
