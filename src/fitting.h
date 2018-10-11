@@ -83,7 +83,7 @@ namespace ALM_NS
         ~Fitting();
 
         int optimize_main(const Symmetry *symmetry,
-                          const Constraint *constraint,
+                          Constraint *constraint,
                           const Fcs *fcs,
                           const int maxorder,
                           const std::vector<std::string> &str_order,
@@ -185,7 +185,7 @@ namespace ALM_NS
                         const Symmetry *symmetry,
                         const std::vector<std::string> &str_order,
                         const Fcs *fcs,
-                        const Constraint *constraint,
+                        Constraint *constraint,
                         const unsigned int nat,
                         const int verbosity,
                         std::vector<double> &param_out);

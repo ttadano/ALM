@@ -346,13 +346,4 @@ namespace ALM_NS
                                         const std::string,
                                         std::vector<ConstraintTypeFix> &) const;
     };
-
-    extern "C" {
-    void dgetrf_(int *m,
-                 int *n,
-                 double *a,
-                 int *lda,
-                 int *ipiv,
-                 int *info);
-    }
 }

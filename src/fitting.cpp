@@ -78,7 +78,7 @@ void Fitting::deallocate_variables()
 }
 
 int Fitting::optimize_main(const Symmetry *symmetry,
-                           const Constraint *constraint,
+                           Constraint *constraint,
                            const Fcs *fcs,
                            const int maxorder,
                            const std::vector<std::string> &str_order,
@@ -105,7 +105,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
 
     if (constraint->get_constraint_algebraic()) {
         for (auto i = 0; i < maxorder; ++i) {
-              N_new += constraint->get_index_bimap(i).size();        
+            N_new += constraint->get_index_bimap(i).size();
         }
     }
 
@@ -440,7 +440,7 @@ int Fitting::elastic_net(const int maxorder,
                          const Symmetry *symmetry,
                          const std::vector<std::string> &str_order,
                          const Fcs *fcs,
-                         const Constraint *constraint,
+                         Constraint *constraint,
                          const unsigned int nat,
                          const int verbosity,
                          std::vector<double> &param_out)
@@ -471,13 +471,12 @@ int Fitting::elastic_net(const int maxorder,
                 u[i][j] *= inv_dnorm;
             }
         }
-        double scaled_val, scale_factor;
         // Scale force constants
         for (i = 0; i < maxorder; ++i) {
-            scale_factor = std::pow(optcontrol.displacement_scaling_factor, i + 1);
+            const auto scale_factor = std::pow(optcontrol.displacement_scaling_factor, i + 1);
             for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
-            //   scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
-            //    constraint->set_const_fix_val_to_fix(i, j, 1.0);
+                const auto scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
+                constraint->set_const_fix_val_to_fix(i, j, scaled_val);
             }
         }
     }
@@ -552,8 +551,8 @@ int Fitting::elastic_net(const int maxorder,
         for (i = 0; i < maxorder; ++i) {
             const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
             for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
-            //    const auto scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
-            //    constraint->set_const_fix_val_to_fix(i, j, scaled_val);
+                const auto scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
+                constraint->set_const_fix_val_to_fix(i, j, scaled_val);
             }
         }
     }
@@ -1371,7 +1370,7 @@ int Fitting::fit_algebraic_constraints(const int N,
         recover_original_forceconstants(maxorder,
                                         param_irred,
                                         param_out,
-                                    fcs->get_nequiv(),
+                                        fcs->get_nequiv(),
                                         constraint);
     }
 
@@ -1454,7 +1453,8 @@ void Fitting::get_matrix_elements(const int maxorder,
                             ind[j] = fcs->get_fc_table()[order][mm].elems[j];
                             amat_tmp *= u_multi[irow][fcs->get_fc_table()[order][mm].elems[j]];
                         }
-                        amat_orig_tmp[k][iparam] -= gamma(order + 2, ind) * fcs->get_fc_table()[order][mm].sign * amat_tmp;
+                        amat_orig_tmp[k][iparam] -= gamma(order + 2, ind) * fcs->get_fc_table()[order][mm].sign *
+                            amat_tmp;
                         ++mm;
                     }
                     ++iparam;
@@ -1614,7 +1614,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                     for (j = 0; j < constraint->get_const_relate(order)[i].alpha.size(); ++j) {
 
                         inew = constraint->get_index_bimap(order).right.at(
-                            constraint->get_const_relate(order)[i].p_index_orig[j]) +
+                                constraint->get_const_relate(order)[i].p_index_orig[j]) +
                             iparam;
 
                         for (k = 0; k < natmin3; ++k) {
@@ -1786,7 +1786,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
                     for (j = 0; j < constraint->get_const_relate(order)[i].alpha.size(); ++j) {
 
                         inew = constraint->get_index_bimap(order).right.at(
-                            constraint->get_const_relate(order)[i].p_index_orig[j]) +
+                                constraint->get_const_relate(order)[i].p_index_orig[j]) +
                             iparam;
 
                         for (k = 0; k < natmin3; ++k) {
@@ -2022,7 +2022,7 @@ void Fitting::set_skip_e(const int skip_e_in)
     skip_e = skip_e_in;
 }
 
-double * Fitting::get_params() const
+double* Fitting::get_params() const
 {
     return params;
 }
@@ -2112,7 +2112,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
                                 const Constraint *constraint,
                                 const int verbosity)
 {
-//    Eigen::BenchTimer t;
+    //    Eigen::BenchTimer t;
 
     if (verbosity > 0) {
         std::cout << "  Solve least-squares problem by sparse LDLT." << std::endl;
@@ -2122,52 +2122,52 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
     Eigen::VectorXd AtB, x;
     AtB = sp_mat.transpose() * sp_bvec;
 
-/*
-    t.reset();
-    t.start();
-    Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
-    x = qr.solve(sp_bvec);
-
-    t.stop();
-    std::cout << "sqr   : " << qr.info() << " ; " << t.value() 
-    << "s ;  err: " << (AtA * x - AtB).norm() / AtB.norm() << "\n";
-
-    t.reset();
-    t.start();
-*/
+    /*
+        t.reset();
+        t.start();
+        Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
+        x = qr.solve(sp_bvec);
+    
+        t.stop();
+        std::cout << "sqr   : " << qr.info() << " ; " << t.value() 
+        << "s ;  err: " << (AtA * x - AtB).norm() / AtB.norm() << "\n";
+    
+        t.reset();
+        t.start();
+    */
     Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
     x = ldlt.solve(AtB);
- //       t.stop();
- //   std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+    //       t.stop();
+    //   std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
-/*
-     t.reset(); t.start();
-     Eigen::ConjugateGradient<SpMat> cg(AtA);
-     cg.setTolerance(optcontrol.tolerance_iteration);
-     cg.setMaxIterations(optcontrol.maxnum_iteration);
-     x.setZero(); x = cg.solve(AtB);
-     t.stop();
-     std::cout << "cg    : " << cg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
-*/
-  /*   t.reset(); t.start();
-     Eigen::LeastSquaresConjugateGradient<SpMat> lscg(sp_mat);
-     lscg.setTolerance(eps10);
-     lscg.setMaxIterations(10000000);
-     x.setZero(); x = lscg.solve(sp_bvec);
+    /*
+         t.reset(); t.start();
+         Eigen::ConjugateGradient<SpMat> cg(AtA);
+         cg.setTolerance(optcontrol.tolerance_iteration);
+         cg.setMaxIterations(optcontrol.maxnum_iteration);
+         x.setZero(); x = cg.solve(AtB);
+         t.stop();
+         std::cout << "cg    : " << cg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+    */
+    /*   t.reset(); t.start();
+       Eigen::LeastSquaresConjugateGradient<SpMat> lscg(sp_mat);
+       lscg.setTolerance(eps10);
+       lscg.setMaxIterations(10000000);
+       x.setZero(); x = lscg.solve(sp_bvec);
+  
+       t.stop();
+       std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";*/
 
-     t.stop();
-     std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";*/
-
-/*
-     t.reset(); t.start();
-     Eigen::BiCGSTAB<SpMat> bicg(AtA);
-     bicg.setTolerance(optcontrol.tolerance_iteration);
-     bicg.setMaxIterations(optcontrol.maxnum_iteration);
-     x.setZero(); x = bicg.solve(AtB);
-     t.stop();
-     std::cout << "bicg    : " << bicg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
-
-*/
+    /*
+         t.reset(); t.start();
+         Eigen::BiCGSTAB<SpMat> bicg(AtA);
+         bicg.setTolerance(optcontrol.tolerance_iteration);
+         bicg.setMaxIterations(optcontrol.maxnum_iteration);
+         x.setZero(); x = bicg.solve(AtB);
+         t.stop();
+         std::cout << "bicg    : " << bicg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+    
+    */
     auto res = sp_bvec - sp_mat * x;
     auto res2norm = res.squaredNorm();
     auto nparams = x.size();
