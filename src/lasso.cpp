@@ -75,11 +75,11 @@ void Lasso::lasso_main(const Symmetry *symmetry,
 
     const auto natmin = symmetry->get_nat_prim();
     const int maxorder = interaction->get_maxorder();
-    const int ndata = fitting->ndata;
-    const int nstart = fitting->nstart;
-    const int nend = fitting->nend;
-    const int skip_s = fitting->skip_s;
-    const int skip_e = fitting->skip_e;
+    const int ndata = fitting->get_ndata();
+    const int nstart = fitting->get_nstart();
+    const int nend = fitting->get_nend();
+    const int skip_s = fitting->get_skip_s();
+    const int skip_e = fitting->get_skip_e();
     const int ntran = symmetry->get_ntran();
     const int ndata_used = nend - nstart + 1 - skip_e + skip_s;
 

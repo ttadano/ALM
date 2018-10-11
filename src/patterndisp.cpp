@@ -213,6 +213,11 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     }
 }
 
+void Displace::set_trim_dispsign_for_evenfunc(const bool trim_dispsign_for_evenfunc_in)
+{
+    trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc_in;
+}
+
 void Displace::set_default_variables()
 {
     trim_dispsign_for_evenfunc = true;

@@ -44,14 +44,6 @@ namespace ALM_NS
                     const std::string file_force,
                     Timer *timer);
 
-        int ndata, nstart, nend;
-        int skip_s, skip_e;
-
-        double *params;
-        double **u_in;
-        double **f_in;
-        int use_sparseQR;
-
         void set_displacement_and_force(const double * const *,
                                         const double * const *,
                                         const int,
@@ -77,7 +69,28 @@ namespace ALM_NS
         double gamma(const int,
                      const int *) const;
 
+        int get_ndata() const;
+        void set_ndata(const int);
+        int get_nstart() const;
+        void set_nstart(const int);
+        int get_nend() const;
+        void set_nend(const int);
+        int get_skip_s() const;
+        void set_skip_s(const int);
+        int get_skip_e() const;
+        void set_skip_e(const int);
+        double *get_params() const;
+        int get_use_sparseQR() const;
+        void set_use_sparseQR(const int);
+
     private:
+
+        int ndata, nstart, nend;
+        int skip_s, skip_e;
+        double *params;
+        int use_sparseQR;
+        double **u_in;
+        double **f_in;
 
         int ndata_used;
 

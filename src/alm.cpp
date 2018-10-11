@@ -107,7 +107,7 @@ void ALM::set_symmetry_tolerance(const double tolerance) const // TOLERANCE
 
 void ALM::set_displacement_param(const bool trim_dispsign_for_evenfunc) const // TRIMEVEN
 {
-    displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
+    displace->set_trim_dispsign_for_evenfunc(trim_dispsign_for_evenfunc);
 }
 
 void ALM::set_displacement_basis(const std::string str_disp_basis) const // DBASIS
@@ -177,9 +177,9 @@ void ALM::set_displacement_and_force(const double *u_in,
     double **u;
     double **f;
 
-    fitting->ndata = ndata_used;
-    fitting->nstart = 1;
-    fitting->nend = ndata_used;
+    fitting->set_ndata(ndata_used);
+    fitting->set_nstart(1);
+    fitting->set_nend(ndata_used);
 
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
@@ -208,7 +208,7 @@ void ALM::set_rotation_axis(const std::string rotation_axis) const // ROTAXIS
 
 void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
 {
-    fitting->use_sparseQR = sparse_mode;
+    fitting->set_use_sparseQR(sparse_mode);
 }
 
 void ALM::set_fitting_filenames(const std::string dfile,
@@ -399,7 +399,7 @@ void ALM::get_fc_origin(double *fc_values,
             for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
-                fc_values[id] = fitting->params[ip] * it.sign;
+                fc_values[id] = fitting->get_params()[ip] * it.sign;
                 for (i = 0; i < fc_order + 1; ++i) {
                     elem_indices[id * (fc_order + 1) + i] = it.elems[i];
                 }
@@ -450,7 +450,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                 inew = it.left;
                 iold = it.right + ishift;
 
-                fc_elem = fitting->params[iold];
+                fc_elem = fitting->get_params()[iold];
                 fc_values[inew] = fc_elem;
                 for (i = 0; i < fc_order + 1; ++i) {
                     elem_indices[inew * (fc_order + 1) + i] =
@@ -495,7 +495,7 @@ void ALM::get_fc_all(double *fc_values,
             for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
-                fc_elem = fitting->params[ip] * it.sign;
+                fc_elem = fitting->get_params()[ip] * it.sign;
 
                 for (i = 0; i < fc_order + 1; ++i) {
                     pair_tmp[i] = it.elems[i] / 3;

@@ -136,8 +136,6 @@ namespace ALM_NS
         Displace();
         ~Displace();
 
-        bool trim_dispsign_for_evenfunc;
-
         std::string disp_basis;
         std::vector<AtomWithDirection> *pattern_all;
         void gen_displacement_pattern(const Interaction *interaction,
@@ -147,7 +145,11 @@ namespace ALM_NS
                                       const System *system,
                                       const int verbosity);
 
+        void set_trim_dispsign_for_evenfunc(const bool);
+
     private:
+        bool trim_dispsign_for_evenfunc;
+
         std::vector<DispDirectionHarmonic> disp_harm, disp_harm_best;
         void set_default_variables();
         void deallocate_variables();

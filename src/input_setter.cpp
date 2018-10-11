@@ -173,7 +173,7 @@ void InputSetter::set_general_vars(ALM *alm,
 
     if (mode == "suggest") {
         alm->displace->disp_basis = str_disp_basis;
-        alm->displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
+        alm->displace->set_trim_dispsign_for_evenfunc(trim_dispsign_for_evenfunc);
     }
 }
 
@@ -201,12 +201,12 @@ void InputSetter::set_fitting_vars(ALM *alm,
                                    const bool fix_cubic,
                                    const int flag_sparse) const
 {
-    alm->fitting->ndata = ndata;
-    alm->fitting->nstart = nstart;
-    alm->fitting->nend = nend;
-    alm->fitting->skip_s = skip_s;
-    alm->fitting->skip_e = skip_e;
-    alm->fitting->use_sparseQR = flag_sparse;
+    alm->fitting->set_ndata(ndata);
+    alm->fitting->set_nstart(nstart);
+    alm->fitting->set_nend(nend);
+    alm->fitting->set_skip_s(skip_s);
+    alm->fitting->set_skip_e(skip_e);
+    alm->fitting->set_use_sparseQR(flag_sparse);
 
     alm->files->file_disp = dfile;
     alm->files->file_force = ffile;

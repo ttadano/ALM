@@ -1186,6 +1186,71 @@ double Fitting::gamma(const int n,
     return static_cast<double>(nsame_to_front) / static_cast<double>(denom);
 }
 
+int Fitting::get_ndata() const
+{
+    return ndata;
+}
+
+void Fitting::set_ndata(const int ndata_in)
+{
+    ndata = ndata_in;
+}
+
+int Fitting::get_nstart() const
+{
+    return nstart;
+}
+
+void Fitting::set_nstart(const int nstart_in)
+{
+    nstart = nstart_in;
+}
+
+int Fitting::get_nend() const
+{
+    return nend;
+}
+
+void Fitting::set_nend(const int nend_in)
+{
+    nend = nend_in;
+}
+
+int Fitting::get_skip_s() const
+{
+    return skip_s;
+}
+
+void Fitting::set_skip_s(const int skip_s_in)
+{
+    skip_s = skip_s_in;
+}
+
+int Fitting::get_skip_e() const
+{
+    return skip_e;
+}
+
+void Fitting::set_skip_e(const int skip_e_in)
+{
+    skip_e = skip_e_in;
+}
+
+double * Fitting::get_params() const
+{
+    return params;
+}
+
+int Fitting::get_use_sparseQR() const
+{
+    return use_sparseQR;
+}
+
+void Fitting::set_use_sparseQR(const int use_sparseQR_in)
+{
+    use_sparseQR = use_sparseQR_in;
+}
+
 int Fitting::factorial(const int n) const
 {
     if (n == 1 || n == 0) {
