@@ -47,6 +47,7 @@ namespace ALM_NS
         double l1_alpha_min;
         double l1_alpha_max;
         int num_l1_alpha;
+        double l1_ratio; // l1_ratio = 1 for LASSO; 0 < l1_ratio < 1 for Elastic net
         int save_solution_path;
 
         OptimizerControl()
@@ -64,6 +65,7 @@ namespace ALM_NS
             l1_alpha = 0.0;
             l1_alpha_min = 1.0e-4;
             l1_alpha_max = 1.0;
+            l1_ratio = 1.0;
             num_l1_alpha = 1;
             save_solution_path = 0;
         }
@@ -293,34 +295,30 @@ namespace ALM_NS
 
         double gamma(const int,
                      const int *) const;
-
+       
 
         // Moved from lasso.h
-        void coordinate_descent(int,
-                                int,
-                                double,
-                                double,
-                                int,
-                                int,
-                                Eigen::VectorXd &,
-                                const Eigen::MatrixXd &,
-                                const Eigen::VectorXd &,
-                                const Eigen::VectorXd &,
-                                bool *,
-                                Eigen::MatrixXd &,
-                                Eigen::VectorXd &,
-                                double,
-                                int,
-                                Eigen::VectorXd,
-                                int,
+        void coordinate_descent(const int M,
+                                const int N,
+                                const double l1_alpha,
+                                const int warm_start,
+                                Eigen::VectorXd &x,
+                                const Eigen::MatrixXd &A,
+                                const Eigen::VectorXd &b,
+                                const Eigen::VectorXd &grad0,
+                                bool *has_prod,
+                                Eigen::MatrixXd &Prod,
+                                Eigen::VectorXd &grad,
+                                const double fnorm,
+                                const Eigen::VectorXd &scale_beta,
                                 const int verbosity) const;
     };
 
     inline double shrink(const double x,
                          const double a)
     {
-        double xabs = std::abs(x);
-        double sign = static_cast<double>((0.0 < x) - (x < 0.0));
+        const auto xabs = std::abs(x);
+        const auto sign = static_cast<double>((0.0 < x) - (x < 0.0));
         return sign * std::max<double>(xabs - a, 0.0);
     }
 

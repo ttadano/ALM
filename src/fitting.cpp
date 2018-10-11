@@ -209,7 +209,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
 
     } else if (optcontrol.optimizer == 2) {
 
-        // Use Elastic net (currently only LASSO is supported)
+        // Use Elastic net 
 
         info_fitting = elastic_net(maxorder,
                                    natmin,
@@ -217,7 +217,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
                                    N,
                                    N_new,
                                    M,
-                                   verbosity,
+                                   M_test,
                                    u,
                                    f,
                                    u_test,
@@ -651,7 +651,7 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
 
     Eigen::MatrixXd Prod;
     Eigen::VectorXd grad0, grad, x;
-    Eigen::VectorXd scale_beta;
+    Eigen::VectorXd scale_beta, scale_beta_enet;
     Eigen::VectorXd factor_std;
     Eigen::VectorXd fdiff, fdiff_test;
     std::vector<double> params_tmp;
@@ -668,6 +668,7 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
     grad.resize(N_new);
     x.setZero(N_new);
     scale_beta.resize(N_new);
+    scale_beta_enet.resize(N_new);
     factor_std.resize(N_new);
     fdiff.resize(M);
     fdiff_test.resize(M);
@@ -747,14 +748,14 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
             initialize_mode = 1;
         }
 
+        for (auto i = 0; i < N_new; ++i) {
+            scale_beta_enet(i) = 1.0 / (1.0 / scale_beta(i) + (1.0 - optcontrol.l1_ratio) * l1_alpha);
+        }
+
         coordinate_descent(M, N_new, l1_alpha,
-                           optcontrol.tolerance_iteration,
                            initialize_mode,
-                           optcontrol.maxnum_iteration,
                            x, A, b, grad0, has_prod, Prod, grad, fnorm,
-                           optcontrol.output_frequency,
-                           scale_beta,
-                           optcontrol.standardize,
+                           scale_beta_enet,
                            verbosity);
 
         fdiff = A * x - b;
@@ -883,15 +884,15 @@ int Fitting::run_elastic_net_optimization(const int maxorder,
     grad0 = A.transpose() * b;
     grad = grad0;
 
+    for (i = 0; i < N_new; ++i) {
+        scale_beta(i) = 1.0 / (1.0 / scale_beta(i) + (1.0 - optcontrol.l1_ratio) * optcontrol.l1_alpha);
+    }
 
     // Coordinate Descent Method
     coordinate_descent(M, N_new, optcontrol.l1_alpha,
-                       optcontrol.tolerance_iteration, 0,
-                       optcontrol.maxnum_iteration,
+                       0,
                        x, A, b, grad0, has_prod, Prod, grad, fnorm,
-                       optcontrol.output_frequency,
                        scale_beta,
-                       optcontrol.standardize,
                        verbosity);
 
     for (i = 0; i < N_new; ++i) {
@@ -2137,9 +2138,7 @@ OptimizerControl& Fitting::get_optimizer_control()
 void Fitting::coordinate_descent(const int M,
                                  const int N,
                                  const double alpha,
-                                 const double tolerance,
                                  const int warm_start,
-                                 const int maxiter,
                                  Eigen::VectorXd &x,
                                  const Eigen::MatrixXd &A,
                                  const Eigen::VectorXd &b,
@@ -2148,13 +2147,10 @@ void Fitting::coordinate_descent(const int M,
                                  Eigen::MatrixXd &Prod,
                                  Eigen::VectorXd &grad,
                                  const double fnorm,
-                                 const int nfreq,
-                                 Eigen::VectorXd scale_beta,
-                                 const int standardize,
+                                 const Eigen::VectorXd &scale_beta,
                                  const int verbosity) const
 {
     int i, j;
-    int iloop;
     double diff;
     Eigen::VectorXd beta(N), delta(N);
     Eigen::VectorXd res(N);
@@ -2172,19 +2168,21 @@ void Fitting::coordinate_descent(const int M,
         std::cout << "  L1_ALPHA = " << std::setw(15) << alpha << std::endl;
     }
 
-    double Minv = 1.0 / static_cast<double>(M);
+    const auto Minv = 1.0 / static_cast<double>(M);
+    const auto alphlambda = alpha * optcontrol.l1_ratio;
 
-    iloop = 0;
-    if (standardize) {
-        while (iloop < maxiter) {
-            do_print_log = !((iloop + 1) % nfreq) && (verbosity > 0);
+    auto iloop = 0;
+
+    if (optcontrol.standardize) {
+        while (iloop < optcontrol.maxnum_iteration) {
+            do_print_log = !((iloop + 1) % optcontrol.output_frequency) && (verbosity > 0);
 
             if (do_print_log) {
                 std::cout << "   Coordinate Descent : " << std::setw(5) << iloop + 1 << std::endl;
             }
             delta = beta;
             for (i = 0; i < N; ++i) {
-                beta(i) = shrink(Minv * grad(i) + beta(i), alpha);
+                beta(i) = shrink(Minv * grad(i) + beta(i), alphlambda);
                 delta(i) -= beta(i);
                 if (std::abs(delta(i)) > 0.0) {
                     if (!has_prod[i]) {
@@ -2199,13 +2197,12 @@ void Fitting::coordinate_descent(const int M,
             ++iloop;
             diff = std::sqrt(delta.dot(delta) / static_cast<double>(N));
 
-            if (diff < tolerance) break;
+            if (diff < optcontrol.tolerance_iteration) break;
 
             if (do_print_log) {
-                double param2norm = beta.dot(beta);
                 std::cout << "    1: ||u_{k}-u_{k-1}||_2     = " << std::setw(15) << diff
-                    << std::setw(15) << diff * std::sqrt(static_cast<double>(N) / param2norm) << std::endl;
-                double tmp = 0.0;
+                    << std::setw(15) << diff * std::sqrt(static_cast<double>(N) / beta.dot(beta)) << std::endl;
+                auto tmp = 0.0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:tmp)
 #endif
@@ -2222,15 +2219,15 @@ void Fitting::coordinate_descent(const int M,
         }
     } else {
         // Non-standardized version. Needs additional operations
-        while (iloop < maxiter) {
-            do_print_log = !((iloop + 1) % nfreq) && (verbosity > 0);
+        while (iloop < optcontrol.maxnum_iteration) {
+            do_print_log = !((iloop + 1) % optcontrol.output_frequency) && (verbosity > 0);
 
             if (do_print_log) {
                 std::cout << "   Coordinate Descent : " << std::setw(5) << iloop + 1 << std::endl;
             }
             delta = beta;
             for (i = 0; i < N; ++i) {
-                beta(i) = shrink(Minv * grad(i) + beta(i) / scale_beta(i), alpha) * scale_beta(i);
+                beta(i) = shrink(Minv * grad(i) + beta(i) / scale_beta(i), alphlambda) * scale_beta(i);
                 delta(i) -= beta(i);
                 if (std::abs(delta(i)) > 0.0) {
                     if (!has_prod[i]) {
@@ -2245,13 +2242,12 @@ void Fitting::coordinate_descent(const int M,
             ++iloop;
             diff = std::sqrt(delta.dot(delta) / static_cast<double>(N));
 
-            if (diff < tolerance) break;
+            if (diff < optcontrol.tolerance_iteration) break;
 
             if (do_print_log) {
-                double param2norm = beta.dot(beta);
                 std::cout << "    1: ||u_{k}-u_{k-1}||_2     = " << std::setw(15) << diff
-                    << std::setw(15) << diff * std::sqrt(static_cast<double>(N) / param2norm) << std::endl;
-                double tmp = 0.0;
+                    << std::setw(15) << diff * std::sqrt(static_cast<double>(N) / beta.dot(beta)) << std::endl;
+                auto tmp = 0.0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:tmp)
 #endif
@@ -2269,13 +2265,13 @@ void Fitting::coordinate_descent(const int M,
     }
 
     if (verbosity > 0) {
-        if (iloop >= maxiter) {
-            std::cout << "WARNING: Convergence NOT achieved within " << maxiter
+        if (iloop >= optcontrol.maxnum_iteration) {
+            std::cout << "WARNING: Convergence NOT achieved within " << optcontrol.maxnum_iteration
                 << " coordinate descent iterations." << std::endl;
         } else {
             std::cout << "  Convergence achieved in " << iloop << " iterations." << std::endl;
         }
-        double param2norm = beta.dot(beta);
+        const auto param2norm = beta.dot(beta);
         if (std::abs(param2norm) < eps) {
             std::cout << "    1': ||u_{k}-u_{k-1}||_2     = " << std::setw(15) << 0.0
                 << std::setw(15) << 0.0 << std::endl;
