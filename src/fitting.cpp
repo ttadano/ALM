@@ -30,9 +30,9 @@
 #include <Eigen/SparseCore>
 #include <Eigen/SparseQR>
 #include <Eigen/SparseCholesky>
-#include <Eigen/IterativeLinearSolvers>
-#include <unsupported/Eigen/SparseExtra>
-#include <bench/BenchTimer.h>
+//#include <Eigen/IterativeLinearSolvers>
+//#include <unsupported/Eigen/SparseExtra>
+//#include <bench/BenchTimer.h>
 #endif
 
 using namespace ALM_NS;
@@ -100,12 +100,12 @@ int Fitting::optimize_main(const Symmetry *symmetry,
     auto N = 0;
     auto N_new = 0;
     for (auto i = 0; i < maxorder; ++i) {
-        N += fcs->nequiv[i].size();
+        N += fcs->get_nequiv()[i].size();
     }
 
-    if (constraint->constraint_algebraic) {
+    if (constraint->get_constraint_algebraic()) {
         for (auto i = 0; i < maxorder; ++i) {
-            N_new += constraint->index_bimap[i].size();
+              N_new += constraint->get_index_bimap(i).size();        
         }
     }
 
@@ -137,7 +137,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
         }
 
         std::cout << "  Total Number of Parameters : " << N << '\n';
-        if (constraint->constraint_algebraic) {
+        if (constraint->get_constraint_algebraic()) {
             std::cout << "  Total Number of Free Parameters : " << N_new << '\n';
         }
         std::cout << '\n';
@@ -288,7 +288,7 @@ int Fitting::least_squares(const int maxorder,
     std::vector<double> amat;
     std::vector<double> bvec;
 
-    if (constraint->constraint_algebraic) {
+    if (constraint->get_constraint_algebraic()) {
 
         // Apply constraints algebraically. (ICONST = 2, 3 is not supported.)
         // SPARSE = 1 is used only when the constraints are considered algebraically.
@@ -399,16 +399,16 @@ int Fitting::least_squares(const int maxorder,
         assert(!amat.empty());
         assert(!bvec.empty());
 
-        if (constraint->exist_constraint) {
+        if (constraint->get_exist_constraint()) {
             info_fitting
                 = fit_with_constraints(N,
                                        M,
-                                       constraint->number_of_constraints,
+                                       constraint->get_number_of_constraints(),
                                        &amat[0],
                                        &bvec[0],
                                        &param_out[0],
-                                       constraint->const_mat,
-                                       constraint->const_rhs,
+                                       constraint->get_const_mat(),
+                                       constraint->get_const_rhs(),
                                        verbosity);
         } else {
             info_fitting
@@ -471,12 +471,13 @@ int Fitting::elastic_net(const int maxorder,
                 u[i][j] *= inv_dnorm;
             }
         }
-
+        double scaled_val, scale_factor;
         // Scale force constants
         for (i = 0; i < maxorder; ++i) {
-            const auto scale_factor = std::pow(optcontrol.displacement_scaling_factor, i + 1);
-            for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-                constraint->const_fix[i][j].val_to_fix *= scale_factor;
+            scale_factor = std::pow(optcontrol.displacement_scaling_factor, i + 1);
+            for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
+            //   scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
+            //    constraint->set_const_fix_val_to_fix(i, j, 1.0);
             }
         }
     }
@@ -546,11 +547,13 @@ int Fitting::elastic_net(const int maxorder,
 
 
     // Scale back force constants
+
     if (scale_displacement) {
         for (i = 0; i < maxorder; ++i) {
             const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
-            for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-                constraint->const_fix[i][j].val_to_fix *= scale_factor;
+            for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
+            //    const auto scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
+            //    constraint->set_const_fix_val_to_fix(i, j, scaled_val);
             }
         }
     }
@@ -592,16 +595,16 @@ int Fitting::elastic_net(const int maxorder,
 
         for (i = 0; i < maxorder; ++i) {
             nzero_lasso[i] = 0;
-            for (const auto &it : constraint->index_bimap[i]) {
+            for (const auto &it : constraint->get_index_bimap(i)) {
                 auto inew = it.left + iparam;
                 if (std::abs(param_tmp[inew]) < eps) ++nzero_lasso[i];
             }
-            iparam += constraint->index_bimap[i].size();
+            iparam += constraint->get_index_bimap(i).size();
         }
 
         for (auto order = 0; order < maxorder; ++order) {
             std::cout << "  Number of non-zero " << std::setw(9) << str_order[order] << " FCs : "
-                << constraint->index_bimap[order].size() - nzero_lasso[order] << std::endl;
+                << constraint->get_index_bimap(order).size() - nzero_lasso[order] << std::endl;
         }
         std::cout << std::endl;
     }
@@ -612,7 +615,7 @@ int Fitting::elastic_net(const int maxorder,
         for (i = 0; i < maxorder; ++i) {
             const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
 
-            for (j = 0; j < constraint->index_bimap[i].size(); ++j) {
+            for (j = 0; j < constraint->get_index_bimap(i).size(); ++j) {
                 param_tmp[k] *= scale_factor;
                 ++k;
             }
@@ -622,7 +625,7 @@ int Fitting::elastic_net(const int maxorder,
     recover_original_forceconstants(maxorder,
                                     param_tmp,
                                     param_out,
-                                    fcs->nequiv,
+                                    fcs->get_nequiv(),
                                     constraint);
 
     return info_fitting;
@@ -768,12 +771,12 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
 
         for (auto i = 0; i < maxorder; ++i) {
             nzero_lasso[i] = 0;
-            for (const auto &it : constraint->index_bimap[i]) {
+            for (const auto &it : constraint->get_index_bimap(i)) {
                 int inew = it.left + iparam;
                 if (std::abs(x[inew]) < eps) ++nzero_lasso[i];
 
             }
-            iparam += constraint->index_bimap[i].size();
+            iparam += constraint->get_index_bimap(i).size();
         }
 
         ofs_cv << std::setw(15) << std::sqrt(res1);
@@ -791,7 +794,7 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
             for (auto i = 0; i < maxorder; ++i) {
                 const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
 
-                for (auto j = 0; j < constraint->index_bimap[i].size(); ++j) {
+                for (auto j = 0; j < constraint->get_index_bimap(i).size(); ++j) {
                     params_tmp[k] *= scale_factor * factor_std(k);
                     ++k;
                 }
@@ -1069,7 +1072,7 @@ void Fitting::set_fcs_values(const int maxorder,
     auto Nirred = 0;
     for (i = 0; i < maxorder; ++i) {
         N += nequiv[i].size();
-        Nirred += constraint->index_bimap[i].size();
+        Nirred += constraint->get_index_bimap(i).size();
     }
 
     std::vector<double> param_in(Nirred, 0.0);
@@ -1098,15 +1101,15 @@ int Fitting::get_ndata_used() const
 }
 
 
-int Fitting::fit_without_constraints(int N,
-                                     int M,
+int Fitting::fit_without_constraints(const int N,
+                                     const int M,
                                      double *amat,
-                                     double *bvec,
+                                     const double *bvec,
                                      double *param_out,
                                      const int verbosity) const
 {
     int i;
-    int nrhs = 1, nrank, INFO;
+    int nrhs = 1, nrank, INFO, M_tmp, N_tmp;
     auto rcond = -1.0;
     auto f_square = 0.0;
     double *WORK, *S, *fsum2;
@@ -1136,7 +1139,10 @@ int Fitting::fit_without_constraints(int N,
     if (verbosity > 0) std::cout << "  SVD has started ... ";
 
     // Fitting with singular value decomposition
-    dgelss_(&M, &N, &nrhs, amat, &M, fsum2, &LMAX,
+    // M_tmp and N_tmp are prepared to cast N and M to (non-const) int.
+    M_tmp = M;
+    N_tmp = N;
+    dgelss_(&M_tmp, &N_tmp, &nrhs, amat, &M_tmp, fsum2, &LMAX,
             S, &rcond, &nrank, WORK, &LWORK, &INFO);
 
     if (verbosity > 0) {
@@ -1170,17 +1176,18 @@ int Fitting::fit_without_constraints(int N,
     return INFO;
 }
 
-int Fitting::fit_with_constraints(int N,
-                                  int M,
-                                  int P,
+int Fitting::fit_with_constraints(const int N,
+                                  const int M,
+                                  const int P,
                                   double *amat,
-                                  double *bvec,
+                                  const double *bvec,
                                   double *param_out,
-                                  double **cmat,
+                                  const double * const *cmat,
                                   double *dvec,
                                   const int verbosity) const
 {
     int i, j;
+    int N_tmp, M_tmp, P_tmp;
     double *fsum2;
     double *mat_tmp;
 
@@ -1249,7 +1256,12 @@ int Fitting::fit_with_constraints(int N,
     allocate(WORK, LWORK);
     allocate(x, N);
 
-    dgglse_(&M, &N, &P, amat, &M, cmat_mod, &P,
+    // M_tmp, N_tmp, P_tmp are prepared to cast N, M, P to (non-const)
+    // int.
+    M_tmp = M;
+    N_tmp = N;
+    P_tmp = P;
+    dgglse_(&M_tmp, &N_tmp, &P_tmp, amat, &M_tmp, cmat_mod, &P_tmp,
             fsum2, dvec, x, WORK, &LWORK, &INFO);
 
     if (verbosity > 0) std::cout << " finished. " << std::endl;
@@ -1279,10 +1291,10 @@ int Fitting::fit_with_constraints(int N,
     return INFO;
 }
 
-int Fitting::fit_algebraic_constraints(int N,
-                                       int M,
+int Fitting::fit_algebraic_constraints(const int N,
+                                       const int M,
                                        double *amat,
-                                       double *bvec,
+                                       const double *bvec,
                                        std::vector<double> &param_out,
                                        const double fnorm,
                                        const int maxorder,
@@ -1291,7 +1303,7 @@ int Fitting::fit_algebraic_constraints(int N,
                                        const int verbosity) const
 {
     int i;
-    int nrhs = 1, nrank, INFO, LWORK;
+    int nrhs = 1, nrank, INFO, LWORK, M_tmp, N_tmp;
     int LMIN, LMAX;
     double rcond = -1.0;
     double *WORK, *S, *fsum2;
@@ -1318,7 +1330,10 @@ int Fitting::fit_algebraic_constraints(int N,
     if (verbosity > 0) std::cout << "  SVD has started ... ";
 
     // Fitting with singular value decomposition
-    dgelss_(&M, &N, &nrhs, amat, &M, fsum2, &LMAX,
+    // M_tmp and N_tmp are prepared to cast N and M to (non-const) int.
+    M_tmp = M;
+    N_tmp = N;
+    dgelss_(&M_tmp, &N_tmp, &nrhs, amat, &M_tmp, fsum2, &LMAX,
             S, &rcond, &nrank, WORK, &LWORK, &INFO);
 
     deallocate(WORK);
@@ -1356,7 +1371,7 @@ int Fitting::fit_algebraic_constraints(int N,
         recover_original_forceconstants(maxorder,
                                         param_irred,
                                         param_out,
-                                        fcs->nequiv,
+                                    fcs->get_nequiv(),
                                         constraint);
     }
 
@@ -1383,7 +1398,7 @@ void Fitting::get_matrix_elements(const int maxorder,
     const int natmin3 = 3 * natmin;
     auto ncols = 0;
 
-    for (i = 0; i < maxorder; ++i) ncols += fcs->nequiv[i].size();
+    for (i = 0; i < maxorder; ++i) ncols += fcs->get_nequiv()[i].size();
 
     const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
 
@@ -1430,16 +1445,16 @@ void Fitting::get_matrix_elements(const int maxorder,
 
                 mm = 0;
 
-                for (const auto &iter : fcs->nequiv[order]) {
+                for (const auto &iter : fcs->get_nequiv()[order]) {
                     for (i = 0; i < iter; ++i) {
-                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        ind[0] = fcs->get_fc_table()[order][mm].elems[0];
                         k = inprim_index(ind[0], symmetry);
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
-                            ind[j] = fcs->fc_table[order][mm].elems[j];
-                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                            ind[j] = fcs->get_fc_table()[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->get_fc_table()[order][mm].elems[j]];
                         }
-                        amat_orig_tmp[k][iparam] -= gamma(order + 2, ind) * fcs->fc_table[order][mm].sign * amat_tmp;
+                        amat_orig_tmp[k][iparam] -= gamma(order + 2, ind) * fcs->get_fc_table()[order][mm].sign * amat_tmp;
                         ++mm;
                     }
                     ++iparam;
@@ -1487,8 +1502,8 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
     auto ncols_new = 0;
 
     for (i = 0; i < maxorder; ++i) {
-        ncols += fcs->nequiv[i].size();
-        ncols_new += constraint->index_bimap[i].size();
+        ncols += fcs->get_nequiv()[i].size();
+        ncols_new += constraint->get_index_bimap(i).size();
     }
 
     const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
@@ -1547,18 +1562,18 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
                 mm = 0;
 
-                for (const auto &iter : fcs->nequiv[order]) {
+                for (const auto &iter : fcs->get_nequiv()[order]) {
                     for (i = 0; i < iter; ++i) {
-                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        ind[0] = fcs->get_fc_table()[order][mm].elems[0];
                         k = inprim_index(ind[0], symmetry);
 
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
-                            ind[j] = fcs->fc_table[order][mm].elems[j];
-                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                            ind[j] = fcs->get_fc_table()[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->get_fc_table()[order][mm].elems[j]];
                         }
                         amat_orig_tmp[k][iparam] -= gamma(order + 2, ind)
-                            * fcs->fc_table[order][mm].sign * amat_tmp;
+                            * fcs->get_fc_table()[order][mm].sign * amat_tmp;
                         ++mm;
                     }
                     ++iparam;
@@ -1573,17 +1588,17 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 
             for (order = 0; order < maxorder; ++order) {
 
-                for (i = 0; i < constraint->const_fix[order].size(); ++i) {
+                for (i = 0; i < constraint->get_const_fix(order).size(); ++i) {
 
                     for (j = 0; j < natmin3; ++j) {
-                        bvec[j + idata] -= constraint->const_fix[order][i].val_to_fix
-                            * amat_orig_tmp[j][ishift + constraint->const_fix[order][i].p_index_target];
+                        bvec[j + idata] -= constraint->get_const_fix(order)[i].val_to_fix
+                            * amat_orig_tmp[j][ishift + constraint->get_const_fix(order)[i].p_index_target];
                     }
                 }
 
                 //                std::cout << "pass const_fix" << std::endl;
 
-                for (const auto &it : constraint->index_bimap[order]) {
+                for (const auto &it : constraint->get_index_bimap(order)) {
                     inew = it.left + iparam;
                     iold = it.right + ishift;
 
@@ -1592,25 +1607,25 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
                     }
                 }
 
-                for (i = 0; i < constraint->const_relate[order].size(); ++i) {
+                for (i = 0; i < constraint->get_const_relate(order).size(); ++i) {
 
-                    iold = constraint->const_relate[order][i].p_index_target + ishift;
+                    iold = constraint->get_const_relate(order)[i].p_index_target + ishift;
 
-                    for (j = 0; j < constraint->const_relate[order][i].alpha.size(); ++j) {
+                    for (j = 0; j < constraint->get_const_relate(order)[i].alpha.size(); ++j) {
 
-                        inew = constraint->index_bimap[order].right.at(
-                                constraint->const_relate[order][i].p_index_orig[j]) +
+                        inew = constraint->get_index_bimap(order).right.at(
+                            constraint->get_const_relate(order)[i].p_index_orig[j]) +
                             iparam;
 
                         for (k = 0; k < natmin3; ++k) {
                             amat_mod_tmp[k][inew] -= amat_orig_tmp[k][iold]
-                                * constraint->const_relate[order][i].alpha[j];
+                                * constraint->get_const_relate(order)[i].alpha[j];
                         }
                     }
                 }
 
-                ishift += fcs->nequiv[order].size();
-                iparam += constraint->index_bimap[order].size();
+                ishift += fcs->get_nequiv()[order].size();
+                iparam += constraint->get_index_bimap(order).size();
             }
 
             for (i = 0; i < natmin3; ++i) {
@@ -1659,8 +1674,8 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
     auto ncols_new = 0;
 
     for (i = 0; i < maxorder; ++i) {
-        ncols += fcs->nequiv[i].size();
-        ncols_new += constraint->index_bimap[i].size();
+        ncols += fcs->get_nequiv()[i].size();
+        ncols_new += constraint->get_index_bimap(i).size();
     }
 
     const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
@@ -1721,18 +1736,18 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 
                 mm = 0;
 
-                for (const auto &iter : fcs->nequiv[order]) {
+                for (const auto &iter : fcs->get_nequiv()[order]) {
                     for (i = 0; i < iter; ++i) {
-                        ind[0] = fcs->fc_table[order][mm].elems[0];
+                        ind[0] = fcs->get_fc_table()[order][mm].elems[0];
                         k = inprim_index(ind[0], symmetry);
 
                         amat_tmp = 1.0;
                         for (j = 1; j < order + 2; ++j) {
-                            ind[j] = fcs->fc_table[order][mm].elems[j];
-                            amat_tmp *= u_multi[irow][fcs->fc_table[order][mm].elems[j]];
+                            ind[j] = fcs->get_fc_table()[order][mm].elems[j];
+                            amat_tmp *= u_multi[irow][fcs->get_fc_table()[order][mm].elems[j]];
                         }
                         amat_orig_tmp[k][iparam] -= gamma(order + 2, ind)
-                            * fcs->fc_table[order][mm].sign * amat_tmp;
+                            * fcs->get_fc_table()[order][mm].sign * amat_tmp;
                         ++mm;
                     }
                     ++iparam;
@@ -1747,15 +1762,15 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 
             for (order = 0; order < maxorder; ++order) {
 
-                for (i = 0; i < constraint->const_fix[order].size(); ++i) {
+                for (i = 0; i < constraint->get_const_fix(order).size(); ++i) {
 
                     for (j = 0; j < natmin3; ++j) {
-                        sp_bvec(j + idata) -= constraint->const_fix[order][i].val_to_fix
-                            * amat_orig_tmp[j][ishift + constraint->const_fix[order][i].p_index_target];
+                        sp_bvec(j + idata) -= constraint->get_const_fix(order)[i].val_to_fix
+                            * amat_orig_tmp[j][ishift + constraint->get_const_fix(order)[i].p_index_target];
                     }
                 }
 
-                for (const auto &it : constraint->index_bimap[order]) {
+                for (const auto &it : constraint->get_index_bimap(order)) {
                     inew = it.left + iparam;
                     iold = it.right + ishift;
 
@@ -1764,25 +1779,25 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
                     }
                 }
 
-                for (i = 0; i < constraint->const_relate[order].size(); ++i) {
+                for (i = 0; i < constraint->get_const_relate(order).size(); ++i) {
 
-                    iold = constraint->const_relate[order][i].p_index_target + ishift;
+                    iold = constraint->get_const_relate(order)[i].p_index_target + ishift;
 
-                    for (j = 0; j < constraint->const_relate[order][i].alpha.size(); ++j) {
+                    for (j = 0; j < constraint->get_const_relate(order)[i].alpha.size(); ++j) {
 
-                        inew = constraint->index_bimap[order].right.at(
-                                constraint->const_relate[order][i].p_index_orig[j]) +
+                        inew = constraint->get_index_bimap(order).right.at(
+                            constraint->get_const_relate(order)[i].p_index_orig[j]) +
                             iparam;
 
                         for (k = 0; k < natmin3; ++k) {
                             amat_mod_tmp[k][inew] -= amat_orig_tmp[k][iold]
-                                * constraint->const_relate[order][i].alpha[j];
+                                * constraint->get_const_relate(order)[i].alpha[j];
                         }
                     }
                 }
 
-                ishift += fcs->nequiv[order].size();
-                iparam += constraint->index_bimap[order].size();
+                ishift += fcs->get_nequiv()[order].size();
+                iparam += constraint->get_index_bimap(order).size();
             }
 
             for (i = 0; i < natmin3; ++i) {
@@ -1820,7 +1835,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 void Fitting::recover_original_forceconstants(const int maxorder,
                                               const std::vector<double> &param_in,
                                               std::vector<double> &param_out,
-                                              std::vector<int> *nequiv,
+                                              const std::vector<int> *nequiv,
                                               const Constraint *constraint) const
 {
     // Expand the given force constants into the larger sets
@@ -1839,35 +1854,35 @@ void Fitting::recover_original_forceconstants(const int maxorder,
     param_out.resize(nparams, 0.0);
 
     for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < constraint->const_fix[i].size(); ++j) {
-            param_out[constraint->const_fix[i][j].p_index_target + ishift]
-                = constraint->const_fix[i][j].val_to_fix;
+        for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
+            param_out[constraint->get_const_fix(i)[j].p_index_target + ishift]
+                = constraint->get_const_fix(i)[j].val_to_fix;
         }
 
-        for (const auto &it : constraint->index_bimap[i]) {
+        for (const auto &it : constraint->get_index_bimap(i)) {
             inew = it.left + iparam;
             iold = it.right + ishift;
 
             param_out[iold] = param_in[inew];
         }
 
-        for (j = 0; j < constraint->const_relate[i].size(); ++j) {
+        for (j = 0; j < constraint->get_const_relate(i).size(); ++j) {
             tmp = 0.0;
 
-            for (k = 0; k < constraint->const_relate[i][j].alpha.size(); ++k) {
-                tmp += constraint->const_relate[i][j].alpha[k]
-                    * param_out[constraint->const_relate[i][j].p_index_orig[k] + ishift];
+            for (k = 0; k < constraint->get_const_relate(i)[j].alpha.size(); ++k) {
+                tmp += constraint->get_const_relate(i)[j].alpha[k]
+                    * param_out[constraint->get_const_relate(i)[j].p_index_orig[k] + ishift];
             }
-            param_out[constraint->const_relate[i][j].p_index_target + ishift] = -tmp;
+            param_out[constraint->get_const_relate(i)[j].p_index_target + ishift] = -tmp;
         }
 
         ishift += nequiv[i].size();
-        iparam += constraint->index_bimap[i].size();
+        iparam += constraint->get_index_bimap(i).size();
     }
 }
 
 
-void Fitting::data_multiplier(double **data_in,
+void Fitting::data_multiplier(const double * const *data_in,
                               std::vector<std::vector<double>> &data_out,
                               const int ndata_used,
                               const Symmetry *symmetry) const
@@ -1957,6 +1972,71 @@ double Fitting::gamma(const int n,
     return static_cast<double>(nsame_to_front) / static_cast<double>(denom);
 }
 
+int Fitting::get_ndata() const
+{
+    return ndata;
+}
+
+void Fitting::set_ndata(const int ndata_in)
+{
+    ndata = ndata_in;
+}
+
+int Fitting::get_nstart() const
+{
+    return nstart;
+}
+
+void Fitting::set_nstart(const int nstart_in)
+{
+    nstart = nstart_in;
+}
+
+int Fitting::get_nend() const
+{
+    return nend;
+}
+
+void Fitting::set_nend(const int nend_in)
+{
+    nend = nend_in;
+}
+
+int Fitting::get_skip_s() const
+{
+    return skip_s;
+}
+
+void Fitting::set_skip_s(const int skip_s_in)
+{
+    skip_s = skip_s_in;
+}
+
+int Fitting::get_skip_e() const
+{
+    return skip_e;
+}
+
+void Fitting::set_skip_e(const int skip_e_in)
+{
+    skip_e = skip_e_in;
+}
+
+double * Fitting::get_params() const
+{
+    return params;
+}
+
+int Fitting::get_use_sparseQR() const
+{
+    return use_sparseQR;
+}
+
+void Fitting::set_use_sparseQR(const int use_sparseQR_in)
+{
+    use_sparseQR = use_sparseQR_in;
+}
+
 int Fitting::factorial(const int n) const
 {
     if (n == 1 || n == 0) {
@@ -2032,7 +2112,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
                                 const Constraint *constraint,
                                 const int verbosity)
 {
-    Eigen::BenchTimer t;
+//    Eigen::BenchTimer t;
 
     if (verbosity > 0) {
         std::cout << "  Solve least-squares problem by sparse LDLT." << std::endl;
@@ -2042,6 +2122,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
     Eigen::VectorXd AtB, x;
     AtB = sp_mat.transpose() * sp_bvec;
 
+/*
     t.reset();
     t.start();
     Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
@@ -2053,12 +2134,13 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 
     t.reset();
     t.start();
+*/
     Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
     x = ldlt.solve(AtB);
-        t.stop();
-    std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+ //       t.stop();
+ //   std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
-
+/*
      t.reset(); t.start();
      Eigen::ConjugateGradient<SpMat> cg(AtA);
      cg.setTolerance(optcontrol.tolerance_iteration);
@@ -2066,7 +2148,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
      x.setZero(); x = cg.solve(AtB);
      t.stop();
      std::cout << "cg    : " << cg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
-
+*/
   /*   t.reset(); t.start();
      Eigen::LeastSquaresConjugateGradient<SpMat> lscg(sp_mat);
      lscg.setTolerance(eps10);
@@ -2076,6 +2158,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
      t.stop();
      std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";*/
 
+/*
      t.reset(); t.start();
      Eigen::BiCGSTAB<SpMat> bicg(AtA);
      bicg.setTolerance(optcontrol.tolerance_iteration);
@@ -2084,7 +2167,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
      t.stop();
      std::cout << "bicg    : " << bicg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
 
-
+*/
     auto res = sp_bvec - sp_mat * x;
     auto res2norm = res.squaredNorm();
     auto nparams = x.size();
@@ -2100,7 +2183,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
         recover_original_forceconstants(maxorder,
                                         param_irred,
                                         param_out,
-                                        fcs->nequiv,
+                                        fcs->get_nequiv(),
                                         constraint);
 
         if (verbosity > 0) {

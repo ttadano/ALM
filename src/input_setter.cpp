@@ -170,11 +170,11 @@ void InputSetter::set_general_vars(ALM *alm,
     }
 
     alm->files->print_hessian = print_hessian;
-    alm->constraint->tolerance_constraint = tolerance_constraint;
+    alm->constraint->set_tolerance_constraint(tolerance_constraint);
 
     if (mode == "suggest") {
-        alm->displace->disp_basis = str_disp_basis;
-        alm->displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
+        alm->displace->set_disp_basis(str_disp_basis);
+        alm->displace->set_trim_dispsign_for_evenfunc(trim_dispsign_for_evenfunc);
     }
 }
 
@@ -203,11 +203,11 @@ void InputSetter::set_optimize_vars(ALM *alm,
                                     const int flag_sparse,
                                     const OptimizerControl &optcontrol_in) const
 {
-    alm->fitting->ndata = ndata;
-    alm->fitting->nstart = nstart;
-    alm->fitting->nend = nend;
-    alm->fitting->skip_s = skip_s;
-    alm->fitting->skip_e = skip_e;
+    alm->fitting->set_ndata(ndata);
+    alm->fitting->set_nstart(nstart);
+    alm->fitting->set_nend(nend);
+    alm->fitting->set_skip_s(skip_s);
+    alm->fitting->set_skip_e(skip_e);
 
     alm->files->file_disp = dfile;
     alm->files->file_force = ffile;
@@ -219,7 +219,7 @@ void InputSetter::set_optimize_vars(ALM *alm,
 
     // use_sparseQR is redundant because the same informatio is
     // included in the optcontrol
-    alm->fitting->use_sparseQR = flag_sparse;
+    alm->fitting->set_use_sparseQR(flag_sparse);
     alm->fitting->set_optimizer_control(optcontrol_in);
 }
 
@@ -231,12 +231,12 @@ void InputSetter::set_constraint_vars(ALM *alm,
                                       const bool fix_harmonic,
                                       const bool fix_cubic) const
 {
-    alm->constraint->constraint_mode = constraint_flag;
-    alm->constraint->rotation_axis = rotation_axis;
-    alm->constraint->fc2_file = fc2_file;
-    alm->constraint->fix_harmonic = fix_harmonic;
-    alm->constraint->fc3_file = fc3_file;
-    alm->constraint->fix_cubic = fix_cubic;
+    alm->constraint->set_constraint_mode(constraint_flag);
+    alm->constraint->set_rotation_axis(rotation_axis);
+    alm->constraint->set_fc_file(2, fc2_file);
+    alm->constraint->set_fix_harmonic(fix_harmonic);
+    alm->constraint->set_fc_file(3, fc3_file);
+    alm->constraint->set_fix_cubic(fix_cubic);
 }
 
 

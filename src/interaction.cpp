@@ -529,7 +529,7 @@ int * Interaction::get_nbody_include() const
     return nbody_include;
 }
 
-const std::string &Interaction::get_ordername(const unsigned int order) const
+const std::string Interaction::get_ordername(const unsigned int order) const
 {
     return str_order[order];
 }

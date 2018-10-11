@@ -62,11 +62,11 @@ void InputParser::run(ALM *alm,
 void InputParser::parse_displacement_and_force(ALM *alm) const
 {
     const int nat = alm->get_supercell().number_of_atoms;
-    const auto ndata = alm->fitting->ndata;
-    const auto nstart = alm->fitting->nstart;
-    const auto nend = alm->fitting->nend;
-    const auto skip_s = alm->fitting->skip_s;
-    const auto skip_e = alm->fitting->skip_e;
+    const auto ndata = alm->fitting->get_ndata();
+    const auto nstart = alm->fitting->get_nstart();
+    const auto nend = alm->fitting->get_nend();
+    const auto skip_s = alm->fitting->get_skip_s();
+    const auto skip_e = alm->fitting->get_skip_e();
     const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
     double **u;
     double **f;
