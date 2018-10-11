@@ -74,7 +74,7 @@ void Writer::write_input_vars(const ALM *alm) const
 
 
     if (alm->get_run_mode() == "suggest") {
-        std::cout << "  DBASIS = " << alm->displace->disp_basis << std::endl;
+        std::cout << "  DBASIS = " << alm->displace->get_disp_basis() << std::endl;
         std::cout << std::endl;
 
     } else if (alm->get_run_mode() == "fitting") {
@@ -347,9 +347,9 @@ void Writer::write_displacement_pattern(ALM *alm) const
 
         int counter = 0;
 
-        ofs_pattern << "Basis : " << alm->displace->disp_basis[0] << std::endl;
+        ofs_pattern << "Basis : " << alm->displace->get_disp_basis()[0] << std::endl;
 
-        for (auto entry : alm->displace->pattern_all[order]) {
+        for (auto entry : alm->displace->get_pattern_all(order)) {
             ++counter;
 
             ofs_pattern << std::setw(5) << counter << ":"

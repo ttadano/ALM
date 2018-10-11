@@ -191,11 +191,11 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     deallocate(fc_table);
 
     allocate(pattern_all, maxorder);
+    // pattern_all is updated.
     generate_pattern_all(maxorder,
                          system->get_supercell().number_of_atoms,
                          system->get_supercell().lattice_vector,
                          symmetry,
-                         pattern_all,
                          dispset, preferred_basis);
 
     deallocate(dispset);
@@ -218,6 +218,21 @@ void Displace::set_trim_dispsign_for_evenfunc(const bool trim_dispsign_for_evenf
     trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc_in;
 }
 
+std::string Displace::get_disp_basis() const
+{
+    return disp_basis;
+}
+
+void Displace::set_disp_basis(const std::string disp_basis_in)
+{
+    disp_basis = disp_basis_in;
+}
+
+const std::vector<AtomWithDirection> & Displace::get_pattern_all(const int order) const
+{
+    return pattern_all[order];
+}
+
 void Displace::set_default_variables()
 {
     trim_dispsign_for_evenfunc = true;
@@ -234,8 +249,7 @@ void Displace::generate_pattern_all(const int N,
                                     const int nat,
                                     const double lavec[3][3],
                                     const Symmetry *symmetry,
-                                    std::vector<AtomWithDirection> *pattern,
-                                    std::set<DispAtomSet> *dispset_in,
+                                    const std::set<DispAtomSet> *dispset_in,
                                     const std::string preferred_basis)
 {
     int i, j;
@@ -258,7 +272,7 @@ void Displace::generate_pattern_all(const int N,
 
     for (order = 0; order < N; ++order) {
 
-        pattern[order].clear();
+        pattern_all[order].clear();
 
         for (auto it = dispset_in[order].cbegin(); it != dispset_in[order].cend(); ++it) {
 
@@ -319,7 +333,7 @@ void Displace::generate_pattern_all(const int N,
                         directions.push_back(disp_tmp[j]);
                     }
                 }
-                pattern[order].push_back(AtomWithDirection(atoms, directions));
+                pattern_all[order].push_back(AtomWithDirection(atoms, directions));
             }
         }
     }
@@ -355,8 +369,8 @@ void Displace::generate_signvecs(const int N,
 void Displace::find_unique_sign_pairs(const int N,
                                       const int nat,
                                       const Symmetry *symmetry,
-                                      std::vector<std::vector<int>> sign_in,
-                                      std::vector<int> pair_in,
+                                      const std::vector<std::vector<int>> sign_in,
+                                      const std::vector<int> pair_in,
                                       std::vector<std::vector<int>> &sign_out,
                                       const std::string preferred_basis) const
 {
@@ -370,7 +384,7 @@ void Displace::find_unique_sign_pairs(const int N,
     double **disp, **disp_sym;
 
     std::vector<int> symnum_vec;
-    std::vector<int>::iterator loc;
+    std::vector<int>::const_iterator loc;
     std::vector<int> atom_tmp, pair_tmp;
     std::vector<std::vector<int>> sign_found;
     std::vector<int> sign_tmp;

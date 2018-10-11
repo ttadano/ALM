@@ -97,7 +97,7 @@ namespace ALM_NS
         void set_default_variables();
         void deallocate_variables();
 
-        void data_multiplier(double **,
+        void data_multiplier(const double * const *,
                              std::vector<std::vector<double>> &,
                              const int,
                              const Symmetry *) const;
@@ -105,17 +105,17 @@ namespace ALM_NS
         int inprim_index(const int,
                          const Symmetry *) const;
 
-        int fit_without_constraints(int,
-                                    int,
+        int fit_without_constraints(const int,
+                                    const int,
                                     double *,
-                                    double *,
+                                    const double *,
                                     double *,
                                     const int) const;
 
-        int fit_algebraic_constraints(int,
-                                      int,
+        int fit_algebraic_constraints(const int,
+                                      const int,
                                       double *,
-                                      double *,
+                                      const double *,
                                       std::vector<double> &,
                                       const double,
                                       const int,
@@ -123,13 +123,13 @@ namespace ALM_NS
                                       const Constraint *,
                                       const int) const;
 
-        int fit_with_constraints(int,
-                                 int,
-                                 int,
+        int fit_with_constraints(const int,
+                                 const int,
+                                 const int,
                                  double *,
+                                 const double *,
                                  double *,
-                                 double *,
-                                 double **,
+                                 const double * const *,
                                  double *,
                                  const int) const;
 
@@ -164,7 +164,7 @@ namespace ALM_NS
         void recover_original_forceconstants(const int,
                                              const std::vector<double> &,
                                              std::vector<double> &,
-                                             std::vector<int> *,
+                                             const std::vector<int> *,
                                              const Constraint *) const;
 
         int factorial(const int) const;

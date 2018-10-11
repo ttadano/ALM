@@ -332,15 +332,15 @@ int Fitting::get_ndata_used() const
     return ndata_used;
 }
 
-int Fitting::fit_without_constraints(int N,
-                                     int M,
+int Fitting::fit_without_constraints(const int N,
+                                     const int M,
                                      double *amat,
-                                     double *bvec,
+                                     const double *bvec,
                                      double *param_out,
                                      const int verbosity) const
 {
     int i;
-    int nrhs = 1, nrank, INFO;
+    int nrhs = 1, nrank, INFO, M_tmp, N_tmp;
     auto rcond = -1.0;
     auto f_square = 0.0;
     double *WORK, *S, *fsum2;
@@ -369,7 +369,10 @@ int Fitting::fit_without_constraints(int N,
     if (verbosity > 0) std::cout << "  SVD has started ... ";
 
     // Fitting with singular value decomposition
-    dgelss_(&M, &N, &nrhs, amat, &M, fsum2, &LMAX,
+    // M_tmp and N_tmp are prepared to cast N and M to (non-const) int.
+    M_tmp = M;
+    N_tmp = N;
+    dgelss_(&M_tmp, &N_tmp, &nrhs, amat, &M_tmp, fsum2, &LMAX,
             S, &rcond, &nrank, WORK, &LWORK, &INFO);
 
     if (verbosity > 0) {
@@ -403,17 +406,18 @@ int Fitting::fit_without_constraints(int N,
     return INFO;
 }
 
-int Fitting::fit_with_constraints(int N,
-                                  int M,
-                                  int P,
+int Fitting::fit_with_constraints(const int N,
+                                  const int M,
+                                  const int P,
                                   double *amat,
-                                  double *bvec,
+                                  const double *bvec,
                                   double *param_out,
-                                  double **cmat,
+                                  const double * const *cmat,
                                   double *dvec,
                                   const int verbosity) const
 {
     int i, j;
+    int N_tmp, M_tmp, P_tmp;
     double *fsum2;
     double *mat_tmp;
 
@@ -481,7 +485,12 @@ int Fitting::fit_with_constraints(int N,
     allocate(WORK, LWORK);
     allocate(x, N);
 
-    dgglse_(&M, &N, &P, amat, &M, cmat_mod, &P,
+    // M_tmp, N_tmp, P_tmp are prepared to cast N, M, P to (non-const)
+    // int.
+    M_tmp = M;
+    N_tmp = N;
+    P_tmp = P;
+    dgglse_(&M_tmp, &N_tmp, &P_tmp, amat, &M_tmp, cmat_mod, &P_tmp,
             fsum2, dvec, x, WORK, &LWORK, &INFO);
 
     if (verbosity > 0) std::cout << " finished. " << std::endl;
@@ -511,10 +520,10 @@ int Fitting::fit_with_constraints(int N,
     return INFO;
 }
 
-int Fitting::fit_algebraic_constraints(int N,
-                                       int M,
+int Fitting::fit_algebraic_constraints(const int N,
+                                       const int M,
                                        double *amat,
-                                       double *bvec,
+                                       const double *bvec,
                                        std::vector<double> &param_out,
                                        const double fnorm,
                                        const int maxorder,
@@ -523,7 +532,7 @@ int Fitting::fit_algebraic_constraints(int N,
                                        const int verbosity) const
 {
     int i;
-    int nrhs = 1, nrank, INFO, LWORK;
+    int nrhs = 1, nrank, INFO, LWORK, M_tmp, N_tmp;
     int LMIN, LMAX;
     double rcond = -1.0;
     double *WORK, *S, *fsum2;
@@ -549,7 +558,10 @@ int Fitting::fit_algebraic_constraints(int N,
     if (verbosity > 0) std::cout << "  SVD has started ... ";
 
     // Fitting with singular value decomposition
-    dgelss_(&M, &N, &nrhs, amat, &M, fsum2, &LMAX,
+    // M_tmp and N_tmp are prepared to cast N and M to (non-const) int.
+    M_tmp = M;
+    N_tmp = N;
+    dgelss_(&M_tmp, &N_tmp, &nrhs, amat, &M_tmp, fsum2, &LMAX,
             S, &rcond, &nrank, WORK, &LWORK, &INFO);
 
     deallocate(WORK);
@@ -1049,7 +1061,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 void Fitting::recover_original_forceconstants(const int maxorder,
                                               const std::vector<double> &param_in,
                                               std::vector<double> &param_out,
-                                              std::vector<int> *nequiv,
+                                              const std::vector<int> *nequiv,
                                               const Constraint *constraint) const
 {
     // Expand the given force constants into the larger sets
@@ -1096,7 +1108,7 @@ void Fitting::recover_original_forceconstants(const int maxorder,
 }
 
 
-void Fitting::data_multiplier(double **data_in,
+void Fitting::data_multiplier(const double * const *data_in,
                               std::vector<std::vector<double>> &data_out,
                               const int ndata_used,
                               const Symmetry *symmetry) const

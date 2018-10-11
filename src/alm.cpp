@@ -112,7 +112,7 @@ void ALM::set_displacement_param(const bool trim_dispsign_for_evenfunc) const //
 
 void ALM::set_displacement_basis(const std::string str_disp_basis) const // DBASIS
 {
-    displace->disp_basis = str_disp_basis;
+    displace->set_disp_basis(str_disp_basis);
 }
 
 void ALM::set_periodicity(const int is_periodic[3]) const // PERIODIC
@@ -286,7 +286,7 @@ int ALM::get_number_of_displacement_patterns(const int fc_order) const
 // harmonic=1, ...
 {
     const auto order = fc_order - 1;
-    return displace->pattern_all[order].size();
+    return displace->get_pattern_all(order).size();
 }
 
 void ALM::get_number_of_displaced_atoms(int *numbers,
@@ -295,8 +295,8 @@ void ALM::get_number_of_displaced_atoms(int *numbers,
 {
     const auto order = fc_order - 1;
 
-    for (int i = 0; i < displace->pattern_all[order].size(); ++i) {
-        numbers[i] = displace->pattern_all[order][i].atoms.size();
+    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
+        numbers[i] = displace->get_pattern_all(order)[i].atoms.size();
     }
 }
 
@@ -305,28 +305,27 @@ int ALM::get_displacement_patterns(int *atom_indices,
                                    const int fc_order) const
 // harmonic=1, ...
 {
-    AtomWithDirection *displacements;
     const auto order = fc_order - 1;
 
     auto i_atom = 0;
     auto i_disp = 0;
-    for (int i = 0; i < displace->pattern_all[order].size(); ++i) {
-        displacements = &displace->pattern_all[order][i];
-        for (int j = 0; j < displacements->atoms.size(); ++j) {
-            atom_indices[i_atom] = displacements->atoms[j];
+    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
+        const AtomWithDirection &displacements = displace->get_pattern_all(order)[i];
+        for (int j = 0; j < displacements.atoms.size(); ++j) {
+            atom_indices[i_atom] = displacements.atoms[j];
             ++i_atom;
             for (int k = 0; k < 3; ++k) {
-                disp_patterns[i_disp] = displacements->directions[3 * j + k];
+                disp_patterns[i_disp] = displacements.directions[3 * j + k];
                 ++i_disp;
             }
         }
     }
 
     // 0:Cartesian or 1:Fractional. -1 means something wrong.
-    if (displace->disp_basis[0] == 'C') {
+    if (displace->get_disp_basis()[0] == 'C') {
         return 0;
     }
-    if (displace->disp_basis[0] == 'F') {
+    if (displace->get_disp_basis()[0] == 'F') {
         return 1;
     }
     return -1;

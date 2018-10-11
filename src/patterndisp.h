@@ -136,8 +136,6 @@ namespace ALM_NS
         Displace();
         ~Displace();
 
-        std::string disp_basis;
-        std::vector<AtomWithDirection> *pattern_all;
         void gen_displacement_pattern(const Interaction *interaction,
                                       const Symmetry *symmetry,
                                       const Fcs *fcs,
@@ -146,9 +144,14 @@ namespace ALM_NS
                                       const int verbosity);
 
         void set_trim_dispsign_for_evenfunc(const bool);
+        std::string get_disp_basis() const;
+        void set_disp_basis(const std::string);
+        const std::vector<AtomWithDirection> &get_pattern_all(const int) const;
 
     private:
         bool trim_dispsign_for_evenfunc;
+        std::string disp_basis;
+        std::vector<AtomWithDirection> *pattern_all;
 
         std::vector<DispDirectionHarmonic> disp_harm, disp_harm_best;
         void set_default_variables();
@@ -157,8 +160,7 @@ namespace ALM_NS
                                   const int,
                                   const double [3][3],
                                   const Symmetry *symmetry,
-                                  std::vector<AtomWithDirection> *,
-                                  std::set<DispAtomSet> *,
+                                  const std::set<DispAtomSet> *,
                                   const std::string);
 
         void generate_signvecs(const int,
@@ -168,8 +170,8 @@ namespace ALM_NS
         void find_unique_sign_pairs(const int,
                                     const int,
                                     const Symmetry *,
-                                    std::vector<std::vector<int>>,
-                                    std::vector<int>,
+                                    const std::vector<std::vector<int>>,
+                                    const std::vector<int>,
                                     std::vector<std::vector<int>> &,
                                     const std::string) const;
     };

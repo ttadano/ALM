@@ -172,7 +172,7 @@ void InputSetter::set_general_vars(ALM *alm,
     alm->constraint->set_tolerance_constraint(tolerance_constraint);
 
     if (mode == "suggest") {
-        alm->displace->disp_basis = str_disp_basis;
+        alm->displace->set_disp_basis(str_disp_basis);
         alm->displace->set_trim_dispsign_for_evenfunc(trim_dispsign_for_evenfunc);
     }
 }
