@@ -107,12 +107,12 @@ void ALM::set_symmetry_tolerance(const double tolerance) const // TOLERANCE
 
 void ALM::set_displacement_param(const bool trim_dispsign_for_evenfunc) const // TRIMEVEN
 {
-    displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
+    displace->set_trim_dispsign_for_evenfunc(trim_dispsign_for_evenfunc);
 }
 
 void ALM::set_displacement_basis(const std::string str_disp_basis) const // DBASIS
 {
-    displace->disp_basis = str_disp_basis;
+    displace->set_disp_basis(str_disp_basis);
 }
 
 void ALM::set_periodicity(const int is_periodic[3]) const // PERIODIC
@@ -177,9 +177,9 @@ void ALM::set_displacement_and_force(const double *u_in,
     double **u;
     double **f;
 
-    fitting->ndata = ndata_used;
-    fitting->nstart = 1;
-    fitting->nend = ndata_used;
+    fitting->set_ndata(ndata_used);
+    fitting->set_nstart(1);
+    fitting->set_nend(ndata_used);
 
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
@@ -198,17 +198,17 @@ void ALM::set_displacement_and_force(const double *u_in,
 
 void ALM::set_constraint_type(const int constraint_flag) const // ICONST
 {
-    constraint->constraint_mode = constraint_flag;
+    constraint->set_constraint_mode(constraint_flag);
 }
 
 void ALM::set_rotation_axis(const std::string rotation_axis) const // ROTAXIS
 {
-    constraint->rotation_axis = rotation_axis;
+    constraint->set_rotation_axis(rotation_axis);
 }
 
 void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
 {
-    fitting->use_sparseQR = sparse_mode;
+    fitting->set_use_sparseQR(sparse_mode);
 }
 
 void ALM::set_fitting_filenames(const std::string dfile,
@@ -286,7 +286,7 @@ int ALM::get_number_of_displacement_patterns(const int fc_order) const
 // harmonic=1, ...
 {
     const auto order = fc_order - 1;
-    return displace->pattern_all[order].size();
+    return displace->get_pattern_all(order).size();
 }
 
 void ALM::get_number_of_displaced_atoms(int *numbers,
@@ -295,8 +295,8 @@ void ALM::get_number_of_displaced_atoms(int *numbers,
 {
     const auto order = fc_order - 1;
 
-    for (int i = 0; i < displace->pattern_all[order].size(); ++i) {
-        numbers[i] = displace->pattern_all[order][i].atoms.size();
+    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
+        numbers[i] = displace->get_pattern_all(order)[i].atoms.size();
     }
 }
 
@@ -305,28 +305,27 @@ int ALM::get_displacement_patterns(int *atom_indices,
                                    const int fc_order) const
 // harmonic=1, ...
 {
-    AtomWithDirection *displacements;
     const auto order = fc_order - 1;
 
     auto i_atom = 0;
     auto i_disp = 0;
-    for (int i = 0; i < displace->pattern_all[order].size(); ++i) {
-        displacements = &displace->pattern_all[order][i];
-        for (int j = 0; j < displacements->atoms.size(); ++j) {
-            atom_indices[i_atom] = displacements->atoms[j];
+    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
+        const AtomWithDirection &displacements = displace->get_pattern_all(order)[i];
+        for (int j = 0; j < displacements.atoms.size(); ++j) {
+            atom_indices[i_atom] = displacements.atoms[j];
             ++i_atom;
             for (int k = 0; k < 3; ++k) {
-                disp_patterns[i_disp] = displacements->directions[3 * j + k];
+                disp_patterns[i_disp] = displacements.directions[3 * j + k];
                 ++i_disp;
             }
         }
     }
 
     // 0:Cartesian or 1:Fractional. -1 means something wrong.
-    if (displace->disp_basis[0] == 'C') {
+    if (displace->get_disp_basis()[0] == 'C') {
         return 0;
     }
-    if (displace->disp_basis[0] == 'F') {
+    if (displace->get_disp_basis()[0] == 'F') {
         return 1;
     }
     return -1;
@@ -337,12 +336,12 @@ int ALM::get_number_of_fc_elements(const int fc_order) const
 {
     const auto order = fc_order - 1;
 
-    if (fcs->nequiv[order].empty()) { return 0; }
+    if (fcs->get_nequiv()[order].empty()) { return 0; }
     auto id = 0;
-    const int num_unique_elems = fcs->nequiv[order].size();
+    const int num_unique_elems = fcs->get_nequiv()[order].size();
 
     for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
-        const auto num_equiv_elems = fcs->nequiv[order][iuniq];
+        const auto num_equiv_elems = fcs->get_nequiv()[order][iuniq];
         id += num_equiv_elems;
     }
     return id;
@@ -366,7 +365,7 @@ int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
                           timer);
         ready_to_fit = true;
     }
-    return constraint->index_bimap[order].size();
+    return constraint->get_index_bimap(order).size();
 }
 
 void ALM::get_fc_origin(double *fc_values,
@@ -391,22 +390,22 @@ void ALM::get_fc_origin(double *fc_values,
 
     for (int order = 0; order < fc_order; ++order) {
 
-        if (fcs->nequiv[order].empty()) { continue; }
+        if (fcs->get_nequiv()[order].empty()) { continue; }
 
         auto id = 0;
 
         if (order == fc_order - 1) {
-            for (const auto &it : fcs->fc_table[order]) {
+            for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
-                fc_values[id] = fitting->params[ip] * it.sign;
+                fc_values[id] = fitting->get_params()[ip] * it.sign;
                 for (i = 0; i < fc_order + 1; ++i) {
                     elem_indices[id * (fc_order + 1) + i] = it.elems[i];
                 }
                 ++id;
             }
         }
-        ishift += fcs->nequiv[order].size();
+        ishift += fcs->get_nequiv()[order].size();
     }
 }
 
@@ -443,22 +442,22 @@ void ALM::get_fc_irreducible(double *fc_values,
 
     for (int order = 0; order < fc_order; ++order) {
 
-        if (constraint->index_bimap[order].empty()) { continue; }
+        if (constraint->get_index_bimap(order).empty()) { continue; }
 
         if (order == fc_order - 1) {
-            for (const auto &it : constraint->index_bimap[order]) {
+            for (const auto &it : constraint->get_index_bimap(order)) {
                 inew = it.left;
                 iold = it.right + ishift;
 
-                fc_elem = fitting->params[iold];
+                fc_elem = fitting->get_params()[iold];
                 fc_values[inew] = fc_elem;
                 for (i = 0; i < fc_order + 1; ++i) {
                     elem_indices[inew * (fc_order + 1) + i] =
-                        fcs->fc_table[order][it.right].elems[i];
+                        fcs->get_fc_table()[order][it.right].elems[i];
                 }
             }
         }
-        ishift += fcs->nequiv[order].size();
+        ishift += fcs->get_nequiv()[order].size();
     }
 }
 
@@ -487,15 +486,15 @@ void ALM::get_fc_all(double *fc_values,
 
     for (int order = 0; order < fc_order; ++order) {
 
-        if (fcs->nequiv[order].empty()) { continue; }
+        if (fcs->get_nequiv()[order].empty()) { continue; }
 
         auto id = 0;
 
         if (order == fc_order - 1) {
-            for (const auto &it : fcs->fc_table[order]) {
+            for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
-                fc_elem = fitting->params[ip] * it.sign;
+                fc_elem = fitting->get_params()[ip] * it.sign;
 
                 for (i = 0; i < fc_order + 1; ++i) {
                     pair_tmp[i] = it.elems[i] / 3;
@@ -516,7 +515,7 @@ void ALM::get_fc_all(double *fc_values,
             }
         }
 
-        ishift += fcs->nequiv[order].size();
+        ishift += fcs->get_nequiv()[order].size();
     }
 }
 
@@ -524,7 +523,7 @@ void ALM::set_fc(double *fc_in) const
 {
     fitting->set_fcs_values(interaction->get_maxorder(),
                             fc_in,
-                            fcs->nequiv,
+                            fcs->get_nequiv(),
                             constraint);
 }
 
@@ -622,10 +621,10 @@ int ALM::optimize_lasso()
     lasso->lasso_main(symmetry,
                       interaction,
                       fcs,
-                      constraint,
                       system->get_supercell().number_of_atoms,
                       files,
                       verbosity,
+                      constraint,
                       fitting,
                       timer);
 

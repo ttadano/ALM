@@ -54,10 +54,10 @@ namespace ALM_NS
         void lasso_main(const Symmetry *symmetry,
                         const Interaction *interaction,
                         const Fcs *fcs,
-                        const Constraint *constraint,
                         const unsigned int nat,
                         const Files *files,
                         const int verbosity,
+                        Constraint *constraint,
                         Fitting *fitting,
                         Timer *timer);
 

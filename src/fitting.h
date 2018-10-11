@@ -44,14 +44,6 @@ namespace ALM_NS
                     const std::string file_force,
                     Timer *timer);
 
-        int ndata, nstart, nend;
-        int skip_s, skip_e;
-
-        double *params;
-        double **u_in;
-        double **f_in;
-        int use_sparseQR;
-
         void set_displacement_and_force(const double * const *,
                                         const double * const *,
                                         const int,
@@ -77,14 +69,35 @@ namespace ALM_NS
         double gamma(const int,
                      const int *) const;
 
+        int get_ndata() const;
+        void set_ndata(const int);
+        int get_nstart() const;
+        void set_nstart(const int);
+        int get_nend() const;
+        void set_nend(const int);
+        int get_skip_s() const;
+        void set_skip_s(const int);
+        int get_skip_e() const;
+        void set_skip_e(const int);
+        double *get_params() const;
+        int get_use_sparseQR() const;
+        void set_use_sparseQR(const int);
+
     private:
+
+        int ndata, nstart, nend;
+        int skip_s, skip_e;
+        double *params;
+        int use_sparseQR;
+        double **u_in;
+        double **f_in;
 
         int ndata_used;
 
         void set_default_variables();
         void deallocate_variables();
 
-        void data_multiplier(double **,
+        void data_multiplier(const double * const *,
                              std::vector<std::vector<double>> &,
                              const int,
                              const Symmetry *) const;
@@ -92,17 +105,17 @@ namespace ALM_NS
         int inprim_index(const int,
                          const Symmetry *) const;
 
-        int fit_without_constraints(int,
-                                    int,
+        int fit_without_constraints(const int,
+                                    const int,
                                     double *,
-                                    double *,
+                                    const double *,
                                     double *,
                                     const int) const;
 
-        int fit_algebraic_constraints(int,
-                                      int,
+        int fit_algebraic_constraints(const int,
+                                      const int,
                                       double *,
-                                      double *,
+                                      const double *,
                                       std::vector<double> &,
                                       const double,
                                       const int,
@@ -110,13 +123,13 @@ namespace ALM_NS
                                       const Constraint *,
                                       const int) const;
 
-        int fit_with_constraints(int,
-                                 int,
-                                 int,
+        int fit_with_constraints(const int,
+                                 const int,
+                                 const int,
                                  double *,
+                                 const double *,
                                  double *,
-                                 double *,
-                                 double **,
+                                 const double * const *,
                                  double *,
                                  const int) const;
 
@@ -151,7 +164,7 @@ namespace ALM_NS
         void recover_original_forceconstants(const int,
                                              const std::vector<double> &,
                                              std::vector<double> &,
-                                             std::vector<int> *,
+                                             const std::vector<int> *,
                                              const Constraint *) const;
 
         int factorial(const int) const;

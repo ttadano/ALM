@@ -348,7 +348,8 @@ void Fcs::get_constraint_symmetry(const int nat,
     // Create constraint matrices arising from the crystal symmetry.
     // Necessary for hexagonal systems.
 
-    int i, j;
+    int i;
+    // int j;
     unsigned int isym;
     int ixyz, nxyz;
     int *index_tmp;
@@ -410,7 +411,7 @@ void Fcs::get_constraint_symmetry(const int nat,
         int *atm_index, *atm_index_symm;
         int *xyz_index;
         double c_tmp;
-        double maxabs;
+        // double maxabs;
 
         std::unordered_set<FcProperty>::iterator iter_found;
         std::vector<double> const_now_omp;
@@ -530,6 +531,16 @@ void Fcs::get_constraint_symmetry(const int nat,
     constraint_all.clear();
 
     if (do_rref) rref_sparse(nparams, const_out, tolerance);
+}
+
+std::vector<int> * Fcs::get_nequiv() const
+{
+    return nequiv;
+}
+
+std::vector<FcProperty> * Fcs::get_fc_table() const
+{
+    return fc_table;
 }
 
 void Fcs::get_available_symmop(const unsigned int nat,
