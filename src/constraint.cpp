@@ -226,8 +226,7 @@ void Constraint::setup(const System *system,
                                               symmetry,
                                               interaction,
                                               fcs,
-                                              verbosity,
-                                              const_symmetry);
+                                              verbosity);
 
     //    std::cout << "CONST SYMMETRY" << std::endl;
     //    for (auto i = 1; i < maxorder; ++i) {
@@ -241,12 +240,12 @@ void Constraint::setup(const System *system,
     }
 
     if (impose_inv_T) {
+        // const_translation is updated.
         generate_translational_constraint(system->get_supercell(),
                                           symmetry,
                                           interaction,
                                           fcs,
-                                          verbosity,
-                                          const_translation);
+                                          verbosity);
         // std::cout << "CONST TRANSLATION" << std::endl;
         // for (auto i = 1; i < maxorder; ++i) {
         //     print_constraint(const_translation[i]);
@@ -278,7 +277,7 @@ void Constraint::setup(const System *system,
 
     for (int order = 0; order < maxorder; ++order) {
 
-        int nparam = fcs->nequiv[order].size();
+        int nparam = fcs->get_nequiv()[order].size();
 
         const_self[order].reserve(
             const_translation[order].size()
@@ -309,7 +308,7 @@ void Constraint::setup(const System *system,
     // }
 
     get_mapping_constraint(maxorder,
-                           fcs->nequiv,
+                           fcs->get_nequiv(),
                            const_self,
                            const_fix,
                            const_relate,
@@ -325,14 +324,14 @@ void Constraint::setup(const System *system,
         }
         if (fix_harmonic) {
             Pmax -= const_self[0].size();
-            Pmax += fcs->nequiv[0].size();
+            Pmax += fcs->get_nequiv()[0].size();
         }
         if (fix_cubic) {
             Pmax -= const_self[1].size();
-            Pmax += fcs->nequiv[1].size();
+            Pmax += fcs->get_nequiv()[1].size();
         }
         for (int order = 0; order < maxorder; ++order) {
-            nparams += fcs->nequiv[order].size();
+            nparams += fcs->get_nequiv()[order].size();
         }
 
         if (const_mat) {
@@ -345,10 +344,10 @@ void Constraint::setup(const System *system,
         }
         allocate(const_rhs, Pmax);
 
-        calc_constraint_matrix(maxorder,
-                               fcs->nequiv,
-                               nparams,
-                               number_of_constraints);
+        // const_mat and const_rhs are updated.
+        number_of_constraints = calc_constraint_matrix(maxorder,
+                                                       fcs->get_nequiv(),
+                                                       nparams);
     }
 
     exist_constraint
@@ -443,13 +442,12 @@ void Constraint::setup(const System *system,
     timer->stop_clock("constraint");
 }
 
-void Constraint::calc_constraint_matrix(const int maxorder,
-                                        std::vector<int> *nequiv,
-                                        const int nparams,
-                                        int &nconst) const
+int Constraint::calc_constraint_matrix(const int maxorder,
+                                       const std::vector<int> *nequiv,
+                                       const int nparams) const
 {
     int i, j;
-    int order;
+    int order, nconst;
     double *arr_tmp;
     std::vector<ConstraintClass> const_total;
 
@@ -483,7 +481,7 @@ void Constraint::calc_constraint_matrix(const int maxorder,
     int nshift2 = 0;
     for (order = 0; order < maxorder; ++order) {
         if (order > 0) {
-            int nparam2 = nequiv[order - 1].size() + nequiv[order].size();
+            // int nparam2 = nequiv[order - 1].size() + nequiv[order].size();
 
             if (const_fix[order - 1].empty() && const_fix[order].empty()) {
                 for (auto &p : const_rotation_cross[order]) {
@@ -556,12 +554,14 @@ void Constraint::calc_constraint_matrix(const int maxorder,
         ++irow;
     }
     const_total.clear();
+
+    return nconst;
 }
 
 
 void Constraint::get_mapping_constraint(const int nmax,
-                                        std::vector<int> *nequiv,
-                                        ConstraintSparseForm *const_in,
+                                        const std::vector<int> *nequiv,
+                                        const ConstraintSparseForm *const_in,
                                         std::vector<ConstraintTypeFix> *const_fix_out,
                                         std::vector<ConstraintTypeRelate> *const_relate_out,
                                         boost::bimap<int, int> *index_bimap_out) const
@@ -670,13 +670,142 @@ void Constraint::get_mapping_constraint(const int nmax,
     deallocate(has_constraint);
 }
 
+int Constraint::get_constraint_mode() const
+{
+    return constraint_mode;
+}
+
+void Constraint::set_constraint_mode(const int constraint_mode_in)
+{
+    constraint_mode = constraint_mode_in;
+}
+
+int Constraint::get_number_of_constraints() const
+{
+    return number_of_constraints;
+}
+
+std::string Constraint::get_fc_file(const int order) const
+{
+    switch(order) {
+    case 2:
+        return fc2_file;
+    case 3:
+        return fc3_file;
+    default:
+        return "";
+    }
+}
+
+void Constraint::set_fc_file(const int order, const std::string fc_file)
+{
+    switch(order) {
+    case 2:
+        fc2_file = fc_file;
+        break;
+    case 3:
+        fc3_file = fc_file;
+        break;
+    default:
+        break;
+    }
+}
+
+bool Constraint::get_fix_harmonic() const
+{
+    return fix_harmonic;
+}
+
+void Constraint::set_fix_harmonic(const bool fix_harmonic_in)
+{
+    fix_harmonic = fix_harmonic_in;
+}
+
+bool Constraint::get_fix_cubic() const
+{
+    return fix_cubic;
+}
+
+void Constraint::set_fix_cubic(const bool fix_cubic_in)
+{
+    fix_cubic = fix_cubic_in;
+}
+
+int Constraint::get_constraint_algebraic() const
+{
+    return constraint_algebraic;
+}
+
+double ** Constraint::get_const_mat() const
+{
+    return const_mat;
+}
+
+double * Constraint::get_const_rhs() const
+{
+    return const_rhs;
+}
+
+double Constraint::get_tolerance_constraint() const
+{
+    return tolerance_constraint;
+}
+
+void Constraint::set_tolerance_constraint(const double tol)
+{
+    tolerance_constraint = tol;
+}
+
+bool Constraint::get_exist_constraint() const
+{
+    return exist_constraint;
+}
+
+bool Constraint::get_extra_constraint_from_symmetry() const
+{
+    return extra_constraint_from_symmetry;
+}
+
+std::string Constraint::get_rotation_axis() const
+{
+    return rotation_axis;
+}
+
+void Constraint::set_rotation_axis(const std::string rotation_axis_in)
+{
+    rotation_axis = rotation_axis_in;
+}
+
+const ConstraintSparseForm &Constraint::get_const_symmetry(const int order) const
+{
+    return const_symmetry[order];
+}
+
+const std::vector<ConstraintTypeFix> &Constraint::get_const_fix(const int order) const
+{
+    return const_fix[order];
+}
+
+void Constraint::set_const_fix_val_to_fix(const int order, const int idx, const double val)
+{
+    const_fix[order][idx].val_to_fix = val;
+}
+
+const std::vector<ConstraintTypeRelate> &Constraint::get_const_relate(const int order) const
+{
+    return const_relate[order];
+}
+
+const boost::bimap<int, int> &Constraint::get_index_bimap(const int order) const
+{
+    return index_bimap[order];
+}
+
 void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
                                                            const Symmetry *symmetry,
                                                            const Interaction *interaction,
                                                            const Fcs *fcs,
-                                                           const int verbosity,
-                                                           ConstraintSparseForm *const_out) const
-
+                                                           const int verbosity)
 {
     // Create constraint matrices arising from the crystal symmetry.
 
@@ -684,8 +813,8 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
     bool has_constraint_from_symm = false;
     std::vector<std::vector<double>> const_tmp;
 
-    for (int isym = 0; isym < symmetry->nsym; ++isym) {
-        if (!symmetry->SymmData[isym].compatible_with_cartesian) {
+    for (int isym = 0; isym < symmetry->get_nsym(); ++isym) {
+        if (!symmetry->get_SymmData()[isym].compatible_with_cartesian) {
             has_constraint_from_symm = true;
             break;
         }
@@ -707,10 +836,10 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const int nat,
                                      order,
                                      interaction->get_cluster_list(order),
                                      "Cartesian",
-                                     fcs->fc_table[order],
-                                     fcs->nequiv[order].size(),
+                                     fcs->get_fc_table()[order],
+                                     fcs->get_nequiv()[order].size(),
                                      tolerance_constraint,
-                                     const_out[order], true);
+                                     const_symmetry[order], true);
 
         if (has_constraint_from_symm) {
             std::cout << " done." << std::endl;
@@ -727,8 +856,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
                                                    const Symmetry *symmetry,
                                                    const Interaction *interaction,
                                                    const Fcs *fcs,
-                                                   const int verbosity,
-                                                   ConstraintSparseForm *const_out)
+                                                   const int verbosity)
 {
     // Create constraint matrix for the translational invariance (aka acoustic sum rule).
 
@@ -741,7 +869,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
         if (verbosity > 0)
             std::cout << "   " << std::setw(8) << interaction->get_ordername(order) << " ...";
 
-        int nparams = fcs->nequiv[order].size();
+        int nparams = fcs->get_nequiv()[order].size();
 
         if (nparams == 0) {
             if (verbosity > 0) std::cout << "  No parameters! Skipped." << std::endl;
@@ -753,9 +881,9 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
                                    interaction,
                                    fcs,
                                    order,
-                                   fcs->fc_table[order],
-                                   fcs->nequiv[order].size(),
-                                   const_out[order], true);
+                                   fcs->get_fc_table()[order],
+                                   fcs->get_nequiv()[order].size(),
+                                   const_translation[order], true);
 
         if (verbosity > 0) std::cout << " done." << std::endl;
     }
@@ -786,7 +914,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
     int **xyzcomponent;
 
     int ixyz, nxyz;
-    int natmin = symmetry->nat_prim;
+    int natmin = symmetry->get_nat_prim();
     int nat = supercell.number_of_atoms;
 
     unsigned int isize;
@@ -843,7 +971,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
 
     for (i = 0; i < natmin; ++i) {
 
-        iat = symmetry->map_p2s[i][0];
+        iat = symmetry->get_map_p2s()[i][0];
 
         // Generate atom pairs for each order
 
@@ -1072,7 +1200,7 @@ void Constraint::generate_rotational_constraint(const System *system,
     int icrd, jcrd;
     int order;
     int maxorder = interaction->get_maxorder();
-    int natmin = symmetry->nat_prim;
+    int natmin = symmetry->get_nat_prim();
     int mu, nu;
     int ixyz, nxyz, nxyz2;
     int mu_lambda, lambda;
@@ -1119,7 +1247,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
     for (order = 0; order < maxorder; ++order) {
 
-        nparams[order] = fcs->nequiv[order].size();
+        nparams[order] = fcs->get_nequiv()[order].size();
 
         if (order == 0) {
             if (verbosity > 0) {
@@ -1158,7 +1286,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
         list_found.clear();
 
-        for (auto p = fcs->fc_table[order].begin(); p != fcs->fc_table[order].end(); ++p) {
+        for (auto p = fcs->get_fc_table()[order].begin(); p != fcs->get_fc_table()[order].end(); ++p) {
             for (i = 0; i < order + 2; ++i) {
                 ind[i] = (*p).elems[i];
             }
@@ -1168,7 +1296,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
         for (i = 0; i < natmin; ++i) {
 
-            iat = symmetry->map_p2s[i][0];
+            iat = symmetry->get_map_p2s()[i][0];
 
             interaction_atom[0] = iat;
 
@@ -1741,12 +1869,12 @@ void Constraint::fix_forceconstants_to_file(const int order,
         get_value_from_xml(pt, "Data.Symmetry.NumberOfTranslations"));
     int natmin_ref = nat_ref / ntran_ref;
 
-    if (natmin_ref != symmetry->nat_prim) {
+    if (natmin_ref != symmetry->get_nat_prim()) {
         exit("fix_forceconstants_to_file",
              "The number of atoms in the primitive cell is not consistent.");
     }
 
-    int nfcs = fcs->nequiv[order].size();
+    int nfcs = fcs->get_nequiv()[order].size();
 
     if (order == 0) {
         int nfcs_ref = boost::lexical_cast<int>(
@@ -1809,7 +1937,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
 
     list_found.clear();
 
-    for (auto &list_tmp : fcs->fc_table[order]) {
+    for (auto &list_tmp : fcs->get_fc_table()[order]) {
         list_found.insert(FcProperty(list_tmp));
     }
 

@@ -13,14 +13,13 @@
 #include <vector>
 #ifdef WITH_SPARSE_SOLVER
 #include <Eigen/SparseCore>
-typedef Eigen::SparseMatrix<double, Eigen::ColMajor, int64_t> SpMat;
+typedef Eigen::SparseMatrix<double, Eigen::ColMajor> SpMat;
 #endif
 
 #include "constraint.h"
 #include "symmetry.h"
 #include "fcs.h"
 #include "timer.h"
-#include "files.h"
 #include <Eigen/Dense>
 
 
@@ -30,8 +29,8 @@ namespace ALM_NS
     {
     public:
         // General optimization options
-        int optimizer;
-        int use_sparse_solver;
+        int optimizer; // 1 : least-squares, 2 : elastic net
+        int use_sparse_solver; // 0: No, 1: Yes
         int maxnum_iteration;
         double tolerance_iteration;
         int output_frequency;
@@ -44,18 +43,19 @@ namespace ALM_NS
         // cross-validation related variables
         int cross_validation_mode;
         int nset_cross_validation;
-        double l1_alpha;
+        double l1_alpha; // L1-regularization coefficient
         double l1_alpha_min;
         double l1_alpha_max;
         int num_l1_alpha;
+        double l1_ratio; // l1_ratio = 1 for LASSO; 0 < l1_ratio < 1 for Elastic net
         int save_solution_path;
 
         OptimizerControl()
         {
-            optimizer = 0;
+            optimizer = 1;
             use_sparse_solver = 0;
             maxnum_iteration = 10000;
-            tolerance_iteration = 1.0e-7;
+            tolerance_iteration = 1.0e-15;
             output_frequency = 1000;
             standardize = 1;
             displacement_scaling_factor = 1.0;
@@ -65,14 +65,15 @@ namespace ALM_NS
             l1_alpha = 0.0;
             l1_alpha_min = 1.0e-4;
             l1_alpha_max = 1.0;
+            l1_ratio = 1.0;
             num_l1_alpha = 1;
             save_solution_path = 0;
         }
+
         ~OptimizerControl() = default;
 
         OptimizerControl(const OptimizerControl &obj) = default;
         OptimizerControl& operator=(const OptimizerControl &obj) = default;
-
     };
 
     class Fitting
@@ -82,23 +83,15 @@ namespace ALM_NS
         ~Fitting();
 
         int optimize_main(const Symmetry *symmetry,
-                          const Constraint *constraint,
+                          Constraint *constraint,
                           const Fcs *fcs,
                           const int maxorder,
+                          const std::vector<std::string> &str_order,
                           const unsigned int nat,
                           const int verbosity,
                           const std::string file_disp,
                           const std::string file_force,
                           Timer *timer);
-
-        int ndata, nstart, nend;
-        int skip_s, skip_e;
-
-        double *params;
-        double **u_in;
-        double **f_in;
-        int use_sparseQR;
-
 
         void set_displacement_and_force(const double * const *,
                                         const double * const *,
@@ -123,25 +116,34 @@ namespace ALM_NS
 
         int get_ndata_used() const;
 
-
-        int ndata_test, nstart_test, nend_test;
-        std::string dfile_test, ffile_test;
-
-
-        void lasso_main(const Symmetry *symmetry,
-                        const Interaction *interaction,
-                        const Fcs *fcs,
-                        const Constraint *constraint,
-                        const unsigned int nat,
-                        const Files *files,
-                        const int verbosity,
-                        Fitting *fitting,
-                        Timer *timer);
+        int get_ndata() const;
+        void set_ndata(const int);
+        int get_nstart() const;
+        void set_nstart(const int);
+        int get_nend() const;
+        void set_nend(const int);
+        int get_skip_s() const;
+        void set_skip_s(const int);
+        int get_skip_e() const;
+        void set_skip_e(const int);
+        double *get_params() const;
+        int get_use_sparseQR() const;
+        void set_use_sparseQR(const int);
 
         void set_optimizer_control(const OptimizerControl &);
         OptimizerControl& get_optimizer_control();
 
+        int ndata_test, nstart_test, nend_test;
+        std::string dfile_test, ffile_test;
+
     private:
+
+        int ndata, nstart, nend;
+        int skip_s, skip_e;
+        double *params;
+        int use_sparseQR;
+        double **u_in;
+        double **f_in;
 
         OptimizerControl optcontrol;
         int ndata_used;
@@ -149,7 +151,7 @@ namespace ALM_NS
         void set_default_variables();
         void deallocate_variables();
 
-        void data_multiplier(double **,
+        void data_multiplier(const double * const *,
                              std::vector<std::vector<double>> &,
                              const int,
                              const Symmetry *) const;
@@ -157,17 +159,93 @@ namespace ALM_NS
         int inprim_index(const int,
                          const Symmetry *) const;
 
-        int fit_without_constraints(int,
-                                    int,
+        int least_squares(const int maxorder,
+                          const int natmin,
+                          const int ntran,
+                          const int N,
+                          const int N_new,
+                          const int M,
+                          const int verbosity,
+                          const Symmetry *symmetry,
+                          const Fcs *fcs,
+                          const Constraint *constraint,
+                          std::vector<double> &param_out);
+
+        int elastic_net(const int maxorder,
+                        const int natmin,
+                        const int ntran,
+                        const int N,
+                        const int N_new,
+                        const int M,
+                        const int M_test,
+                        double **u,
+                        double **f,
+                        double **u_test,
+                        double **f_test,
+                        const Symmetry *symmetry,
+                        const std::vector<std::string> &str_order,
+                        const Fcs *fcs,
+                        Constraint *constraint,
+                        const unsigned int nat,
+                        const int verbosity,
+                        std::vector<double> &param_out);
+
+
+        int run_elastic_net_crossvalidation(const int maxorder,
+                                            const int M,
+                                            const int M_test,
+                                            const int N_new,
+                                            std::vector<double> &amat_1D,
+                                            std::vector<double> &bvec,
+                                            const double fnorm,
+                                            std::vector<double> &amat_1D_test,
+                                            std::vector<double> &bvec_test,
+                                            const double fnorm_test,
+                                            const Constraint *constraint,
+                                            const int verbosity,
+                                            std::vector<double> &param_out);
+
+        int run_elastic_net_optimization(const int maxorder,
+                                         const int M,
+                                         const int N_new,
+                                         std::vector<double> &amat_1D,
+                                         std::vector<double> &bvec,
+                                         const double fnorm,
+                                         const std::vector<std::string> &str_order,
+                                         const int verbosity,
+                                         std::vector<double> &param_out);
+
+        int run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
+                                                 const Eigen::VectorXd &b_in,
+                                                 const Eigen::VectorXd &factor_std,
+                                                 std::vector<double> &params,
+                                                 const int verbosity);
+
+        void get_standardizer(const Eigen::MatrixXd &Amat,
+                              Eigen::VectorXd &mean,
+                              Eigen::VectorXd &dev,
+                              Eigen::VectorXd &factor_std,
+                              Eigen::VectorXd &scale_beta);
+
+        void apply_standardizer(Eigen::MatrixXd &Amat,
+                                const Eigen::VectorXd &mean,
+                                const Eigen::VectorXd &dev);
+
+        double get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
+                                      const Eigen::VectorXd &bvec) const;
+
+
+        int fit_without_constraints(const int,
+                                    const int,
                                     double *,
-                                    double *,
+                                    const double *,
                                     double *,
                                     const int) const;
 
-        int fit_algebraic_constraints(int,
-                                      int,
+        int fit_algebraic_constraints(const int,
+                                      const int,
                                       double *,
-                                      double *,
+                                      const double *,
                                       std::vector<double> &,
                                       const double,
                                       const int,
@@ -175,13 +253,13 @@ namespace ALM_NS
                                       const Constraint *,
                                       const int) const;
 
-        int fit_with_constraints(int,
-                                 int,
-                                 int,
+        int fit_with_constraints(const int,
+                                 const int,
+                                 const int,
                                  double *,
+                                 const double *,
                                  double *,
-                                 double *,
-                                 double **,
+                                 const double * const *,
                                  double *,
                                  const int) const;
 
@@ -216,7 +294,7 @@ namespace ALM_NS
         void recover_original_forceconstants(const int,
                                              const std::vector<double> &,
                                              std::vector<double> &,
-                                             std::vector<int> *,
+                                             const std::vector<int> *,
                                              const Constraint *) const;
 
         int factorial(const int) const;
@@ -227,48 +305,30 @@ namespace ALM_NS
 
         double gamma(const int,
                      const int *) const;
-
+       
 
         // Moved from lasso.h
-        void coordinate_descent(int,
-                                int,
-                                double,
-                                double,
-                                int,
-                                int,
-                                Eigen::VectorXd &,
-                                const Eigen::MatrixXd &,
-                                const Eigen::VectorXd &,
-                                const Eigen::VectorXd &,
-                                bool *,
-                                Eigen::MatrixXd &,
-                                Eigen::VectorXd &,
-                                double,
-                                int,
-                                Eigen::VectorXd,
-                                int) const;
-
-        void calculate_residual(int,
-                                int,
-                                double **,
-                                double *,
-                                double *,
-                                double,
-                                double &) const;
-
-
-        void get_prefactor_force(const int,
-                                 const Fcs *,
-                                 const Constraint *,
-                                 const Fitting *,
-                                 std::vector<double> &) const;
+        void coordinate_descent(const int M,
+                                const int N,
+                                const double l1_alpha,
+                                const int warm_start,
+                                Eigen::VectorXd &x,
+                                const Eigen::MatrixXd &A,
+                                const Eigen::VectorXd &b,
+                                const Eigen::VectorXd &grad0,
+                                bool *has_prod,
+                                Eigen::MatrixXd &Prod,
+                                Eigen::VectorXd &grad,
+                                const double fnorm,
+                                const Eigen::VectorXd &scale_beta,
+                                const int verbosity) const;
     };
 
     inline double shrink(const double x,
                          const double a)
     {
-        double xabs = std::abs(x);
-        double sign = static_cast<double>((0.0 < x) - (x < 0.0));
+        const auto xabs = std::abs(x);
+        const auto sign = static_cast<double>((0.0 < x) - (x < 0.0));
         return sign * std::max<double>(xabs - a, 0.0);
     }
 
@@ -310,30 +370,5 @@ namespace ALM_NS
                  double *work,
                  int *lwork,
                  int *info);
-    void dgemm_(const char *TRANSA,
-                const char *TRANSB,
-                int *M,
-                int *N,
-                int *K,
-                double *ALPHA,
-                double *A,
-                int *LDA,
-                double *B,
-                int *LDB,
-                double *BETA,
-                double *C,
-                int *LDC);
-
-    void dgemv_(const char *trans,
-                int *M,
-                int *N,
-                double *alpha,
-                double *a,
-                int *lda,
-                double *x,
-                int *incx,
-                double *beta,
-                double *y,
-                int *incy);
     }
 }

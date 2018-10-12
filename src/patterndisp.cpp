@@ -70,8 +70,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     // Decide preferred basis (Cartesian or Lattice)
     int ncompat_cart = 0;
     int ncompat_latt = 0;
-    for (auto it = symmetry->SymmData.begin();
-         it != symmetry->SymmData.end(); ++it) {
+    for (auto it = symmetry->get_SymmData().begin();
+         it != symmetry->get_SymmData().end(); ++it) {
         if ((*it).compatible_with_cartesian) ++ncompat_cart;
         if ((*it).compatible_with_lattice) ++ncompat_latt;
     }
@@ -108,7 +108,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
                                      preferred_basis,
                                      fc_table[order],
                                      nequiv[order].size(),
-                                     constraint->tolerance_constraint,
+                                     constraint->get_tolerance_constraint(),
                                      constsym[order], do_rref);
 
     }
@@ -191,11 +191,11 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     deallocate(fc_table);
 
     allocate(pattern_all, maxorder);
+    // pattern_all is updated.
     generate_pattern_all(maxorder,
                          system->get_supercell().number_of_atoms,
                          system->get_supercell().lattice_vector,
                          symmetry,
-                         pattern_all,
                          dispset, preferred_basis);
 
     deallocate(dispset);
@@ -211,6 +211,26 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
         }
         std::cout << std::endl;
     }
+}
+
+void Displace::set_trim_dispsign_for_evenfunc(const bool trim_dispsign_for_evenfunc_in)
+{
+    trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc_in;
+}
+
+std::string Displace::get_disp_basis() const
+{
+    return disp_basis;
+}
+
+void Displace::set_disp_basis(const std::string disp_basis_in)
+{
+    disp_basis = disp_basis_in;
+}
+
+const std::vector<AtomWithDirection> & Displace::get_pattern_all(const int order) const
+{
+    return pattern_all[order];
 }
 
 void Displace::set_default_variables()
@@ -229,8 +249,7 @@ void Displace::generate_pattern_all(const int N,
                                     const int nat,
                                     const double lavec[3][3],
                                     const Symmetry *symmetry,
-                                    std::vector<AtomWithDirection> *pattern,
-                                    std::set<DispAtomSet> *dispset_in,
+                                    const std::set<DispAtomSet> *dispset_in,
                                     const std::string preferred_basis)
 {
     int i, j;
@@ -253,7 +272,7 @@ void Displace::generate_pattern_all(const int N,
 
     for (order = 0; order < N; ++order) {
 
-        pattern[order].clear();
+        pattern_all[order].clear();
 
         for (auto it = dispset_in[order].cbegin(); it != dispset_in[order].cend(); ++it) {
 
@@ -314,7 +333,7 @@ void Displace::generate_pattern_all(const int N,
                         directions.push_back(disp_tmp[j]);
                     }
                 }
-                pattern[order].push_back(AtomWithDirection(atoms, directions));
+                pattern_all[order].push_back(AtomWithDirection(atoms, directions));
             }
         }
     }
@@ -350,8 +369,8 @@ void Displace::generate_signvecs(const int N,
 void Displace::find_unique_sign_pairs(const int N,
                                       const int nat,
                                       const Symmetry *symmetry,
-                                      std::vector<std::vector<int>> sign_in,
-                                      std::vector<int> pair_in,
+                                      const std::vector<std::vector<int>> sign_in,
+                                      const std::vector<int> pair_in,
                                       std::vector<std::vector<int>> &sign_out,
                                       const std::string preferred_basis) const
 {
@@ -365,7 +384,7 @@ void Displace::find_unique_sign_pairs(const int N,
     double **disp, **disp_sym;
 
     std::vector<int> symnum_vec;
-    std::vector<int>::iterator loc;
+    std::vector<int>::const_iterator loc;
     std::vector<int> atom_tmp, pair_tmp;
     std::vector<std::vector<int>> sign_found;
     std::vector<int> sign_tmp;
@@ -398,7 +417,7 @@ void Displace::find_unique_sign_pairs(const int N,
     // Find symmetry operations which can be used to
     // reduce the number of sign patterns (+, -) of displacements
 
-    for (isym = 0; isym < symmetry->nsym; ++isym) {
+    for (isym = 0; isym < symmetry->get_nsym(); ++isym) {
 
         flag_avail = true;
         pair_tmp.clear();
@@ -406,7 +425,7 @@ void Displace::find_unique_sign_pairs(const int N,
         for (i = 0; i < N; ++i) {
             if (!flag_avail) break;
 
-            mapped_atom = symmetry->map_sym[pair_in[i] / 3][isym];
+            mapped_atom = symmetry->get_map_sym()[pair_in[i] / 3][isym];
             mapped_index = 3 * mapped_atom + pair_in[i] % 3;
 
             loc = std::find(pair_in.begin(), pair_in.end(), mapped_index);
@@ -428,7 +447,7 @@ void Displace::find_unique_sign_pairs(const int N,
             pair_tmp.clear();
 
             for (i = 0; i < list_disp_atom.size(); ++i) {
-                mapped_atom = symmetry->map_sym[list_disp_atom[i]][isym];
+                mapped_atom = symmetry->get_map_sym()[list_disp_atom[i]][isym];
 
                 for (j = 0; j < 3; ++j) {
                     disp_sym[mapped_atom][j] = 0.0;
@@ -436,12 +455,12 @@ void Displace::find_unique_sign_pairs(const int N,
                     if (preferred_basis == "Cartesian") {
                         for (k = 0; k < 3; ++k) {
                             disp_sym[mapped_atom][j]
-                                += symmetry->SymmData[isym].rotation_cart[j][k] * disp[list_disp_atom[i]][k];
+                                += symmetry->get_SymmData()[isym].rotation_cart[j][k] * disp[list_disp_atom[i]][k];
                         }
                     } else if (preferred_basis == "Lattice") {
                         for (k = 0; k < 3; ++k) {
                             disp_sym[mapped_atom][j]
-                                += static_cast<double>(symmetry->SymmData[isym].rotation[j][k])
+                                += static_cast<double>(symmetry->get_SymmData()[isym].rotation[j][k])
                                 * disp[list_disp_atom[i]][k];
                         }
                     } else {
@@ -492,20 +511,20 @@ void Displace::find_unique_sign_pairs(const int N,
             index_for_sort.clear();
 
             for (i = 0; i < list_disp_atom.size(); ++i) {
-                mapped_atom = symmetry->map_sym[list_disp_atom[i]][symnum_vec[isym]];
+                mapped_atom = symmetry->get_map_sym()[list_disp_atom[i]][symnum_vec[isym]];
 
                 for (j = 0; j < 3; ++j) {
                     disp_sym[mapped_atom][j] = 0.0;
                     if (preferred_basis == "Cartesian") {
                         for (k = 0; k < 3; ++k) {
                             disp_sym[mapped_atom][j]
-                                += symmetry->SymmData[symnum_vec[isym]].rotation_cart[j][k]
+                                += symmetry->get_SymmData()[symnum_vec[isym]].rotation_cart[j][k]
                                 * disp[list_disp_atom[i]][k];
                         }
                     } else if (preferred_basis == "Lattice") {
                         for (k = 0; k < 3; ++k) {
                             disp_sym[mapped_atom][j]
-                                += static_cast<double>(symmetry->SymmData[symnum_vec[isym]].rotation[j][k])
+                                += static_cast<double>(symmetry->get_SymmData()[symnum_vec[isym]].rotation[j][k])
                                 * disp[list_disp_atom[i]][k];
                         }
                     } else {

@@ -67,12 +67,12 @@ void Interaction::init(const System *system,
     if (interaction_pair) {
         deallocate(interaction_pair);
     }
-    allocate(interaction_pair, maxorder, symmetry->nat_prim);
+    allocate(interaction_pair, maxorder, symmetry->get_nat_prim());
 
     if (interaction_cluster) {
         deallocate(interaction_cluster);
     }
-    allocate(interaction_cluster, maxorder, symmetry->nat_prim);
+    allocate(interaction_cluster, maxorder, symmetry->get_nat_prim());
 
     if (cluster_list) {
         deallocate(cluster_list);
@@ -103,21 +103,17 @@ void Interaction::init(const System *system,
 
     set_interaction_by_cutoff(system->get_supercell().number_of_atoms,
                               system->get_supercell().kind,
-                              symmetry->nat_prim,
-                              symmetry->map_p2s,
-                              cutoff_radii,
-                              interaction_pair);
+                              symmetry->get_nat_prim(),
+                              symmetry->get_map_p2s());
 
-    calc_interaction_clusters(symmetry->nat_prim,
+    calc_interaction_clusters(symmetry->get_nat_prim(),
                               system->get_supercell().kind,
-                              symmetry->map_p2s,
-                              interaction_pair,
+                              symmetry->get_map_p2s(),
                               system->get_x_image(),
-                              system->get_exist_image(),
-                              interaction_cluster);
+                              system->get_exist_image());
 
-    generate_pairs(symmetry->nat_prim,
-                   symmetry->map_p2s,
+    generate_pairs(symmetry->get_nat_prim(),
+                   symmetry->get_map_p2s(),
                    cluster_list,
                    interaction_cluster);
 
@@ -141,15 +137,15 @@ void Interaction::init(const System *system,
         }
 
         print_neighborlist(system->get_supercell().number_of_atoms,
-                           symmetry->nat_prim,
-                           symmetry->map_p2s,
+                           symmetry->get_nat_prim(),
+                           symmetry->get_map_p2s(),
                            system->get_supercell().kind,
                            system->get_kdname());
     }
 
     if (verbosity > 1) {
-        print_interaction_information(symmetry->nat_prim,
-                                      symmetry->map_p2s,
+        print_interaction_information(symmetry->get_nat_prim(),
+                                      symmetry->get_map_p2s(),
                                       system->get_supercell().kind,
                                       system->get_kdname(),
                                       interaction_pair);
@@ -174,7 +170,7 @@ void Interaction::init(const System *system,
 }
 
 void Interaction::generate_pairs(const int natmin,
-                                 const int * const *map_p2s,
+                                 const std::vector<std::vector<int>> &map_p2s,
                                  std::set<IntList> *pair_out,
                                  const std::set<InteractionCluster> * const *interaction_cluster) const
 {
@@ -321,7 +317,7 @@ void Interaction::get_pairs_of_minimum_distance(const int nat,
 
 void Interaction::print_neighborlist(const int nat,
                                      const int natmin,
-                                     const int * const * map_p2s,
+                                     const std::vector<std::vector<int>> &map_p2s,
                                      const std::vector<int> &kd,
                                      const std::string *kdname) const
 {
@@ -440,7 +436,7 @@ void Interaction::print_neighborlist(const int nat,
 void Interaction::generate_interaction_information_by_cutoff(const int nat,
                                                              const int natmin,
                                                              const std::vector<int> &kd,
-                                                             const int * const *map_p2s,
+                                                             const std::vector<std::vector<int>> &map_p2s,
                                                              const double * const * rc,
                                                              std::vector<int> *interaction_list) const
 {
@@ -478,17 +474,15 @@ void Interaction::generate_interaction_information_by_cutoff(const int nat,
 void Interaction::set_interaction_by_cutoff(const unsigned int nat,
                                             const std::vector<int> &kd,
                                             const unsigned int nat_prim,
-                                            const int * const * map_p2s_in,
-                                            const double * const * const *cutoff_radii_in,
-                                            std::vector<int> **interaction_pair_out) const
+                                            const std::vector<std::vector<int>> &map_p2s)
 {
     for (int order = 0; order < maxorder; ++order) {
         generate_interaction_information_by_cutoff(nat,
                                                    nat_prim,
                                                    kd,
-                                                   map_p2s_in,
-                                                   cutoff_radii_in[order],
-                                                   interaction_pair_out[order]);
+                                                   map_p2s,
+                                                   cutoff_radii[order],
+                                                   interaction_pair[order]);
     }
 }
 
@@ -535,7 +529,7 @@ int * Interaction::get_nbody_include() const
     return nbody_include;
 }
 
-const std::string &Interaction::get_ordername(const unsigned int order) const
+const std::string Interaction::get_ordername(const unsigned int order) const
 {
     return str_order[order];
 }
@@ -558,7 +552,7 @@ const std::set<InteractionCluster> &Interaction::get_interaction_cluster(const u
 }
 
 void Interaction::print_interaction_information(const int natmin,
-                                                const int * const *map_p2s,
+                                                const std::vector<std::vector<int>> &map_p2s,
                                                 const std::vector<int> &kd,
                                                 const std::string *kdname,
                                                 const std::vector<int> * const *interaction_list)
@@ -684,11 +678,9 @@ bool Interaction::satisfy_nbody_rule(const int nelem,
 
 void Interaction::calc_interaction_clusters(const int natmin,
                                             const std::vector<int> &kd,
-                                            const int * const *map_p2s,
-                                            const std::vector<int> * const *interaction_pair_in,
+                                            const std::vector<std::vector<int>> &map_p2s,
                                             const double * const * const *x_image,
-                                            const int *exist,
-                                            std::set<InteractionCluster> **interaction_cluster_out)
+                                            const int *exist)
 {
     //
     // Calculate the complete set of interaction clusters for all orders.
@@ -699,10 +691,10 @@ void Interaction::calc_interaction_clusters(const int natmin,
                                 natmin,
                                 kd,
                                 map_p2s,
-                                interaction_pair_in[order],
+                                interaction_pair[order],
                                 x_image,
                                 exist,
-                                interaction_cluster_out[order]);
+                                interaction_cluster[order]);
 
     }
 }
@@ -711,11 +703,11 @@ void Interaction::calc_interaction_clusters(const int natmin,
 void Interaction::set_interaction_cluster(const int order,
                                           const int natmin,
                                           const std::vector<int> &kd,
-                                          const int * const *map_p2s,
+                                          const std::vector<std::vector<int>> &map_p2s,
                                           const std::vector<int> *interaction_pair_in,
                                           const double * const * const *x_image,
                                           const int *exist,
-                                          std::set<InteractionCluster> *interaction_cluster_out) const
+                                          std::set<InteractionCluster> *interaction_cluster_out)
 {
     //
     // Calculate a set of interaction clusters for the given order
