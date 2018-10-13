@@ -200,7 +200,6 @@ void InputSetter::set_optimize_vars(ALM *alm,
                                     const int nend_test,
                                     const std::string dfile_test,
                                     const std::string ffile_test,
-                                    const int flag_sparse,
                                     const OptimizerControl &optcontrol_in) const
 {
     alm->fitting->set_ndata(ndata);
@@ -217,9 +216,6 @@ void InputSetter::set_optimize_vars(ALM *alm,
     alm->fitting->dfile_test = dfile_test;
     alm->fitting->ffile_test = ffile_test;
 
-    // use_sparseQR is redundant because the same informatio is
-    // included in the optcontrol
-    alm->fitting->set_use_sparseQR(flag_sparse);
     alm->fitting->set_optimizer_control(optcontrol_in);
 }
 

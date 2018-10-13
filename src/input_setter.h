@@ -69,7 +69,6 @@ namespace ALM_NS
                                const int nend_test,
                                const std::string dfile_test,
                                const std::string ffile_test,
-                               int flag_sparse,
                                const OptimizerControl &optcontrol_in) const;
 
         void set_constraint_vars(ALM *alm,

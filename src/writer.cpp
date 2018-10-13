@@ -37,10 +37,9 @@ Writer::~Writer() {}
 void Writer::write_input_vars(const ALM *alm) const
 {
     unsigned int i;
-    int nat, nkd;
 
-    nat = alm->get_supercell().number_of_atoms;
-    nkd = alm->get_supercell().number_of_elems;
+    const int nat = alm->get_supercell().number_of_atoms;
+    const int nkd = alm->get_supercell().number_of_elems;
 
     alm->timer->start_clock("writer");
 
@@ -86,7 +85,7 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
         std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
         std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << std::endl;
-        std::cout << "  SPARSE = " << alm->fitting->get_use_sparseQR() << std::endl;
+        //std::cout << "  SPARSE = " << alm->fitting->get_use_sparseQR() << std::endl;
         std::cout << std::endl;
     } else if (alm->get_run_mode() == "lasso") {
         std::cout << " Fitting:" << std::endl;
@@ -100,7 +99,7 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
         std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << std::endl;
         std::cout << std::endl;
-        OptimizerControl optctrl = alm->fitting->get_optimizer_control();
+        const auto optctrl = alm->fitting->get_optimizer_control();
         std::cout << " Lasso:" << std::endl;
         std::cout << "  LASSO_ALPHA = " << optctrl.l1_alpha << std::endl;
         std::cout << "  LASSO_MINALPHA = " << optctrl.l1_alpha_min;

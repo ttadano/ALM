@@ -58,7 +58,6 @@ void Fitting::set_default_variables()
     skip_s = 0;
     skip_e = 0;
     ndata_used = 0;
-    use_sparseQR = 0;
     ndata_test = 0;
     nstart_test = 0;
     nend_test = 0;
@@ -2027,16 +2026,6 @@ double* Fitting::get_params() const
     return params;
 }
 
-int Fitting::get_use_sparseQR() const
-{
-    return use_sparseQR;
-}
-
-void Fitting::set_use_sparseQR(const int use_sparseQR_in)
-{
-    use_sparseQR = use_sparseQR_in;
-}
-
 int Fitting::factorial(const int n) const
 {
     if (n == 1 || n == 0) {
@@ -2209,10 +2198,27 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 
 void Fitting::set_optimizer_control(const OptimizerControl &optcontrol_in)
 {
+    // Check the validity of the options before copying it.
+
+    if (optcontrol_in.cross_validation_mode < 0 || optcontrol_in.cross_validation_mode > 1) {
+        exit("set_optimizer_control", "cross_validation_mode must be 0 or 1");
+    }
+    if (optcontrol_in.optimizer == 2) {
+        if (optcontrol_in.l1_ratio <= eps || optcontrol_in.l1_ratio > 1.0) {
+            exit("set_optimizer_control", "L1_RATIO must be 0 < L1_RATIO <= 1.");
+        }
+
+        if (optcontrol_in.cross_validation_mode == 1) {
+            if (optcontrol_in.l1_alpha_min >= optcontrol_in.l1_alpha_max) {
+                exit("set_optimizer_control", "L1_ALPHA_MIN must be smaller than L1_ALPHA_MAX.");
+            }
+        }
+    }
+
     optcontrol = optcontrol_in;
 }
 
-OptimizerControl& Fitting::get_optimizer_control()
+OptimizerControl Fitting::get_optimizer_control() const
 {
     return optcontrol;
 }
