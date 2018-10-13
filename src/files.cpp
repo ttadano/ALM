@@ -17,7 +17,7 @@ Files::Files()
     print_hessian = false;
 }
 
-Files::~Files() {}
+Files::~Files() = default;
 
 void Files::init()
 {

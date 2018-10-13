@@ -293,7 +293,7 @@ void ALM::get_number_of_displaced_atoms(int *numbers,
 {
     const auto order = fc_order - 1;
 
-    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
+    for (auto i = 0; i < displace->get_pattern_all(order).size(); ++i) {
         numbers[i] = displace->get_pattern_all(order)[i].atoms.size();
     }
 }
@@ -307,12 +307,11 @@ int ALM::get_displacement_patterns(int *atom_indices,
 
     auto i_atom = 0;
     auto i_disp = 0;
-    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
-        const AtomWithDirection &displacements = displace->get_pattern_all(order)[i];
-        for (int j = 0; j < displacements.atoms.size(); ++j) {
+    for (const auto &displacements : displace->get_pattern_all(order)) {
+        for (auto j = 0; j < displacements.atoms.size(); ++j) {
             atom_indices[i_atom] = displacements.atoms[j];
             ++i_atom;
-            for (int k = 0; k < 3; ++k) {
+            for (auto k = 0; k < 3; ++k) {
                 disp_patterns[i_disp] = displacements.directions[3 * j + k];
                 ++i_disp;
             }
@@ -338,7 +337,7 @@ int ALM::get_number_of_fc_elements(const int fc_order) const
     auto id = 0;
     const int num_unique_elems = fcs->get_nequiv()[order].size();
 
-    for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
+    for (auto iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
         const auto num_equiv_elems = fcs->get_nequiv()[order][iuniq];
         id += num_equiv_elems;
     }
@@ -499,7 +498,7 @@ void ALM::get_fc_all(double *fc_values,
                     xyz_tmp[i] = it.elems[i] % 3;
                 }
 
-                for (int itran = 0; itran < ntran; ++itran) {
+                for (auto itran = 0; itran < ntran; ++itran) {
                     for (i = 0; i < fc_order + 1; ++i) {
                         pair_tran[i] = symmetry->get_map_sym()[pair_tmp[i]][symmetry->get_symnum_tran()[itran]];
                     }

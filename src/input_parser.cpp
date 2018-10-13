@@ -180,7 +180,7 @@ void InputParser::parse_input(ALM *alm)
         exit("parse_input",
              "&cell entry not found in the input file");
     }
-    parse_cell_parameter(alm);
+    parse_cell_parameter();
 
     if (!locate_tag("&position")) {
         exit("parse_input",
@@ -193,13 +193,13 @@ void InputParser::parse_input(ALM *alm)
         exit("parse_input",
              "&interaction entry not found in the input file");
     }
-    parse_interaction_vars(alm);
+    parse_interaction_vars();
 
     if (!locate_tag("&cutoff")) {
         exit("parse_input",
              "&cutoff entry not found in the input file");
     }
-    parse_cutoff_radii(alm);
+    parse_cutoff_radii();
     input_setter->define(alm);
 
     if (mode == "fitting" || mode == "lasso") {
@@ -226,6 +226,7 @@ void InputParser::parse_general_vars(ALM *alm)
     double tolerance;
     double tolerance_constraint;
     int verbosity;
+    int nat;
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
     std::string str_allowed_list =
@@ -468,7 +469,7 @@ void InputParser::parse_general_vars(ALM *alm)
     general_var_dict.clear();
 }
 
-void InputParser::parse_cell_parameter(ALM *alm)
+void InputParser::parse_cell_parameter()
 {
     auto a = 0.0;
     double lavec_tmp[3][3];
@@ -558,7 +559,7 @@ void InputParser::parse_cell_parameter(ALM *alm)
 }
 
 
-void InputParser::parse_interaction_vars(ALM *alm)
+void InputParser::parse_interaction_vars()
 {
     int i;
     int *nbody_include;
@@ -861,6 +862,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
     std::vector<std::string> str_v, pos_line;
     double (*xeq)[3];
     int *kd;
+    const auto nat = alm->get_supercell().number_of_atoms;
 
     if (from_stdin) {
         std::cin.ignore();
@@ -953,7 +955,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
     str_v.clear();
 }
 
-void InputParser::parse_cutoff_radii(ALM *alm)
+void InputParser::parse_cutoff_radii()
 {
     std::string line, line_wo_comment;
     std::string::size_type pos_first_comment_tag;

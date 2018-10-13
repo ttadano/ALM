@@ -19,7 +19,7 @@ namespace ALM_NS
     inline unsigned long memsize_in_MB(const int size_of_one,
                                        const unsigned int n1)
     {
-        unsigned long n = n1 * size_of_one;
+        const unsigned long n = n1 * size_of_one;
         return n / 1000000;
     }
 
@@ -27,7 +27,7 @@ namespace ALM_NS
                                        const unsigned int n1,
                                        const unsigned int n2)
     {
-        unsigned long n = n1 * n2 * size_of_one;
+        const unsigned long n = n1 * n2 * size_of_one;
         return n / 1000000;
     }
 
@@ -36,7 +36,7 @@ namespace ALM_NS
                                        const unsigned int n2,
                                        const unsigned int n3)
     {
-        unsigned long n = n1 * n2 * n3 * size_of_one;
+        const unsigned long n = n1 * n2 * n3 * size_of_one;
         return n / 1000000;
     }
 
@@ -46,13 +46,13 @@ namespace ALM_NS
                                        const unsigned int n3,
                                        const unsigned int n4)
     {
-        unsigned long n = n1 * n2 * n3 * n4 * size_of_one;
+        const unsigned long n = n1 * n2 * n3 * n4 * size_of_one;
         return n / 1000000;
     }
 
-// Declaration and definition must be located in the same file for template functions.
+    // Declaration and definition must be located in the same file for template functions.
 
-/* allocator */
+    /* allocator */
 
     template <typename T>
     T* allocate(T *&arr,
@@ -71,9 +71,9 @@ namespace ALM_NS
     }
 
     template <typename T>
-    inline T** allocate(T **&arr,
-                        const unsigned int n1,
-                        const unsigned int n2)
+    T** allocate(T **&arr,
+                 const unsigned int n1,
+                 const unsigned int n2)
     {
         try {
             arr = new T *[n1];
@@ -92,10 +92,10 @@ namespace ALM_NS
     }
 
     template <typename T>
-    inline T*** allocate(T ***&arr,
-                         const unsigned int n1,
-                         const unsigned int n2,
-                         const unsigned int n3)
+    T*** allocate(T ***&arr,
+                  const unsigned int n1,
+                  const unsigned int n2,
+                  const unsigned int n3)
     {
         try {
             arr = new T **[n1];
@@ -111,18 +111,19 @@ namespace ALM_NS
         catch (std::bad_alloc &ba) {
             std::cout << " Caught an exception when trying to allocate 3-dimensional array" << std::endl;
             std::cout << " " << ba.what() << " : Array shape = " << n1 << "x" << n2 << "x" << n3 << std::endl;
-            std::cout << " " << ba.what() << " : Array size (MB) = " << memsize_in_MB(sizeof(T), n1, n2, n3) << std::endl;
+            std::cout << " " << ba.what() << " : Array size (MB) = " << memsize_in_MB(sizeof(T), n1, n2, n3) << std::
+                endl;
             std::exit(EXIT_FAILURE);
         }
         return arr;
     }
 
     template <typename T>
-    inline T**** allocate(T ****&arr,
-                          const unsigned int n1,
-                          const unsigned int n2,
-                          const unsigned int n3,
-                          const unsigned int n4)
+    T**** allocate(T ****&arr,
+                   const unsigned int n1,
+                   const unsigned int n2,
+                   const unsigned int n3,
+                   const unsigned int n4)
     {
         try {
             arr = new T ***[n1];
@@ -142,8 +143,10 @@ namespace ALM_NS
         }
         catch (std::bad_alloc &ba) {
             std::cout << " Caught an exception when trying to allocate 4-dimensional array" << std::endl;
-            std::cout << " " << ba.what() << " : Array shape = " << n1 << "x" << n2 << "x" << n3 << "x" << n4 << std::endl;
-            std::cout << " " << ba.what() << " : Array size (MB) = " << memsize_in_MB(sizeof(T), n1, n2, n3, n4) << std::
+            std::cout << " " << ba.what() << " : Array shape = " << n1 << "x" << n2 << "x" << n3 << "x" << n4 << std::
+                endl;
+            std::cout << " " << ba.what() << " : Array size (MB) = " << memsize_in_MB(sizeof(T), n1, n2, n3, n4) << std
+                ::
                 endl;
             std::exit(EXIT_FAILURE);
         }
@@ -151,7 +154,7 @@ namespace ALM_NS
     }
 
 
-/* deallocator */
+    /* deallocator */
 
 
     template <typename T>

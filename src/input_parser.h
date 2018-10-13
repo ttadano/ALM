@@ -50,16 +50,16 @@ namespace ALM_NS
         std::string *kdname;
         std::string mode;
         int maxorder;
-        int nat;
+  //      int nat;
         int nkd;
         InputSetter *input_setter;
 
         void parse_input(ALM *alm);
         void parse_general_vars(ALM *alm);
-        void parse_cell_parameter(ALM *alm);
+        void parse_cell_parameter();
         void parse_atomic_positions(ALM *alm);
-        void parse_interaction_vars(ALM *alm);
-        void parse_cutoff_radii(ALM *alm);
+        void parse_interaction_vars();
+        void parse_cutoff_radii();
         void parse_fitting_vars(ALM *alm);
         int locate_tag(const std::string);
         void split_str_by_space(const std::string,

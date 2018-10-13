@@ -28,7 +28,7 @@ namespace ALM_NS
         Timer();
         ~Timer();
 
-        void print_elapsed();
+        void print_elapsed() const;
         void start_clock(std::string);
         void stop_clock(std::string);
         double get_walltime(std::string);
@@ -38,7 +38,7 @@ namespace ALM_NS
     private:
         void reset();
         double elapsed_walltime() const;
-        double elapsed_cputime();
+        double elapsed_cputime() const;
         std::map<std::string, double> walltime;
         std::map<std::string, double> cputime;
         double wtime_tmp, ctime_tmp;

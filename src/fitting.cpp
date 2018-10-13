@@ -95,7 +95,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
     const int ntran = symmetry->get_ntran();
     auto info_fitting = 0;
     const int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
-    const int M_test = 3 * natmin * ndata_used_test * ntran;
+    const auto M_test = 3 * natmin * ndata_used_test * ntran;
     auto N = 0;
     auto N_new = 0;
     for (auto i = 0; i < maxorder; ++i) {
@@ -151,7 +151,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
 
-    auto input_parser = new InputParser();
+    const auto input_parser = new InputParser();
 
     input_parser->parse_displacement_and_force_files(u,
                                                      f,
@@ -594,7 +594,7 @@ int Fitting::elastic_net(const int maxorder,
         for (i = 0; i < maxorder; ++i) {
             nzero_lasso[i] = 0;
             for (const auto &it : constraint->get_index_bimap(i)) {
-                auto inew = it.left + iparam;
+                const auto inew = it.left + iparam;
                 if (std::abs(param_tmp[inew]) < eps) ++nzero_lasso[i];
             }
             iparam += constraint->get_index_bimap(i).size();
@@ -735,10 +735,10 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
 
     for (auto ialpha = 0; ialpha <= optcontrol.num_l1_alpha; ++ialpha) {
 
-        auto l1_alpha = optcontrol.l1_alpha_min * std::pow(optcontrol.l1_alpha_max / optcontrol.l1_alpha_min,
+        const auto l1_alpha = optcontrol.l1_alpha_min 
+        * std::pow(optcontrol.l1_alpha_max / optcontrol.l1_alpha_min,
                                                            static_cast<double>(optcontrol.num_l1_alpha - ialpha) /
-                                                           static_cast<double>(
-                                                               optcontrol.num_l1_alpha));
+                                                           static_cast<double>(optcontrol.num_l1_alpha));
 
 
         ofs_cv << std::setw(15) << l1_alpha;
@@ -765,12 +765,12 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
         const auto res2 = fdiff_test.dot(fdiff_test) / (fnorm_test * fnorm_test);
 
         // Count the number of zero parameters
-        int iparam = 0;
+        auto iparam = 0;
 
         for (auto i = 0; i < maxorder; ++i) {
             nzero_lasso[i] = 0;
             for (const auto &it : constraint->get_index_bimap(i)) {
-                int inew = it.left + iparam;
+                const auto inew = it.left + iparam;
                 if (std::abs(x[inew]) < eps) ++nzero_lasso[i];
 
             }
@@ -902,7 +902,7 @@ int Fitting::run_elastic_net_optimization(const int maxorder,
 
     if (verbosity > 0) {
         fdiff = A * x - b;
-        auto res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
+        const auto res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
         std::cout << "  RESIDUAL (%): " << std::sqrt(res1) * 100.0 << std::endl;
     }
 
@@ -1113,10 +1113,10 @@ int Fitting::fit_without_constraints(const int N,
     double *WORK, *S, *fsum2;
 
 
-    auto LMIN = std::min<int>(M, N);
+    const auto LMIN = std::min<int>(M, N);
     auto LMAX = std::max<int>(M, N);
 
-    int LWORK = 3 * LMIN + std::max<int>(2 * LMIN, LMAX);
+    auto LWORK = 3 * LMIN + std::max<int>(2 * LMIN, LMAX);
     LWORK = 2 * LWORK;
 
     if (verbosity > 0) {
@@ -1248,7 +1248,7 @@ int Fitting::fit_with_constraints(const int N,
 
     // Fitting
 
-    int LWORK = P + std::min<int>(M, N) + 10 * std::max<int>(M, N);
+    auto LWORK = P + std::min<int>(M, N) + 10 * std::max<int>(M, N);
     int INFO;
     double *WORK, *x;
     allocate(WORK, LWORK);
@@ -1264,7 +1264,7 @@ int Fitting::fit_with_constraints(const int N,
 
     if (verbosity > 0) std::cout << " finished. " << std::endl;
 
-    double f_residual = 0.0;
+    auto f_residual = 0.0;
     for (i = N - P; i < M; ++i) {
         f_residual += std::pow(fsum2[i], 2);
     }
@@ -1301,19 +1301,18 @@ int Fitting::fit_algebraic_constraints(const int N,
                                        const int verbosity) const
 {
     int i;
-    int nrhs = 1, nrank, INFO, LWORK, M_tmp, N_tmp;
-    int LMIN, LMAX;
-    double rcond = -1.0;
+    int nrhs = 1, nrank, INFO, M_tmp, N_tmp;
+    auto rcond = -1.0;
     double *WORK, *S, *fsum2;
 
     if (verbosity > 0) {
         std::cout << "  Entering fitting routine: SVD with constraints considered algebraically." << std::endl;
     }
 
-    LMIN = std::min<int>(M, N);
-    LMAX = std::max<int>(M, N);
+    auto LMIN = std::min<int>(M, N);
+    auto LMAX = std::max<int>(M, N);
 
-    LWORK = 3 * LMIN + std::max<int>(2 * LMIN, LMAX);
+    auto LWORK = 3 * LMIN + std::max<int>(2 * LMIN, LMAX);
     LWORK = 2 * LWORK;
 
     allocate(WORK, LWORK);
@@ -1348,7 +1347,7 @@ int Fitting::fit_algebraic_constraints(const int N,
     }
 
     if (nrank == N && verbosity > 0) {
-        double f_residual = 0.0;
+        auto f_residual = 0.0;
         for (i = N; i < M; ++i) {
             f_residual += std::pow(fsum2[i], 2);
         }
@@ -1495,7 +1494,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
     data_multiplier(f_in, f_multi, ndata_fit, symmetry);
 
     const int natmin = symmetry->get_nat_prim();
-    const int natmin3 = 3 * natmin;
+    const auto natmin3 = 3 * natmin;
     const int nrows = natmin3 * ndata_fit * symmetry->get_ntran();
     auto ncols = 0;
     auto ncols_new = 0;
@@ -1505,7 +1504,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
         ncols_new += constraint->get_index_bimap(i).size();
     }
 
-    const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
+    const auto ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
 
     std::vector<double> bvec_orig(nrows, 0.0);
 
@@ -1667,7 +1666,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
     data_multiplier(f_in, f_multi, ndata_fit, symmetry);
 
     const int natmin = symmetry->get_nat_prim();
-    const int natmin3 = 3 * natmin;
+    const auto natmin3 = 3 * natmin;
     const int nrows = natmin3 * ndata_fit * symmetry->get_ntran();
     auto ncols = 0;
     auto ncols_new = 0;
@@ -1677,7 +1676,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
         ncols_new += constraint->get_index_bimap(i).size();
     }
 
-    const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
+    const auto ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
 
     std::vector<double> bvec_orig(nrows, 0.0);
 
@@ -1841,8 +1840,8 @@ void Fitting::recover_original_forceconstants(const int maxorder,
     // by using the constraint matrix.
 
     int i, j, k;
-    int ishift = 0;
-    int iparam = 0;
+    auto ishift = 0;
+    auto iparam = 0;
     double tmp;
     int inew, iold;
 
@@ -1886,19 +1885,16 @@ void Fitting::data_multiplier(const double * const *data_in,
                               const int ndata_used,
                               const Symmetry *symmetry) const
 {
-    int i, j, k;
-    int n_mapped;
-
     const int nat = symmetry->get_nat_prim() * symmetry->get_ntran();
 
     auto idata = 0;
-    for (i = 0; i < ndata_used; ++i) {
+    for (auto i = 0; i < ndata_used; ++i) {
         std::vector<double> data_tmp(3 * nat, 0.0);
 
-        for (int itran = 0; itran < symmetry->get_ntran(); ++itran) {
-            for (j = 0; j < nat; ++j) {
-                n_mapped = symmetry->get_map_sym()[j][symmetry->get_symnum_tran()[itran]];
-                for (k = 0; k < 3; ++k) {
+        for (auto itran = 0; itran < symmetry->get_ntran(); ++itran) {
+            for (auto j = 0; j < nat; ++j) {
+                const auto n_mapped = symmetry->get_map_sym()[j][symmetry->get_symnum_tran()[itran]];
+                for (auto k = 0; k < 3; ++k) {
                     data_tmp[3 * n_mapped + k] = data_in[i][3 * j + k];
                 }
             }
@@ -2059,7 +2055,7 @@ int Fitting::rankQRD(const int m,
     allocate(WORK, LWORK);
     allocate(TAU, nmin);
 
-    for (int i = 0; i < n_; ++i) JPVT[i] = 0;
+    for (auto i = 0; i < n_; ++i) JPVT[i] = 0;
 
     dgeqp3_(&m_, &n_, mat, &LDA, JPVT, TAU, WORK, &LWORK, &INFO);
 
@@ -2074,14 +2070,14 @@ int Fitting::rankQRD(const int m,
 
     unsigned long k = 0;
 
-    for (int j = 0; j < n_; ++j) {
-        for (int i = 0; i < m_; ++i) {
+    for (auto j = 0; j < n_; ++j) {
+        for (auto i = 0; i < m_; ++i) {
             mat_tmp[i][j] = mat[k++];
         }
     }
 
     auto nrank = 0;
-    for (int i = 0; i < nmin; ++i) {
+    for (auto i = 0; i < nmin; ++i) {
         if (std::abs(mat_tmp[i][i]) > tolerance * std::abs(mat[0])) ++nrank;
     }
 
