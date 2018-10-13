@@ -144,16 +144,20 @@ int Optimize::optimize_main(const Symmetry *symmetry,
     }
 
     // Parse displacement and force data sets from files
+
     double **u = nullptr;
     double **f = nullptr;
     double **u_test = nullptr;
     double **f_test = nullptr;
 
+    const auto input_parser = new InputParser();
+    
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
 
-    const auto input_parser = new InputParser();
-
+    if (optcontrol.optimizer == 1 && !u_in || optcontrol.optimizer == 2) {
+     // This if condition is necessary because DFILE and FFILE are not
+     // defined when the method is called via API.
     input_parser->parse_displacement_and_force_files(u,
                                                      f,
                                                      nat,
@@ -164,7 +168,7 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                                                      skip_e,
                                                      file_disp,
                                                      file_force);
-
+    }
     if (optcontrol.optimizer == 2 &&
         optcontrol.cross_validation_mode == 1) {
 

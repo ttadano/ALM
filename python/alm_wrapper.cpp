@@ -304,12 +304,12 @@ extern "C" {
         if (str_solver == "dense") {
 
             alm[id]->set_sparse_mode(0);
-            info = alm[id]->optimize();
+            info = alm[id]->run_optimize();
 
         } else if (str_solver == "SimplicialLDLT") {
 
             alm[id]->set_sparse_mode(1);
-            info = alm[id]->optimize();
+            info = alm[id]->run_optimize();
 
         } else {
             std::cerr << " Unsupported solver type : " << str_solver << std::endl;
