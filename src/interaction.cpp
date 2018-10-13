@@ -44,8 +44,8 @@ void Interaction::init(const System *system,
     timer->start_clock("interaction");
 
     int i, j, k;
-    const unsigned int nat = system->get_supercell().number_of_atoms;
-    const unsigned int nkd = system->get_supercell().number_of_elems;
+    const auto nat = system->get_supercell().number_of_atoms;
+    const auto nkd = system->get_supercell().number_of_elems;
 
     if (verbosity > 0) {
         std::cout << " INTERACTION" << std::endl;
@@ -174,19 +174,18 @@ void Interaction::generate_pairs(const int natmin,
                                  std::set<IntList> *pair_out,
                                  const std::set<InteractionCluster> * const *interaction_cluster) const
 {
-    int i, j;
-    int iat;
+    int j;
     int *pair_tmp;
 
-    for (int order = 0; order < maxorder; ++order) {
+    for (auto order = 0; order < maxorder; ++order) {
 
         pair_out[order].clear();
 
         allocate(pair_tmp, order + 2);
 
-        for (i = 0; i < natmin; ++i) {
+        for (auto i = 0; i < natmin; ++i) {
 
-            iat = map_p2s[i][0];
+            const auto iat = map_p2s[i][0];
 
             for (auto it = interaction_cluster[order][i].begin();
                  it != interaction_cluster[order][i].end(); ++it) {
@@ -254,8 +253,7 @@ void Interaction::deallocate_variables()
 double Interaction::distance(const double *x1,
                              const double *x2) const
 {
-    double dist;
-    dist = std::pow(x1[0] - x2[0], 2) + std::pow(x1[1] - x2[1], 2) + std::pow(x1[2] - x2[2], 2);
+    auto dist = std::pow(x1[0] - x2[0], 2) + std::pow(x1[1] - x2[1], 2) + std::pow(x1[2] - x2[2], 2);
     dist = std::sqrt(dist);
 
     return dist;
@@ -265,13 +263,7 @@ void Interaction::get_pairs_of_minimum_distance(const int nat,
                                                 const double * const * const *xc_in,
                                                 const int *exist)
 {
-    //
-    // Calculate the minimum distance between atom i and j
-    // under the periodic boundary conditions
-    //
-    int icell;
-    int i, j, k;
-    double dist_tmp;
+    int i, j;
     double vec[3];
 
 
@@ -280,13 +272,13 @@ void Interaction::get_pairs_of_minimum_distance(const int nat,
 
             distall[i][j].clear();
 
-            for (icell = 0; icell < 27; ++icell) {
+            for (auto icell = 0; icell < 27; ++icell) {
 
                 if (exist[icell]) {
 
-                    dist_tmp = distance(xc_in[0][i], xc_in[icell][j]);
+                    auto dist_tmp = distance(xc_in[0][i], xc_in[icell][j]);
 
-                    for (k = 0; k < 3; ++k) vec[k] = xc_in[icell][j][k] - xc_in[0][i][k];
+                    for (auto k = 0; k < 3; ++k) vec[k] = xc_in[icell][j][k] - xc_in[0][i][k];
 
                     distall[i][j].emplace_back(DistInfo(icell, dist_tmp, vec));
                 }
@@ -297,12 +289,11 @@ void Interaction::get_pairs_of_minimum_distance(const int nat,
 
     // Construct pairs of minimum distance.
 
-    double dist_min;
     for (i = 0; i < nat; ++i) {
         for (j = 0; j < nat; ++j) {
             mindist_pairs[i][j].clear();
 
-            dist_min = distall[i][j][0].dist;
+            const auto dist_min = distall[i][j][0].dist;
             for (auto it = distall[i][j].cbegin(); it != distall[i][j].cend(); ++it) {
                 // The tolerance below (1.e-3) should be chosen so that
                 // the mirror images with equal distances are found correctly.
@@ -440,21 +431,17 @@ void Interaction::generate_interaction_information_by_cutoff(const int nat,
                                                              const double * const * rc,
                                                              std::vector<int> *interaction_list) const
 {
-    int i, iat, jat, ikd, jkd;
-    double cutoff_tmp;
-
-    for (i = 0; i < natmin; ++i) {
+    for (auto i = 0; i < natmin; ++i) {
 
         interaction_list[i].clear();
 
-        iat = map_p2s[i][0];
-        ikd = kd[iat] - 1;
+        const auto iat = map_p2s[i][0];
+        const auto ikd = kd[iat] - 1;
 
-        for (jat = 0; jat < nat; ++jat) {
+        for (auto jat = 0; jat < nat; ++jat) {
 
-            jkd = kd[jat] - 1;
-
-            cutoff_tmp = rc[ikd][jkd];
+            const auto jkd = kd[jat] - 1;
+            const auto cutoff_tmp = rc[ikd][jkd];
 
             if (cutoff_tmp < 0.0) {
 
@@ -476,7 +463,7 @@ void Interaction::set_interaction_by_cutoff(const unsigned int nat,
                                             const unsigned int nat_prim,
                                             const std::vector<std::vector<int>> &map_p2s)
 {
-    for (int order = 0; order < maxorder; ++order) {
+    for (auto order = 0; order < maxorder; ++order) {
         generate_interaction_information_by_cutoff(nat,
                                                    nat_prim,
                                                    kd,
@@ -502,7 +489,7 @@ void Interaction::define(const int maxorder_in,
     }
     allocate(nbody_include, maxorder);
 
-    for (int i = 0; i < maxorder; ++i) {
+    for (auto i = 0; i < maxorder; ++i) {
         nbody_include[i] = nbody_include_in[i];
     }
 
@@ -515,7 +502,7 @@ void Interaction::define(const int maxorder_in,
         allocate(cutoff_radii, maxorder, nkd, nkd);
     }
 
-    for (int i = 0; i < maxorder; ++i) {
+    for (auto i = 0; i < maxorder; ++i) {
         for (unsigned int j = 0; j < nkd; ++j) {
             for (unsigned int k = 0; k < nkd; ++k) {
                 cutoff_radii[i][j][k] = cutoff_radii_in[i][j][k];
@@ -529,7 +516,7 @@ int * Interaction::get_nbody_include() const
     return nbody_include;
 }
 
-const std::string Interaction::get_ordername(const unsigned int order) const
+std::string Interaction::get_ordername(const unsigned int order) const
 {
     return str_order[order];
 }
@@ -557,25 +544,23 @@ void Interaction::print_interaction_information(const int natmin,
                                                 const std::string *kdname,
                                                 const std::vector<int> * const *interaction_list)
 {
-    int order;
-    int i, iat;
     std::vector<int> intlist;
 
     std::cout << std::endl;
     std::cout << "  List of interacting atom pairs considered for each order:" << std::endl;
 
-    for (order = 0; order < maxorder; ++order) {
+    for (auto order = 0; order < maxorder; ++order) {
 
         std::cout << std::endl << "   ***" << str_order[order] << "***" << std::endl;
 
-        for (i = 0; i < natmin; ++i) {
+        for (auto i = 0; i < natmin; ++i) {
 
             if (interaction_list[order][i].empty()) {
                 std::cout << "   No interacting atoms! Skipped." << std::endl;
                 continue; // no interaction
             }
 
-            iat = map_p2s[i][0];
+            const auto iat = map_p2s[i][0];
 
             intlist.clear();
             for (auto &it : interaction_list[order][i]) {
@@ -588,7 +573,7 @@ void Interaction::print_interaction_information(const int natmin,
                 << "(" << std::setw(3) << kdname[kd[iat] - 1]
                 << ")" << " interacts with atoms ... " << std::endl;
 
-            for (int id = 0; id < intlist.size(); ++id) {
+            for (auto id = 0; id < intlist.size(); ++id) {
                 if (id % 6 == 0) {
                     if (id == 0) {
                         std::cout << "   ";
@@ -616,19 +601,15 @@ bool Interaction::is_incutoff(const int n,
                               const int order,
                               const std::vector<int> &kd) const
 {
-    int iat, jat;
-    int ikd, jkd;
-    double cutoff_tmp;
+    for (auto i = 0; i < n; ++i) {
+        const auto iat = atomnumlist[i];
+        const auto ikd = kd[iat] - 1;
 
-    for (int i = 0; i < n; ++i) {
-        iat = atomnumlist[i];
-        ikd = kd[iat] - 1;
+        for (auto j = i + 1; j < n; ++j) {
+            const auto jat = atomnumlist[j];
+            const auto jkd = kd[jat] - 1;
 
-        for (int j = i + 1; j < n; ++j) {
-            jat = atomnumlist[j];
-            jkd = kd[jat] - 1;
-
-            cutoff_tmp = cutoff_radii[order][ikd][jkd];
+            const auto cutoff_tmp = cutoff_radii[order][ikd][jkd];
 
             if (cutoff_tmp >= 0.0 &&
                 (mindist_pairs[iat][jat][0].dist > cutoff_tmp)) {
@@ -646,7 +627,7 @@ void Interaction::set_ordername()
     str_order.resize(maxorder);
     str_order[0] = "HARMONIC";
 
-    for (int i = 1; i < maxorder; ++i) {
+    for (auto i = 1; i < maxorder; ++i) {
         str_order[i] = "ANHARM" + std::to_string(i + 2);
     }
 }
@@ -662,7 +643,7 @@ int Interaction::nbody(const int n,
     std::stable_sort(v.begin(), v.end());
     v.erase(std::unique(v.begin(), v.end()), v.end());
 
-    int ret = v.size();
+    const int ret = v.size();
     v.clear();
 
     return ret;
@@ -714,12 +695,10 @@ void Interaction::set_interaction_cluster(const int order,
     //
 
     int j, k;
-    int iat, jat;
+    int jat;
     int ii;
-    int ikd, jkd;
+    int jkd;
     int icount;
-    int idata;
-    unsigned int ielem;
 
     double dist_tmp, rc_tmp;
     double distmax;
@@ -742,12 +721,12 @@ void Interaction::set_interaction_cluster(const int order,
 
     allocate(list_now, order + 2);
 
-    for (int i = 0; i < natmin; ++i) {
+    for (auto i = 0; i < natmin; ++i) {
 
         interaction_cluster_out[i].clear();
 
-        iat = map_p2s[i][0];
-        ikd = kd[iat] - 1;
+        const auto iat = map_p2s[i][0];
+        const auto ikd = kd[iat] - 1;
         list_now[0] = iat;
 
         // List of 2-body interaction pairs
@@ -758,7 +737,7 @@ void Interaction::set_interaction_cluster(const int order,
 
             // Harmonic term
 
-            for (ielem = 0; ielem < intlist.size(); ++ielem) {
+            for (unsigned int ielem = 0; ielem < intlist.size(); ++ielem) {
 
                 jat = intlist[ielem];
                 list_now[1] = jat;
@@ -789,7 +768,7 @@ void Interaction::set_interaction_cluster(const int order,
             // First, we generate all possible combinations of interaction clusters.
             CombinationWithRepetition<int> g(intlist.begin(), intlist.end(), order + 1);
             do {
-                std::vector<int> data = g.now();
+                auto data = g.now();
 
                 list_now[0] = iat;
                 for (j = 0; j < order + 1; ++j) list_now[j + 1] = data[j];
@@ -803,9 +782,9 @@ void Interaction::set_interaction_cluster(const int order,
 
             intlist.clear();
 
-            int ndata = data_vec.size();
+            const int ndata = data_vec.size();
 
-            for (idata = 0; idata < ndata; ++idata) {
+            for (auto idata = 0; idata < ndata; ++idata) {
 
                 data_now = data_vec[idata];
 
@@ -941,15 +920,15 @@ void Interaction::set_interaction_cluster(const int order,
 
 void Interaction::cell_combination(const std::vector<std::vector<int>> &array,
                                    const int i,
-                                   const std::vector<int> accum,
+                                   const std::vector<int> &accum,
                                    std::vector<std::vector<int>> &comb) const
 {
     if (i == array.size()) {
         comb.push_back(accum);
     } else {
-        std::vector<int> row = array[i];
-        for (int j : row) {
-            std::vector<int> tmp(accum);
+        auto row = array[i];
+        for (auto j : row) {
+            auto tmp(accum);
             tmp.push_back(j);
             cell_combination(array, i + 1, tmp, comb);
         }

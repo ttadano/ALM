@@ -131,11 +131,11 @@ namespace ALM_NS
             double dist_a = 0;
             double dist_b = 0;
 
-            for (int i = 0; i < a.dist.size(); ++i) {
-                dist_a += a.dist[i];
+            for (auto i : a.dist) {
+                dist_a += i;
             }
-            for (int i = 0; i < b.dist.size(); ++i) {
-                dist_b += b.dist[i];
+            for (auto i : b.dist) {
+                dist_b += i;
             }
             return dist_a < dist_b;
         }
@@ -147,8 +147,8 @@ namespace ALM_NS
             std::vector<double> dvec_a, dvec_b;
             std::copy(a.dist.begin(), a.dist.end(), std::back_inserter(dvec_a));
             std::copy(b.dist.begin(), b.dist.end(), std::back_inserter(dvec_b));
-            double max_dist_a = *std::max_element(dvec_a.begin(), dvec_a.end());
-            double max_dist_b = *std::max_element(dvec_b.begin(), dvec_b.end());
+            const auto max_dist_a = *std::max_element(dvec_a.begin(), dvec_a.end());
+            const auto max_dist_b = *std::max_element(dvec_b.begin(), dvec_b.end());
 
             return max_dist_a < max_dist_b;
         }
@@ -206,7 +206,7 @@ namespace ALM_NS
                     const double * const * const *);
         int get_maxorder() const;
         int * get_nbody_include() const;
-        const std::string get_ordername(const unsigned int order) const;
+        std::string get_ordername(const unsigned int order) const;
         const std::set<IntList> &get_cluster_list(const unsigned int order) const;
         const std::vector<int> &get_interaction_pair(const unsigned int order,
                                                      const unsigned int atom_index) const;
@@ -281,7 +281,7 @@ namespace ALM_NS
 
         void cell_combination(const std::vector<std::vector<int>> &,
                               const int,
-                              const std::vector<int>,
+                              const std::vector<int> &,
                               std::vector<std::vector<int>> &) const;
 
         void generate_pairs(const int,

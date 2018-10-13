@@ -123,15 +123,13 @@ void ALM::set_cell(const int nat,
                    const int kd[],
                    const std::string kdname[]) const
 {
-    int i, j;
     std::vector<int> nkd_vals(nat);
-    bool kd_exist;
 
     nkd_vals[0] = kd[0];
-    int nkd = 1;
-    for (i = 1; i < nat; ++i) {
-        kd_exist = false;
-        for (j = 0; j < nkd; ++j) {
+    auto nkd = 1;
+    for (auto i = 1; i < nat; ++i) {
+        auto kd_exist = false;
+        for (auto j = 0; j < nkd; ++j) {
             if (nkd_vals[j] == kd[i]) {
                 kd_exist = true;
                 break;
@@ -181,8 +179,8 @@ void ALM::set_displacement_and_force(const double *u_in,
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
 
-    for (int i = 0; i < ndata_used; i++) {
-        for (int j = 0; j < 3 * nat; j++) {
+    for (auto i = 0; i < ndata_used; i++) {
+        for (auto j = 0; j < 3 * nat; j++) {
             u[i][j] = u_in[i * nat * 3 + j];
             f[i][j] = f_in[i * nat * 3 + j];
         }
@@ -205,7 +203,10 @@ void ALM::set_rotation_axis(const std::string rotation_axis) const // ROTAXIS
 
 void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
 {
-    fitting->set_use_sparseQR(sparse_mode);
+    auto optctrl = fitting->get_optimizer_control();
+    optctrl.use_sparse_solver = sparse_mode;
+    fitting->set_optimizer_control(optctrl);
+  //  fitting->set_use_sparseQR(sparse_mode);
 }
 
 void ALM::set_fitting_filenames(const std::string dfile,
@@ -292,7 +293,7 @@ void ALM::get_number_of_displaced_atoms(int *numbers,
 {
     const auto order = fc_order - 1;
 
-    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
+    for (auto i = 0; i < displace->get_pattern_all(order).size(); ++i) {
         numbers[i] = displace->get_pattern_all(order)[i].atoms.size();
     }
 }
@@ -306,12 +307,11 @@ int ALM::get_displacement_patterns(int *atom_indices,
 
     auto i_atom = 0;
     auto i_disp = 0;
-    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
-        const AtomWithDirection &displacements = displace->get_pattern_all(order)[i];
-        for (int j = 0; j < displacements.atoms.size(); ++j) {
+    for (const auto &displacements : displace->get_pattern_all(order)) {
+        for (auto j = 0; j < displacements.atoms.size(); ++j) {
             atom_indices[i_atom] = displacements.atoms[j];
             ++i_atom;
-            for (int k = 0; k < 3; ++k) {
+            for (auto k = 0; k < 3; ++k) {
                 disp_patterns[i_disp] = displacements.directions[3 * j + k];
                 ++i_disp;
             }
@@ -337,7 +337,7 @@ int ALM::get_number_of_fc_elements(const int fc_order) const
     auto id = 0;
     const int num_unique_elems = fcs->get_nequiv()[order].size();
 
-    for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
+    for (auto iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
         const auto num_equiv_elems = fcs->get_nequiv()[order][iuniq];
         id += num_equiv_elems;
     }
@@ -498,7 +498,7 @@ void ALM::get_fc_all(double *fc_values,
                     xyz_tmp[i] = it.elems[i] % 3;
                 }
 
-                for (int itran = 0; itran < ntran; ++itran) {
+                for (auto itran = 0; itran < ntran; ++itran) {
                     for (i = 0; i < fc_order + 1; ++i) {
                         pair_tran[i] = symmetry->get_map_sym()[pair_tmp[i]][symmetry->get_symnum_tran()[itran]];
                     }
@@ -602,37 +602,6 @@ void ALM::run_suggest() const
                                        system,
                                        verbosity);
 }
-
-//int ALM::optimize_lasso()
-//{
-//    if (!structure_initialized) {
-//        std::cout << "initialize_structure must be called beforehand." << std::endl;
-//        exit(EXIT_FAILURE);
-//    }
-//    if (!ready_to_fit) {
-//        constraint->setup(system,
-//                          fcs,
-//                          interaction,
-//                          symmetry,
-//                          mode,
-//                          verbosity,
-//                          timer);
-//        ready_to_fit = true;
-//    }
-//    fitting->elastic_net(symmetry,
-//                        interaction,
-//                        fcs,
-//                        constraint,
-//                        system->get_supercell().number_of_atoms,
-//                        files,
-//                        verbosity,
-//                        fitting,
-//                        timer);
-//
-//    int info = 1;
-//    return info;
-//}
-
 
 void ALM::initialize_structure()
 {

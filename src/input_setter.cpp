@@ -74,10 +74,8 @@ InputSetter::~InputSetter()
 void InputSetter::set_cell_parameter(const double a,
                                      const double lavec_in[3][3])
 {
-    int i, j;
-
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
+    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
             lavec[i][j] = a * lavec_in[i][j];
         }
     }
@@ -200,7 +198,6 @@ void InputSetter::set_optimize_vars(ALM *alm,
                                     const int nend_test,
                                     const std::string dfile_test,
                                     const std::string ffile_test,
-                                    const int flag_sparse,
                                     const OptimizerControl &optcontrol_in) const
 {
     alm->fitting->set_ndata(ndata);
@@ -217,9 +214,6 @@ void InputSetter::set_optimize_vars(ALM *alm,
     alm->fitting->dfile_test = dfile_test;
     alm->fitting->ffile_test = ffile_test;
 
-    // use_sparseQR is redundant because the same informatio is
-    // included in the optcontrol
-    alm->fitting->set_use_sparseQR(flag_sparse);
     alm->fitting->set_optimizer_control(optcontrol_in);
 }
 
@@ -244,20 +238,18 @@ void InputSetter::set_atomic_positions(const int nat_in,
                                        const int *kd_in,
                                        const double (*xcoord_in)[3])
 {
-    int i, j;
-
     if (kd) {
         deallocate(kd);
     }
     if (xcoord) {
         deallocate(xcoord);
     }
-    allocate(xcoord, nat);
-    allocate(kd, nat);
+    allocate(xcoord, nat_in);
+    allocate(kd, nat_in);
 
-    for (i = 0; i < nat; ++i) {
+    for (auto i = 0; i < nat_in; ++i) {
         kd[i] = kd_in[i];
-        for (j = 0; j < 3; ++j) {
+        for (auto j = 0; j < 3; ++j) {
             xcoord[i][j] = xcoord_in[i][j];
         }
     }

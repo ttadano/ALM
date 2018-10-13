@@ -100,7 +100,6 @@ namespace ALM_NS
         void get_constraint_symmetry(const int,
                                      const Symmetry *,
                                      const int,
-                                     const std::set<IntList> &,
                                      const std::string,
                                      const std::vector<FcProperty> &,
                                      const int,

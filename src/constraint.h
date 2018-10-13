@@ -31,7 +31,7 @@ namespace ALM_NS
 
         ConstraintClass();
 
-        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const) { }
+        ConstraintClass(const ConstraintClass &a) = default;
 
         ConstraintClass(std::vector<double> vec) : w_const(std::move(vec)) { }
 
@@ -39,7 +39,7 @@ namespace ALM_NS
                         const double *arr,
                         const int nshift = 0)
         {
-            for (int i = nshift; i < n; ++i) {
+            for (auto i = nshift; i < n; ++i) {
                 w_const.push_back(arr[i]);
             }
         }
@@ -70,18 +70,18 @@ namespace ALM_NS
         std::vector<unsigned int> p_index_orig;
 
         ConstraintTypeRelate(const unsigned int index_in,
-                             const std::vector<double> &alpha_in,
-                             const std::vector<unsigned int> &p_index_in) :
-            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in) { }
+                             std::vector<double> alpha_in,
+                             std::vector<unsigned int> p_index_in) :
+            p_index_target(index_in), alpha(std::move(alpha_in)), p_index_orig(std::move(p_index_in)) { }
     };
 
     inline bool equal_within_eps12(const std::vector<double> &a,
                                    const std::vector<double> &b)
     {
-        int n = a.size();
-        int m = b.size();
+        const int n = a.size();
+        const int m = b.size();
         if (n != m) return false;
-        for (int i = 0; i < n; ++i) {
+        for (auto i = 0; i < n; ++i) {
             if (std::abs(a[i] - b[i]) > eps12) return false;
         }
         return true;
@@ -105,9 +105,9 @@ namespace ALM_NS
     {
         const int len1 = obj1.size();
         const int len2 = obj2.size();
-        const int min = (std::min)(len1, len2);
+        const auto min = (std::min)(len1, len2);
 
-        for (int i = 0; i < min; ++i) {
+        for (auto i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
                 return true;
             } else if (obj1[i].col > obj2[i].col) {
@@ -131,7 +131,7 @@ namespace ALM_NS
         const int len2 = obj2.size();
         if (len1 != len2) return false;
 
-        for (int i = 0; i < len1; ++i) {
+        for (auto i = 0; i < len1; ++i) {
             if (obj1[i].col != obj2[i].col || obj1[i].val != obj2[i].val) {
                 return false;
             }
@@ -157,9 +157,9 @@ namespace ALM_NS
     {
         const int len1 = obj1.size();
         const int len2 = obj2.size();
-        const int min = (std::min)(len1, len2);
+        const auto min = (std::min)(len1, len2);
 
-        for (int i = 0; i < min; ++i) {
+        for (auto i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
                 return true;
             } else if (obj1[i].col > obj2[i].col) {
@@ -183,7 +183,7 @@ namespace ALM_NS
         const int len2 = obj2.size();
         if (len1 != len2) return false;
 
-        for (int i = 0; i < len1; ++i) {
+        for (auto i = 0; i < len1; ++i) {
             if (obj1[i].col != obj2[i].col || (std::abs(obj1[i].val - obj2[i].val) > 1.0e-10)) {
                 return false;
             }
@@ -289,9 +289,7 @@ namespace ALM_NS
                                             const Interaction *,
                                             const Fcs *,
                                             const int,
-                                            const double,
-                                            ConstraintSparseForm *,
-                                            ConstraintSparseForm *);
+                                            const double);
 
         // const_mat and const_rhs are updated.
         int calc_constraint_matrix(const int,

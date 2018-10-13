@@ -15,17 +15,16 @@ void rref(const int nrows,
     // Return the reduced row echelon form (rref) of matrix mat.
     // In addition, rank of the matrix is estimated.
 
-    int irow, icol, jrow, jcol;
-    int pivot;
+    int jcol;
     double tmp;
 
     nrank = 0;
 
-    icol = 0;
+    auto icol = 0;
 
-    for (irow = 0; irow < nrows; ++irow) {
+    for (auto irow = 0; irow < nrows; ++irow) {
 
-        pivot = irow;
+        auto pivot = irow;
 
         while (std::abs(mat[pivot][icol]) < tolerance) {
             ++pivot;
@@ -58,7 +57,7 @@ void rref(const int nrows,
             mat[irow][jcol] *= tmp;
         }
 
-        for (jrow = 0; jrow < nrows; ++jrow) {
+        for (auto jrow = 0; jrow < nrows; ++jrow) {
             if (jrow == irow) continue;
 
             tmp = mat[jrow][icol];
@@ -146,25 +145,24 @@ void rref_sparse(const int ncols,
     // Smaller tolerance is preferable.
 
     const int nrows = sp_constraint.size();
-    int icol, irow, jrow;
+    int jrow;
     double scaling_factor;
     double division_factor;
 
     // This parameter controls the stability and performance.
     // Smaller value is more stable but little more costly.
     //    double zero_criterion = tolerance * 1.0e-3;
-    const double zero_criterion = eps15;
+    const auto zero_criterion = eps15;
 
-    int nrank = 0;
-    int pivot;
-    icol = 0;
+    auto nrank = 0;
+    auto icol = 0;
 
     std::set<unsigned int>::iterator it_found;
     std::map<unsigned int, double>::iterator it_elem;
 
-    for (irow = 0; irow < nrows; ++irow) {
+    for (auto irow = 0; irow < nrows; ++irow) {
 
-        pivot = irow;
+        auto pivot = irow;
 
         while (true) {
             it_elem = sp_constraint[pivot].find(icol);

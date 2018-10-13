@@ -127,11 +127,11 @@ namespace ALM_NS
         int get_skip_e() const;
         void set_skip_e(const int);
         double *get_params() const;
-        int get_use_sparseQR() const;
-        void set_use_sparseQR(const int);
+        //int get_use_sparseQR() const;
+        //void set_use_sparseQR(const int);
 
         void set_optimizer_control(const OptimizerControl &);
-        OptimizerControl& get_optimizer_control();
+        OptimizerControl get_optimizer_control() const;
 
         int ndata_test, nstart_test, nend_test;
         std::string dfile_test, ffile_test;
@@ -141,7 +141,7 @@ namespace ALM_NS
         int ndata, nstart, nend;
         int skip_s, skip_e;
         double *params;
-        int use_sparseQR;
+ //       int use_sparseQR;
         double **u_in;
         double **f_in;
 

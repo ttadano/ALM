@@ -36,13 +36,13 @@ namespace ALM_NS
                           const bool compatibility_cart,
                           const bool is_trans_in)
         {
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
+            for (auto i = 0; i < 3; ++i) {
+                for (auto j = 0; j < 3; ++j) {
                     rotation[i][j] = rot_in[i][j];
                     rotation_cart[i][j] = rot_cart_in[i][j];
                 }
             }
-            for (int i = 0; i < 3; ++i) {
+            for (auto i = 0; i < 3; ++i) {
                 tran[i] = tran_in[i];
             }
             compatible_with_lattice = compatibility_lat;
@@ -54,13 +54,13 @@ namespace ALM_NS
         bool operator<(const SymmetryOperation &a) const
         {
             std::vector<double> v1, v2;
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
+            for (auto i = 0; i < 3; ++i) {
+                for (auto j = 0; j < 3; ++j) {
                     v1.push_back(static_cast<double>(rotation[i][j]));
                     v2.push_back(static_cast<double>(a.rotation[i][j]));
                 }
             }
-            for (int i = 0; i < 3; ++i) {
+            for (auto i = 0; i < 3; ++i) {
                 if (tran[i] < 0.0) {
                     v1.push_back(1.0 + tran[i]);
                 } else {
@@ -86,8 +86,8 @@ namespace ALM_NS
 
         RotationMatrix(const int rot[3][3])
         {
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
+            for (auto i = 0; i < 3; ++i) {
+                for (auto j = 0; j < 3; ++j) {
                     mat[i][j] = rot[i][j];
                 }
             }

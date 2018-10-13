@@ -162,7 +162,7 @@ void Symmetry::set_default_variables()
 
 void Symmetry::deallocate_variables()
 {
-    ;
+
 }
 
 void Symmetry::setup_symmetry_operation(const Cell &cell,
@@ -179,10 +179,9 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
         // SymmData is written.
         findsym_alm(cell, is_periodic, atomtype_group, spin);
     } else {
-        int spgnum;
         std::string spgsymbol;
         // SymmData is written.
-        spgnum = findsym_spglib(cell, atomtype_group, spin, spgsymbol);
+        const auto spgnum = findsym_spglib(cell, atomtype_group, spin, spgsymbol);
 
         if (verbosity > 0) {
             std::cout << "  Space group: " << spgsymbol << " (" << std::setw(3) << spgnum << ")" << std::endl;
@@ -276,7 +275,7 @@ void Symmetry::find_lattice_symmetry(const double aa[3][3],
     int i, j, k;
     int m11, m12, m13, m21, m22, m23, m31, m32, m33;
 
-    int nsym_tmp = 0;
+    auto nsym_tmp = 0;
     int mat_tmp[3][3];
     double det, res;
     double rot_tmp[3][3];
@@ -400,7 +399,7 @@ void Symmetry::find_crystal_symmetry(const Cell &cell,
     double x_rot_tmp[3];
     double tmp[3];
     double diff;
-    auto nclass = atomtype_group.size();
+    const auto nclass = atomtype_group.size();
 
     int rot_int[3][3];
 
@@ -572,7 +571,7 @@ int Symmetry::findsym_spglib(const Cell &cell,
                              const Spin &spin,
                              std::string &spgsymbol)
 {
-    int i, j, spgnum;
+    int i, j;
     double (*position)[3];
     double (*translation)[3];
     int (*rotation)[3][3];
@@ -625,7 +624,7 @@ int Symmetry::findsym_spglib(const Cell &cell,
     nsym = spg_get_symmetry(rotation, translation, nsym,
                             aa_tmp, position, types_tmp, nat, tolerance);
 
-    spgnum = spg_get_international(symbol, aa_tmp, position, types_tmp, nat, tolerance);
+    const auto spgnum = spg_get_international(symbol, aa_tmp, position, types_tmp, nat, tolerance);
     spgsymbol = std::string(symbol);
 
     // Copy symmetry information
@@ -700,9 +699,9 @@ void Symmetry::print_symminfo_stdout() const
     std::cout << "  **Cell-Atom Correspondens Below**" << std::endl;
     std::cout << std::setw(6) << " CELL" << " | " << std::setw(5) << "ATOM" << std::endl;
 
-    for (int i = 0; i < ntran; ++i) {
+    for (auto i = 0; i < ntran; ++i) {
         std::cout << std::setw(6) << i + 1 << " | ";
-        for (int j = 0; j < nat_prim; ++j) {
+        for (auto j = 0; j < nat_prim; ++j) {
             std::cout << std::setw(5) << map_p2s[j][i] + 1;
             if ((j + 1) % 5 == 0) {
                 std::cout << std::endl << "       | ";
@@ -731,7 +730,7 @@ void Symmetry::gen_mapping_information(const Cell &cell,
     }
 
     // This part may be incompatible with the tolerance used in spglib
-    auto natomtypes = atomtype_group.size();
+    const auto natomtypes = atomtype_group.size();
 
 #ifdef _OPENMP
 #pragma omp parallel for private(i, j, rot_double, itype, ii, iat, x_tmp, xnew, jj, jat, tmp, diff, isym)
@@ -816,7 +815,7 @@ void Symmetry::gen_mapping_information(const Cell &cell,
 
 bool Symmetry::is_translation(const int rot[3][3]) const
 {
-    bool ret =
+    const auto ret =
         rot[0][0] == 1 && rot[0][1] == 0 && rot[0][2] == 0 &&
         rot[1][0] == 0 && rot[1][1] == 1 && rot[1][2] == 0 &&
         rot[2][0] == 0 && rot[2][1] == 0 && rot[2][2] == 1;
@@ -828,11 +827,11 @@ template <typename T>
 bool Symmetry::is_compatible(const T rot[3][3],
                              const double tolerance_zero)
 {
-    int nfinite = 0;
+    auto nfinite = 0;
     double rot_double[3][3];
 
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
+    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
             rot_double[i][j] = static_cast<double>(rot[i][j]);
             if (std::abs(rot_double[i][j]) > tolerance_zero) ++nfinite;
         }
@@ -844,7 +843,7 @@ bool Symmetry::is_compatible(const T rot[3][3],
 
 bool Symmetry::is_proper(const double rot[3][3]) const
 {
-    double det = rot[0][0] * (rot[1][1] * rot[2][2] - rot[2][1] * rot[1][2])
+    const auto det = rot[0][0] * (rot[1][1] * rot[2][2] - rot[2][1] * rot[1][2])
         - rot[1][0] * (rot[0][1] * rot[2][2] - rot[2][1] * rot[0][2])
         + rot[2][0] * (rot[0][1] * rot[1][2] - rot[1][1] * rot[0][2]);
 
