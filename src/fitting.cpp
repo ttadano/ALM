@@ -226,7 +226,6 @@ int Fitting::optimize_main(const Symmetry *symmetry,
                                    nat,
                                    verbosity,
                                    fcs_tmp);
-
     }
 
     if (u) {
@@ -674,6 +673,10 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
 
     allocate(has_prod, N_new);
 
+    for (auto i = 0; i < N_new; ++i) {
+        has_prod[i] = false;
+    }
+
     if (verbosity > 0) {
         std::cout << "  Lasso validation with the following parameters:" << std::endl;
         std::cout << "   LASSO_MINALPHA = " << std::setw(15) << optcontrol.l1_alpha_min;
@@ -744,7 +747,7 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
         if (ialpha == 0) {
             initialize_mode = 0;
         } else {
-            initialize_mode = 0;
+            initialize_mode = 1;
         }
 
         for (auto i = 0; i < N_new; ++i) {
@@ -808,6 +811,8 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
     }
 
     ofs_cv.close();
+
+    deallocate(has_prod);
 
     return 1;
 }
