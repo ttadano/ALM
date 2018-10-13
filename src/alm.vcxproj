@@ -54,6 +54,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)include;C:\lapack</AdditionalIncludeDirectories>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);WITH_SPARSE_SOLVER</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -70,6 +71,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)include;C:\lapack</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
       <DisableSpecificWarnings>4018</DisableSpecificWarnings>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);WITH_SPARSE_SOLVER</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -85,12 +87,11 @@
     <ClCompile Include="constraint.cpp" />
     <ClCompile Include="fcs.cpp" />
     <ClCompile Include="files.cpp" />
-    <ClCompile Include="fitting.cpp" />
     <ClCompile Include="input_parser.cpp" />
     <ClCompile Include="input_setter.cpp" />
     <ClCompile Include="interaction.cpp" />
-    <ClCompile Include="lasso.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="optimize.cpp" />
     <ClCompile Include="patterndisp.cpp" />
     <ClCompile Include="rref.cpp" />
     <ClCompile Include="symmetry.cpp" />
@@ -106,12 +107,11 @@
     <ClInclude Include="error.h" />
     <ClInclude Include="fcs.h" />
     <ClInclude Include="files.h" />
-    <ClInclude Include="fitting.h" />
     <ClInclude Include="input_parser.h" />
     <ClInclude Include="input_setter.h" />
     <ClInclude Include="interaction.h" />
-    <ClInclude Include="lasso.h" />
     <ClInclude Include="memory.h" />
+    <ClInclude Include="optimize.h" />
     <ClInclude Include="patterndisp.h" />
     <ClInclude Include="rref.h" />
     <ClInclude Include="symmetry.h" />

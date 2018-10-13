@@ -12,7 +12,7 @@
 #include "alm.h"
 #include "error.h"
 #include "files.h"
-#include "fitting.h"
+#include "optimize.h"
 #include "input_setter.h"
 #include "memory.h"
 #include "system.h"
@@ -62,11 +62,11 @@ void InputParser::run(ALM *alm,
 void InputParser::parse_displacement_and_force(ALM *alm) const
 {
     const int nat = alm->get_supercell().number_of_atoms;
-    const auto ndata = alm->fitting->get_ndata();
-    const auto nstart = alm->fitting->get_nstart();
-    const auto nend = alm->fitting->get_nend();
-    const auto skip_s = alm->fitting->get_skip_s();
-    const auto skip_e = alm->fitting->get_skip_e();
+    const auto ndata = alm->optimize->get_ndata();
+    const auto nstart = alm->optimize->get_nstart();
+    const auto nend = alm->optimize->get_nend();
+    const auto skip_s = alm->optimize->get_skip_s();
+    const auto skip_e = alm->optimize->get_skip_e();
     const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
     double **u;
     double **f;
@@ -81,7 +81,7 @@ void InputParser::parse_displacement_and_force(ALM *alm) const
                                        ndata, nstart, nend,
                                        skip_s, skip_e,
                                        file_disp, file_force);
-    alm->fitting->set_displacement_and_force(u, f, nat, ndata_used);
+    alm->optimize->set_displacement_and_force(u, f, nat, ndata_used);
     deallocate(u);
     deallocate(f);
 }
@@ -180,7 +180,7 @@ void InputParser::parse_input(ALM *alm)
         exit("parse_input",
              "&cell entry not found in the input file");
     }
-    parse_cell_parameter(alm);
+    parse_cell_parameter();
 
     if (!locate_tag("&position")) {
         exit("parse_input",
@@ -193,19 +193,23 @@ void InputParser::parse_input(ALM *alm)
         exit("parse_input",
              "&interaction entry not found in the input file");
     }
-    parse_interaction_vars(alm);
+    parse_interaction_vars();
 
     if (!locate_tag("&cutoff")) {
         exit("parse_input",
              "&cutoff entry not found in the input file");
     }
-    parse_cutoff_radii(alm);
+    parse_cutoff_radii();
     input_setter->define(alm);
 
-    if (mode == "fitting" || mode == "lasso") {
-        if (!locate_tag("&fitting")) {
-            exit("parse_input",
-                 "&fitting entry not found in the input file");
+    if (mode == "optimize") {
+        if (!locate_tag("&optimize")) {
+            if (!locate_tag("&fitting")) {
+                exit("parse_input",
+                     "&optimize entry not found in the input file");
+            } else {
+                warn("parse_input", "&fitting field is deprecated. Please use &optimize instead.");
+            }
         }
         parse_fitting_vars(alm);
     }
@@ -257,8 +261,17 @@ void InputParser::parse_general_vars(ALM *alm)
     mode = general_var_dict["MODE"];
 
     std::transform(mode.begin(), mode.end(), mode.begin(), tolower);
-    if (mode != "fitting" && mode != "suggest" && mode != "lasso") {
+    if (mode != "fitting" && mode != "suggest" && mode != "lasso" && mode != "optimize") {
         exit("parse_general_vars", "Invalid MODE variable");
+    }
+    if (mode == "fitting") {
+        mode = "optimize";
+        warn("parse_general_vars", "MODE = fitting is deprecated. Please use MODE = optimize instead.");
+    }
+    if (mode == "lasso") {
+        mode = "optimize";
+        warn("parse_general_vars",
+             "MODE = lasso is deprecated. Please use MODE = optimize instead with OPTIMIZER = enet option in the &optimize field.");
     }
 
     assign_val(nat, "NAT", general_var_dict);
@@ -468,7 +481,7 @@ void InputParser::parse_general_vars(ALM *alm)
     general_var_dict.clear();
 }
 
-void InputParser::parse_cell_parameter(ALM *alm)
+void InputParser::parse_cell_parameter()
 {
     auto a = 0.0;
     double lavec_tmp[3][3];
@@ -558,7 +571,7 @@ void InputParser::parse_cell_parameter(ALM *alm)
 }
 
 
-void InputParser::parse_interaction_vars(ALM *alm)
+void InputParser::parse_interaction_vars()
 {
     int i;
     int *nbody_include;
@@ -640,17 +653,19 @@ void InputParser::parse_fitting_vars(ALM *alm)
     std::string rotation_axis;
     std::string str_allowed_list =
         "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML SPARSE \
-                                   LASSO_DNORM LASSO_ALPHA LASSO_LAMBDA LASSO_MAXITER LASSO_TOL LASSO_CV LASSO_CVSET \
-                                   LASSO_MAXITER_CG LASSO_FREQ LASSO_ZERO_THR LASSO_MAXALPHA LASSO_MINALPHA LASSO_NALPHA \
-                                   LASSO_PCG NDATA_TEST DFILE_TEST FFILE_TEST NSTART_TEST NEND_TEST SKIP STANDARDIZE LASSO_ALGO \
-                                   SOLUTION_PATH DEBIAS_OLS";
+                                   LASSO_DNORM LASSO_ALPHA LASSO_MAXITER LASSO_TOL LASSO_CV LASSO_CVSET \
+                                   LASSO_FREQ LASSO_MAXALPHA LASSO_MINALPHA LASSO_NALPHA \
+                                   NDATA_TEST DFILE_TEST FFILE_TEST NSTART_TEST NEND_TEST SKIP STANDARDIZE \
+                                   SOLUTION_PATH DEBIAS_OLS L1_RATIO OPTIMIZER";
     std::string str_no_defaults = "NDATA DFILE FFILE";
     std::vector<std::string> no_defaults;
     std::map<std::string, std::string> fitting_var_dict;
 
-    int nstart_test, nend_test;
-    int skip_s, skip_e;
+    int ndata_test, nstart_test, nend_test;
+    int skip_s = 0;
+    int skip_e = 0;
     std::string str_skip, dfile_test, ffile_test;
+    OptimizerControl optcontrol;
 
     if (from_stdin) {
         std::cin.ignore();
@@ -670,6 +685,19 @@ void InputParser::parse_fitting_vars(ALM *alm)
         }
     }
 
+    if (!fitting_var_dict["OPTIMIZER"].empty()) {
+        auto str_optimizer = fitting_var_dict["OPTIMIZER"];
+        boost::to_lower(str_optimizer);
+
+        if (str_optimizer == "ols" || str_optimizer == "ls" || str_optimizer == "least-squares") {
+            optcontrol.optimizer = 1;
+        } else if (str_optimizer == "enet" || str_optimizer == "elastic-net") {
+            optcontrol.optimizer = 2;
+        } else {
+            exit("parse_fitting_vars", "Invalid OPTIMIZER-tag");
+        }
+    }
+
     assign_val(ndata, "NDATA", fitting_var_dict);
 
     if (fitting_var_dict["NSTART"].empty()) {
@@ -683,10 +711,7 @@ void InputParser::parse_fitting_vars(ALM *alm)
         assign_val(nend, "NEND", fitting_var_dict);
     }
 
-    if (fitting_var_dict["SKIP"].empty()) {
-        skip_s = 0;
-        skip_e = 0;
-    } else {
+    if (!fitting_var_dict["SKIP"].empty()) {
         std::vector<std::string> str_entry;
         assign_val(str_skip, "SKIP", fitting_var_dict);
         boost::split(str_entry, str_skip, boost::is_any_of("-"));
@@ -732,167 +757,110 @@ void InputParser::parse_fitting_vars(ALM *alm)
 
     if (!fitting_var_dict["SPARSE"].empty()) {
         assign_val(flag_sparse, "SPARSE", fitting_var_dict);
+        optcontrol.use_sparse_solver = flag_sparse;
     }
 
-    input_setter->set_fitting_vars(alm,
-                                   ndata,
-                                   nstart,
-                                   nend,
-                                   skip_s,
-                                   skip_e,
-                                   dfile,
-                                   ffile,
-                                   constraint_flag,
-                                   rotation_axis,
-                                   fc2_file,
-                                   fc3_file,
-                                   fix_harmonic,
-                                   fix_cubic,
-                                   flag_sparse);
-
-    if (alm->get_run_mode() == "lasso") {
-
-        double lasso_dnorm = 0.2;
-        double lasso_alpha = 1.0;
-        double lasso_lambda = 10.0;
-        double lasso_tol = 1.0e-7;
-        int lasso_maxiter = 100000;
-        int lasso_maxiter_cg = 5;
-        int lasso_cv = 0;
-        int lasso_cvset = 10;
-        int lasso_freq = 1000;
-        double lasso_zero_thr = 1.0e-50;
-        double lasso_min_alpha = 1.0e-3;
-        double lasso_max_alpha = 1.0;
-        int lasso_num_alpha = 20;
-        int lasso_pcg = 0;
-        int lasso_algo = 0;
-        int standardize = 1;
-        int save_solution_path = 0;
-        int debias_ols = 0;
-
-        if (!fitting_var_dict["LASSO_DNORM"].empty()) {
-            lasso_dnorm = boost::lexical_cast<double>(fitting_var_dict["LASSO_DNORM"]);
-        }
-        if (!fitting_var_dict["LASSO_ALPHA"].empty()) {
-            lasso_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_ALPHA"]);
-        }
-        if (!fitting_var_dict["LASSO_MINALPHA"].empty()) {
-            lasso_min_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_MINALPHA"]);
-        }
-        if (!fitting_var_dict["LASSO_MAXALPHA"].empty()) {
-            lasso_max_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_MAXALPHA"]);
-        }
-        if (!fitting_var_dict["LASSO_NALPHA"].empty()) {
-            lasso_num_alpha = boost::lexical_cast<int>(fitting_var_dict["LASSO_NALPHA"]);
-        }
-        if (!fitting_var_dict["LASSO_LAMBDA"].empty()) {
-            lasso_lambda = boost::lexical_cast<double>(fitting_var_dict["LASSO_LAMBDA"]);
-        }
-        if (!fitting_var_dict["LASSO_TOL"].empty()) {
-            lasso_tol = boost::lexical_cast<double>(fitting_var_dict["LASSO_TOL"]);
-        }
-        if (!fitting_var_dict["LASSO_MAXITER"].empty()) {
-            lasso_maxiter = boost::lexical_cast<int>(fitting_var_dict["LASSO_MAXITER"]);
-        }
-        if (!fitting_var_dict["LASSO_MAXITER_CG"].empty()) {
-            lasso_maxiter_cg = boost::lexical_cast<int>(fitting_var_dict["LASSO_MAXITER_CG"]);
-        }
-        if (!fitting_var_dict["LASSO_CV"].empty()) {
-            lasso_cv = boost::lexical_cast<int>(fitting_var_dict["LASSO_CV"]);
-        }
-        if (!fitting_var_dict["LASSO_CVSET"].empty()) {
-            lasso_cvset = boost::lexical_cast<int>(fitting_var_dict["LASSO_CVSET"]);
-        }
-        if (!fitting_var_dict["LASSO_FREQ"].empty()) {
-            lasso_freq = boost::lexical_cast<int>(fitting_var_dict["LASSO_FREQ"]);
-        }
-        if (!fitting_var_dict["LASSO_ZERO_THR"].empty()) {
-            lasso_zero_thr = boost::lexical_cast<double>(fitting_var_dict["LASSO_ZERO_THR"]);
-        }
-        if (!fitting_var_dict["LASSO_PCG"].empty()) {
-            lasso_pcg = boost::lexical_cast<int>(fitting_var_dict["LASSO_PCG"]);
-        }
-        if (!fitting_var_dict["STANDARDIZE"].empty()) {
-            standardize = boost::lexical_cast<int>(fitting_var_dict["STANDARDIZE"]);
-        }
-        if (!fitting_var_dict["LASSO_ALGO"].empty()) {
-            lasso_algo = boost::lexical_cast<int>(fitting_var_dict["LASSO_ALGO"]);
-        }
-        if (!fitting_var_dict["SOLUTION_PATH"].empty()) {
-            save_solution_path = boost::lexical_cast<int>(fitting_var_dict["SOLUTION_PATH"]);
-        }
-        if (!fitting_var_dict["DEBIAS_OLS"].empty()) {
-            debias_ols = boost::lexical_cast<int>(fitting_var_dict["DEBIAS_OLS"]);
-        }
-
-        if (lasso_pcg < 0 || lasso_pcg > 1) {
-            exit("parse_fitting_vars", "LASSO_PCG should be 0 or 1.");
-        }
-        if (lasso_algo < 0 || lasso_algo > 1) {
-            exit("parse_fitting_vars", "LASSO_ALGO should be 0 or 1.");
-        }
-
-        int ndata_test = ndata;
-
-        if (!fitting_var_dict["NDATA_TEST"].empty()) {
-            ndata_test = boost::lexical_cast<int>(fitting_var_dict["NDATA_TEST"]);
-        }
-
-        if (fitting_var_dict["NSTART_TEST"].empty()) {
-            nstart_test = 1;
-        } else {
-            nstart_test = boost::lexical_cast<int>(fitting_var_dict["NSTART_TEST"]);
-        }
-        if (fitting_var_dict["NEND_TEST"].empty()) {
-            nend_test = 1;
-        } else {
-            nend_test = boost::lexical_cast<int>(fitting_var_dict["NEND_TEST"]);
-        }
-
-        if (fitting_var_dict["DFILE_TEST"].empty()) {
-            dfile_test = dfile;
-        } else {
-            dfile_test = fitting_var_dict["DFILE_TEST"];
-        }
-
-        if (fitting_var_dict["FFILE_TEST"].empty()) {
-            ffile_test = ffile;
-        } else {
-            ffile_test = fitting_var_dict["FFILE_TEST"];
-        }
-
-        if (ndata_test <= 0 || nstart_test <= 0 || nend_test <= 0
-            || nstart_test > ndata_test || nend_test > ndata_test || nstart_test > nend_test) {
-            exit("parse_fitting_vars",
-                 "ndata_test, nstart_test, nend_test are not consistent with each other");
-        }
-
-        input_setter->set_lasso_vars(alm,
-                                     lasso_alpha,
-                                     lasso_min_alpha,
-                                     lasso_max_alpha,
-                                     lasso_num_alpha,
-                                     lasso_tol,
-                                     lasso_maxiter,
-                                     lasso_freq,
-                                     lasso_algo,
-                                     standardize,
-                                     lasso_dnorm,
-                                     lasso_lambda,
-                                     lasso_maxiter_cg,
-                                     lasso_pcg,
-                                     lasso_cv,
-                                     lasso_cvset,
-                                     save_solution_path,
-                                     debias_ols,
-                                     lasso_zero_thr,
-                                     ndata_test,
-                                     nstart_test,
-                                     nend_test,
-                                     dfile_test,
-                                     ffile_test);
+    if (!fitting_var_dict["LASSO_DNORM"].empty()) {
+        optcontrol.displacement_scaling_factor
+            = boost::lexical_cast<double>(fitting_var_dict["LASSO_DNORM"]);
     }
+    if (!fitting_var_dict["LASSO_ALPHA"].empty()) {
+        optcontrol.l1_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_ALPHA"]);
+    }
+    if (!fitting_var_dict["LASSO_MINALPHA"].empty()) {
+        optcontrol.l1_alpha_min = boost::lexical_cast<double>(fitting_var_dict["LASSO_MINALPHA"]);
+    }
+    if (!fitting_var_dict["LASSO_MAXALPHA"].empty()) {
+        optcontrol.l1_alpha_max = boost::lexical_cast<double>(fitting_var_dict["LASSO_MAXALPHA"]);
+    }
+    if (!fitting_var_dict["LASSO_NALPHA"].empty()) {
+        optcontrol.num_l1_alpha = boost::lexical_cast<int>(fitting_var_dict["LASSO_NALPHA"]);
+    }
+    if (!fitting_var_dict["LASSO_TOL"].empty()) {
+        optcontrol.tolerance_iteration = boost::lexical_cast<double>(fitting_var_dict["LASSO_TOL"]);
+    }
+    if (!fitting_var_dict["LASSO_MAXITER"].empty()) {
+        optcontrol.maxnum_iteration = boost::lexical_cast<int>(fitting_var_dict["LASSO_MAXITER"]);
+    }
+    if (!fitting_var_dict["LASSO_CV"].empty()) {
+        optcontrol.cross_validation_mode = boost::lexical_cast<int>(fitting_var_dict["LASSO_CV"]);
+    }
+    if (!fitting_var_dict["LASSO_CVSET"].empty()) {
+        optcontrol.nset_cross_validation = boost::lexical_cast<int>(fitting_var_dict["LASSO_CVSET"]);
+    }
+    if (!fitting_var_dict["LASSO_FREQ"].empty()) {
+        optcontrol.output_frequency = boost::lexical_cast<int>(fitting_var_dict["LASSO_FREQ"]);
+    }
+    if (!fitting_var_dict["STANDARDIZE"].empty()) {
+        optcontrol.standardize = boost::lexical_cast<int>(fitting_var_dict["STANDARDIZE"]);
+    }
+    if (!fitting_var_dict["SOLUTION_PATH"].empty()) {
+        optcontrol.save_solution_path = boost::lexical_cast<int>(fitting_var_dict["SOLUTION_PATH"]);
+    }
+    if (!fitting_var_dict["DEBIAS_OLS"].empty()) {
+        optcontrol.debiase_after_l1opt = boost::lexical_cast<int>(fitting_var_dict["DEBIAS_OLS"]);
+    }
+    if (!fitting_var_dict["L1_RATIO"].empty()) {
+        optcontrol.l1_ratio = boost::lexical_cast<double>(fitting_var_dict["L1_RATIO"]);
+    }
+
+    ndata_test = ndata;
+
+    if (!fitting_var_dict["NDATA_TEST"].empty()) {
+        ndata_test = boost::lexical_cast<int>(fitting_var_dict["NDATA_TEST"]);
+    }
+
+    if (fitting_var_dict["NSTART_TEST"].empty()) {
+        nstart_test = 1;
+    } else {
+        nstart_test = boost::lexical_cast<int>(fitting_var_dict["NSTART_TEST"]);
+    }
+    if (fitting_var_dict["NEND_TEST"].empty()) {
+        nend_test = 1;
+    } else {
+        nend_test = boost::lexical_cast<int>(fitting_var_dict["NEND_TEST"]);
+    }
+
+    if (fitting_var_dict["DFILE_TEST"].empty()) {
+        dfile_test = dfile;
+    } else {
+        dfile_test = fitting_var_dict["DFILE_TEST"];
+    }
+
+    if (fitting_var_dict["FFILE_TEST"].empty()) {
+        ffile_test = ffile;
+    } else {
+        ffile_test = fitting_var_dict["FFILE_TEST"];
+    }
+
+    if (ndata_test <= 0 || nstart_test <= 0 || nend_test <= 0
+        || nstart_test > ndata_test || nend_test > ndata_test || nstart_test > nend_test) {
+        exit("parse_fitting_vars",
+             "ndata_test, nstart_test, nend_test are not consistent with each other");
+    }
+
+    input_setter->set_optimize_vars(alm,
+                                    ndata,
+                                    nstart,
+                                    nend,
+                                    skip_s,
+                                    skip_e,
+                                    dfile,
+                                    ffile,
+                                    ndata_test,
+                                    nstart_test,
+                                    nend_test,
+                                    dfile_test,
+                                    ffile_test,
+                                    optcontrol);
+
+    input_setter->set_constraint_vars(alm,
+                                      constraint_flag,
+                                      rotation_axis,
+                                      fc2_file,
+                                      fc3_file,
+                                      fix_harmonic,
+                                      fix_cubic);
 
     fitting_var_dict.clear();
 }
@@ -912,6 +880,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
     } else {
         ifs_input.ignore();
     }
+
 
     str_v.clear();
 
@@ -998,7 +967,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
     str_v.clear();
 }
 
-void InputParser::parse_cutoff_radii(ALM *alm)
+void InputParser::parse_cutoff_radii()
 {
     std::string line, line_wo_comment;
     std::string::size_type pos_first_comment_tag;

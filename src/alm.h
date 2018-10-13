@@ -15,8 +15,7 @@
 #include "interaction.h"
 #include "fcs.h"
 #include "symmetry.h"
-#include "fitting.h"
-#include "lasso.h"
+#include "optimize.h"
 #include "constraint.h"
 #include "files.h"
 #include "patterndisp.h"
@@ -33,8 +32,7 @@ namespace ALM_NS
         class Interaction *interaction;
         class Fcs *fcs;
         class Symmetry *symmetry;
-        class Fitting *fitting;
-        class Lasso *lasso;
+        class Optimize *optimize;
         class Constraint *constraint;
         class Files *files;
         class Displace *displace;
@@ -74,19 +72,19 @@ namespace ALM_NS
         void define(const int maxorder,
                     const unsigned int nkd,
                     const int *nbody_include,
-                    const double * const * const * cutoff_radii);
+                    const double * const * const *cutoff_radii);
         int get_ndata_used() const;
         Cell get_supercell() const;
-        std::string * get_kdname() const;
+        std::string* get_kdname() const;
         Spin get_spin() const;
         void set_str_magmom(std::string);
         std::string get_str_magmom() const;
-        double *** get_x_image() const;
-        int * get_periodicity() const;
+        double*** get_x_image() const;
+        int* get_periodicity() const;
 
-        const std::vector<std::vector<int>> &get_atom_mapping_by_pure_translations() const;
+        const std::vector<std::vector<int>>& get_atom_mapping_by_pure_translations() const;
         int get_maxorder() const;
-        int * get_nbody_include() const;
+        int* get_nbody_include() const;
 
         int get_number_of_displacement_patterns(int fc_order) const; // harmonic=1, ...
         void get_number_of_displaced_atoms(int *numbers,
@@ -120,8 +118,7 @@ namespace ALM_NS
                                  double *amat,
                                  double *bvec) const;
         void generate_force_constant();
-        int optimize();
-        int optimize_lasso();
+        int run_optimize();
         void run_suggest() const;
         void run();
 

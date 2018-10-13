@@ -40,7 +40,7 @@ void System::init(const int verbosity,
     // Set atomic types (kind + magmom)
     set_atomtype_group();
 
-    const int nneib = 27;
+    const auto nneib = 27;
     if (x_image) {
         deallocate(x_image);
     }
@@ -125,24 +125,25 @@ void System::set_supercell(const double lavec_in[3][3],
     }
 }
 
-const Cell &System::get_supercell() const
+const Cell& System::get_supercell() const
 {
     return supercell;
 }
 
-double *** System::get_x_image() const
+double*** System::get_x_image() const
 {
     return x_image;
 }
 
-int * System::get_exist_image() const
+int* System::get_exist_image() const
 {
     return exist_image;
 }
 
 void System::set_periodicity(const int is_periodic_in[3])
 {
-    if (! is_periodic) {  // This should be already allocated though.
+    if (! is_periodic) {
+        // This should be already allocated though.
         allocate(is_periodic, 3);
     }
     for (unsigned int i = 0; i < 3; i++) {
@@ -150,12 +151,12 @@ void System::set_periodicity(const int is_periodic_in[3])
     }
 }
 
-int * System::get_periodicity() const
+int* System::get_periodicity() const
 {
     return is_periodic;
 }
 
-void System::set_kdname(const std::string * kdname_in)
+void System::set_kdname(const std::string *kdname_in)
 {
     const int nkd = supercell.number_of_elems;
 
@@ -168,7 +169,7 @@ void System::set_kdname(const std::string * kdname_in)
     }
 }
 
-std::string * System::get_kdname() const
+std::string* System::get_kdname() const
 {
     return kdname;
 }
@@ -191,8 +192,8 @@ void System::set_reciprocal_latt(const double aa[3][3],
     b1 = t(b11, b12, b13) etc.
     */
 
-    double det;
-    det = aa[0][0] * aa[1][1] * aa[2][2]
+    const auto det
+        = aa[0][0] * aa[1][1] * aa[2][2]
         + aa[1][0] * aa[2][1] * aa[0][2]
         + aa[2][0] * aa[0][1] * aa[1][2]
         - aa[0][0] * aa[2][1] * aa[1][2]
@@ -203,7 +204,7 @@ void System::set_reciprocal_latt(const double aa[3][3],
         exit("set_reciprocal_latt", "Lattice Vector is singular");
     }
 
-    double factor = 2.0 * pi / det;
+    const auto factor = 2.0 * pi / det;
 
     bb[0][0] = (aa[1][1] * aa[2][2] - aa[1][2] * aa[2][1]) * factor;
     bb[0][1] = (aa[0][2] * aa[2][1] - aa[0][1] * aa[2][2]) * factor;
@@ -225,11 +226,11 @@ void System::frac2cart(double **xf) const
     double *x_tmp;
     allocate(x_tmp, 3);
 
-    for (int i = 0; i < supercell.number_of_atoms; ++i) {
+    for (auto i = 0; i < supercell.number_of_atoms; ++i) {
 
         rotvec(x_tmp, xf[i], supercell.lattice_vector);
 
-        for (int j = 0; j < 3; ++j) {
+        for (auto j = 0; j < 3; ++j) {
             xf[i][j] = x_tmp[j];
         }
     }
@@ -237,7 +238,7 @@ void System::frac2cart(double **xf) const
 }
 
 double System::volume(const double latt_in[3][3],
-                      LatticeType type) const
+                      const LatticeType type) const
 {
     int i, j;
     double mat[3][3];
@@ -258,7 +259,7 @@ double System::volume(const double latt_in[3][3],
         exit("volume", "Invalid LatticeType is given");
     }
 
-    auto vol = std::abs(mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1])
+    const auto vol = std::abs(mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1])
         + mat[0][1] * (mat[1][2] * mat[2][0] - mat[1][0] * mat[2][2])
         + mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]));
 
@@ -322,7 +323,7 @@ void System::set_spin_variables(const unsigned int nat_in,
     }
 }
 
-const Spin &System::get_spin() const
+const Spin& System::get_spin() const
 {
     return spin;
 }
@@ -333,15 +334,14 @@ void System::set_str_magmom(std::string str_magmom_in)
     str_magmom = str_magmom_in;
 }
 
-const std::string &System::get_str_magmom() const
+const std::string& System::get_str_magmom() const
 {
     return str_magmom;
 }
 
-const std::vector<std::vector<unsigned int>> &System::get_atomtype_group() const
+const std::vector<std::vector<unsigned int>>& System::get_atomtype_group() const
 {
     return atomtype_group;
-
 }
 
 
@@ -370,7 +370,7 @@ void System::set_atomtype_group()
         set_type.insert(type_tmp);
     }
 
-    int natomtypes = set_type.size();
+    const int natomtypes = set_type.size();
     atomtype_group.resize(natomtypes);
 
     for (i = 0; i < supercell.number_of_atoms; ++i) {
@@ -399,16 +399,15 @@ void System::generate_coordinate_of_periodic_images()
     // Generate Cartesian coordinates of atoms in the neighboring 27 supercells
     //
 
-    unsigned int i, j;
+    unsigned int i;
     int ia, ja, ka;
-    int icell;
 
-    const unsigned int nat = supercell.number_of_atoms;
-    const std::vector<std::vector<double>> xf_in = supercell.x_fractional;
+    const auto nat = supercell.number_of_atoms;
+    const auto xf_in = supercell.x_fractional;
 
-    icell = 0;
+    auto icell = 0;
     for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
+        for (unsigned int j = 0; j < 3; ++j) {
             x_image[0][i][j] = xf_in[i][j];
         }
     }

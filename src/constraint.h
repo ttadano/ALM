@@ -31,7 +31,7 @@ namespace ALM_NS
 
         ConstraintClass();
 
-        ConstraintClass(const ConstraintClass &a) : w_const(a.w_const) { }
+        ConstraintClass(const ConstraintClass &a) = default;
 
         ConstraintClass(std::vector<double> vec) : w_const(std::move(vec)) { }
 
@@ -39,7 +39,7 @@ namespace ALM_NS
                         const double *arr,
                         const int nshift = 0)
         {
-            for (int i = nshift; i < n; ++i) {
+            for (auto i = nshift; i < n; ++i) {
                 w_const.push_back(arr[i]);
             }
         }
@@ -70,18 +70,18 @@ namespace ALM_NS
         std::vector<unsigned int> p_index_orig;
 
         ConstraintTypeRelate(const unsigned int index_in,
-                             const std::vector<double> &alpha_in,
-                             const std::vector<unsigned int> &p_index_in) :
-            p_index_target(index_in), alpha(alpha_in), p_index_orig(p_index_in) { }
+                             std::vector<double> alpha_in,
+                             std::vector<unsigned int> p_index_in) :
+            p_index_target(index_in), alpha(std::move(alpha_in)), p_index_orig(std::move(p_index_in)) { }
     };
 
     inline bool equal_within_eps12(const std::vector<double> &a,
                                    const std::vector<double> &b)
     {
-        int n = a.size();
-        int m = b.size();
+        const int n = a.size();
+        const int m = b.size();
         if (n != m) return false;
-        for (int i = 0; i < n; ++i) {
+        for (auto i = 0; i < n; ++i) {
             if (std::abs(a[i] - b[i]) > eps12) return false;
         }
         return true;
@@ -105,9 +105,9 @@ namespace ALM_NS
     {
         const int len1 = obj1.size();
         const int len2 = obj2.size();
-        const int min = (std::min)(len1, len2);
+        const auto min = (std::min)(len1, len2);
 
-        for (int i = 0; i < min; ++i) {
+        for (auto i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
                 return true;
             } else if (obj1[i].col > obj2[i].col) {
@@ -131,7 +131,7 @@ namespace ALM_NS
         const int len2 = obj2.size();
         if (len1 != len2) return false;
 
-        for (int i = 0; i < len1; ++i) {
+        for (auto i = 0; i < len1; ++i) {
             if (obj1[i].col != obj2[i].col || obj1[i].val != obj2[i].val) {
                 return false;
             }
@@ -157,9 +157,9 @@ namespace ALM_NS
     {
         const int len1 = obj1.size();
         const int len2 = obj2.size();
-        const int min = (std::min)(len1, len2);
+        const auto min = (std::min)(len1, len2);
 
-        for (int i = 0; i < min; ++i) {
+        for (auto i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
                 return true;
             } else if (obj1[i].col > obj2[i].col) {
@@ -183,7 +183,7 @@ namespace ALM_NS
         const int len2 = obj2.size();
         if (len1 != len2) return false;
 
-        for (int i = 0; i < len1; ++i) {
+        for (auto i = 0; i < len1; ++i) {
             if (obj1[i].col != obj2[i].col || (std::abs(obj1[i].val - obj2[i].val) > 1.0e-10)) {
                 return false;
             }
@@ -222,15 +222,16 @@ namespace ALM_NS
         void set_constraint_mode(const int);
         int get_number_of_constraints() const;
         std::string get_fc_file(const int) const;
-        void set_fc_file(const int, const std::string);
+        void set_fc_file(const int,
+                         const std::string);
         bool get_fix_harmonic() const;
         void set_fix_harmonic(const bool);
         bool get_fix_cubic() const;
         void set_fix_cubic(const bool);
         int get_constraint_algebraic() const;
 
-        double ** get_const_mat() const;
-        double * get_const_rhs() const;
+        double** get_const_mat() const;
+        double* get_const_rhs() const;
 
         double get_tolerance_constraint() const;
         void set_tolerance_constraint(const double);
@@ -241,11 +242,13 @@ namespace ALM_NS
         std::string get_rotation_axis() const;
         void set_rotation_axis(const std::string);
 
-        const ConstraintSparseForm &get_const_symmetry(const int) const;
-        const std::vector<ConstraintTypeFix> &get_const_fix(const int) const;
-        void set_const_fix_val_to_fix(const int, const int, const double);
-        const std::vector<ConstraintTypeRelate> &get_const_relate(const int) const;
-        const boost::bimap<int, int> &get_index_bimap(const int) const;
+        const ConstraintSparseForm& get_const_symmetry(const int) const;
+        const std::vector<ConstraintTypeFix>& get_const_fix(const int) const;
+        void set_const_fix_val_to_fix(const int,
+                                      const int,
+                                      const double);
+        const std::vector<ConstraintTypeRelate>& get_const_relate(const int) const;
+        const boost::bimap<int, int>& get_index_bimap(const int) const;
 
     private:
 
@@ -289,9 +292,7 @@ namespace ALM_NS
                                             const Interaction *,
                                             const Fcs *,
                                             const int,
-                                            const double,
-                                            ConstraintSparseForm *,
-                                            ConstraintSparseForm *);
+                                            const double);
 
         // const_mat and const_rhs are updated.
         int calc_constraint_matrix(const int,
@@ -346,13 +347,4 @@ namespace ALM_NS
                                         const std::string,
                                         std::vector<ConstraintTypeFix> &) const;
     };
-
-    extern "C" {
-    void dgetrf_(int *m,
-                 int *n,
-                 double *a,
-                 int *lda,
-                 int *ipiv,
-                 int *info);
-    }
 }

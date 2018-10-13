@@ -12,15 +12,13 @@
 #include "constraint.h"
 #include "fcs.h"
 #include "files.h"
-#include "fitting.h"
+#include "optimize.h"
 #include "interaction.h"
-#include "lasso.h"
 #include "memory.h"
 #include "patterndisp.h"
 #include "symmetry.h"
 #include "system.h"
 #include "timer.h"
-#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -44,8 +42,7 @@ ALM::~ALM()
     delete interaction;
     delete fcs;
     delete symmetry;
-    delete fitting;
-    delete lasso;
+    delete optimize;
     delete constraint;
     delete displace;
     delete timer;
@@ -58,8 +55,7 @@ void ALM::create()
     interaction = new Interaction();
     fcs = new Fcs();
     symmetry = new Symmetry();
-    fitting = new Fitting();
-    lasso = new Lasso();
+    optimize = new Optimize();
     constraint = new Constraint();
     displace = new Displace();
     timer = new Timer();
@@ -87,7 +83,7 @@ int ALM::get_verbosity() const
 
 void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
 {
-    files->job_title = prefix;
+    files->set_prefix(prefix);
 }
 
 void ALM::set_print_symmetry(const int printsymmetry) // PRINTSYM
@@ -126,15 +122,13 @@ void ALM::set_cell(const int nat,
                    const int kd[],
                    const std::string kdname[]) const
 {
-    int i, j;
     std::vector<int> nkd_vals(nat);
-    bool kd_exist;
 
     nkd_vals[0] = kd[0];
-    int nkd = 1;
-    for (i = 1; i < nat; ++i) {
-        kd_exist = false;
-        for (j = 0; j < nkd; ++j) {
+    auto nkd = 1;
+    for (auto i = 1; i < nat; ++i) {
+        auto kd_exist = false;
+        for (auto j = 0; j < nkd; ++j) {
             if (nkd_vals[j] == kd[i]) {
                 kd_exist = true;
                 break;
@@ -177,20 +171,20 @@ void ALM::set_displacement_and_force(const double *u_in,
     double **u;
     double **f;
 
-    fitting->set_ndata(ndata_used);
-    fitting->set_nstart(1);
-    fitting->set_nend(ndata_used);
+    optimize->set_ndata(ndata_used);
+    optimize->set_nstart(1);
+    optimize->set_nend(ndata_used);
 
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
 
-    for (int i = 0; i < ndata_used; i++) {
-        for (int j = 0; j < 3 * nat; j++) {
+    for (auto i = 0; i < ndata_used; i++) {
+        for (auto j = 0; j < 3 * nat; j++) {
             u[i][j] = u_in[i * nat * 3 + j];
             f[i][j] = f_in[i * nat * 3 + j];
         }
     }
-    fitting->set_displacement_and_force(u, f, nat, ndata_used);
+    optimize->set_displacement_and_force(u, f, nat, ndata_used);
 
     deallocate(u);
     deallocate(f);
@@ -208,7 +202,9 @@ void ALM::set_rotation_axis(const std::string rotation_axis) const // ROTAXIS
 
 void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
 {
-    fitting->set_use_sparseQR(sparse_mode);
+    auto optctrl = optimize->get_optimizer_control();
+    optctrl.use_sparse_solver = sparse_mode;
+    optimize->set_optimizer_control(optctrl);
 }
 
 void ALM::set_fitting_filenames(const std::string dfile,
@@ -222,7 +218,7 @@ void ALM::set_fitting_filenames(const std::string dfile,
 void ALM::define(const int maxorder,
                  const unsigned int nkd,
                  const int *nbody_include,
-                 const double * const * const * cutoff_radii)
+                 const double * const * const *cutoff_radii)
 {
     // nkd = 0 means cutoff_radii undefined (hopefully nullptr).
     interaction->define(maxorder,
@@ -234,7 +230,7 @@ void ALM::define(const int maxorder,
 
 int ALM::get_ndata_used() const
 {
-    return fitting->get_ndata_used();
+    return optimize->get_ndata_used();
 }
 
 Cell ALM::get_supercell() const
@@ -242,7 +238,7 @@ Cell ALM::get_supercell() const
     return system->get_supercell();
 }
 
-std::string * ALM::get_kdname() const
+std::string* ALM::get_kdname() const
 {
     return system->get_kdname();
 }
@@ -257,17 +253,17 @@ std::string ALM::get_str_magmom() const
     return system->get_str_magmom();
 }
 
-double *** ALM::get_x_image() const
+double*** ALM::get_x_image() const
 {
     return system->get_x_image();
 }
 
-int * ALM::get_periodicity() const
+int* ALM::get_periodicity() const
 {
     return system->get_periodicity();
 }
 
-const std::vector<std::vector<int>> &ALM::get_atom_mapping_by_pure_translations() const
+const std::vector<std::vector<int>>& ALM::get_atom_mapping_by_pure_translations() const
 {
     return symmetry->get_map_p2s();
 }
@@ -277,7 +273,7 @@ int ALM::get_maxorder() const
     return interaction->get_maxorder();
 }
 
-int * ALM::get_nbody_include() const
+int* ALM::get_nbody_include() const
 {
     return interaction->get_nbody_include();
 }
@@ -295,7 +291,7 @@ void ALM::get_number_of_displaced_atoms(int *numbers,
 {
     const auto order = fc_order - 1;
 
-    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
+    for (auto i = 0; i < displace->get_pattern_all(order).size(); ++i) {
         numbers[i] = displace->get_pattern_all(order)[i].atoms.size();
     }
 }
@@ -309,12 +305,11 @@ int ALM::get_displacement_patterns(int *atom_indices,
 
     auto i_atom = 0;
     auto i_disp = 0;
-    for (int i = 0; i < displace->get_pattern_all(order).size(); ++i) {
-        const AtomWithDirection &displacements = displace->get_pattern_all(order)[i];
-        for (int j = 0; j < displacements.atoms.size(); ++j) {
+    for (const auto &displacements : displace->get_pattern_all(order)) {
+        for (auto j = 0; j < displacements.atoms.size(); ++j) {
             atom_indices[i_atom] = displacements.atoms[j];
             ++i_atom;
-            for (int k = 0; k < 3; ++k) {
+            for (auto k = 0; k < 3; ++k) {
                 disp_patterns[i_disp] = displacements.directions[3 * j + k];
                 ++i_disp;
             }
@@ -340,7 +335,7 @@ int ALM::get_number_of_fc_elements(const int fc_order) const
     auto id = 0;
     const int num_unique_elems = fcs->get_nequiv()[order].size();
 
-    for (int iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
+    for (auto iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
         const auto num_equiv_elems = fcs->get_nequiv()[order][iuniq];
         id += num_equiv_elems;
     }
@@ -398,7 +393,7 @@ void ALM::get_fc_origin(double *fc_values,
             for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
-                fc_values[id] = fitting->get_params()[ip] * it.sign;
+                fc_values[id] = optimize->get_params()[ip] * it.sign;
                 for (i = 0; i < fc_order + 1; ++i) {
                     elem_indices[id * (fc_order + 1) + i] = it.elems[i];
                 }
@@ -440,7 +435,7 @@ void ALM::get_fc_irreducible(double *fc_values,
     auto ishift = 0;
     int inew, iold;
 
-    for (int order = 0; order < fc_order; ++order) {
+    for (auto order = 0; order < fc_order; ++order) {
 
         if (constraint->get_index_bimap(order).empty()) { continue; }
 
@@ -449,7 +444,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                 inew = it.left;
                 iold = it.right + ishift;
 
-                fc_elem = fitting->get_params()[iold];
+                fc_elem = optimize->get_params()[iold];
                 fc_values[inew] = fc_elem;
                 for (i = 0; i < fc_order + 1; ++i) {
                     elem_indices[inew * (fc_order + 1) + i] =
@@ -470,7 +465,7 @@ void ALM::get_fc_all(double *fc_values,
 {
     int i;
     double fc_elem;
-    const unsigned int ntran = symmetry->get_ntran();
+    const auto ntran = symmetry->get_ntran();
 
     const auto maxorder = interaction->get_maxorder();
     if (fc_order > maxorder) {
@@ -484,7 +479,7 @@ void ALM::get_fc_all(double *fc_values,
     std::vector<int> pair_tran(fc_order + 1);
     std::vector<int> xyz_tmp(fc_order + 1);
 
-    for (int order = 0; order < fc_order; ++order) {
+    for (auto order = 0; order < fc_order; ++order) {
 
         if (fcs->get_nequiv()[order].empty()) { continue; }
 
@@ -494,14 +489,14 @@ void ALM::get_fc_all(double *fc_values,
             for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
-                fc_elem = fitting->get_params()[ip] * it.sign;
+                fc_elem = optimize->get_params()[ip] * it.sign;
 
                 for (i = 0; i < fc_order + 1; ++i) {
                     pair_tmp[i] = it.elems[i] / 3;
                     xyz_tmp[i] = it.elems[i] % 3;
                 }
 
-                for (int itran = 0; itran < ntran; ++itran) {
+                for (auto itran = 0; itran < ntran; ++itran) {
                     for (i = 0; i < fc_order + 1; ++i) {
                         pair_tran[i] = symmetry->get_map_sym()[pair_tmp[i]][symmetry->get_symnum_tran()[itran]];
                     }
@@ -521,10 +516,10 @@ void ALM::get_fc_all(double *fc_values,
 
 void ALM::set_fc(double *fc_in) const
 {
-    fitting->set_fcs_values(interaction->get_maxorder(),
-                            fc_in,
-                            fcs->get_nequiv(),
-                            constraint);
+    optimize->set_fcs_values(interaction->get_maxorder(),
+                             fc_in,
+                             fcs->get_nequiv(),
+                             constraint);
 }
 
 void ALM::get_matrix_elements(const int ndata_used,
@@ -534,14 +529,14 @@ void ALM::get_matrix_elements(const int ndata_used,
     const auto maxorder = interaction->get_maxorder();
     double fnorm;
 
-    fitting->get_matrix_elements_algebraic_constraint(maxorder,
-                                                      ndata_used,
-                                                      amat,
-                                                      bvec,
-                                                      fnorm,
-                                                      symmetry,
-                                                      fcs,
-                                                      constraint);
+    optimize->get_matrix_elements_algebraic_constraint(maxorder,
+                                                       ndata_used,
+                                                       amat,
+                                                       bvec,
+                                                       fnorm,
+                                                       symmetry,
+                                                       fcs,
+                                                       constraint);
 }
 
 
@@ -555,16 +550,14 @@ void ALM::run()
 {
     generate_force_constant();
 
-    if (run_mode == "fitting") {
-        optimize();
+    if (run_mode == "optimize") {
+        run_optimize();
     } else if (run_mode == "suggest") {
         run_suggest();
-    } else if (run_mode == "lasso") {
-        optimize_lasso();
     }
 }
 
-int ALM::optimize()
+int ALM::run_optimize()
 {
     if (!structure_initialized) {
         std::cout << "initialize_structure must be called beforehand." << std::endl;
@@ -580,15 +573,22 @@ int ALM::optimize()
                           timer);
         ready_to_fit = true;
     }
-    int info = fitting->fitmain(symmetry,
-                                constraint,
-                                fcs,
-                                interaction->get_maxorder(),
-                                system->get_supercell().number_of_atoms,
-                                verbosity,
-                                files->file_disp,
-                                files->file_force,
-                                timer);
+    const auto maxorder = interaction->get_maxorder();
+    std::vector<std::string> str_order(maxorder);
+    for (auto i = 0; i < maxorder; ++i) {
+        str_order[i] = interaction->get_ordername(i);
+    }
+    const auto info = optimize->optimize_main(symmetry,
+                                              constraint,
+                                              fcs,
+                                              maxorder,
+                                              files->get_prefix(),
+                                              str_order,
+                                              system->get_supercell().number_of_atoms,
+                                              verbosity,
+                                              files->file_disp,
+                                              files->file_force,
+                                              timer);
     return info;
 }
 
@@ -601,37 +601,6 @@ void ALM::run_suggest() const
                                        system,
                                        verbosity);
 }
-
-int ALM::optimize_lasso()
-{
-    if (!structure_initialized) {
-        std::cout << "initialize_structure must be called beforehand." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    if (!ready_to_fit) {
-        constraint->setup(system,
-                          fcs,
-                          interaction,
-                          symmetry,
-                          run_mode,
-                          verbosity,
-                          timer);
-        ready_to_fit = true;
-    }
-    lasso->lasso_main(symmetry,
-                      interaction,
-                      fcs,
-                      system->get_supercell().number_of_atoms,
-                      files,
-                      verbosity,
-                      constraint,
-                      fitting,
-                      timer);
-
-    int info = 1;
-    return info;
-}
-
 
 void ALM::initialize_structure()
 {

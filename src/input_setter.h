@@ -33,7 +33,7 @@ namespace ALM_NS
                                   const int *nbody_include_in);
         void set_cutoff_radii(const int maxorder_in,
                               const unsigned int nkd_in,
-                              const double * const * const * cutoff_radii_in);
+                              const double * const * const *cutoff_radii_in);
         void define(ALM *alm);
 
         void set_general_vars(ALM *alm,
@@ -44,56 +44,42 @@ namespace ALM_NS
                               std::string str_magmom,
                               int nat_in,
                               int nkd_in,
-                              int is_printsymmetry,
-                              const int is_periodic[3],
+                              int printsymmetry,
+                              const int is_periodic_in[3],
                               bool trim_dispsign_for_evenfunc,
-                              bool lspin,
+                              bool lspin_in,
                               bool print_hessian,
-                              int noncollinear,
-                              int trevsym,
+                              int noncollinear_in,
+                              int trevsym_in,
                               const std::string *kdname_in,
-                              const double * const *magmom,
+                              const double * const *magmom_in,
                               double tolerance,
                               double tolerance_constraint);
-        void set_fitting_vars(ALM *alm,
-                              int ndata,
-                              int nstart,
-                              int nend,
-                              int skip_s,
-                              int skip_e,
-                              std::string dfile,
-                              std::string ffile,
-                              int constraint_flag,
-                              std::string rotation_axis,
-                              std::string fc2_file,
-                              std::string fc3_file,
-                              bool fix_harmonic,
-                              bool fix_cubic,
-                              int flag_sparse) const;
-        void set_lasso_vars(ALM *alm,
-                            double lasso_alpha,
-                            double lasso_min_alpha,
-                            double lasso_max_alpha,
-                            int lasso_num_alpha,
-                            double lasso_tol,
-                            int lasso_maxiter,
-                            int lasso_freq,
-                            int lasso_algo,
-                            int standardize,
-                            double lasso_dnorm,
-                            double lasso_lambda,
-                            int lasso_maxiter_cg,
-                            int lasso_pcg,
-                            int lasso_cv,
-                            int lasso_cvset,
-                            int save_solution_path,
-                            int debias_ols,
-                            double lasso_zero_thr,
-                            int ndata_test,
-                            int nstart_test,
-                            int nend_test,
-                            std::string dfile_test,
-                            std::string ffile_test) const;
+
+        void set_optimize_vars(ALM *alm,
+                               int ndata,
+                               int nstart,
+                               int nend,
+                               int skip_s,
+                               int skip_e,
+                               std::string dfile,
+                               std::string ffile,
+                               const int ndata_test,
+                               const int nstart_test,
+                               const int nend_test,
+                               const std::string dfile_test,
+                               const std::string ffile_test,
+                               const OptimizerControl &optcontrol_in) const;
+
+        void set_constraint_vars(ALM *alm,
+                                 int constraint_flag,
+                                 std::string rotation_axis,
+                                 std::string fc2_file,
+                                 std::string fc3_file,
+                                 bool fix_harmonic,
+                                 bool fix_cubic) const;
+
+        void set_geometric_structure(ALM *alm) const;
 
     private:
         int nat, nkd;
@@ -112,6 +98,5 @@ namespace ALM_NS
         int maxorder;
         int *nbody_include;
         double ***cutoff_radii;
-
     };
 }

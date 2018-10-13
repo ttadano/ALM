@@ -23,11 +23,9 @@ namespace ALM_NS
         int kind;
         int atom, tran;
 
-        AtomProperty() { };
+        AtomProperty() = default;;
 
-        AtomProperty(const AtomProperty &other)
-            : x(other.x), y(other.y), z(other.z),
-              kind(other.kind), atom(other.atom), tran(other.tran) { };
+        AtomProperty(const AtomProperty &other) = default;
 
         AtomProperty(const double *pos,
                      const int kind_in,
@@ -51,7 +49,7 @@ namespace ALM_NS
         int nat, natmin, ntran;
         int nspecies;
 
-        SystemInfo() { };
+        SystemInfo() = default;;
     };
 
     class Writer
@@ -72,6 +70,7 @@ namespace ALM_NS
         void write_fc3_thirdorderpy_format(ALM *) const;
         std::string easyvizint(int) const;
 
-        std::string double2string(double, int nprec = 15) const;
+        std::string double2string(double,
+                                  int nprec = 15) const;
     };
 }

@@ -9,8 +9,8 @@ os.environ["CXX"] = "g++-8"
 include_dirs_numpy = [numpy.get_include()]
 
 compile_with_sources = False
-extra_link_args = ['-lstdc++', 
-                   '-llapack', 
+extra_link_args = ['-lstdc++', '-lgomp',
+                   '-llapack', '-static',
                    '-L/Users/tadano/src/spglib/lib', '-lsymspg',
                    '-fopenmp', '-Wl,-rpath,/usr/local/opt/gcc/lib/gcc/7,-rpath,/Users/tadano/src/spglib/lib']
 #                   '/Users/tadano/src/spglib/lib/libsymspg.a',
@@ -26,12 +26,11 @@ if compile_with_sources:
                'constraint.cpp',
                'fcs.cpp',
                'files.cpp',
-               'fitting.cpp',
                'input_parser.cpp',
                'input_setter.cpp',
                'interaction.cpp',
-               'lasso.cpp',
                'main.cpp',
+               'optimize.cpp',
                'patterndisp.cpp',
                'rref.cpp',
                'symmetry.cpp',

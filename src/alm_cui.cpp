@@ -11,7 +11,6 @@
 #include "alm_cui.h"
 #include "alm.h"
 #include "input_parser.h"
-#include "lasso.h"
 #include "timer.h"
 #include "version.h"
 #include "writer.h"
@@ -28,13 +27,13 @@ ALMCUI::ALMCUI() {}
 
 ALMCUI::~ALMCUI() {}
 
-void ALMCUI::run(int narg,
+void ALMCUI::run(const int narg,
                  char **arg) const
 {
-    ALM *alm = new ALM();
+    auto alm = new ALM();
 
     // alm->mode is set herein.
-    InputParser *input_parser = new InputParser();
+    auto input_parser = new InputParser();
     input_parser->run(alm, narg, arg);
 
     if (alm->get_verbosity() > 0) {
@@ -53,13 +52,13 @@ void ALMCUI::run(int narg,
         std::cout << " Job started at " << alm->timer->DateAndTime() << std::endl;
     }
 
-    Writer *writer = new Writer();
+    auto writer = new Writer();
 
     if (alm->get_verbosity() > 0) {
         writer->write_input_vars(alm);
     }
 
-    if (alm->get_run_mode() == "fitting" || alm->get_run_mode() == "lasso") {
+    if (alm->get_run_mode() == "optimize") {
         input_parser->parse_displacement_and_force(alm);
     }
 
@@ -67,8 +66,12 @@ void ALMCUI::run(int narg,
 
     alm->run();
 
-    if (alm->get_run_mode() == "fitting" || (alm->get_run_mode() == "lasso" && alm->lasso->lasso_cv == 0)) {
-        writer->writeall(alm);
+    if (alm->get_run_mode() == "optimize") {
+        if (alm->optimize->get_optimizer_control().optimizer == 1 ||
+            (alm->optimize->get_optimizer_control().optimizer == 2
+                && alm->optimize->get_optimizer_control().cross_validation_mode == 0)) {
+            writer->writeall(alm);
+        }
     } else if (alm->get_run_mode() == "suggest") {
         writer->write_displacement_pattern(alm);
     }

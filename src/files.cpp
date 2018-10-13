@@ -17,10 +17,20 @@ Files::Files()
     print_hessian = false;
 }
 
-Files::~Files() {}
+Files::~Files() = default;
 
 void Files::init()
 {
     file_fcs = job_title + ".fcs";
     file_hes = job_title + ".hessian";
+}
+
+void Files::set_prefix(const std::string prefix_in)
+{
+    job_title = prefix_in;
+}
+
+std::string Files::get_prefix() const
+{
+    return job_title;
 }

@@ -131,11 +131,11 @@ namespace ALM_NS
             double dist_a = 0;
             double dist_b = 0;
 
-            for (int i = 0; i < a.dist.size(); ++i) {
-                dist_a += a.dist[i];
+            for (auto i : a.dist) {
+                dist_a += i;
             }
-            for (int i = 0; i < b.dist.size(); ++i) {
-                dist_b += b.dist[i];
+            for (auto i : b.dist) {
+                dist_b += i;
             }
             return dist_a < dist_b;
         }
@@ -147,8 +147,8 @@ namespace ALM_NS
             std::vector<double> dvec_a, dvec_b;
             std::copy(a.dist.begin(), a.dist.end(), std::back_inserter(dvec_a));
             std::copy(b.dist.begin(), b.dist.end(), std::back_inserter(dvec_b));
-            double max_dist_a = *std::max_element(dvec_a.begin(), dvec_a.end());
-            double max_dist_b = *std::max_element(dvec_b.begin(), dvec_b.end());
+            const auto max_dist_a = *std::max_element(dvec_a.begin(), dvec_a.end());
+            const auto max_dist_b = *std::max_element(dvec_b.begin(), dvec_b.end());
 
             return max_dist_a < max_dist_b;
         }
@@ -205,12 +205,12 @@ namespace ALM_NS
                     const int *,
                     const double * const * const *);
         int get_maxorder() const;
-        int * get_nbody_include() const;
-        const std::string get_ordername(const unsigned int order) const;
-        const std::set<IntList> &get_cluster_list(const unsigned int order) const;
-        const std::vector<int> &get_interaction_pair(const unsigned int order,
+        int* get_nbody_include() const;
+        std::string get_ordername(const unsigned int order) const;
+        const std::set<IntList>& get_cluster_list(const unsigned int order) const;
+        const std::vector<int>& get_interaction_pair(const unsigned int order,
                                                      const unsigned int atom_index) const;
-        const std::set<InteractionCluster> &get_interaction_cluster(const unsigned int order,
+        const std::set<InteractionCluster>& get_interaction_cluster(const unsigned int order,
                                                                     const unsigned int atom_index) const;
 
     private:
@@ -223,7 +223,7 @@ namespace ALM_NS
         std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **interaction_cluster;
 
-        std::vector<DistInfo> **distall; // Distance of all pairs (i,j) under the PBC
+        std::vector<DistInfo> **distall;       // Distance of all pairs (i,j) under the PBC
         std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
         // Interaction many-body clusters with mirrow image information
 
@@ -261,8 +261,10 @@ namespace ALM_NS
                                            const std::vector<int> * const *);
 
         void set_ordername();
-        double distance(const double *, const double *) const;
-        int nbody(const int, const int *) const;
+        double distance(const double *,
+                        const double *) const;
+        int nbody(const int,
+                  const int *) const;
 
         void calc_interaction_clusters(const int,
                                        const std::vector<int> &,
@@ -281,7 +283,7 @@ namespace ALM_NS
 
         void cell_combination(const std::vector<std::vector<int>> &,
                               const int,
-                              const std::vector<int>,
+                              const std::vector<int> &,
                               std::vector<std::vector<int>> &) const;
 
         void generate_pairs(const int,

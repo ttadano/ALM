@@ -88,8 +88,8 @@ void Fcs::init(const Interaction *interaction,
         std::cout << std::endl;
         for (i = 0; i < maxorder; ++i) {
             std::cout << "  Number of " << std::setw(9)
-                      << interaction->get_ordername(i)
-                      << " FCs : " << nequiv[i].size();
+                << interaction->get_ordername(i)
+                << " FCs : " << nequiv[i].size();
             std::cout << std::endl;
         }
         std::cout << std::endl;
@@ -337,7 +337,6 @@ void Fcs::generate_force_constant_table(const int order,
 void Fcs::get_constraint_symmetry(const int nat,
                                   const Symmetry *symmetry,
                                   const int order,
-                                  const std::set<IntList> &pairs,
                                   const std::string basis,
                                   const std::vector<FcProperty> &fc_table,
                                   const int nparams,
@@ -351,7 +350,7 @@ void Fcs::get_constraint_symmetry(const int nat,
     int i;
     // int j;
     unsigned int isym;
-    int ixyz, nxyz;
+    int ixyz;
     int *index_tmp;
     int **xyzcomponent;
     int nsym_in_use;
@@ -366,10 +365,10 @@ void Fcs::get_constraint_symmetry(const int nat,
 
     if (order < 0) return;
 
-    int nsym = symmetry->get_SymmData().size();
-    int natmin = symmetry->get_nat_prim();
-    int nfcs = fc_table.size();
-    bool use_compatible = false;
+    const int nsym = symmetry->get_SymmData().size();
+    const int natmin = symmetry->get_nat_prim();
+    const int nfcs = fc_table.size();
+    const auto use_compatible = false;
 
     if (nparams == 0) return;
 
@@ -377,7 +376,7 @@ void Fcs::get_constraint_symmetry(const int nat,
     allocate(map_sym, nat, nsym);
     allocate(index_tmp, order + 2);
 
-    nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 2));
+    const auto nxyz = static_cast<int>(std::pow(static_cast<double>(3), order + 2));
     allocate(xyzcomponent, nxyz, order + 2);
     get_xyzcomponent(order + 2, xyzcomponent);
 
@@ -512,7 +511,7 @@ void Fcs::get_constraint_symmetry(const int nat,
 
     typedef std::map<unsigned int, double> ConstDoubleEntry;
     ConstDoubleEntry const_tmp2;
-    double division_factor;
+    auto division_factor = 1.0;
     int counter;
     const_out.clear();
 
@@ -533,12 +532,12 @@ void Fcs::get_constraint_symmetry(const int nat,
     if (do_rref) rref_sparse(nparams, const_out, tolerance);
 }
 
-std::vector<int> * Fcs::get_nequiv() const
+std::vector<int>* Fcs::get_nequiv() const
 {
     return nequiv;
 }
 
-std::vector<FcProperty> * Fcs::get_fc_table() const
+std::vector<FcProperty>* Fcs::get_fc_table() const
 {
     return fc_table;
 }
@@ -612,10 +611,9 @@ double Fcs::coef_sym(const int n,
                      const int *arr1,
                      const int *arr2) const
 {
-    double tmp = 1.0;
-    int i;
+    auto tmp = 1.0;
 
-    for (i = 0; i < n; ++i) {
+    for (auto i = 0; i < n; ++i) {
         tmp *= rot[arr2[i]][arr1[i]];
     }
     return tmp;
@@ -624,7 +622,7 @@ double Fcs::coef_sym(const int n,
 bool Fcs::is_ascending(const int n,
                        const int *arr) const
 {
-    for (int i = 0; i < n - 1; ++i) {
+    for (auto i = 0; i < n - 1; ++i) {
         if (arr[i] > arr[i + 1]) return false;
     }
     return true;
@@ -651,8 +649,8 @@ int Fcs::get_minimum_index_in_primitive(const int n,
         }
     }
 
-    int minval = ind[0];
-    int minloc = 0;
+    auto minval = ind[0];
+    auto minloc = 0;
 
     for (i = 0; i < n; ++i) {
         if (ind[i] < minval) {
@@ -669,8 +667,8 @@ bool Fcs::is_inprim(const int n,
                     const int natmin,
                     const std::vector<std::vector<int>> &map_p2s) const
 {
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < natmin; ++j) {
+    for (auto i = 0; i < n; ++i) {
+        for (auto j = 0; j < natmin; ++j) {
             if (map_p2s[j][0] == arr[i]) return true;
         }
     }
@@ -681,9 +679,9 @@ bool Fcs::is_inprim(const int n,
                     const int natmin,
                     const std::vector<std::vector<int>> &map_p2s) const
 {
-    int atmn = n / 3;
+    const auto atmn = n / 3;
 
-    for (int i = 0; i < natmin; ++i) {
+    for (auto i = 0; i < natmin; ++i) {
         if (map_p2s[i][0] == atmn) return true;
     }
 
@@ -703,7 +701,7 @@ void Fcs::get_xyzcomponent(const int n,
     for (i = n; i < 2 * n; ++i) v[i] = 1;
     for (i = 2 * n; i < 3 * n; ++i) v[i] = 2;
 
-    int m = 0;
+    auto m = 0;
 
     do {
         xyz[m][0] = v[0];
@@ -717,8 +715,8 @@ bool Fcs::is_allzero(const std::vector<double> &vec,
                      int &loc) const
 {
     loc = -1;
-    auto n = vec.size();
-    for (int i = 0; i < n; ++i) {
+    const auto n = vec.size();
+    for (auto i = 0; i < n; ++i) {
         if (std::abs(vec[i]) > tol) {
             loc = i;
             return false;

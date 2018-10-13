@@ -31,7 +31,7 @@ namespace ALM_NS
 
     inline void exit(const char *file,
                      const char *message,
-                     int info)
+                     const int info)
     {
         std::cout << " ERROR in " << file << "  MESSAGE: " << message << info << std::endl;
         std::exit(EXIT_FAILURE);

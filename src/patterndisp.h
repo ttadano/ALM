@@ -12,6 +12,7 @@
 
 //#include "pointers.h"
 #include <string>
+#include <utility>
 #include <vector>
 #include <set>
 #include "interaction.h"
@@ -29,24 +30,19 @@ namespace ALM_NS
 
         DispAtomSet();
 
-        DispAtomSet(std::vector<int> vec)
-        {
-            for (auto it = vec.begin(); it != vec.end(); ++it) {
-                atomset.push_back((*it));
-            }
-        }
+        DispAtomSet(std::vector<int> atomset_in) : atomset(std::move(atomset_in)) {}
     };
 
     class DirectionVec
     {
     public:
-        double direction[3];
+        double direction[3]{};
 
         DirectionVec();
 
-        DirectionVec(double vec_in[3])
+        DirectionVec(const double vec_in[3])
         {
-            for (int i = 0; i < 3; ++i) direction[i] = vec_in[i];
+            for (auto i = 0; i < 3; ++i) direction[i] = vec_in[i];
         }
     };
 
@@ -58,12 +54,12 @@ namespace ALM_NS
 
         DispDirectionHarmonic();
 
-        DispDirectionHarmonic(int n,
-                              std::vector<DirectionVec> list_in)
+        DispDirectionHarmonic(const int n,
+                              const std::vector<DirectionVec> &list_in)
         {
             atom = n;
-            for (auto it = list_in.begin(); it != list_in.end(); ++it) {
-                directionlist.push_back(*it);
+            for (auto &it : list_in) {
+                directionlist.push_back(it);
             }
         }
     };
@@ -77,23 +73,15 @@ namespace ALM_NS
         AtomWithDirection();
 
         AtomWithDirection(std::vector<int> a,
-                          std::vector<double> b)
-        {
-            for (unsigned int i = 0; i < a.size(); ++i) {
-                atoms.push_back(a[i]);
-            }
-            for (unsigned int i = 0; i < b.size(); ++i) {
-                directions.push_back(b[i]);
-            }
-        }
+                          std::vector<double> b) : atoms(std::move(a)), directions(std::move(b)) {}
 
-        AtomWithDirection(int n,
-                          int *a,
-                          double **b)
+        AtomWithDirection(const int n,
+                          const int *a,
+                          const double **b)
         {
-            for (int i = 0; i < n; ++i) {
+            for (auto i = 0; i < n; ++i) {
                 atoms.push_back(a[i]);
-                for (int j = 0; j < 3; ++j) {
+                for (auto j = 0; j < 3; ++j) {
                     directions.push_back(b[i][j]);
                 }
             }
@@ -146,7 +134,7 @@ namespace ALM_NS
         void set_trim_dispsign_for_evenfunc(const bool);
         std::string get_disp_basis() const;
         void set_disp_basis(const std::string);
-        const std::vector<AtomWithDirection> &get_pattern_all(const int) const;
+        const std::vector<AtomWithDirection>& get_pattern_all(const int) const;
 
     private:
         bool trim_dispsign_for_evenfunc;
@@ -161,7 +149,7 @@ namespace ALM_NS
                                   const double [3][3],
                                   const Symmetry *symmetry,
                                   const std::set<DispAtomSet> *,
-                                  const std::string);
+                                  const std::string) const;
 
         void generate_signvecs(const int,
                                std::vector<std::vector<int>> &,
@@ -171,7 +159,7 @@ namespace ALM_NS
                                     const int,
                                     const Symmetry *,
                                     const std::vector<std::vector<int>>,
-                                    const std::vector<int>,
+                                    const std::vector<int> &,
                                     std::vector<std::vector<int>> &,
                                     const std::string) const;
     };
