@@ -1,5 +1,5 @@
 /*
- fitting.h
+ optimize.h
 
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
@@ -29,7 +29,7 @@ namespace ALM_NS
     {
     public:
         // General optimization options
-        int optimizer; // 1 : least-squares, 2 : elastic net
+        int optimizer;         // 1 : least-squares, 2 : elastic net
         int use_sparse_solver; // 0: No, 1: Yes
         int maxnum_iteration;
         double tolerance_iteration;
@@ -126,7 +126,7 @@ namespace ALM_NS
         void set_skip_s(const int);
         int get_skip_e() const;
         void set_skip_e(const int);
-        double *get_params() const;
+        double* get_params() const;
         //int get_use_sparseQR() const;
         //void set_use_sparseQR(const int);
 
@@ -141,7 +141,7 @@ namespace ALM_NS
         int ndata, nstart, nend;
         int skip_s, skip_e;
         double *params;
- //       int use_sparseQR;
+        //       int use_sparseQR;
         double **u_in;
         double **f_in;
 
@@ -305,7 +305,7 @@ namespace ALM_NS
 
         double gamma(const int,
                      const int *) const;
-       
+
 
         // Moved from lasso.h
         void coordinate_descent(const int M,

@@ -79,20 +79,20 @@ namespace ALM_NS
                                 const double (*)[3]);
         void set_str_magmom(std::string);
 
-        const Cell &get_supercell() const;
-        double *** get_x_image() const;
-        int * get_exist_image() const;
-        std::string * get_kdname() const;
-        int * get_periodicity() const;
-        const Spin &get_spin() const;
-        const std::string &get_str_magmom() const;
-        const std::vector<std::vector<unsigned int>> &get_atomtype_group() const;
+        const Cell& get_supercell() const;
+        double*** get_x_image() const;
+        int* get_exist_image() const;
+        std::string* get_kdname() const;
+        int* get_periodicity() const;
+        const Spin& get_spin() const;
+        const std::string& get_str_magmom() const;
+        const std::vector<std::vector<unsigned int>>& get_atomtype_group() const;
 
     private:
         // Variables for geometric structure
         Cell supercell;
         std::string *kdname;
-        int *is_periodic;  // is_periodic[3];
+        int *is_periodic; // is_periodic[3];
         double ***x_image;
         int *exist_image;
 
@@ -105,11 +105,13 @@ namespace ALM_NS
 
         enum LatticeType { Direct, Reciprocal };
 
-        void set_reciprocal_latt(const double [3][3], double [3][3]) const;
+        void set_reciprocal_latt(const double [3][3],
+                                 double [3][3]) const;
         void set_default_variables();
         void deallocate_variables();
 
-        double volume(const double [3][3], LatticeType) const;
+        double volume(const double [3][3],
+                      LatticeType) const;
         void set_atomtype_group();
 
         void generate_coordinate_of_periodic_images();

@@ -20,8 +20,8 @@ namespace ALM_NS
     class SymmetryOperation
     {
     public:
-        int rotation[3][3]; // in lattice basis
-        double tran[3]; // in Cartesian basis
+        int rotation[3][3];         // in lattice basis
+        double tran[3];             // in Cartesian basis
         double rotation_cart[3][3]; // in Cartesian basis
         bool compatible_with_lattice;
         bool compatible_with_cartesian;
@@ -115,22 +115,22 @@ namespace ALM_NS
         void set_tolerance(const double);
         int get_print_symmetry() const;
         void set_print_symmetry(const int);
-        const std::vector<Maps> &get_map_s2p() const;
-        const std::vector<std::vector<int>> &get_map_p2s() const;
-        const std::vector<SymmetryOperation> &get_SymmData() const;
-        const std::vector<std::vector<int>> &get_map_sym() const;
-        const std::vector<int> &get_symnum_tran() const;
+        const std::vector<Maps>& get_map_s2p() const;
+        const std::vector<std::vector<int>>& get_map_p2s() const;
+        const std::vector<SymmetryOperation>& get_SymmData() const;
+        const std::vector<std::vector<int>>& get_map_sym() const;
+        const std::vector<int>& get_symnum_tran() const;
         unsigned int get_nsym() const;
         unsigned int get_ntran() const;
         unsigned int get_nat_prim() const;
 
     private:
         unsigned int nsym, ntran, nat_prim;
-        std::vector<std::vector<int>> map_sym; // [nat, nsym]
-        std::vector<std::vector<int>> map_p2s;  // [nat_prim, ntran]
-        std::vector<Maps> map_s2p;  // [nat]
-        std::vector<SymmetryOperation> SymmData;  // [nsym]
-        std::vector<int> symnum_tran;  // [ntran]
+        std::vector<std::vector<int>> map_sym;   // [nat, nsym]
+        std::vector<std::vector<int>> map_p2s;   // [nat_prim, ntran]
+        std::vector<Maps> map_s2p;               // [nat]
+        std::vector<SymmetryOperation> SymmData; // [nsym]
+        std::vector<int> symnum_tran;            // [ntran]
 
         double tolerance;
         bool use_internal_symm_finder;

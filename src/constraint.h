@@ -222,15 +222,16 @@ namespace ALM_NS
         void set_constraint_mode(const int);
         int get_number_of_constraints() const;
         std::string get_fc_file(const int) const;
-        void set_fc_file(const int, const std::string);
+        void set_fc_file(const int,
+                         const std::string);
         bool get_fix_harmonic() const;
         void set_fix_harmonic(const bool);
         bool get_fix_cubic() const;
         void set_fix_cubic(const bool);
         int get_constraint_algebraic() const;
 
-        double ** get_const_mat() const;
-        double * get_const_rhs() const;
+        double** get_const_mat() const;
+        double* get_const_rhs() const;
 
         double get_tolerance_constraint() const;
         void set_tolerance_constraint(const double);
@@ -241,11 +242,13 @@ namespace ALM_NS
         std::string get_rotation_axis() const;
         void set_rotation_axis(const std::string);
 
-        const ConstraintSparseForm &get_const_symmetry(const int) const;
-        const std::vector<ConstraintTypeFix> &get_const_fix(const int) const;
-        void set_const_fix_val_to_fix(const int, const int, const double);
-        const std::vector<ConstraintTypeRelate> &get_const_relate(const int) const;
-        const boost::bimap<int, int> &get_index_bimap(const int) const;
+        const ConstraintSparseForm& get_const_symmetry(const int) const;
+        const std::vector<ConstraintTypeFix>& get_const_fix(const int) const;
+        void set_const_fix_val_to_fix(const int,
+                                      const int,
+                                      const double);
+        const std::vector<ConstraintTypeRelate>& get_const_relate(const int) const;
+        const boost::bimap<int, int>& get_index_bimap(const int) const;
 
     private:
 

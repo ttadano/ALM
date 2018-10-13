@@ -428,7 +428,7 @@ void Interaction::generate_interaction_information_by_cutoff(const int nat,
                                                              const int natmin,
                                                              const std::vector<int> &kd,
                                                              const std::vector<std::vector<int>> &map_p2s,
-                                                             const double * const * rc,
+                                                             const double * const *rc,
                                                              std::vector<int> *interaction_list) const
 {
     for (auto i = 0; i < natmin; ++i) {
@@ -481,7 +481,7 @@ int Interaction::get_maxorder() const
 void Interaction::define(const int maxorder_in,
                          const unsigned int nkd,
                          const int *nbody_include_in,
-                         const double * const * const * cutoff_radii_in)
+                         const double * const * const *cutoff_radii_in)
 {
     maxorder = maxorder_in;
     if (nbody_include) {
@@ -511,7 +511,7 @@ void Interaction::define(const int maxorder_in,
     }
 }
 
-int * Interaction::get_nbody_include() const
+int* Interaction::get_nbody_include() const
 {
     return nbody_include;
 }
@@ -521,18 +521,18 @@ std::string Interaction::get_ordername(const unsigned int order) const
     return str_order[order];
 }
 
-const std::set<IntList> &Interaction::get_cluster_list(const unsigned int order) const
+const std::set<IntList>& Interaction::get_cluster_list(const unsigned int order) const
 {
     return cluster_list[order];
 }
 
-const std::vector<int> &Interaction::get_interaction_pair(const unsigned int order,
+const std::vector<int>& Interaction::get_interaction_pair(const unsigned int order,
                                                           const unsigned int atom_index) const
 {
     return interaction_pair[order][atom_index];
 }
 
-const std::set<InteractionCluster> &Interaction::get_interaction_cluster(const unsigned int order,
+const std::set<InteractionCluster>& Interaction::get_interaction_cluster(const unsigned int order,
                                                                          const unsigned int atom_index) const
 {
     return interaction_cluster[order][atom_index];

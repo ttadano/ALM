@@ -134,7 +134,7 @@ namespace ALM_NS
         void set_trim_dispsign_for_evenfunc(const bool);
         std::string get_disp_basis() const;
         void set_disp_basis(const std::string);
-        const std::vector<AtomWithDirection> &get_pattern_all(const int) const;
+        const std::vector<AtomWithDirection>& get_pattern_all(const int) const;
 
     private:
         bool trim_dispsign_for_evenfunc;

@@ -12,8 +12,6 @@
 #include "input_setter.h"
 #include "memory.h"
 #include "files.h"
-#include "interaction.h"
-#include "system.h"
 #include "symmetry.h"
 #include "optimize.h"
 #include "constraint.h"
@@ -29,8 +27,8 @@ InputSetter::InputSetter()
     kd = nullptr;
     kdname = nullptr;
 
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; j++) {
+    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; j++) {
             lavec[i][j] = 0.0;
         }
     }
@@ -133,7 +131,7 @@ void InputSetter::set_general_vars(ALM *alm,
 {
     int i, j;
 
-    alm->files->job_title = prefix;
+    alm->files->set_prefix(prefix);
     alm->set_run_mode(mode);
     alm->set_verbosity(verbosity);
     nat = nat_in;

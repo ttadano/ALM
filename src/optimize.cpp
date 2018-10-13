@@ -1,5 +1,5 @@
 /*
- fitting.cpp
+ optimize.cpp
 
  Copyright (c) 2014-2018 Terumasa Tadano
 
@@ -77,15 +77,15 @@ void Optimize::deallocate_variables()
 }
 
 int Optimize::optimize_main(const Symmetry *symmetry,
-                           Constraint *constraint,
-                           const Fcs *fcs,
-                           const int maxorder,
-                           const std::vector<std::string> &str_order,
-                           const unsigned int nat,
-                           const int verbosity,
-                           const std::string file_disp,
-                           const std::string file_force,
-                           Timer *timer)
+                            Constraint *constraint,
+                            const Fcs *fcs,
+                            const int maxorder,
+                            const std::vector<std::string> &str_order,
+                            const unsigned int nat,
+                            const int verbosity,
+                            const std::string file_disp,
+                            const std::string file_force,
+                            Timer *timer)
 {
     timer->start_clock("optimize");
 
@@ -268,16 +268,16 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 }
 
 int Optimize::least_squares(const int maxorder,
-                           const int natmin,
-                           const int ntran,
-                           const int N,
-                           const int N_new,
-                           const int M,
-                           const int verbosity,
-                           const Symmetry *symmetry,
-                           const Fcs *fcs,
-                           const Constraint *constraint,
-                           std::vector<double> &param_out)
+                            const int natmin,
+                            const int ntran,
+                            const int N,
+                            const int N_new,
+                            const int M,
+                            const int verbosity,
+                            const Symmetry *symmetry,
+                            const Fcs *fcs,
+                            const Constraint *constraint,
+                            std::vector<double> &param_out)
 {
     auto info_fitting = 0;
 
@@ -423,23 +423,23 @@ int Optimize::least_squares(const int maxorder,
 
 
 int Optimize::elastic_net(const int maxorder,
-                         const int natmin,
-                         const int ntran,
-                         const int N,
-                         const int N_new,
-                         const int M,
-                         const int M_test,
-                         double **&u,
-                         double **&f,
-                         double **&u_test,
-                         double **&f_test,
-                         const Symmetry *symmetry,
-                         const std::vector<std::string> &str_order,
-                         const Fcs *fcs,
-                         Constraint *constraint,
-                         const unsigned int nat,
-                         const int verbosity,
-                         std::vector<double> &param_out)
+                          const int natmin,
+                          const int ntran,
+                          const int N,
+                          const int N_new,
+                          const int M,
+                          const int M_test,
+                          double **&u,
+                          double **&f,
+                          double **&u_test,
+                          double **&f_test,
+                          const Symmetry *symmetry,
+                          const std::vector<std::string> &str_order,
+                          const Fcs *fcs,
+                          Constraint *constraint,
+                          const unsigned int nat,
+                          const int verbosity,
+                          std::vector<double> &param_out)
 {
     auto info_fitting = 0;
     int i, j;
@@ -627,18 +627,18 @@ int Optimize::elastic_net(const int maxorder,
 }
 
 int Optimize::run_elastic_net_crossvalidation(const int maxorder,
-                                             const int M,
-                                             const int M_test,
-                                             const int N_new,
-                                             std::vector<double> &amat_1D,
-                                             std::vector<double> &bvec,
-                                             const double fnorm,
-                                             std::vector<double> &amat_1D_test,
-                                             std::vector<double> &bvec_test,
-                                             const double fnorm_test,
-                                             const Constraint *constraint,
-                                             const int verbosity,
-                                             std::vector<double> &param_out)
+                                              const int M,
+                                              const int M_test,
+                                              const int N_new,
+                                              std::vector<double> &amat_1D,
+                                              std::vector<double> &bvec,
+                                              const double fnorm,
+                                              std::vector<double> &amat_1D_test,
+                                              std::vector<double> &bvec_test,
+                                              const double fnorm_test,
+                                              const Constraint *constraint,
+                                              const int verbosity,
+                                              std::vector<double> &param_out)
 {
     // Cross-validation mode
 
@@ -736,10 +736,10 @@ int Optimize::run_elastic_net_crossvalidation(const int maxorder,
 
     for (auto ialpha = 0; ialpha <= optcontrol.num_l1_alpha; ++ialpha) {
 
-        const auto l1_alpha = optcontrol.l1_alpha_min 
-        * std::pow(optcontrol.l1_alpha_max / optcontrol.l1_alpha_min,
-                                                           static_cast<double>(optcontrol.num_l1_alpha - ialpha) /
-                                                           static_cast<double>(optcontrol.num_l1_alpha));
+        const auto l1_alpha = optcontrol.l1_alpha_min
+            * std::pow(optcontrol.l1_alpha_max / optcontrol.l1_alpha_min,
+                       static_cast<double>(optcontrol.num_l1_alpha - ialpha) /
+                       static_cast<double>(optcontrol.num_l1_alpha));
 
 
         ofs_cv << std::setw(15) << l1_alpha;
@@ -819,14 +819,14 @@ int Optimize::run_elastic_net_crossvalidation(const int maxorder,
 
 
 int Optimize::run_elastic_net_optimization(const int maxorder,
-                                          const int M,
-                                          const int N_new,
-                                          std::vector<double> &amat_1D,
-                                          std::vector<double> &bvec,
-                                          const double fnorm,
-                                          const std::vector<std::string> &str_order,
-                                          const int verbosity,
-                                          std::vector<double> &param_out)
+                                           const int M,
+                                           const int N_new,
+                                           std::vector<double> &amat_1D,
+                                           std::vector<double> &bvec,
+                                           const double fnorm,
+                                           const std::vector<std::string> &str_order,
+                                           const int verbosity,
+                                           std::vector<double> &param_out)
 {
     // Start Lasso optimization
     int i;
@@ -921,10 +921,10 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
 }
 
 int Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
-                                                  const Eigen::VectorXd &b_in,
-                                                  const Eigen::VectorXd &factor_std,
-                                                  std::vector<double> &params,
-                                                  const int verbosity)
+                                                   const Eigen::VectorXd &b_in,
+                                                   const Eigen::VectorXd &factor_std,
+                                                   std::vector<double> &params,
+                                                   const int verbosity)
 {
     // Perform OLS fitting to the features selected by LASSO for reducing the bias.
 
@@ -964,10 +964,10 @@ int Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
 
 
 void Optimize::get_standardizer(const Eigen::MatrixXd &Amat,
-                               Eigen::VectorXd &mean,
-                               Eigen::VectorXd &dev,
-                               Eigen::VectorXd &factor_std,
-                               Eigen::VectorXd &scale_beta)
+                                Eigen::VectorXd &mean,
+                                Eigen::VectorXd &dev,
+                                Eigen::VectorXd &factor_std,
+                                Eigen::VectorXd &scale_beta)
 {
     const auto nrows = Amat.rows();
     const auto ncols = Amat.cols();
@@ -1001,8 +1001,8 @@ void Optimize::get_standardizer(const Eigen::MatrixXd &Amat,
 }
 
 void Optimize::apply_standardizer(Eigen::MatrixXd &Amat,
-                                 const Eigen::VectorXd &mean,
-                                 const Eigen::VectorXd &dev)
+                                  const Eigen::VectorXd &mean,
+                                  const Eigen::VectorXd &dev)
 {
     const auto ncols = Amat.cols();
     const auto nrows = Amat.rows();
@@ -1018,7 +1018,7 @@ void Optimize::apply_standardizer(Eigen::MatrixXd &Amat,
 }
 
 double Optimize::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
-                                       const Eigen::VectorXd &bvec) const
+                                        const Eigen::VectorXd &bvec) const
 {
     const auto ncols = Amat.cols();
     Eigen::MatrixXd C = Amat.transpose() * bvec;
@@ -1034,9 +1034,9 @@ double Optimize::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
 
 
 void Optimize::set_displacement_and_force(const double * const *disp_in,
-                                         const double * const *force_in,
-                                         const int nat,
-                                         const int ndata_used_in)
+                                          const double * const *force_in,
+                                          const int nat,
+                                          const int ndata_used_in)
 {
     ndata_used = ndata_used_in;
 
@@ -1059,9 +1059,9 @@ void Optimize::set_displacement_and_force(const double * const *disp_in,
 }
 
 void Optimize::set_fcs_values(const int maxorder,
-                             double *fc_in,
-                             std::vector<int> *nequiv,
-                             const Constraint *constraint)
+                              double *fc_in,
+                              std::vector<int> *nequiv,
+                              const Constraint *constraint)
 {
     // fc_in: irreducible set of force constants
     // fc_length: dimension of params (can differ from that of fc_in)
@@ -1102,11 +1102,11 @@ int Optimize::get_ndata_used() const
 
 
 int Optimize::fit_without_constraints(const int N,
-                                     const int M,
-                                     double *amat,
-                                     const double *bvec,
-                                     double *param_out,
-                                     const int verbosity) const
+                                      const int M,
+                                      double *amat,
+                                      const double *bvec,
+                                      double *param_out,
+                                      const int verbosity) const
 {
     int i;
     int nrhs = 1, nrank, INFO, M_tmp, N_tmp;
@@ -1177,14 +1177,14 @@ int Optimize::fit_without_constraints(const int N,
 }
 
 int Optimize::fit_with_constraints(const int N,
-                                  const int M,
-                                  const int P,
-                                  double *amat,
-                                  const double *bvec,
-                                  double *param_out,
-                                  const double * const *cmat,
-                                  double *dvec,
-                                  const int verbosity) const
+                                   const int M,
+                                   const int P,
+                                   double *amat,
+                                   const double *bvec,
+                                   double *param_out,
+                                   const double * const *cmat,
+                                   double *dvec,
+                                   const int verbosity) const
 {
     int i, j;
     int N_tmp, M_tmp, P_tmp;
@@ -1292,15 +1292,15 @@ int Optimize::fit_with_constraints(const int N,
 }
 
 int Optimize::fit_algebraic_constraints(const int N,
-                                       const int M,
-                                       double *amat,
-                                       const double *bvec,
-                                       std::vector<double> &param_out,
-                                       const double fnorm,
-                                       const int maxorder,
-                                       const Fcs *fcs,
-                                       const Constraint *constraint,
-                                       const int verbosity) const
+                                        const int M,
+                                        double *amat,
+                                        const double *bvec,
+                                        std::vector<double> &param_out,
+                                        const double fnorm,
+                                        const int maxorder,
+                                        const Fcs *fcs,
+                                        const Constraint *constraint,
+                                        const int verbosity) const
 {
     int i;
     int nrhs = 1, nrank, INFO, M_tmp, N_tmp;
@@ -1379,11 +1379,11 @@ int Optimize::fit_algebraic_constraints(const int N,
 
 
 void Optimize::get_matrix_elements(const int maxorder,
-                                  const int ndata_fit,
-                                  double *amat,
-                                  double *bvec,
-                                  const Symmetry *symmetry,
-                                  const Fcs *fcs) const
+                                   const int ndata_fit,
+                                   double *amat,
+                                   double *bvec,
+                                   const Symmetry *symmetry,
+                                   const Fcs *fcs) const
 {
     int i, j;
     long irow;
@@ -1479,13 +1479,13 @@ void Optimize::get_matrix_elements(const int maxorder,
 
 
 void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
-                                                       const int ndata_fit,
-                                                       double *amat,
-                                                       double *bvec,
-                                                       double &fnorm,
-                                                       const Symmetry *symmetry,
-                                                       const Fcs *fcs,
-                                                       const Constraint *constraint) const
+                                                        const int ndata_fit,
+                                                        double *amat,
+                                                        double *bvec,
+                                                        double &fnorm,
+                                                        const Symmetry *symmetry,
+                                                        const Fcs *fcs,
+                                                        const Constraint *constraint) const
 {
     int i, j;
     long irow;
@@ -1650,13 +1650,13 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
 
 #ifdef WITH_SPARSE_SOLVER
 void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
-                                                 const int ndata_fit,
-                                                 SpMat &sp_amat,
-                                                 Eigen::VectorXd &sp_bvec,
-                                                 double &fnorm,
-                                                 const Symmetry *symmetry,
-                                                 const Fcs *fcs,
-                                                 const Constraint *constraint)
+                                                  const int ndata_fit,
+                                                  SpMat &sp_amat,
+                                                  Eigen::VectorXd &sp_bvec,
+                                                  double &fnorm,
+                                                  const Symmetry *symmetry,
+                                                  const Fcs *fcs,
+                                                  const Constraint *constraint)
 {
     int i, j;
     long irow;
@@ -1833,10 +1833,10 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
 
 
 void Optimize::recover_original_forceconstants(const int maxorder,
-                                              const std::vector<double> &param_in,
-                                              std::vector<double> &param_out,
-                                              const std::vector<int> *nequiv,
-                                              const Constraint *constraint) const
+                                               const std::vector<double> &param_in,
+                                               std::vector<double> &param_out,
+                                               const std::vector<int> *nequiv,
+                                               const Constraint *constraint) const
 {
     // Expand the given force constants into the larger sets
     // by using the constraint matrix.
@@ -1883,9 +1883,9 @@ void Optimize::recover_original_forceconstants(const int maxorder,
 
 
 void Optimize::data_multiplier(const double * const *data_in,
-                              std::vector<std::vector<double>> &data_out,
-                              const int ndata_used,
-                              const Symmetry *symmetry) const
+                               std::vector<std::vector<double>> &data_out,
+                               const int ndata_used,
+                               const Symmetry *symmetry) const
 {
     const int nat = symmetry->get_nat_prim() * symmetry->get_ntran();
 
@@ -1907,7 +1907,7 @@ void Optimize::data_multiplier(const double * const *data_in,
 }
 
 int Optimize::inprim_index(const int n,
-                          const Symmetry *symmetry) const
+                           const Symmetry *symmetry) const
 {
     auto in = -1;
     const auto atmn = n / 3;
@@ -1923,7 +1923,7 @@ int Optimize::inprim_index(const int n,
 }
 
 double Optimize::gamma(const int n,
-                      const int *arr) const
+                       const int *arr) const
 {
     int *arr_tmp, *nsame;
     int i;
@@ -2034,9 +2034,9 @@ int Optimize::factorial(const int n) const
 
 
 int Optimize::rankQRD(const int m,
-                     const int n,
-                     double *mat,
-                     const double tolerance) const
+                      const int n,
+                      double *mat,
+                      const double tolerance) const
 {
     // Return the rank of matrix mat revealed by the column pivoting QR decomposition
     // The matrix mat is destroyed.
@@ -2091,13 +2091,13 @@ int Optimize::rankQRD(const int m,
 
 #ifdef WITH_SPARSE_SOLVER
 int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
-                                const Eigen::VectorXd &sp_bvec,
-                                std::vector<double> &param_out,
-                                const double fnorm,
-                                const int maxorder,
-                                const Fcs *fcs,
-                                const Constraint *constraint,
-                                const int verbosity)
+                                 const Eigen::VectorXd &sp_bvec,
+                                 std::vector<double> &param_out,
+                                 const double fnorm,
+                                 const int maxorder,
+                                 const Fcs *fcs,
+                                 const Constraint *constraint,
+                                 const int verbosity)
 {
     //    Eigen::BenchTimer t;
 
@@ -2223,19 +2223,19 @@ OptimizerControl Optimize::get_optimizer_control() const
 
 
 void Optimize::coordinate_descent(const int M,
-                                 const int N,
-                                 const double alpha,
-                                 const int warm_start,
-                                 Eigen::VectorXd &x,
-                                 const Eigen::MatrixXd &A,
-                                 const Eigen::VectorXd &b,
-                                 const Eigen::VectorXd &grad0,
-                                 bool *has_prod,
-                                 Eigen::MatrixXd &Prod,
-                                 Eigen::VectorXd &grad,
-                                 const double fnorm,
-                                 const Eigen::VectorXd &scale_beta,
-                                 const int verbosity) const
+                                  const int N,
+                                  const double alpha,
+                                  const int warm_start,
+                                  Eigen::VectorXd &x,
+                                  const Eigen::MatrixXd &A,
+                                  const Eigen::VectorXd &b,
+                                  const Eigen::VectorXd &grad0,
+                                  bool *has_prod,
+                                  Eigen::MatrixXd &Prod,
+                                  Eigen::VectorXd &grad,
+                                  const double fnorm,
+                                  const Eigen::VectorXd &scale_beta,
+                                  const int verbosity) const
 {
     int i, j;
     double diff;

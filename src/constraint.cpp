@@ -627,7 +627,7 @@ int Constraint::get_number_of_constraints() const
 
 std::string Constraint::get_fc_file(const int order) const
 {
-    switch(order) {
+    switch (order) {
     case 2:
         return fc2_file;
     case 3:
@@ -637,9 +637,10 @@ std::string Constraint::get_fc_file(const int order) const
     }
 }
 
-void Constraint::set_fc_file(const int order, const std::string fc_file)
+void Constraint::set_fc_file(const int order,
+                             const std::string fc_file)
 {
-    switch(order) {
+    switch (order) {
     case 2:
         fc2_file = fc_file;
         break;
@@ -676,12 +677,12 @@ int Constraint::get_constraint_algebraic() const
     return constraint_algebraic;
 }
 
-double ** Constraint::get_const_mat() const
+double** Constraint::get_const_mat() const
 {
     return const_mat;
 }
 
-double * Constraint::get_const_rhs() const
+double* Constraint::get_const_rhs() const
 {
     return const_rhs;
 }
@@ -716,27 +717,29 @@ void Constraint::set_rotation_axis(const std::string rotation_axis_in)
     rotation_axis = rotation_axis_in;
 }
 
-const ConstraintSparseForm &Constraint::get_const_symmetry(const int order) const
+const ConstraintSparseForm& Constraint::get_const_symmetry(const int order) const
 {
     return const_symmetry[order];
 }
 
-const std::vector<ConstraintTypeFix> &Constraint::get_const_fix(const int order) const
+const std::vector<ConstraintTypeFix>& Constraint::get_const_fix(const int order) const
 {
     return const_fix[order];
 }
 
-void Constraint::set_const_fix_val_to_fix(const int order, const int idx, const double val)
+void Constraint::set_const_fix_val_to_fix(const int order,
+                                          const int idx,
+                                          const double val)
 {
     const_fix[order][idx].val_to_fix = val;
 }
 
-const std::vector<ConstraintTypeRelate> &Constraint::get_const_relate(const int order) const
+const std::vector<ConstraintTypeRelate>& Constraint::get_const_relate(const int order) const
 {
     return const_relate[order];
 }
 
-const boost::bimap<int, int> &Constraint::get_index_bimap(const int order) const
+const boost::bimap<int, int>& Constraint::get_index_bimap(const int order) const
 {
     return index_bimap[order];
 }
@@ -1197,8 +1200,8 @@ void Constraint::generate_rotational_constraint(const System *system,
         } else {
             if (verbosity > 0) {
                 std::cout << "   Constraints between " << std::setw(8)
-                          << interaction->get_ordername(order - 1) << " and "
-                          << std::setw(8) << interaction->get_ordername(order) << " ...";
+                    << interaction->get_ordername(order - 1) << " and "
+                    << std::setw(8) << interaction->get_ordername(order) << " ...";
             }
 
             nparam_sub = nparams[order] + nparams[order - 1];
@@ -1339,9 +1342,9 @@ void Constraint::generate_rotational_constraint(const System *system,
                     interaction_index[0] = 3 * iat + icrd;
 
                     const CombinationWithRepetition<int> g_now(interaction_list_now.begin(),
-                                                         interaction_list_now.end(), order);
+                                                               interaction_list_now.end(), order);
                     const CombinationWithRepetition<int> g_old(interaction_list_old.begin(),
-                                                         interaction_list_old.end(), order);
+                                                               interaction_list_old.end(), order);
 
                     // m    -th order --> (m-1)-th order
                     // (m-1)-th order -->     m-th order

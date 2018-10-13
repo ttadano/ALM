@@ -206,7 +206,7 @@ void InputParser::parse_input(ALM *alm)
         if (!locate_tag("&optimize")) {
             if (!locate_tag("&fitting")) {
                 exit("parse_input",
-                    "&optimize entry not found in the input file");
+                     "&optimize entry not found in the input file");
             } else {
                 warn("parse_input", "&fitting field is deprecated. Please use &optimize instead.");
             }
@@ -270,8 +270,8 @@ void InputParser::parse_general_vars(ALM *alm)
     }
     if (mode == "lasso") {
         mode = "optimize";
-        warn("parse_general_vars", 
-            "MODE = lasso is deprecated. Please use MODE = optimize instead with OPTIMIZER = enet option in the &optimize field.");
+        warn("parse_general_vars",
+             "MODE = lasso is deprecated. Please use MODE = optimize instead with OPTIMIZER = enet option in the &optimize field.");
     }
 
     assign_val(nat, "NAT", general_var_dict);

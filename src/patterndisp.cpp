@@ -79,8 +79,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
         preferred_basis = "Lattice";
     }
 
-   // std::cout << "Preferred_basis = " << preferred_basis << std::endl;
-   // std::cout << ncompat_cart << " " << ncompat_latt << std::endl;
+    // std::cout << "Preferred_basis = " << preferred_basis << std::endl;
+    // std::cout << ncompat_cart << " " << ncompat_latt << std::endl;
 
     allocate(fc_table, maxorder);
     allocate(fc_zeros, maxorder);
@@ -124,8 +124,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     if (verbosity > 0) {
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of free" << std::setw(9)
-                      << interaction->get_ordername(order) << " FCs : "
-                      << index_bimap_tmp[order].size() << std::endl;
+                << interaction->get_ordername(order) << " FCs : "
+                << index_bimap_tmp[order].size() << std::endl;
         }
         std::cout << std::endl;
     }
@@ -203,8 +203,8 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
 
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of disp. patterns for " << std::setw(9)
-                      << interaction->get_ordername(order) << " : "
-                      << pattern_all[order].size() << std::endl;
+                << interaction->get_ordername(order) << " : "
+                << pattern_all[order].size() << std::endl;
         }
         std::cout << std::endl;
     }
@@ -225,7 +225,7 @@ void Displace::set_disp_basis(const std::string disp_basis_in)
     disp_basis = disp_basis_in;
 }
 
-const std::vector<AtomWithDirection> & Displace::get_pattern_all(const int order) const
+const std::vector<AtomWithDirection>& Displace::get_pattern_all(const int order) const
 {
     return pattern_all[order];
 }

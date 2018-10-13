@@ -58,28 +58,28 @@ void Symmetry::set_print_symmetry(const int printsymmetry_in)
     printsymmetry = printsymmetry_in;
 }
 
-const std::vector<Maps> &Symmetry::get_map_s2p() const
+const std::vector<Maps>& Symmetry::get_map_s2p() const
 {
     return map_s2p;
 }
 
-const std::vector<std::vector<int>> &Symmetry::get_map_p2s() const
+const std::vector<std::vector<int>>& Symmetry::get_map_p2s() const
 {
     return map_p2s;
 }
 
 
-const std::vector<SymmetryOperation> &Symmetry::get_SymmData() const
+const std::vector<SymmetryOperation>& Symmetry::get_SymmData() const
 {
     return SymmData;
 }
 
-const std::vector<std::vector<int>> & Symmetry::get_map_sym() const
+const std::vector<std::vector<int>>& Symmetry::get_map_sym() const
 {
     return map_sym;
 }
 
-const std::vector<int> &Symmetry::get_symnum_tran() const
+const std::vector<int>& Symmetry::get_symnum_tran() const
 {
     return symnum_tran;
 }
@@ -160,10 +160,7 @@ void Symmetry::set_default_variables()
     use_internal_symm_finder = false;
 }
 
-void Symmetry::deallocate_variables()
-{
-
-}
+void Symmetry::deallocate_variables() {}
 
 void Symmetry::setup_symmetry_operation(const Cell &cell,
                                         const int is_periodic[3],
@@ -854,7 +851,7 @@ bool Symmetry::is_proper(const double rot[3][3]) const
         return false;
     }
     exit("is_proper", "This cannot happen.");
-    return false;  // dummy to avoid compiler warning
+    return false; // dummy to avoid compiler warning
 }
 
 void Symmetry::set_primitive_lattice(const double aa[3][3],

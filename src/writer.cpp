@@ -47,11 +47,11 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << " Input variables:" << std::endl;
     std::cout << " -------------------------------------------------------------------" << std::endl;
     std::cout << " General:" << std::endl;
-    std::cout << "  PREFIX = " << alm->files->job_title << std::endl;
+    std::cout << "  PREFIX = " << alm->files->get_prefix() << std::endl;
     std::cout << "  MODE = " << alm->get_run_mode() << std::endl;
     std::cout << "  NAT = " << nat << "; NKD = " << nkd << std::endl;
     std::cout << "  PRINTSYM = " << alm->symmetry->get_print_symmetry()
-              << "; TOLERANCE = " << alm->symmetry->get_tolerance() << std::endl;
+        << "; TOLERANCE = " << alm->symmetry->get_tolerance() << std::endl;
     std::cout << "  KD = ";
     for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->get_kdname()[i];
     std::cout << std::endl;
@@ -80,7 +80,7 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
         std::cout << "  FFILE = " << alm->files->file_force << std::endl;
         std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
-                  << "; NEND = " << alm->optimize->get_nend() << std::endl;
+            << "; NEND = " << alm->optimize->get_nend() << std::endl;
         std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
         std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
         std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
@@ -92,7 +92,7 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
         std::cout << "  FFILE = " << alm->files->file_force << std::endl;
         std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
-                  << "; NEND = " << alm->optimize->get_nend() << std::endl;
+            << "; NEND = " << alm->optimize->get_nend() << std::endl;
         std::cout << "  SKIP = " << alm->optimize->get_skip_s() + 1 << "-" << alm->optimize->get_skip_e() << std::endl;
         std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
         std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
@@ -195,8 +195,9 @@ void Writer::write_force_constants(ALM *alm) const
                 j = alm->symmetry->get_map_s2p()[alm->fcs->get_fc_table()[order][m].elems[0] / 3].atom_num;
                 std::sort(atom_tmp.begin(), atom_tmp.end());
 
-                auto iter_cluster 
-                = alm->interaction->get_interaction_cluster(order, j).find(InteractionCluster(atom_tmp, cell_dummy));
+                auto iter_cluster
+                    = alm->interaction->get_interaction_cluster(order, j).
+                           find(InteractionCluster(atom_tmp, cell_dummy));
 
                 if (iter_cluster == alm->interaction->get_interaction_cluster(order, j).end()) {
                     std::cout << std::setw(5) << j;
@@ -292,9 +293,9 @@ void Writer::write_displacement_pattern(ALM *alm) const
     for (auto order = 0; order < maxorder; ++order) {
 
         if (order == 0) {
-            file_disp_pattern = alm->files->job_title + ".pattern_HARMONIC";
+            file_disp_pattern = alm->files->get_prefix() + ".pattern_HARMONIC";
         } else {
-            file_disp_pattern = alm->files->job_title + ".pattern_ANHARM"
+            file_disp_pattern = alm->files->get_prefix() + ".pattern_ANHARM"
                 + std::to_string(order + 2);
         }
 
@@ -326,7 +327,7 @@ void Writer::write_displacement_pattern(ALM *alm) const
 
         if (alm->get_verbosity() > 0) {
             std::cout << "  " << alm->interaction->get_ordername(order)
-                      << " : " << file_disp_pattern << std::endl;
+                << " : " << file_disp_pattern << std::endl;
         }
 
     }
@@ -380,7 +381,7 @@ void Writer::write_misc_xml(ALM *alm)
 
     for (i = 0; i < system_structure.nspecies; ++i) {
         auto &child = pt.add("Data.Structure.AtomicElements.element",
-                              alm->get_kdname()[i]);
+                             alm->get_kdname()[i]);
         child.put("<xmlattr>.number", i + 1);
     }
 
@@ -416,7 +417,7 @@ void Writer::write_misc_xml(ALM *alm)
     for (i = 0; i < system_structure.ntran; ++i) {
         for (j = 0; j < system_structure.natmin; ++j) {
             auto &child = pt.add("Data.Symmetry.Translations.map",
-                                  alm->symmetry->get_map_p2s()[j][i] + 1);
+                                 alm->symmetry->get_map_p2s()[j][i] + 1);
             child.put("<xmlattr>.tran", i + 1);
             child.put("<xmlattr>.atom", j + 1);
         }
@@ -471,7 +472,7 @@ void Writer::write_misc_xml(ALM *alm)
         multiplicity = (*iter_cluster).cell.size();
 
         auto &child = pt.add("Data.ForceConstants.HarmonicUnique.FC2",
-                              double2string(alm->optimize->get_params()[k]));
+                             double2string(alm->optimize->get_params()[k]));
         child.put("<xmlattr>.pairs",
                   std::to_string(alm->fcs->get_fc_table()[0][ihead].elems[0])
                   + " " + std::to_string(alm->fcs->get_fc_table()[0][ihead].elems[1]));
@@ -508,7 +509,7 @@ void Writer::write_misc_xml(ALM *alm)
 
 
             auto &child = pt.add("Data.ForceConstants.CubicUnique.FC3",
-                                  double2string(alm->optimize->get_params()[k]));
+                                 double2string(alm->optimize->get_params()[k]));
             child.put("<xmlattr>.pairs",
                       std::to_string(alm->fcs->get_fc_table()[1][ihead].elems[0])
                       + " " + std::to_string(alm->fcs->get_fc_table()[1][ihead].elems[1])
@@ -549,7 +550,7 @@ void Writer::write_misc_xml(ALM *alm)
 
                 ptree &child = pt.add(elementname,
                                       double2string(alm->optimize->get_params()[ip] * fctmp.sign
-                                                    / static_cast<double>(multiplicity)));
+                                          / static_cast<double>(multiplicity)));
 
                 child.put("<xmlattr>.pair1", std::to_string(j + 1)
                           + " " + std::to_string(fctmp.elems[0] % 3 + 1));
@@ -605,8 +606,8 @@ void Writer::write_misc_xml(ALM *alm)
                     auto cell_now = (*iter_cluster).cell[imult];
 
                     auto &child = pt.add(elementname,
-                                          double2string(alm->optimize->get_params()[ip] * fctmp.sign
-                                              / static_cast<double>(multiplicity)));
+                                         double2string(alm->optimize->get_params()[ip] * fctmp.sign
+                                             / static_cast<double>(multiplicity)));
 
                     child.put("<xmlattr>.pair1", std::to_string(j + 1)
                               + " " + std::to_string(fctmp.elems[0] % 3 + 1));
@@ -628,7 +629,7 @@ void Writer::write_misc_xml(ALM *alm)
     using namespace boost::property_tree::xml_parser;
     const auto indent = 2;
 
-    const auto file_xml = alm->files->job_title + ".xml";
+    const auto file_xml = alm->files->get_prefix() + ".xml";
 
 #if BOOST_VERSION >= 105600
     write_xml(file_xml, pt, std::locale(),
@@ -745,7 +746,7 @@ void Writer::write_in_QEformat(ALM *alm) const
         }
     }
 
-    auto file_fc = alm->files->job_title + ".fc";
+    auto file_fc = alm->files->get_prefix() + ".fc";
 
     ofs_hes.open(file_fc.c_str(), std::ios::out);
     if (!ofs_hes) exit("write_hessian", "cannot create hessian file");
@@ -849,7 +850,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
     }
 
 
-    auto file_fc3 = alm->files->job_title + ".FORCE_CONSTANT_3RD";
+    auto file_fc3 = alm->files->get_prefix() + ".FORCE_CONSTANT_3RD";
 
     ofs_fc3.open(file_fc3.c_str(), std::ios::out);
     if (!ofs_fc3) exit("write_fc3_thirdorderpy_format", "cannot create the file");
@@ -890,8 +891,10 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
 
                         const int multiplicity = (*iter_cluster).cell.size();
 
-                        const auto jat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[0]].atom_num][0];
-                        const auto kat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[1]].atom_num][0];
+                        const auto jat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[0]].
+                            atom_num][0];
+                        const auto kat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[1]].
+                            atom_num][0];
 
                         for (auto imult = 0; imult < multiplicity; ++imult) {
                             auto cell_now = (*iter_cluster).cell[imult];

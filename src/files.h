@@ -24,9 +24,14 @@ namespace ALM_NS
         void init();
 
         bool print_hessian;
-        std::string job_title;
         std::string file_fcs, file_hes;
         std::string file_disp, file_force;
-        //     std::string *file_disp_pattern;
+
+        void set_prefix(const std::string);
+        std::string get_prefix() const;
+
+    private:
+
+        std::string job_title;
     };
 }

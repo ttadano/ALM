@@ -19,7 +19,6 @@
 #include "symmetry.h"
 #include "system.h"
 #include "timer.h"
-#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -84,7 +83,7 @@ int ALM::get_verbosity() const
 
 void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
 {
-    files->job_title = prefix;
+    files->set_prefix(prefix);
 }
 
 void ALM::set_print_symmetry(const int printsymmetry) // PRINTSYM
@@ -206,7 +205,6 @@ void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
     auto optctrl = optimize->get_optimizer_control();
     optctrl.use_sparse_solver = sparse_mode;
     optimize->set_optimizer_control(optctrl);
-  //  fitting->set_use_sparseQR(sparse_mode);
 }
 
 void ALM::set_fitting_filenames(const std::string dfile,
@@ -437,7 +435,7 @@ void ALM::get_fc_irreducible(double *fc_values,
     auto ishift = 0;
     int inew, iold;
 
-    for (int order = 0; order < fc_order; ++order) {
+    for (auto order = 0; order < fc_order; ++order) {
 
         if (constraint->get_index_bimap(order).empty()) { continue; }
 
@@ -467,7 +465,7 @@ void ALM::get_fc_all(double *fc_values,
 {
     int i;
     double fc_elem;
-    const unsigned int ntran = symmetry->get_ntran();
+    const auto ntran = symmetry->get_ntran();
 
     const auto maxorder = interaction->get_maxorder();
     if (fc_order > maxorder) {
@@ -481,7 +479,7 @@ void ALM::get_fc_all(double *fc_values,
     std::vector<int> pair_tran(fc_order + 1);
     std::vector<int> xyz_tmp(fc_order + 1);
 
-    for (int order = 0; order < fc_order; ++order) {
+    for (auto order = 0; order < fc_order; ++order) {
 
         if (fcs->get_nequiv()[order].empty()) { continue; }
 
@@ -519,9 +517,9 @@ void ALM::get_fc_all(double *fc_values,
 void ALM::set_fc(double *fc_in) const
 {
     optimize->set_fcs_values(interaction->get_maxorder(),
-                            fc_in,
-                            fcs->get_nequiv(),
-                            constraint);
+                             fc_in,
+                             fcs->get_nequiv(),
+                             constraint);
 }
 
 void ALM::get_matrix_elements(const int ndata_used,
@@ -532,13 +530,13 @@ void ALM::get_matrix_elements(const int ndata_used,
     double fnorm;
 
     optimize->get_matrix_elements_algebraic_constraint(maxorder,
-                                                      ndata_used,
-                                                      amat,
-                                                      bvec,
-                                                      fnorm,
-                                                      symmetry,
-                                                      fcs,
-                                                      constraint);
+                                                       ndata_used,
+                                                       amat,
+                                                       bvec,
+                                                       fnorm,
+                                                       symmetry,
+                                                       fcs,
+                                                       constraint);
 }
 
 
@@ -575,21 +573,21 @@ int ALM::run_optimize()
                           timer);
         ready_to_fit = true;
     }
-    auto maxorder = interaction->get_maxorder();
+    const auto maxorder = interaction->get_maxorder();
     std::vector<std::string> str_order(maxorder);
     for (auto i = 0; i < maxorder; ++i) {
         str_order[i] = interaction->get_ordername(i);
     }
-    int info = optimize->optimize_main(symmetry,
-                                      constraint,
-                                      fcs,
-                                      maxorder,
-                                      str_order,
-                                      system->get_supercell().number_of_atoms,
-                                      verbosity,
-                                      files->file_disp,
-                                      files->file_force,
-                                      timer);
+    const auto info = optimize->optimize_main(symmetry,
+                                              constraint,
+                                              fcs,
+                                              maxorder,
+                                              str_order,
+                                              system->get_supercell().number_of_atoms,
+                                              verbosity,
+                                              files->file_disp,
+                                              files->file_force,
+                                              timer);
     return info;
 }
 

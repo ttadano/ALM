@@ -88,8 +88,8 @@ void Fcs::init(const Interaction *interaction,
         std::cout << std::endl;
         for (i = 0; i < maxorder; ++i) {
             std::cout << "  Number of " << std::setw(9)
-                      << interaction->get_ordername(i)
-                      << " FCs : " << nequiv[i].size();
+                << interaction->get_ordername(i)
+                << " FCs : " << nequiv[i].size();
             std::cout << std::endl;
         }
         std::cout << std::endl;
@@ -532,12 +532,12 @@ void Fcs::get_constraint_symmetry(const int nat,
     if (do_rref) rref_sparse(nparams, const_out, tolerance);
 }
 
-std::vector<int> * Fcs::get_nequiv() const
+std::vector<int>* Fcs::get_nequiv() const
 {
     return nequiv;
 }
 
-std::vector<FcProperty> * Fcs::get_fc_table() const
+std::vector<FcProperty>* Fcs::get_fc_table() const
 {
     return fc_table;
 }

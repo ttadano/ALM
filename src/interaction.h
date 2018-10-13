@@ -205,12 +205,12 @@ namespace ALM_NS
                     const int *,
                     const double * const * const *);
         int get_maxorder() const;
-        int * get_nbody_include() const;
+        int* get_nbody_include() const;
         std::string get_ordername(const unsigned int order) const;
-        const std::set<IntList> &get_cluster_list(const unsigned int order) const;
-        const std::vector<int> &get_interaction_pair(const unsigned int order,
+        const std::set<IntList>& get_cluster_list(const unsigned int order) const;
+        const std::vector<int>& get_interaction_pair(const unsigned int order,
                                                      const unsigned int atom_index) const;
-        const std::set<InteractionCluster> &get_interaction_cluster(const unsigned int order,
+        const std::set<InteractionCluster>& get_interaction_cluster(const unsigned int order,
                                                                     const unsigned int atom_index) const;
 
     private:
@@ -223,7 +223,7 @@ namespace ALM_NS
         std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **interaction_cluster;
 
-        std::vector<DistInfo> **distall; // Distance of all pairs (i,j) under the PBC
+        std::vector<DistInfo> **distall;       // Distance of all pairs (i,j) under the PBC
         std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
         // Interaction many-body clusters with mirrow image information
 
@@ -261,8 +261,10 @@ namespace ALM_NS
                                            const std::vector<int> * const *);
 
         void set_ordername();
-        double distance(const double *, const double *) const;
-        int nbody(const int, const int *) const;
+        double distance(const double *,
+                        const double *) const;
+        int nbody(const int,
+                  const int *) const;
 
         void calc_interaction_clusters(const int,
                                        const std::vector<int> &,
