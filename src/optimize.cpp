@@ -80,6 +80,7 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                             Constraint *constraint,
                             const Fcs *fcs,
                             const int maxorder,
+                            const std::string file_prefix,
                             const std::vector<std::string> &str_order,
                             const unsigned int nat,
                             const int verbosity,
@@ -208,7 +209,8 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
         // Use elastic net 
 
-        info_fitting = elastic_net(maxorder,
+        info_fitting = elastic_net(file_prefix,
+                                   maxorder,
                                    natmin,
                                    ntran,
                                    N,
@@ -422,7 +424,8 @@ int Optimize::least_squares(const int maxorder,
 }
 
 
-int Optimize::elastic_net(const int maxorder,
+int Optimize::elastic_net(const std::string job_prefix,
+                          const int maxorder,
                           const int natmin,
                           const int ntran,
                           const int N,
@@ -557,7 +560,8 @@ int Optimize::elastic_net(const int maxorder,
 
     if (optcontrol.cross_validation_mode > 0) {
 
-        info_fitting = run_elastic_net_crossvalidation(maxorder,
+        info_fitting = run_elastic_net_crossvalidation(job_prefix,
+                                                       maxorder,
                                                        M,
                                                        M_test,
                                                        N_new,
@@ -626,7 +630,8 @@ int Optimize::elastic_net(const int maxorder,
     return info_fitting;
 }
 
-int Optimize::run_elastic_net_crossvalidation(const int maxorder,
+int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
+                                              const int maxorder,
                                               const int M,
                                               const int M_test,
                                               const int N_new,
@@ -698,8 +703,8 @@ int Optimize::run_elastic_net_crossvalidation(const int maxorder,
 
     std::ofstream ofs_cv, ofs_coef;
 
-    std::string file_cv = "hoge.lasso_cv";
-    std::string file_coef = "hoge.lasso_coef";
+    auto file_cv = job_prefix + ".lasso_cv";
+    auto file_coef = job_prefix + ".lasso_coef";
     ofs_cv.open(file_cv.c_str(), std::ios::out);
 
     ofs_cv << "# Algorithm : Coordinate descent" << std::endl;

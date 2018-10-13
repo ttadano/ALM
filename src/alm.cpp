@@ -582,6 +582,7 @@ int ALM::run_optimize()
                                               constraint,
                                               fcs,
                                               maxorder,
+                                              files->get_prefix(),
                                               str_order,
                                               system->get_supercell().number_of_atoms,
                                               verbosity,

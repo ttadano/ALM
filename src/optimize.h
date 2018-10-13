@@ -86,6 +86,7 @@ namespace ALM_NS
                           Constraint *constraint,
                           const Fcs *fcs,
                           const int maxorder,
+                          const std::string file_prefix,
                           const std::vector<std::string> &str_order,
                           const unsigned int nat,
                           const int verbosity,
@@ -171,7 +172,8 @@ namespace ALM_NS
                           const Constraint *constraint,
                           std::vector<double> &param_out);
 
-        int elastic_net(const int maxorder,
+        int elastic_net(const std::string job_prefix,
+                        const int maxorder,
                         const int natmin,
                         const int ntran,
                         const int N,
@@ -191,7 +193,8 @@ namespace ALM_NS
                         std::vector<double> &param_out);
 
 
-        int run_elastic_net_crossvalidation(const int maxorder,
+        int run_elastic_net_crossvalidation(const std::string job_prefix,
+                                            const int maxorder,
                                             const int M,
                                             const int M_test,
                                             const int N_new,
