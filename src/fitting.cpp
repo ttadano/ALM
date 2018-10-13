@@ -165,11 +165,10 @@ int Fitting::optimize_main(const Symmetry *symmetry,
                                                      file_force);
 
     if (optcontrol.optimizer == 2 &&
-        optcontrol.cross_validation_mode == 2) {
+        optcontrol.cross_validation_mode == 1) {
 
         allocate(u_test, ndata_used_test, 3 * nat);
         allocate(f_test, ndata_used_test, 3 * nat);
-
 
         input_parser->parse_displacement_and_force_files(u_test,
                                                          f_test,
@@ -184,7 +183,6 @@ int Fitting::optimize_main(const Symmetry *symmetry,
     }
 
     delete input_parser;
-
 
     // Run optimization and obtain force constants
 
@@ -208,7 +206,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
 
     } else if (optcontrol.optimizer == 2) {
 
-        // Use Elastic net 
+        // Use elastic net 
 
         info_fitting = elastic_net(maxorder,
                                    natmin,
@@ -432,10 +430,10 @@ int Fitting::elastic_net(const int maxorder,
                          const int N_new,
                          const int M,
                          const int M_test,
-                         double **u,
-                         double **f,
-                         double **u_test,
-                         double **f_test,
+                         double **&u,
+                         double **&f,
+                         double **&u_test,
+                         double **&f_test,
                          const Symmetry *symmetry,
                          const std::vector<std::string> &str_order,
                          const Fcs *fcs,
@@ -500,12 +498,17 @@ int Fitting::elastic_net(const int maxorder,
                                              fcs,
                                              constraint);
 
-    deallocate(u);
-    u = nullptr;
-    deallocate(f);
-    f = nullptr;
+    if (u) {
+        deallocate(u);
+        u = nullptr;
+    }
 
-    if (optcontrol.cross_validation_mode == 2) {
+    if (f) {
+        deallocate(f);
+        f = nullptr;
+    }
+
+    if (optcontrol.cross_validation_mode == 1) {
         nrows = 3 * static_cast<long>(natmin)
             * static_cast<long>(ndata_used_test)
             * static_cast<long>(ntran);
@@ -522,7 +525,6 @@ int Fitting::elastic_net(const int maxorder,
             }
         }
 
-
         set_displacement_and_force(u_test,
                                    f_test,
                                    nat,
@@ -536,13 +538,11 @@ int Fitting::elastic_net(const int maxorder,
                                                  symmetry,
                                                  fcs,
                                                  constraint);
-
         deallocate(u_test);
         u_test = nullptr;
         deallocate(f_test);
         f_test = nullptr;
     }
-
 
     // Scale back force constants
 
@@ -555,7 +555,6 @@ int Fitting::elastic_net(const int maxorder,
             }
         }
     }
-
 
     if (optcontrol.cross_validation_mode > 0) {
 
@@ -585,6 +584,7 @@ int Fitting::elastic_net(const int maxorder,
                                                     str_order,
                                                     verbosity,
                                                     param_tmp);
+
     }
 
     if (verbosity > 0 && info_fitting == 0) {
@@ -607,7 +607,6 @@ int Fitting::elastic_net(const int maxorder,
         std::cout << std::endl;
     }
 
-
     if (scale_displacement) {
         auto k = 0;
         for (i = 0; i < maxorder; ++i) {
@@ -625,7 +624,6 @@ int Fitting::elastic_net(const int maxorder,
                                     param_out,
                                     fcs->get_nequiv(),
                                     constraint);
-
     return info_fitting;
 }
 
@@ -746,7 +744,7 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
         if (ialpha == 0) {
             initialize_mode = 0;
         } else {
-            initialize_mode = 1;
+            initialize_mode = 0;
         }
 
         for (auto i = 0; i < N_new; ++i) {
@@ -880,7 +878,6 @@ int Fitting::run_elastic_net_optimization(const int maxorder,
         Eigen::VectorXd mean, dev;
         get_standardizer(A, mean, dev, factor_std, scale_beta);
     }
-
 
     grad0 = A.transpose() * b;
     grad = grad0;
@@ -2242,7 +2239,7 @@ void Fitting::coordinate_descent(const int M,
     bool do_print_log;
 
     if (warm_start) {
-        for (i = 0; i < N; ++i) beta(i) = x[i];
+        for (i = 0; i < N; ++i) beta(i) = x(i);
     } else {
         for (i = 0; i < N; ++i) beta(i) = 0.0;
         grad = grad0;

@@ -50,7 +50,7 @@ namespace ALM_NS
         std::string *kdname;
         std::string mode;
         int maxorder;
-  //      int nat;
+        int nat;
         int nkd;
         InputSetter *input_setter;
 

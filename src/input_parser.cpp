@@ -226,7 +226,6 @@ void InputParser::parse_general_vars(ALM *alm)
     double tolerance;
     double tolerance_constraint;
     int verbosity;
-    int nat;
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
     std::string str_allowed_list =
@@ -862,13 +861,13 @@ void InputParser::parse_atomic_positions(ALM *alm)
     std::vector<std::string> str_v, pos_line;
     double (*xeq)[3];
     int *kd;
-    const auto nat = alm->get_supercell().number_of_atoms;
 
     if (from_stdin) {
         std::cin.ignore();
     } else {
         ifs_input.ignore();
     }
+
 
     str_v.clear();
 
