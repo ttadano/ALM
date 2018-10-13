@@ -62,11 +62,11 @@ void InputParser::run(ALM *alm,
 void InputParser::parse_displacement_and_force(ALM *alm) const
 {
     const int nat = alm->get_supercell().number_of_atoms;
-    const auto ndata = alm->fitting->get_ndata();
-    const auto nstart = alm->fitting->get_nstart();
-    const auto nend = alm->fitting->get_nend();
-    const auto skip_s = alm->fitting->get_skip_s();
-    const auto skip_e = alm->fitting->get_skip_e();
+    const auto ndata = alm->optimize->get_ndata();
+    const auto nstart = alm->optimize->get_nstart();
+    const auto nend = alm->optimize->get_nend();
+    const auto skip_s = alm->optimize->get_skip_s();
+    const auto skip_e = alm->optimize->get_skip_e();
     const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
     double **u;
     double **f;
@@ -81,7 +81,7 @@ void InputParser::parse_displacement_and_force(ALM *alm) const
                                        ndata, nstart, nend,
                                        skip_s, skip_e,
                                        file_disp, file_force);
-    alm->fitting->set_displacement_and_force(u, f, nat, ndata_used);
+    alm->optimize->set_displacement_and_force(u, f, nat, ndata_used);
     deallocate(u);
     deallocate(f);
 }
@@ -202,10 +202,14 @@ void InputParser::parse_input(ALM *alm)
     parse_cutoff_radii();
     input_setter->define(alm);
 
-    if (mode == "fitting" || mode == "lasso") {
-        if (!locate_tag("&fitting")) {
-            exit("parse_input",
-                 "&fitting entry not found in the input file");
+    if (mode == "optimize") {
+        if (!locate_tag("&optimize")) {
+            if (!locate_tag("&fitting")) {
+                exit("parse_input",
+                    "&optimize entry not found in the input file");
+            } else {
+                warn("parse_input", "&fitting field is deprecated. Please use &optimize instead.");
+            }
         }
         parse_fitting_vars(alm);
     }
@@ -257,8 +261,17 @@ void InputParser::parse_general_vars(ALM *alm)
     mode = general_var_dict["MODE"];
 
     std::transform(mode.begin(), mode.end(), mode.begin(), tolower);
-    if (mode != "fitting" && mode != "suggest" && mode != "lasso") {
+    if (mode != "fitting" && mode != "suggest" && mode != "lasso" && mode != "optimize") {
         exit("parse_general_vars", "Invalid MODE variable");
+    }
+    if (mode == "fitting") {
+        mode = "optimize";
+        warn("parse_general_vars", "MODE = fitting is deprecated. Please use MODE = optimize instead.");
+    }
+    if (mode == "lasso") {
+        mode = "optimize";
+        warn("parse_general_vars", 
+            "MODE = lasso is deprecated. Please use MODE = optimize instead with OPTIMIZER = enet option in the &optimize field.");
     }
 
     assign_val(nat, "NAT", general_var_dict);

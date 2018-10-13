@@ -79,8 +79,8 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << " Fitting:" << std::endl;
         std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
         std::cout << "  FFILE = " << alm->files->file_force << std::endl;
-        std::cout << "  NDATA = " << alm->fitting->get_ndata() << "; NSTART = " << alm->fitting->get_nstart()
-                  << "; NEND = " << alm->fitting->get_nend() << std::endl;
+        std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
+                  << "; NEND = " << alm->optimize->get_nend() << std::endl;
         std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
         std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
         std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
@@ -91,15 +91,15 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << " Fitting:" << std::endl;
         std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
         std::cout << "  FFILE = " << alm->files->file_force << std::endl;
-        std::cout << "  NDATA = " << alm->fitting->get_ndata() << "; NSTART = " << alm->fitting->get_nstart()
-                  << "; NEND = " << alm->fitting->get_nend() << std::endl;
-        std::cout << "  SKIP = " << alm->fitting->get_skip_s() + 1 << "-" << alm->fitting->get_skip_e() << std::endl;
+        std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
+                  << "; NEND = " << alm->optimize->get_nend() << std::endl;
+        std::cout << "  SKIP = " << alm->optimize->get_skip_s() + 1 << "-" << alm->optimize->get_skip_e() << std::endl;
         std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
         std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
         std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
         std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << std::endl;
         std::cout << std::endl;
-        const auto optctrl = alm->fitting->get_optimizer_control();
+        const auto optctrl = alm->optimize->get_optimizer_control();
         std::cout << " Lasso:" << std::endl;
         std::cout << "  LASSO_ALPHA = " << optctrl.l1_alpha << std::endl;
         std::cout << "  LASSO_MINALPHA = " << optctrl.l1_alpha_min;
@@ -186,7 +186,7 @@ void Writer::write_force_constants(ALM *alm) const
 
                 ofs_fcs << std::setw(8) << k + 1 << std::setw(8) << ui + 1
                     << std::setw(18) << std::setprecision(7)
-                    << std::scientific << alm->fitting->get_params()[k];
+                    << std::scientific << alm->optimize->get_params()[k];
 
                 atom_tmp.clear();
                 for (l = 1; l < order + 2; ++l) {
@@ -252,7 +252,7 @@ void Writer::write_force_constants(ALM *alm) const
 
                 ofs_fcs << str_tmp << std::setw(5) << alm->fcs->get_nequiv()[order][iuniq]
                     << std::setw(16) << std::scientific
-                    << std::setprecision(7) << alm->fitting->get_params()[ip] << std::endl;
+                    << std::setprecision(7) << alm->optimize->get_params()[ip] << std::endl;
 
                 for (j = 0; j < alm->fcs->get_nequiv()[order][iuniq]; ++j) {
                     ofs_fcs << std::setw(5) << j + 1 << std::setw(12)
@@ -471,7 +471,7 @@ void Writer::write_misc_xml(ALM *alm)
         multiplicity = (*iter_cluster).cell.size();
 
         auto &child = pt.add("Data.ForceConstants.HarmonicUnique.FC2",
-                              double2string(alm->fitting->get_params()[k]));
+                              double2string(alm->optimize->get_params()[k]));
         child.put("<xmlattr>.pairs",
                   std::to_string(alm->fcs->get_fc_table()[0][ihead].elems[0])
                   + " " + std::to_string(alm->fcs->get_fc_table()[0][ihead].elems[1]));
@@ -508,7 +508,7 @@ void Writer::write_misc_xml(ALM *alm)
 
 
             auto &child = pt.add("Data.ForceConstants.CubicUnique.FC3",
-                                  double2string(alm->fitting->get_params()[k]));
+                                  double2string(alm->optimize->get_params()[k]));
             child.put("<xmlattr>.pairs",
                       std::to_string(alm->fcs->get_fc_table()[1][ihead].elems[0])
                       + " " + std::to_string(alm->fcs->get_fc_table()[1][ihead].elems[1])
@@ -548,7 +548,7 @@ void Writer::write_misc_xml(ALM *alm)
                 std::vector<int> cell_now = (*iter_cluster).cell[imult];
 
                 ptree &child = pt.add(elementname,
-                                      double2string(alm->fitting->get_params()[ip] * fctmp.sign
+                                      double2string(alm->optimize->get_params()[ip] * fctmp.sign
                                                     / static_cast<double>(multiplicity)));
 
                 child.put("<xmlattr>.pair1", std::to_string(j + 1)
@@ -605,7 +605,7 @@ void Writer::write_misc_xml(ALM *alm)
                     auto cell_now = (*iter_cluster).cell[imult];
 
                     auto &child = pt.add(elementname,
-                                          double2string(alm->fitting->get_params()[ip] * fctmp.sign
+                                          double2string(alm->optimize->get_params()[ip] * fctmp.sign
                                               / static_cast<double>(multiplicity)));
 
                     child.put("<xmlattr>.pair1", std::to_string(j + 1)
@@ -676,7 +676,7 @@ void Writer::write_hessian(ALM *alm) const
                 pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }
             hessian[3 * pair_tran[0] + fctmp.elems[0] % 3][3 * pair_tran[1] + fctmp.elems[1] % 3]
-                = alm->fitting->get_params()[ip] * fctmp.sign;
+                = alm->optimize->get_params()[ip] * fctmp.sign;
         }
     }
 
@@ -741,7 +741,7 @@ void Writer::write_in_QEformat(ALM *alm) const
                 pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }
             hessian[3 * pair_tran[0] + fctmp.elems[0] % 3][3 * pair_tran[1] + fctmp.elems[1] % 3]
-                = alm->fitting->get_params()[ip] * fctmp.sign;
+                = alm->optimize->get_params()[ip] * fctmp.sign;
         }
     }
 
@@ -837,14 +837,14 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
             nelems += (*iter_cluster).cell.size();
             has_element[j][pair_tmp[1]][pair_tmp[2]] = 1;
         }
-        fc3[3 * j + coord_tmp[0]][fctmp.elems[1]][fctmp.elems[2]] = alm->fitting->get_params()[ip] * fctmp.sign;
+        fc3[3 * j + coord_tmp[0]][fctmp.elems[1]][fctmp.elems[2]] = alm->optimize->get_params()[ip] * fctmp.sign;
 
         if (fctmp.elems[1] != fctmp.elems[2]) {
             if (!has_element[j][pair_tmp[2]][pair_tmp[1]]) {
                 nelems += (*iter_cluster).cell.size();
                 has_element[j][pair_tmp[2]][pair_tmp[1]] = 1;
             }
-            fc3[3 * j + coord_tmp[0]][fctmp.elems[2]][fctmp.elems[1]] = alm->fitting->get_params()[ip] * fctmp.sign;
+            fc3[3 * j + coord_tmp[0]][fctmp.elems[2]][fctmp.elems[1]] = alm->optimize->get_params()[ip] * fctmp.sign;
         }
     }
 

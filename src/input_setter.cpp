@@ -200,21 +200,21 @@ void InputSetter::set_optimize_vars(ALM *alm,
                                     const std::string ffile_test,
                                     const OptimizerControl &optcontrol_in) const
 {
-    alm->fitting->set_ndata(ndata);
-    alm->fitting->set_nstart(nstart);
-    alm->fitting->set_nend(nend);
-    alm->fitting->set_skip_s(skip_s);
-    alm->fitting->set_skip_e(skip_e);
+    alm->optimize->set_ndata(ndata);
+    alm->optimize->set_nstart(nstart);
+    alm->optimize->set_nend(nend);
+    alm->optimize->set_skip_s(skip_s);
+    alm->optimize->set_skip_e(skip_e);
 
     alm->files->file_disp = dfile;
     alm->files->file_force = ffile;
-    alm->fitting->ndata_test = ndata_test;
-    alm->fitting->nstart_test = nstart_test;
-    alm->fitting->nend_test = nend_test;
-    alm->fitting->dfile_test = dfile_test;
-    alm->fitting->ffile_test = ffile_test;
+    alm->optimize->ndata_test = ndata_test;
+    alm->optimize->nstart_test = nstart_test;
+    alm->optimize->nend_test = nend_test;
+    alm->optimize->dfile_test = dfile_test;
+    alm->optimize->ffile_test = ffile_test;
 
-    alm->fitting->set_optimizer_control(optcontrol_in);
+    alm->optimize->set_optimizer_control(optcontrol_in);
 }
 
 void InputSetter::set_constraint_vars(ALM *alm,

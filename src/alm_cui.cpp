@@ -58,7 +58,7 @@ void ALMCUI::run(const int narg,
         writer->write_input_vars(alm);
     }
 
-    if (alm->get_run_mode() == "fitting" || alm->get_run_mode() == "lasso") {
+    if (alm->get_run_mode() == "optimize") {
         input_parser->parse_displacement_and_force(alm);
     }
 
@@ -66,9 +66,12 @@ void ALMCUI::run(const int narg,
 
     alm->run();
 
-    if (alm->get_run_mode() == "fitting" || 
-        (alm->get_run_mode() == "lasso" && alm->fitting->get_optimizer_control().cross_validation_mode == 0)) {
-        writer->writeall(alm);
+    if (alm->get_run_mode() == "optimize") {
+        if (alm->optimize->get_optimizer_control().optimizer == 0 ||
+            (alm->optimize->get_optimizer_control().optimizer == 1
+                && alm->optimize->get_optimizer_control().cross_validation_mode == 0)) {
+            writer->writeall(alm);
+        }
     } else if (alm->get_run_mode() == "suggest") {
         writer->write_displacement_pattern(alm);
     }

@@ -43,7 +43,7 @@ ALM::~ALM()
     delete interaction;
     delete fcs;
     delete symmetry;
-    delete fitting;
+    delete optimize;
     delete constraint;
     delete displace;
     delete timer;
@@ -56,7 +56,7 @@ void ALM::create()
     interaction = new Interaction();
     fcs = new Fcs();
     symmetry = new Symmetry();
-    fitting = new Fitting();
+    optimize = new Optimize();
     constraint = new Constraint();
     displace = new Displace();
     timer = new Timer();
@@ -172,9 +172,9 @@ void ALM::set_displacement_and_force(const double *u_in,
     double **u;
     double **f;
 
-    fitting->set_ndata(ndata_used);
-    fitting->set_nstart(1);
-    fitting->set_nend(ndata_used);
+    optimize->set_ndata(ndata_used);
+    optimize->set_nstart(1);
+    optimize->set_nend(ndata_used);
 
     allocate(u, ndata_used, 3 * nat);
     allocate(f, ndata_used, 3 * nat);
@@ -185,7 +185,7 @@ void ALM::set_displacement_and_force(const double *u_in,
             f[i][j] = f_in[i * nat * 3 + j];
         }
     }
-    fitting->set_displacement_and_force(u, f, nat, ndata_used);
+    optimize->set_displacement_and_force(u, f, nat, ndata_used);
 
     deallocate(u);
     deallocate(f);
@@ -203,9 +203,9 @@ void ALM::set_rotation_axis(const std::string rotation_axis) const // ROTAXIS
 
 void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
 {
-    auto optctrl = fitting->get_optimizer_control();
+    auto optctrl = optimize->get_optimizer_control();
     optctrl.use_sparse_solver = sparse_mode;
-    fitting->set_optimizer_control(optctrl);
+    optimize->set_optimizer_control(optctrl);
   //  fitting->set_use_sparseQR(sparse_mode);
 }
 
@@ -232,7 +232,7 @@ void ALM::define(const int maxorder,
 
 int ALM::get_ndata_used() const
 {
-    return fitting->get_ndata_used();
+    return optimize->get_ndata_used();
 }
 
 Cell ALM::get_supercell() const
@@ -395,7 +395,7 @@ void ALM::get_fc_origin(double *fc_values,
             for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
-                fc_values[id] = fitting->get_params()[ip] * it.sign;
+                fc_values[id] = optimize->get_params()[ip] * it.sign;
                 for (i = 0; i < fc_order + 1; ++i) {
                     elem_indices[id * (fc_order + 1) + i] = it.elems[i];
                 }
@@ -446,7 +446,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                 inew = it.left;
                 iold = it.right + ishift;
 
-                fc_elem = fitting->get_params()[iold];
+                fc_elem = optimize->get_params()[iold];
                 fc_values[inew] = fc_elem;
                 for (i = 0; i < fc_order + 1; ++i) {
                     elem_indices[inew * (fc_order + 1) + i] =
@@ -491,7 +491,7 @@ void ALM::get_fc_all(double *fc_values,
             for (const auto &it : fcs->get_fc_table()[order]) {
 
                 ip = it.mother + ishift;
-                fc_elem = fitting->get_params()[ip] * it.sign;
+                fc_elem = optimize->get_params()[ip] * it.sign;
 
                 for (i = 0; i < fc_order + 1; ++i) {
                     pair_tmp[i] = it.elems[i] / 3;
@@ -518,7 +518,7 @@ void ALM::get_fc_all(double *fc_values,
 
 void ALM::set_fc(double *fc_in) const
 {
-    fitting->set_fcs_values(interaction->get_maxorder(),
+    optimize->set_fcs_values(interaction->get_maxorder(),
                             fc_in,
                             fcs->get_nequiv(),
                             constraint);
@@ -531,7 +531,7 @@ void ALM::get_matrix_elements(const int ndata_used,
     const auto maxorder = interaction->get_maxorder();
     double fnorm;
 
-    fitting->get_matrix_elements_algebraic_constraint(maxorder,
+    optimize->get_matrix_elements_algebraic_constraint(maxorder,
                                                       ndata_used,
                                                       amat,
                                                       bvec,
@@ -552,14 +552,14 @@ void ALM::run()
 {
     generate_force_constant();
 
-    if (run_mode == "fitting" || run_mode == "lasso") {
-        optimize();
+    if (run_mode == "optimize") {
+        run_optimize();
     } else if (run_mode == "suggest") {
         run_suggest();
     }
 }
 
-int ALM::optimize()
+int ALM::run_optimize()
 {
     if (!structure_initialized) {
         std::cout << "initialize_structure must be called beforehand." << std::endl;
@@ -580,7 +580,7 @@ int ALM::optimize()
     for (auto i = 0; i < maxorder; ++i) {
         str_order[i] = interaction->get_ordername(i);
     }
-    int info = fitting->optimize_main(symmetry,
+    int info = optimize->optimize_main(symmetry,
                                       constraint,
                                       fcs,
                                       maxorder,

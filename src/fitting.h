@@ -76,11 +76,11 @@ namespace ALM_NS
         OptimizerControl& operator=(const OptimizerControl &obj) = default;
     };
 
-    class Fitting
+    class Optimize
     {
     public:
-        Fitting();
-        ~Fitting();
+        Optimize();
+        ~Optimize();
 
         int optimize_main(const Symmetry *symmetry,
                           Constraint *constraint,

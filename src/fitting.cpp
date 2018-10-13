@@ -37,17 +37,17 @@
 
 using namespace ALM_NS;
 
-Fitting::Fitting()
+Optimize::Optimize()
 {
     set_default_variables();
 }
 
-Fitting::~Fitting()
+Optimize::~Optimize()
 {
     deallocate_variables();
 }
 
-void Fitting::set_default_variables()
+void Optimize::set_default_variables()
 {
     params = nullptr;
     u_in = nullptr;
@@ -63,7 +63,7 @@ void Fitting::set_default_variables()
     nend_test = 0;
 }
 
-void Fitting::deallocate_variables()
+void Optimize::deallocate_variables()
 {
     if (params) {
         deallocate(params);
@@ -76,7 +76,7 @@ void Fitting::deallocate_variables()
     }
 }
 
-int Fitting::optimize_main(const Symmetry *symmetry,
+int Optimize::optimize_main(const Symmetry *symmetry,
                            Constraint *constraint,
                            const Fcs *fcs,
                            const int maxorder,
@@ -87,7 +87,7 @@ int Fitting::optimize_main(const Symmetry *symmetry,
                            const std::string file_force,
                            Timer *timer)
 {
-    timer->start_clock("fitting");
+    timer->start_clock("optimize");
 
     const int natmin = symmetry->get_nat_prim();
     const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
@@ -262,12 +262,12 @@ int Fitting::optimize_main(const Symmetry *symmetry,
         std::cout << std::endl;
     }
 
-    timer->stop_clock("fitting");
+    timer->stop_clock("optimize");
 
     return info_fitting;
 }
 
-int Fitting::least_squares(const int maxorder,
+int Optimize::least_squares(const int maxorder,
                            const int natmin,
                            const int ntran,
                            const int N,
@@ -422,7 +422,7 @@ int Fitting::least_squares(const int maxorder,
 }
 
 
-int Fitting::elastic_net(const int maxorder,
+int Optimize::elastic_net(const int maxorder,
                          const int natmin,
                          const int ntran,
                          const int N,
@@ -626,7 +626,7 @@ int Fitting::elastic_net(const int maxorder,
     return info_fitting;
 }
 
-int Fitting::run_elastic_net_crossvalidation(const int maxorder,
+int Optimize::run_elastic_net_crossvalidation(const int maxorder,
                                              const int M,
                                              const int M_test,
                                              const int N_new,
@@ -818,7 +818,7 @@ int Fitting::run_elastic_net_crossvalidation(const int maxorder,
 }
 
 
-int Fitting::run_elastic_net_optimization(const int maxorder,
+int Optimize::run_elastic_net_optimization(const int maxorder,
                                           const int M,
                                           const int N_new,
                                           std::vector<double> &amat_1D,
@@ -920,7 +920,7 @@ int Fitting::run_elastic_net_optimization(const int maxorder,
     return 0;
 }
 
-int Fitting::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
+int Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
                                                   const Eigen::VectorXd &b_in,
                                                   const Eigen::VectorXd &factor_std,
                                                   std::vector<double> &params,
@@ -963,7 +963,7 @@ int Fitting::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
 }
 
 
-void Fitting::get_standardizer(const Eigen::MatrixXd &Amat,
+void Optimize::get_standardizer(const Eigen::MatrixXd &Amat,
                                Eigen::VectorXd &mean,
                                Eigen::VectorXd &dev,
                                Eigen::VectorXd &factor_std,
@@ -1000,7 +1000,7 @@ void Fitting::get_standardizer(const Eigen::MatrixXd &Amat,
     }
 }
 
-void Fitting::apply_standardizer(Eigen::MatrixXd &Amat,
+void Optimize::apply_standardizer(Eigen::MatrixXd &Amat,
                                  const Eigen::VectorXd &mean,
                                  const Eigen::VectorXd &dev)
 {
@@ -1017,7 +1017,7 @@ void Fitting::apply_standardizer(Eigen::MatrixXd &Amat,
     }
 }
 
-double Fitting::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
+double Optimize::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
                                        const Eigen::VectorXd &bvec) const
 {
     const auto ncols = Amat.cols();
@@ -1033,7 +1033,7 @@ double Fitting::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
 }
 
 
-void Fitting::set_displacement_and_force(const double * const *disp_in,
+void Optimize::set_displacement_and_force(const double * const *disp_in,
                                          const double * const *force_in,
                                          const int nat,
                                          const int ndata_used_in)
@@ -1058,7 +1058,7 @@ void Fitting::set_displacement_and_force(const double * const *disp_in,
     }
 }
 
-void Fitting::set_fcs_values(const int maxorder,
+void Optimize::set_fcs_values(const int maxorder,
                              double *fc_in,
                              std::vector<int> *nequiv,
                              const Constraint *constraint)
@@ -1095,13 +1095,13 @@ void Fitting::set_fcs_values(const int maxorder,
     }
 }
 
-int Fitting::get_ndata_used() const
+int Optimize::get_ndata_used() const
 {
     return ndata_used;
 }
 
 
-int Fitting::fit_without_constraints(const int N,
+int Optimize::fit_without_constraints(const int N,
                                      const int M,
                                      double *amat,
                                      const double *bvec,
@@ -1176,7 +1176,7 @@ int Fitting::fit_without_constraints(const int N,
     return INFO;
 }
 
-int Fitting::fit_with_constraints(const int N,
+int Optimize::fit_with_constraints(const int N,
                                   const int M,
                                   const int P,
                                   double *amat,
@@ -1291,7 +1291,7 @@ int Fitting::fit_with_constraints(const int N,
     return INFO;
 }
 
-int Fitting::fit_algebraic_constraints(const int N,
+int Optimize::fit_algebraic_constraints(const int N,
                                        const int M,
                                        double *amat,
                                        const double *bvec,
@@ -1378,7 +1378,7 @@ int Fitting::fit_algebraic_constraints(const int N,
 }
 
 
-void Fitting::get_matrix_elements(const int maxorder,
+void Optimize::get_matrix_elements(const int maxorder,
                                   const int ndata_fit,
                                   double *amat,
                                   double *bvec,
@@ -1478,7 +1478,7 @@ void Fitting::get_matrix_elements(const int maxorder,
 }
 
 
-void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
+void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
                                                        const int ndata_fit,
                                                        double *amat,
                                                        double *bvec,
@@ -1649,7 +1649,7 @@ void Fitting::get_matrix_elements_algebraic_constraint(const int maxorder,
 }
 
 #ifdef WITH_SPARSE_SOLVER
-void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
+void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
                                                  const int ndata_fit,
                                                  SpMat &sp_amat,
                                                  Eigen::VectorXd &sp_bvec,
@@ -1832,7 +1832,7 @@ void Fitting::get_matrix_elements_in_sparse_form(const int maxorder,
 #endif
 
 
-void Fitting::recover_original_forceconstants(const int maxorder,
+void Optimize::recover_original_forceconstants(const int maxorder,
                                               const std::vector<double> &param_in,
                                               std::vector<double> &param_out,
                                               const std::vector<int> *nequiv,
@@ -1882,7 +1882,7 @@ void Fitting::recover_original_forceconstants(const int maxorder,
 }
 
 
-void Fitting::data_multiplier(const double * const *data_in,
+void Optimize::data_multiplier(const double * const *data_in,
                               std::vector<std::vector<double>> &data_out,
                               const int ndata_used,
                               const Symmetry *symmetry) const
@@ -1906,7 +1906,7 @@ void Fitting::data_multiplier(const double * const *data_in,
     }
 }
 
-int Fitting::inprim_index(const int n,
+int Optimize::inprim_index(const int n,
                           const Symmetry *symmetry) const
 {
     auto in = -1;
@@ -1922,7 +1922,7 @@ int Fitting::inprim_index(const int n,
     return in;
 }
 
-double Fitting::gamma(const int n,
+double Optimize::gamma(const int n,
                       const int *arr) const
 {
     int *arr_tmp, *nsame;
@@ -1969,62 +1969,62 @@ double Fitting::gamma(const int n,
     return static_cast<double>(nsame_to_front) / static_cast<double>(denom);
 }
 
-int Fitting::get_ndata() const
+int Optimize::get_ndata() const
 {
     return ndata;
 }
 
-void Fitting::set_ndata(const int ndata_in)
+void Optimize::set_ndata(const int ndata_in)
 {
     ndata = ndata_in;
 }
 
-int Fitting::get_nstart() const
+int Optimize::get_nstart() const
 {
     return nstart;
 }
 
-void Fitting::set_nstart(const int nstart_in)
+void Optimize::set_nstart(const int nstart_in)
 {
     nstart = nstart_in;
 }
 
-int Fitting::get_nend() const
+int Optimize::get_nend() const
 {
     return nend;
 }
 
-void Fitting::set_nend(const int nend_in)
+void Optimize::set_nend(const int nend_in)
 {
     nend = nend_in;
 }
 
-int Fitting::get_skip_s() const
+int Optimize::get_skip_s() const
 {
     return skip_s;
 }
 
-void Fitting::set_skip_s(const int skip_s_in)
+void Optimize::set_skip_s(const int skip_s_in)
 {
     skip_s = skip_s_in;
 }
 
-int Fitting::get_skip_e() const
+int Optimize::get_skip_e() const
 {
     return skip_e;
 }
 
-void Fitting::set_skip_e(const int skip_e_in)
+void Optimize::set_skip_e(const int skip_e_in)
 {
     skip_e = skip_e_in;
 }
 
-double* Fitting::get_params() const
+double* Optimize::get_params() const
 {
     return params;
 }
 
-int Fitting::factorial(const int n) const
+int Optimize::factorial(const int n) const
 {
     if (n == 1 || n == 0) {
         return 1;
@@ -2033,7 +2033,7 @@ int Fitting::factorial(const int n) const
 }
 
 
-int Fitting::rankQRD(const int m,
+int Optimize::rankQRD(const int m,
                      const int n,
                      double *mat,
                      const double tolerance) const
@@ -2090,7 +2090,7 @@ int Fitting::rankQRD(const int m,
 
 
 #ifdef WITH_SPARSE_SOLVER
-int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
+int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
                                 const Eigen::VectorXd &sp_bvec,
                                 std::vector<double> &param_out,
                                 const double fnorm,
@@ -2194,7 +2194,7 @@ int Fitting::run_eigen_sparseQR(const SpMat &sp_mat,
 #endif
 
 
-void Fitting::set_optimizer_control(const OptimizerControl &optcontrol_in)
+void Optimize::set_optimizer_control(const OptimizerControl &optcontrol_in)
 {
     // Check the validity of the options before copying it.
 
@@ -2216,13 +2216,13 @@ void Fitting::set_optimizer_control(const OptimizerControl &optcontrol_in)
     optcontrol = optcontrol_in;
 }
 
-OptimizerControl Fitting::get_optimizer_control() const
+OptimizerControl Optimize::get_optimizer_control() const
 {
     return optcontrol;
 }
 
 
-void Fitting::coordinate_descent(const int M,
+void Optimize::coordinate_descent(const int M,
                                  const int N,
                                  const double alpha,
                                  const int warm_start,
