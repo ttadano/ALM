@@ -8,7 +8,7 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include "fitting.h"
+#include "optimize.h"
 #include "files.h"
 #include "constants.h"
 #include "constraint.h"

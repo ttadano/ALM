@@ -12,7 +12,7 @@
 #include "constraint.h"
 #include "fcs.h"
 #include "files.h"
-#include "fitting.h"
+#include "optimize.h"
 #include "interaction.h"
 #include "memory.h"
 #include "patterndisp.h"

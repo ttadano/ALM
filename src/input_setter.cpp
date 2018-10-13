@@ -15,7 +15,7 @@
 #include "interaction.h"
 #include "system.h"
 #include "symmetry.h"
-#include "fitting.h"
+#include "optimize.h"
 #include "constraint.h"
 #include "patterndisp.h"
 #include "alm.h"

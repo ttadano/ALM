@@ -12,7 +12,7 @@
 #include "alm.h"
 #include "error.h"
 #include "files.h"
-#include "fitting.h"
+#include "optimize.h"
 #include "input_setter.h"
 #include "memory.h"
 #include "system.h"
