@@ -10,6 +10,8 @@ Welcome to ALM's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   intro
+   install
    modules
 
 
