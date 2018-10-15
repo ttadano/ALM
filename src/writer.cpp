@@ -27,6 +27,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/version.hpp>
+#include "H5Cpp.h"
 
 using namespace ALM_NS;
 
@@ -136,6 +137,7 @@ void Writer::writeall(ALM *alm)
         write_fc3_thirdorderpy_format(alm);
     }
 
+    write_fcs_HDF5(alm->get_maxorder(), alm->fcs, alm->optimize->get_params());
     alm->timer->stop_clock("writer");
 }
 
@@ -963,4 +965,58 @@ std::string Writer::easyvizint(const int n) const
     str_tmp += str_crd[crdn];
 
     return str_tmp;
+}
+
+int Writer::write_fcs_HDF5(const int maxorder,
+                            const Fcs *fcs,
+                            const double *param_in)
+{
+    using namespace H5;
+
+    // Try block to detect exceptions raised by any of the calls inside it
+    try
+    {
+        // Turn off the auto-printing when failure occurs so that we can
+        // handle the errors appropriately
+        Exception::dontPrint();
+
+        // Create a new file using the default property lists. 
+        const H5std_string filename = "hoge.hdf5";
+
+        H5File file(filename, H5F_ACC_TRUNC);
+
+        // Create the data space for the dataset.
+        hsize_t dims[2];               // dataset dimensions
+        dims[0] = 10;
+        dims[1] = 5;
+        DataSpace dataspace(2, dims);
+
+        // Create the dataset.      
+        const H5std_string dataset_name = "dset";
+        auto dataset = file.createDataSet(dataset_name, PredType::STD_I32BE, dataspace);
+
+    }  // end of try block
+
+    // catch failure caused by the H5File operations
+    catch (FileIException error)
+    {
+        error.printErrorStack();
+        return -1;
+    }
+
+    // catch failure caused by the DataSet operations
+    catch (DataSetIException error)
+    {
+        error.printErrorStack();
+        return -1;
+    }
+
+    // catch failure caused by the DataSpace operations
+    catch (DataSpaceIException error)
+    {
+        error.printErrorStack();
+        return -1;
+    }
+
+    return 0;  // successfully terminated
 }

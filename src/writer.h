@@ -72,5 +72,9 @@ namespace ALM_NS
 
         std::string double2string(double,
                                   int nprec = 15) const;
+
+        int write_fcs_HDF5(const int maxorder,
+                           const Fcs *fcs,
+                           const double *param_in);
     };
 }
