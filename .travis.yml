@@ -1,0 +1,23 @@
+matrix:
+  include:
+  - python: '2.7'
+    sudo: false
+    env: TRAVIS_PYTHON_VERSION='2.7'
+  - python: '3.6'
+    sudo: false
+    env: TRAVIS_PYTHON_VERSION='3.6'
+
+before_install:
+- wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+- bash miniconda.sh -b -p $HOME/miniconda;
+- export PATH="$HOME/miniconda/bin:$PATH";
+- conda create -n travis python="$TRAVIS_PYTHON_VERSION"
+- source activate travis
+
+install:
+- conda install --no-update-deps --yes python="$TRAVIS_PYTHON_VERSION" gcc_linux-64 gxx_linux-64 cmake boost eigen numpy ipython
+- conda install --no-update-deps --yes python="$TRAVIS_PYTHON_VERSION" -c conda-forge openblas h5py
+- pwd
+
+script:
+- pwd

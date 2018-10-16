@@ -3,6 +3,10 @@
 #include <numpy/arrayobject.h>
 #include "alm_wrapper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if (PY_MAJOR_VERSION < 3) && (PY_MINOR_VERSION < 6)
 #define PYUNICODE_FROMSTRING PyString_FromString
 #else
@@ -542,3 +546,7 @@ static PyObject * py_get_matrix_elements(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
+#ifdef __cplusplus
+}
+#endif
