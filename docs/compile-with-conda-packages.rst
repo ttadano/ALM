@@ -202,8 +202,8 @@ at
 - ``$HOME/ALM/ALM/lib/libalmcxx.a``
 - ``$HOME/ALM/ALM/include/alm.h``
 
-These libraries are linked to spglib, openblas, and boost
-dynamically. Therefore to use the ALM library for C++,
+These libraries are linked to spglib and openblas dynamically. 
+Therefore to use the ALM library for C++,
 ``LD_LIBRARY_PATH`` has to be set properly, e.g.,
 
 ::
