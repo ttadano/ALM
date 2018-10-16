@@ -4,7 +4,7 @@ import numpy
 try:
     from pathlib import Path
     home = str(Path.home())
-except ModuleNotFoundError:
+except ImportError:
     home = os.path.expanduser("~")
 
 # This is the switch for ALM developement. Always True for general cases.
