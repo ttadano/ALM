@@ -1,5 +1,9 @@
 # ALM
-### Version 0.9.8
+
+[![License][license-image]][license-url]
+[![Doc status][docs-image]][docs-url]
+
+### Version x.y.z
 
 - - -
 
@@ -14,16 +18,11 @@ This is a software for calculating harmonic and anharmonic interatomic force con
 * Accurate treatment of translational and rotational invariance
 * Interface to VASP, Quantum-ESPRESSO, and xTAPP codes
 
-## Prerequisite
-* C++ compiler
-* LAPACK libarary
-* MPI library
-* Boost C++ library
-
 ## License
-Copyright (c) 2014, 2015, 2016 Terumasa Tadano
+Copyright (c) 2014 Terumasa Tadano
 This software is released under the MIT license. 
 For license rights and limitations, see LICENSE.txt file.
 
 ## Author
-Terumasa Tadano 
+Terumasa Tadano
+Atsushi Togo
