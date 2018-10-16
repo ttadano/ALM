@@ -968,14 +968,43 @@ std::string Writer::easyvizint(const int n) const
 }
 
 int Writer::write_fcs_HDF5(const int maxorder,
-                            const Fcs *fcs,
-                            const double *param_in)
+                           const Fcs *fcs,
+                           const double *param_in)
 {
     using namespace H5;
 
+    int i, j, k;
+    int ihead = 0;
+
+    int order = 0;
+    auto ishift = 0;
+
+    std::vector<int> pair_tmp(3);
+    std::vector<int> xyz_tmp(3);
+    std::vector<int> atom_tmp(3);
+
+    for (i = 0; i < order; ++i) {
+        ishift += fcs->get_nequiv()[i].size();
+    }
+
+    auto nfcs = fcs->get_fc_table()[order].size();
+
+    for (auto it = fcs->get_fc_table()[order].begin();
+         it != fcs->get_fc_table()[order].end(); ++it) {
+        auto fctmp = *it;
+        auto ip = fctmp.mother + ishift;
+
+        for (k = 0; k < order + 2; ++k) {
+            atom_tmp[k] = fctmp.elems[k] / 3;
+            xyz_tmp[k] = fctmp.elems[k] % 3;
+        }
+
+        auto fcs_value = param_in[ip] * fctmp.sign;
+    }
+
+
     // Try block to detect exceptions raised by any of the calls inside it
-    try
-    {
+    try {
         // Turn off the auto-printing when failure occurs so that we can
         // handle the errors appropriately
         Exception::dontPrint();
@@ -985,38 +1014,63 @@ int Writer::write_fcs_HDF5(const int maxorder,
 
         H5File file(filename, H5F_ACC_TRUNC);
 
+        std::sort(fcs->get_fc_table()[order].begin(), fcs->get_fc_table()[order].end());
+
         // Create the data space for the dataset.
-        hsize_t dims[2];               // dataset dimensions
-        dims[0] = 10;
-        dims[1] = 5;
+        hsize_t dims[2]; // dataset dimensions
+        dims[0] = nfcs;
+        dims[1] = (order + 2) * 2;
         DataSpace dataspace(2, dims);
+        hsize_t dims2[1];
+        dims2[0] = nfcs;
+        //dims2[1] = 1;
+        DataSpace dataspace_fcs(1, dims2);
+
+        std::vector<int> index_1D;
+        std::vector<double> fcs_1D(dims[0]);
+        //int *index_1D;
+        //allocate(index_1D, dims[0] * dims[1]);
+        index_1D.resize(dims[0] * dims[1]);
+
+        hsize_t counter = 0;
+        hsize_t counter2 = 0;
+        for (const auto &it : fcs->get_fc_table()[order]) {
+
+            fcs_1D[counter2++] = param_in[it.mother + ishift] * it.sign;
+            for (const auto &it2 : it.elems) {
+                index_1D[counter++] = it2 / 3 + 1;
+                index_1D[counter++] = it2 % 3 + 1;
+            }
+        }
 
         // Create the dataset.      
-        const H5std_string dataset_name = "dset";
-        auto dataset = file.createDataSet(dataset_name, PredType::STD_I32BE, dataspace);
+        const H5std_string dsetname_fcs = "force_constant_values";
+        const H5std_string dsetname_index = "force_constant_labels";
+        auto dataset = file.createDataSet(dsetname_index, PredType::NATIVE_INT, dataspace);
+        dataset.write(&index_1D[0], PredType::NATIVE_INT);
+        auto dataset2 = file.createDataSet(dsetname_fcs, PredType::NATIVE_DOUBLE, dataspace_fcs);
+        dataset2.write(&fcs_1D[0], PredType::NATIVE_DOUBLE);
 
-    }  // end of try block
+    } // end of try block
 
-    // catch failure caused by the H5File operations
-    catch (FileIException error)
-    {
+        // catch failure caused by the H5File operations
+    catch (FileIException error) {
         error.printErrorStack();
         return -1;
     }
 
-    // catch failure caused by the DataSet operations
-    catch (DataSetIException error)
-    {
+        // catch failure caused by the DataSet operations
+    catch (DataSetIException error) {
         error.printErrorStack();
         return -1;
     }
 
-    // catch failure caused by the DataSpace operations
-    catch (DataSpaceIException error)
-    {
+        // catch failure caused by the DataSpace operations
+    catch (DataSpaceIException error) {
         error.printErrorStack();
         return -1;
     }
 
-    return 0;  // successfully terminated
+
+    return 0; // successfully terminated
 }
