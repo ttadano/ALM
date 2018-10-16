@@ -26,3 +26,10 @@ For license rights and limitations, see LICENSE.txt file.
 ## Author
 * Terumasa Tadano
 * Atsushi Togo
+
+
+[license-image]: https://img.shields.io/github/license/ttadano/ALM.svg
+[license-url]:  https://github.com/ttadano/ALM/blob/develop/LICENSE.txt
+
+[docs-image]:  https://readthedocs.org/projects/alm/badge/?version=develop
+[docs-url]: https://alm.readthedocs.io/en/develop/?badge=develop
