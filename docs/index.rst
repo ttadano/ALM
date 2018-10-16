@@ -11,7 +11,8 @@ Welcome to ALM's documentation!
    :caption: Contents:
 
    intro
-   install
+   compile-with-conda-packages
+   compile-with-makefile 
    modules
 
 

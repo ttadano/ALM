@@ -2,33 +2,32 @@ cmake_minimum_required(VERSION 3.1)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2")
-# set(CMAKE_BUILD_TYPE DEBUG)
+#set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_BUILD_TYPE RELEASE)
 
 project(alm)
-#set(CMAKE_CXX_COMPILER "g++")
+# set(CMAKE_CXX_COMPILER "clang++")
 option(WITH_SPARSE_SOLVER "Use sparse solver option" ON)
 
 if(WIN32)
-    LINK_DIRECTORIES(C:\\lapack)
-	LINK_DIRECTORIES(C:\\spglib)
-    include_directories(C:\\spglib)
-	set(LAPACK_LIBRARIES lapack)
-	set(spglib symspg)
+  LINK_DIRECTORIES(C:\\lapack)
+  LINK_DIRECTORIES(C:\\spglib)
+  include_directories(C:\\spglib)
+  set(LAPACK_LIBRARIES lapack)
+  set(spglib symspg)
 endif()
 
 if (UNIX)
-    #set( ENV{BLA_VENDOR} "Intel10_64lp")
-	include_directories("/Users/tadano/src/spglib/include")
-    find_package(LAPACK REQUIRED)
-	set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
+  include_directories("/Users/tadano/src/spglib/include")
+  find_package(LAPACK REQUIRED)
+  set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
 endif()
 
 #
-# Add openmp flag if available 
-# 
+# Add openmp flag if available
+#
 find_package(OpenMP)
-if (OPENMP_FOUND) 
+if (OPENMP_FOUND)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
@@ -54,10 +53,10 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
             ${PROJECT_SOURCE_DIR}/src/constraint.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
-            ${PROJECT_SOURCE_DIR}/src/optimize.cpp
             ${PROJECT_SOURCE_DIR}/src/input_parser.cpp
             ${PROJECT_SOURCE_DIR}/src/input_setter.cpp
             ${PROJECT_SOURCE_DIR}/src/interaction.cpp
+            ${PROJECT_SOURCE_DIR}/src/optimize.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
             ${PROJECT_SOURCE_DIR}/src/rref.cpp
             ${PROJECT_SOURCE_DIR}/src/symmetry.cpp
@@ -69,10 +68,10 @@ set(HEADERS ${PROJECT_SOURCE_DIR}/src/alm.h
             ${PROJECT_SOURCE_DIR}/src/constraint.h
             ${PROJECT_SOURCE_DIR}/src/fcs.h
             ${PROJECT_SOURCE_DIR}/src/files.h
-            ${PROJECT_SOURCE_DIR}/src/optimize.h
             ${PROJECT_SOURCE_DIR}/src/input_parser.h
             ${PROJECT_SOURCE_DIR}/src/input_setter.h
             ${PROJECT_SOURCE_DIR}/src/interaction.h
+            ${PROJECT_SOURCE_DIR}/src/optimize.h
             ${PROJECT_SOURCE_DIR}/src/patterndisp.h
             ${PROJECT_SOURCE_DIR}/src/rref.h
             ${PROJECT_SOURCE_DIR}/src/symmetry.h
@@ -87,7 +86,7 @@ set(HEADERS ${PROJECT_SOURCE_DIR}/src/alm.h
 # Executable
 add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
                    ${PROJECT_SOURCE_DIR}/src/alm_cui.cpp
-		   ${SOURCES} ${HEADERS})
+                   ${SOURCES} ${HEADERS})
 target_link_libraries(alm ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib})
 target_link_libraries(alm ${LAPACK_LIBRARIES})
 set_property(TARGET alm PROPERTY CXX_STANDARD 11)
@@ -119,4 +118,3 @@ install(TARGETS almcxx_static ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Header file
 install(FILES ${PROJECT_SOURCE_DIR}/src/alm.h DESTINATION ${PROJECT_SOURCE_DIR}/include)
-

@@ -1,11 +1,8 @@
-alm package
-===========
+ALM python modules
+==================
 
-Submodules
+alm module
 ----------
-
-alm\.alm module
----------------
 
 .. automodule:: alm.alm
     :members:

@@ -72,5 +72,3 @@ Author & Contact
 | National Institute for Material Science (NIMS), 
 | Japan
 
-If you have any questions, suggestions, and problems regarding ALM, please feel free to contact the author.
-
