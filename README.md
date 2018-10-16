@@ -2,6 +2,7 @@
 
 [![License][license-image]][license-url]
 [![Doc status][docs-image]][docs-url]
+[![Build Status][travis-image]][travis-url]
 
 ### Version x.y.z
 
@@ -29,7 +30,10 @@ For license rights and limitations, see LICENSE.txt file.
 
 
 [license-image]: https://img.shields.io/github/license/ttadano/ALM.svg
-[license-url]:  https://github.com/ttadano/ALM/blob/develop/LICENSE.txt
+[license-url]: https://github.com/ttadano/ALM/blob/develop/LICENSE.txt
 
-[docs-image]:  https://readthedocs.org/projects/alm/badge/?version=develop
+[docs-image]: https://readthedocs.org/projects/alm/badge/?version=develop
 [docs-url]: https://alm.readthedocs.io/en/develop/?badge=develop
+
+[travis-image]: https://travis-ci.org/ttadano/ALM.svg?branch=develop
+[travis-url]: https://travis-ci.org/ttadano/ALM
