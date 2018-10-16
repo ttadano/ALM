@@ -18,7 +18,7 @@ compile_with_sources = True
 # |   |-- ALM
 # |   |   |-- include/
 # |   |   |-- lib/
-# |   |   |-- python/
+# |   |   |-- python/setup.py
 # |   |   |-- src/
 # |   |   |-- _build/
 # |   |   |-- CMakeLists.txt
@@ -27,25 +27,27 @@ compile_with_sources = True
 # |       |-- include/
 # |       |-- lib/
 # |       |-- _build/
-# |       |-- setup.py
 # |       |-- CMakeLists.txt
 # |       `-- ...
 # |-- miniconda/envs/alm/include
 # |-- miniconda/envs/alm/include/eigen3
 # `-- ...
 
-spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
+library_dirs = []
+extra_link_args = []
 include_dirs = []
+
+spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
 include_dirs_numpy = [numpy.get_include()]
 include_dirs += include_dirs_numpy
+
+# The following setting can work in place of "export CPLUS_INCLUDE_PATH=$CONDA_PREFIX/include:$CONDA_PREFIX/include/eigen3:$HOME/ALM/spglib/include".
 # include_dir_spglib = os.path.join(home, "ALM", "spglib", "include")
 # include_dirs.append(include_dir_spglib)
 # include_dir_boost = os.path.join(home, "miniconda", "envs", "alm", "include")
 # include_dirs.append(include_dir_boost)
 # include_dir_eigen = os.path.join(include_dir_boost, "eigen3")
 # include_dirs.append(include_dir_eigen)
-library_dirs = []
-extra_link_args = []
 
 if compile_with_sources:
     cpp_files = ['alm.cpp',
@@ -85,7 +87,8 @@ else:  # compile with library
 extension = Extension('alm._alm',
                       include_dirs=include_dirs,
                       library_dirs=library_dirs,
-                      extra_compile_args = ['-fopenmp', '-std=c++11'],
+                      extra_compile_args = ['-fopenmp', '-std=c++11',
+                                            '-DWITH_SPARSE_SOLVER'],
                       extra_link_args=extra_link_args,
                       sources=sources)
 

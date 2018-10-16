@@ -3,9 +3,11 @@
 Building ALM using conda
 =========================
 
-ALM is written in C++. So to build it, a set of build tools is needed
-to install. Currently using conda gives a relatively simple and
-uniform way to perform building ALM. There are steps to achieve it as follows.
+ALM is written in C++. To build it, a set of build tools is
+needed. Currently using conda gives a relatively simple and uniform
+way to perform building the ALM python module and the ALM library for
+C++. In this documentation, it is presented a step-by-step procedure
+to build them using conda.
 
 .. contents::
    :depth: 2
@@ -25,8 +27,8 @@ detailed instruction about the conda environment is found at
 
 - https://conda.io/docs/user-guide/tasks/manage-environments.html
 
-Preparing build tools
----------------------
+Preparing build tools by conda
+-------------------------------
 
 Compilers prepared by conda for linux and macOS are different. See:
 
@@ -40,8 +42,8 @@ For linux
 
 ::
 
-   % conda install gcc_linux-64 gxx_linux-64 cmake boost eigen openblas numpy h5py ipython
-
+   % conda install gcc_linux-64 gxx_linux-64 cmake boost eigen numpy ipython
+   % conda install -c conda-forge openblas h5py
 
 For macOS
 ~~~~~~~~~~
@@ -62,26 +64,10 @@ required::
    # "CONDA_BUILD_SYSROOT,${CONDA_BUILD_SYSROOT:-$(xcrun --show-sdk-path)}"
 
 
-Preparing spglib
-----------------
-
-`spglib <https://github.com/atztogo/spglib>`_ is necessary to build to
-be linked by ALM. Spglib is built as follows::
-
-   % git clone https://github.com/atztogo/spglib.git
-   % cd spglib
-   % mkdir _build && cd _build
-   % cmake -DCMAKE_INSTALL_PREFIX="" ..
-   % make
-   % make DESTDIR=.. install
-
-Detailed build configuration can be controlled to modify
-``CMakeLists.txt`` if necessary.
-
 .. _build_ALMlib:
 
-Building ALM library and/or ALM python module
----------------------------------------------
+Building ALM python module and/or ALM library for C++
+------------------------------------------------------
 
 Now the directory structure supposed in this document is shown as below::
 
@@ -90,7 +76,7 @@ Now the directory structure supposed in this document is shown as below::
    |   |-- ALM
    |   |   |-- include/
    |   |   |-- lib/
-   |   |   |-- python/
+   |   |   |-- python/setup.py
    |   |   |-- src/
    |   |   |-- _build/
    |   |   |-- CMakeLists.txt
@@ -99,7 +85,6 @@ Now the directory structure supposed in this document is shown as below::
    |       |-- include/
    |       |-- lib/
    |       |-- _build/
-   |       |-- setup.py
    |       |-- CMakeLists.txt
    |       `-- ...
    |-- miniconda/envs/alm/include
@@ -107,7 +92,34 @@ Now the directory structure supposed in this document is shown as below::
    `-- ...
 
 In this directory structure, ``$CONDA_PREFIX`` is equivalent to
-``$HOME/miniconda/envs/alm``.
+``$HOME/miniconda/envs/alm``. The location of ``miniconda`` directory
+is chosen at the installation time of miniconda.
+
+ALM and spglib are downloaded from github. ``ALM`` and ``spglib``
+directories are created running the following commands::
+
+   % git clone https://github.com/ttadano/ALM.git
+   % git clone https://github.com/atztogo/spglib.git
+
+When this is done on ``$HOME/ALM``, the above directory structure is
+made. If git command doesn't exist in your system, it is also obtained
+from conda by ``conda install git``.
+
+Preparing spglib
+~~~~~~~~~~~~~~~~
+
+`spglib <https://github.com/atztogo/spglib>`_ is necessary for to
+build both of the ALM python module and/or ALM library for C++. It is
+assumed that we are in ``$HOME/ALM/spglib``, where spglib is built as
+follows::
+
+   % mkdir _build && cd _build
+   % cmake -DCMAKE_INSTALL_PREFIX="" ..
+   % make
+   % make DESTDIR=.. install
+
+Detailed build configuration is controlled to modify
+``CMakeLists.txt`` if necessary.
 
 Building ALM python module by Modifying ``setup.py``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,8 +158,6 @@ Finally the build and installation in the user directory is done by
 
    % python setup.py build
    % pip install -e .
-
-
 
 Building ALM library for C++ by modifying ``CMakeLists.txt``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -188,7 +198,7 @@ structure shown :ref:`above <build_ALMlib>`. Using this
 The dynamic and static link libraries and the head file are installed
 at
 
-- ``$HOME/ALM/ALM/lib/libalmcxx.dylib``
+- ``$HOME/ALM/ALM/lib/libalmcxx.dylib`` or ``$HOME/ALM/ALM/lib/libalmcxx.so``
 - ``$HOME/ALM/ALM/lib/libalmcxx.a``
 - ``$HOME/ALM/ALM/include/alm.h``
 
