@@ -1,62 +1,89 @@
 import os
 from setuptools import setup, Extension
-# from distutils.core import setup, Extension
 import numpy
+try:
+    from pathlib import Path
+    home = str(Path.home())
+except ModuleNotFoundError:
+    home = os.path.expanduser("~")
 
-os.environ["CC"] = "gcc-8"
-os.environ["CXX"] = "g++-8"
+# This is the switch for ALM developement. Always True for general cases.
+compile_with_sources = True
 
+# Configurations to pass to extention.
+# The following directory structure and use of conda are supposed.
+#
+# $HOME
+# |-- ALM
+# |   |-- ALM
+# |   |   |-- include/
+# |   |   |-- lib/
+# |   |   |-- python/
+# |   |   |-- src/
+# |   |   |-- _build/
+# |   |   |-- CMakeLists.txt
+# |   |   `-- ...
+# |   `-- spglib
+# |       |-- include/
+# |       |-- lib/
+# |       |-- _build/
+# |       |-- setup.py
+# |       |-- CMakeLists.txt
+# |       `-- ...
+# |-- miniconda/envs/alm/include
+# |-- miniconda/envs/alm/include/eigen3
+# `-- ...
+
+spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
+include_dirs = []
 include_dirs_numpy = [numpy.get_include()]
-
-compile_with_sources = False
-extra_link_args = ['-lstdc++', '-lgomp',
-                   '-llapack', '-static',
-                   '-L/Users/tadano/src/spglib/lib', '-lsymspg',
-                   '-fopenmp', '-Wl,-rpath,/usr/local/opt/gcc/lib/gcc/7,-rpath,/Users/tadano/src/spglib/lib']
-#                   '/Users/tadano/src/spglib/lib/libsymspg.a',
-#                   '/usr/local/opt/gcc/lib/gcc/7/libgomp.a']
-
-
-include_dir_spglib=['/Users/tadano/src/spglib/include', '/usr/local/include/eigen3/']
-
+include_dirs += include_dirs_numpy
+# include_dir_spglib = os.path.join(home, "ALM", "spglib", "include")
+# include_dirs.append(include_dir_spglib)
+# include_dir_boost = os.path.join(home, "miniconda", "envs", "alm", "include")
+# include_dirs.append(include_dir_boost)
+# include_dir_eigen = os.path.join(include_dir_boost, "eigen3")
+# include_dirs.append(include_dir_eigen)
 library_dirs = []
+extra_link_args = []
+
 if compile_with_sources:
-    sources = ['alm.cpp',
-               'alm_cui.cpp',
-               'constraint.cpp',
-               'fcs.cpp',
-               'files.cpp',
-               'input_parser.cpp',
-               'input_setter.cpp',
-               'interaction.cpp',
-               'main.cpp',
-               'optimize.cpp',
-               'patterndisp.cpp',
-               'rref.cpp',
-               'symmetry.cpp',
-               'system.cpp',
-               'timer.cpp',
-               'writer.cpp']
+    cpp_files = ['alm.cpp',
+                 'alm_cui.cpp',
+                 'constraint.cpp',
+                 'fcs.cpp',
+                 'files.cpp',
+                 'input_parser.cpp',
+                 'input_setter.cpp',
+                 'interaction.cpp',
+                 'main.cpp',
+                 'optimize.cpp',
+                 'patterndisp.cpp',
+                 'rref.cpp',
+                 'symmetry.cpp',
+                 'system.cpp',
+                 'timer.cpp',
+                 'writer.cpp']
     if os.path.exists('src'):
         source_dir = "src"
     else:
-        source_dir = "../src"
-    
-    include_dirs = [source_dir,]
-    include_dirs += include_dirs_numpy
-    for i, s in enumerate(sources):
-        sources[i] = "%s/%s" % (source_dir, s) 
+        source_dir = os.path.join("..", "src")
+
+    include_dirs += [source_dir, ]
+    sources = [os.path.join(source_dir, s) for s in cpp_files]
     sources += ['_alm.c', 'alm_wrapper.cpp']
-else: # compile with library
+    extra_link_args.append(os.path.join(spglib_dir, "libsymspg.a"))
+else:  # compile with library
     sources = ['_alm.c', 'alm_wrapper.cpp']
     # static link library
-    extra_link_args += ['../lib/libalmcxx.a']
+    extra_link_args.append(os.path.join("..", "lib", "libalmcxx.a"))
+    extra_link_args.append(os.path.join(spglib_dir, "libsymspg.a"))
     # dynamic link library
     # extra_link_args += ['-lalmcxx']
-    # library_dirs = ['../lib']
+    # library_dirs.append(os.path.join("..", "lib"))
 
 extension = Extension('alm._alm',
-                      include_dirs=include_dirs_numpy + include_dir_spglib,
+                      include_dirs=include_dirs,
                       library_dirs=library_dirs,
                       extra_compile_args = ['-fopenmp', '-std=c++11'],
                       extra_link_args=extra_link_args,
