@@ -24,5 +24,5 @@ This software is released under the MIT license.
 For license rights and limitations, see LICENSE.txt file.
 
 ## Author
-Terumasa Tadano
-Atsushi Togo
+* Terumasa Tadano
+* Atsushi Togo
