@@ -27,8 +27,9 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/version.hpp>
+#ifdef _FCS_HDF5
 #include "H5Cpp.h"
-
+#endif
 using namespace ALM_NS;
 
 Writer::Writer() {}
@@ -66,11 +67,10 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << " Interaction:" << std::endl;
     std::cout << "  NORDER = " << alm->interaction->get_maxorder() << std::endl;
     std::cout << "  NBODY = ";
-    for (i = 0; i < alm->interaction->get_maxorder(); ++i)
+    for (i = 0; i < alm->interaction->get_maxorder(); ++i) {
         std::cout << std::setw(3) << alm->get_nbody_include()[i];
-
+    }
     std::cout << std::endl << std::endl;
-
 
     if (alm->get_run_mode() == "suggest") {
         std::cout << "  DBASIS = " << alm->displace->get_disp_basis() << std::endl;
@@ -136,8 +136,14 @@ void Writer::writeall(ALM *alm)
     if (alm->interaction->get_maxorder() > 1 && print_thirdorderpy_fc3) {
         write_fc3_thirdorderpy_format(alm);
     }
-
-    write_fcs_HDF5(alm->get_maxorder(), alm->fcs, alm->optimize->get_params());
+#ifdef _FCS_HDF5
+    create_fcs_HDF5(alm->files->get_prefix(),
+                    alm->get_supercell(),
+                    alm->symmetry,
+                    alm->get_maxorder(),
+                    alm->fcs,
+                    alm->optimize->get_params());
+#endif
     alm->timer->stop_clock("writer");
 }
 
@@ -967,41 +973,41 @@ std::string Writer::easyvizint(const int n) const
     return str_tmp;
 }
 
-int Writer::write_fcs_HDF5(const int maxorder,
-                           const Fcs *fcs,
-                           const double *param_in)
+#ifdef _FCS_HDF5
+
+void Writer::create_fcs_HDF5(const std::string prefix,
+                             const Cell &supercell,
+                             const Symmetry *symmetry,
+                             const int maxorder,
+                             const Fcs *fcs,
+                             const double *param_in)
+{
+    for (auto order = 0; order < maxorder; ++order) {
+        const H5std_string filename = prefix + "-fc"
+            + std::to_string(order + 2) + ".h5";
+
+        const auto info = write_HDF5fcs_targer_order(filename,
+                                                     supercell,
+                                                     symmetry,
+                                                     order,
+                                                     fcs,
+                                                     param_in);
+
+        if (info != 0) {
+            exit("create_fcs_HDF5",
+                 "Error occurred while writing force constants to HDF5");
+        }
+    }
+}
+
+int Writer::write_HDF5fcs_targer_order(const H5std_string filename,
+                                       const Cell &supercell,
+                                       const Symmetry *symmetry,
+                                       const int order,
+                                       const Fcs *fcs,
+                                       const double *param_in)
 {
     using namespace H5;
-
-    int i, j, k;
-    int ihead = 0;
-
-    int order = 0;
-    auto ishift = 0;
-
-    std::vector<int> pair_tmp(3);
-    std::vector<int> xyz_tmp(3);
-    std::vector<int> atom_tmp(3);
-
-    for (i = 0; i < order; ++i) {
-        ishift += fcs->get_nequiv()[i].size();
-    }
-
-    auto nfcs = fcs->get_fc_table()[order].size();
-
-    for (auto it = fcs->get_fc_table()[order].begin();
-         it != fcs->get_fc_table()[order].end(); ++it) {
-        auto fctmp = *it;
-        auto ip = fctmp.mother + ishift;
-
-        for (k = 0; k < order + 2; ++k) {
-            atom_tmp[k] = fctmp.elems[k] / 3;
-            xyz_tmp[k] = fctmp.elems[k] % 3;
-        }
-
-        auto fcs_value = param_in[ip] * fctmp.sign;
-    }
-
 
     // Try block to detect exceptions raised by any of the calls inside it
     try {
@@ -1009,47 +1015,21 @@ int Writer::write_fcs_HDF5(const int maxorder,
         // handle the errors appropriately
         Exception::dontPrint();
 
-        // Create a new file using the default property lists. 
-        const H5std_string filename = "hoge.hdf5";
-
         H5File file(filename, H5F_ACC_TRUNC);
 
-        std::sort(fcs->get_fc_table()[order].begin(), fcs->get_fc_table()[order].end());
+        Group group_cell(file.createGroup("/Supercell"));
+        Group group_fcs(file.createGroup("/ForceConstants"));
+        Group group_input(file.createGroup("/Inputs"));
+        Group group_symm(file.createGroup("/Symmetry"));
 
-        // Create the data space for the dataset.
-        hsize_t dims[2]; // dataset dimensions
-        dims[0] = nfcs;
-        dims[1] = (order + 2) * 2;
-        DataSpace dataspace(2, dims);
-        hsize_t dims2[1];
-        dims2[0] = nfcs;
-        //dims2[1] = 1;
-        DataSpace dataspace_fcs(1, dims2);
+        write_HDFgroup_cell(supercell, group_cell);
+        write_HDFgroup_fcs(order, param_in, fcs, group_fcs);
+        write_HDFgroup_symm(symmetry, group_symm);
 
-        std::vector<int> index_1D;
-        std::vector<double> fcs_1D(dims[0]);
-        //int *index_1D;
-        //allocate(index_1D, dims[0] * dims[1]);
-        index_1D.resize(dims[0] * dims[1]);
-
-        hsize_t counter = 0;
-        hsize_t counter2 = 0;
-        for (const auto &it : fcs->get_fc_table()[order]) {
-
-            fcs_1D[counter2++] = param_in[it.mother + ishift] * it.sign;
-            for (const auto &it2 : it.elems) {
-                index_1D[counter++] = it2 / 3 + 1;
-                index_1D[counter++] = it2 % 3 + 1;
-            }
-        }
-
-        // Create the dataset.      
-        const H5std_string dsetname_fcs = "force_constant_values";
-        const H5std_string dsetname_index = "force_constant_labels";
-        auto dataset = file.createDataSet(dsetname_index, PredType::NATIVE_INT, dataspace);
-        dataset.write(&index_1D[0], PredType::NATIVE_INT);
-        auto dataset2 = file.createDataSet(dsetname_fcs, PredType::NATIVE_DOUBLE, dataspace_fcs);
-        dataset2.write(&fcs_1D[0], PredType::NATIVE_DOUBLE);
+        group_fcs.close();
+        group_cell.close();
+        group_input.close();
+        group_symm.close();
 
     } // end of try block
 
@@ -1071,6 +1051,204 @@ int Writer::write_fcs_HDF5(const int maxorder,
         return -1;
     }
 
-
     return 0; // successfully terminated
 }
+
+void Writer::write_HDFgroup_cell(const Cell &supercell,
+                                 H5::Group &group_cell)
+{
+    using namespace H5;
+
+    int i, j;
+    hsize_t dims[2];
+
+    dims[0] = 3;
+    dims[1] = 3;
+
+    double lavec_tmp[3][3];
+
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            lavec_tmp[i][j] = supercell.lattice_vector[j][i];
+        }
+    }
+    DataSpace *dataspace = new DataSpace(2, dims);
+    DataSet *dataset = new DataSet(group_cell.createDataSet("lattice_vector",
+                                                            PredType::NATIVE_DOUBLE,
+                                                            *dataspace));
+
+    dataset->write(lavec_tmp, PredType::NATIVE_DOUBLE);
+    dataset->close();
+    dataspace->close();
+
+    dims[0] = supercell.number_of_atoms;
+    dims[1] = 3;
+
+    std::vector<double> xfrac_1D(dims[0] * dims[1]);
+
+    hsize_t counter = 0;
+
+    for (i = 0; i < supercell.number_of_atoms; ++i) {
+        for (j = 0; j < 3; ++j) {
+            xfrac_1D[counter++] = supercell.x_fractional[i][j];
+        }
+    }
+    dataspace = new DataSpace(2, dims);
+    dataset = new DataSet(group_cell.createDataSet("fractional_coordinate",
+                                                   PredType::NATIVE_DOUBLE,
+                                                   *dataspace));
+
+    dataset->write(&xfrac_1D[0], PredType::NATIVE_DOUBLE);
+    dataset->close();
+    dataspace->close();
+
+    hsize_t dims2[1];
+    dims2[0] = supercell.number_of_atoms;
+
+    dataspace = new DataSpace(1, dims2);
+    dataset = new DataSet(group_cell.createDataSet("atomic_kinds",
+                                                   PredType::NATIVE_INT,
+                                                   *dataspace));
+
+    dataset->write(&supercell.kind[0], PredType::NATIVE_INT);
+
+    dataset->close();
+    dataspace->close();
+}
+
+void Writer::write_HDFgroup_symm(const Symmetry *symm,
+                                 H5::Group &group_symm)
+{
+    using namespace H5;
+
+    int i, j;
+    hsize_t dims[2];
+
+    const auto ntran = symm->get_ntran();
+    auto map_sym = symm->get_map_sym();
+    const auto nat = map_sym.size();
+
+    dims[0] = nat;
+    dims[1] = ntran;
+
+    std::vector<int> mapsym_1D(dims[0] * dims[1]);
+
+    hsize_t counter = 0;
+    for (j = 0; j < nat; ++j) {
+        for (i = 0; i < ntran; ++i) {
+            mapsym_1D[counter] = map_sym[j][symm->get_symnum_tran()[i]] + 1;
+            ++counter;
+        }
+    }
+
+    auto dataspace = new DataSpace(2, dims);
+    auto dataset = new DataSet(group_symm.createDataSet("atom_mapping_translation",
+                                                        PredType::NATIVE_INT,
+                                                        *dataspace));
+    dataset->write(&mapsym_1D[0], PredType::NATIVE_INT);
+
+    dataset->close();
+    dataspace->close();
+}
+
+
+void Writer::write_HDFgroup_fcs(const int order,
+                                const double *param_in,
+                                const Fcs *fcs,
+                                H5::Group &group_fcs)
+{
+    using namespace H5;
+    int i;
+
+    hsize_t dims[2]; // dataset dimensions
+    hsize_t dims2[1];
+
+    auto ishift = 0;
+    for (i = 0; i < order; ++i) {
+        ishift += fcs->get_nequiv()[i].size();
+    }
+    // Save force constants
+
+    // Irreducible set 
+    const auto nfcs_irred = fcs->get_nequiv()[order].size();
+
+    dims[0] = nfcs_irred;
+    dims[1] = (order + 2) * 2;
+
+    std::vector<int> index_1D(dims[0] * dims[1]);
+    std::vector<double> fcs_1D(dims[0]);
+
+    hsize_t counter = 0;
+    hsize_t counter2 = 0;
+
+    auto ihead = 0;
+    for (const auto &it : fcs->get_nequiv()[order]) {
+
+        fcs_1D[counter2] = param_in[counter2 + ishift];
+        for (const auto &it2 : fcs->get_fc_table()[order][ihead].elems) {
+            index_1D[counter++] = it2 / 3 + 1;
+            index_1D[counter++] = it2 % 3 + 1;
+        }
+        ihead += it;
+        ++counter2;
+    }
+
+    DataSpace *dataspace = new DataSpace(2, dims);
+    DataSet *dataset = new DataSet(group_fcs.createDataSet("force_constant_labels_compact",
+                                                           PredType::NATIVE_INT,
+                                                           *dataspace));
+    dataset->write(&index_1D[0], PredType::NATIVE_INT);
+    dataset->close();
+    dataspace->close();
+
+    dims2[0] = nfcs_irred;
+    dataspace = new DataSpace(1, dims2);
+    dataset = new DataSet(group_fcs.createDataSet("force_constant_values_compact",
+                                                  PredType::NATIVE_DOUBLE,
+                                                  *dataspace));
+    dataset->write(&fcs_1D[0], PredType::NATIVE_DOUBLE);
+
+    dataset->close();
+    dataspace->close();
+
+    // Reducible set
+    const auto nfcs = fcs->get_fc_table()[order].size();
+    dims[0] = nfcs;
+    dims[1] = (order + 2) * 2;
+    dataspace = new DataSpace(2, dims);
+    dataset = new DataSet(group_fcs.createDataSet("force_constant_labels",
+                                                  PredType::NATIVE_INT,
+                                                  *dataspace));
+
+    index_1D.resize(dims[0] * dims[1]);
+    fcs_1D.resize(dims[0]);
+
+    counter = 0;
+    counter2 = 0;
+    for (const auto &it : fcs->get_fc_table()[order]) {
+
+        fcs_1D[counter2++] = param_in[it.mother + ishift] * it.sign;
+        for (const auto &it2 : it.elems) {
+            index_1D[counter++] = it2 / 3 + 1;
+            index_1D[counter++] = it2 % 3 + 1;
+        }
+    }
+
+    dataset->write(&index_1D[0], PredType::NATIVE_INT);
+
+    dataset->close();
+    dataspace->close();
+
+    dims2[0] = nfcs;
+    dataspace = new DataSpace(1, dims2);
+    dataset = new DataSet(group_fcs.createDataSet("force_constant_values",
+                                                  PredType::NATIVE_DOUBLE,
+                                                  *dataspace));
+
+    dataset->write(&fcs_1D[0], PredType::NATIVE_DOUBLE);
+
+    dataset->close();
+    dataspace->close();
+}
+
+#endif

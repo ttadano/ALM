@@ -13,7 +13,9 @@
 #include <string>
 #include <vector>
 #include "alm.h"
-
+#ifdef _FCS_HDF5
+#include "H5cpp.h"
+#endif
 namespace ALM_NS
 {
     class AtomProperty
@@ -73,8 +75,31 @@ namespace ALM_NS
         std::string double2string(double,
                                   int nprec = 15) const;
 
-        int write_fcs_HDF5(const int maxorder,
-                           const Fcs *fcs,
-                           const double *param_in);
+#ifdef _FCS_HDF5
+        void create_fcs_HDF5(const std::string prefix,
+                             const Cell &supercell,
+                             const Symmetry *symmetry,
+                             const int maxorder,
+                             const Fcs *fcs,
+                             const double *param_in);
+
+        int write_HDF5fcs_targer_order(const H5std_string filename,
+                                       const Cell &supercell,
+                                       const Symmetry *symmetry,
+                                       const int order,
+                                       const Fcs *fcs,
+                                       const double *param_in);
+
+        void write_HDFgroup_cell(const Cell &supercell,
+                                 H5::Group &group_cell);
+
+        void write_HDFgroup_symm(const Symmetry *symm,
+                                 H5::Group &group_symm);
+
+        void write_HDFgroup_fcs(const int order,
+                                const double *param_in,
+                                const Fcs *fcs,
+                                H5::Group &group_fcs);
+#endif
     };
 }
