@@ -52,7 +52,7 @@ namespace ALM_NS
         void set_cell(int nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
-                      const int kd[],
+                      const int kind[],
                       const std::string kdname[]) const;
         void set_magnetic_params(const unsigned int nat,
                                  const double (*magmom)[3],

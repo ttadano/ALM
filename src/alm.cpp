@@ -119,29 +119,10 @@ void ALM::set_periodicity(const int is_periodic[3]) const // PERIODIC
 void ALM::set_cell(const int nat,
                    const double lavec[3][3],
                    const double xcoord[][3],
-                   const int kd[],
+                   const int kind[],
                    const std::string kdname[]) const
 {
-    std::vector<int> nkd_vals(nat);
-
-    nkd_vals[0] = kd[0];
-    auto nkd = 1;
-    for (auto i = 1; i < nat; ++i) {
-        auto kd_exist = false;
-        for (auto j = 0; j < nkd; ++j) {
-            if (nkd_vals[j] == kd[i]) {
-                kd_exist = true;
-                break;
-            }
-        }
-        if (!kd_exist) {
-            nkd_vals[nkd] = kd[i];
-            ++nkd;
-        }
-    }
-
-    // Generate the information of the supercell
-    system->set_supercell(lavec, nat, nkd, kd, xcoord);
+    system->set_supercell(lavec, nat, kind, xcoord);
     system->set_kdname(kdname);
 }
 

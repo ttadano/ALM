@@ -7,10 +7,16 @@ class ALM:
 
     Attributes
     ----------
+    kind_indices : array_like
+        Atomic types represented by integer numbers starting from 1, which
+        are used internally, but currently needed to specify cutoff radii
+        in define method.
+        shape=(num_atoms,)
+        dtype='intc'
 
     """
 
-    def __init__(self, lavec, xcoord, kd):
+    def __init__(self, lavec, xcoord, atomic_numbers):
         """
 
         Parameters
@@ -23,7 +29,7 @@ class ALM:
             Fractional coordinates of atomic points.
             shape=(num_atoms, 3)
             dtype='double'
-        kd : array_like
+        atomic_numbers : array_like
             Atomic numbers.
             shape=(num_atoms,)
             dtype='intc'
@@ -33,10 +39,16 @@ class ALM:
         self._id = None
         self._lavec = np.array(lavec, dtype='double', order='C')
         self._xcoord = np.array(xcoord, dtype='double', order='C')
-        self._kd = np.array(kd, dtype='intc', order='C')
+        self._atomic_numbers = np.array(atomic_numbers,
+                                        dtype='intc', order='C')
+        self._kind_indices = None
         self._iconst = 11
         self._verbosity = 0
         self._maxorder = 1
+
+    @property
+    def kind_indices(self):
+        return self._kind_indices
 
     def __enter__(self):
         self.alm_new()
@@ -52,7 +64,7 @@ class ALM:
 
         ex.::
 
-           with ALM(lavec, xcoord, kd) as alm:
+           with ALM(lavec, xcoord, kind) as alm:
 
         Note
         ----
@@ -79,7 +91,7 @@ class ALM:
 
         ex.::
 
-           with ALM(lavec, xcoord, kd) as alm:
+           with ALM(lavec, xcoord, kind) as alm:
 
         """
 
@@ -155,7 +167,7 @@ class ALM:
             np.array(u, dtype='double', order='C'),
             np.array(f, dtype='double', order='C'))
 
-    def define(self, maxorder, rcs=None, nbody=None):
+    def define(self, maxorder, cutoff_radii=None, nbody=None):
         """Define the Taylor expansion potential.
 
         Parameters
@@ -168,7 +180,7 @@ class ALM:
             - If ``maxorder = 2``, both harmonic and cubic terms are
               considered.
 
-        rcs : array_like, default = None
+        cutoff_radii : array_like, default = None
             Cutoff radii defined for each order.
             When a negative value is provided, the cutoff radius is not used.
             dtype='double'
@@ -194,26 +206,27 @@ class ALM:
                 print("The size of nbody must be equal to maxorder.")
                 raise RuntimeError
 
-        if rcs is None:
-            _rcs = None
+        if cutoff_radii is None:
+            _cutoff_radii = None
         else:
-            _rcs = np.array(rcs, dtype='double', order='C')
-            nelem = len(_rcs.ravel())
+            _cutoff_radii = np.array(cutoff_radii, dtype='double', order='C')
+            nelem = len(_cutoff_radii.ravel())
             if (nelem // maxorder) * maxorder != nelem:
-                print("The array shape of rcs is wrong.")
+                print("The array shape of cutoff_radii is wrong.")
                 raise RuntimeError
             nkd = int(round(np.sqrt(nelem // maxorder)))
             if nkd ** 2 - nelem // maxorder != 0:
-                print("The array shape of rcs is wrong.")
+                print("The array shape of cutoff_radii is wrong.")
                 raise RuntimeError
-            _rcs = np.reshape(_rcs, (maxorder, nkd, nkd), order='C')
+            _cutoff_radii = np.reshape(_cutoff_radii, (maxorder, nkd, nkd),
+                                       order='C')
 
         self._maxorder = maxorder
 
         alm.define(self._id,
                    maxorder,
                    np.array(nbody, dtype='intc'),
-                   _rcs)
+                   _cutoff_radii)
 
         alm.generate_force_constant(self._id)
 
@@ -495,14 +508,17 @@ class ALM:
         bvec = np.zeros(3 * nat * ndata_used)
         alm.get_matrix_elements(self._id, ndata_used, amat, bvec)
 
-        return np.reshape(amat, (3 * nat * ndata_used, fc_length), order='F'), bvec
+        return (np.reshape(amat, (3 * nat * ndata_used, fc_length), order='F'),
+                bvec)
 
     def _set_cell(self):
         """Private method to setup the crystal lattice information"""
         if self._id is None:
             self._show_error_message()
 
-        alm.set_cell(self._id, self._lavec, self._xcoord, self._kd)
+        self._kind_indices = np.zeros_like(self._atomic_numbers)
+        alm.set_cell(self._id, self._lavec, self._xcoord, self._atomic_numbers,
+                     self._kind_indices)
 
     def _get_ndata_used(self):
         """Private method to return the number of training data sets"""

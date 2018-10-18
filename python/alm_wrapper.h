@@ -20,7 +20,8 @@ extern "C" {
                       const int nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
-                      const int kd[]);
+                      const int kd[],
+                      int kind[]);
     void alm_set_verbosity(const int id,
                            const int verbosity);
     // void set_magnetic_params(const double* const * magmom,
