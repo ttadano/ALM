@@ -81,42 +81,48 @@ extern "C" {
     // void set_displacement_basis(const std::string str_disp_basis);
     // void set_periodicity(const int is_periodic[3]);
 
+    // kind_in contains integer numbers to distinguish chemical
+    // elements. This is transformed to kind in ALM format, which
+    // contains incrementing integer number starting from 1.
+    // Here the mapping from the numbers in kind_in to those in kind
+    // is made by finding unique numbers (i.e., kind_uniqe) in kind_in
+    // and keeping the order, e.g., [8, 8, 4, 4] --> [1, 1, 2, 2].
     void alm_set_cell(const int id,
                       const int nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
-                      const int kd[])
+                      const int kind_in[])
     {
         int i, j, nkd;
-        int nkd_vals[nat], kd_new[nat];
-        bool kd_exist;
+        int kind_unique[nat], kind[nat];
+        bool in_kind_unique;
 
-        nkd_vals[0] = kd[0];
-        kd_new[0] = 1;
+        kind_unique[0] = kind_in[0];
+        kind[0] = 1;
         nkd = 1;
+
         for (i = 1; i < nat; ++i) {
-            kd_exist = false;
+            in_kind_unique = false;
             for (j = 0; j < nkd; ++j) {
-                if (nkd_vals[j] == kd[i]) {
-                    kd_exist = true;
-                    kd_new[i] = j + 1;
+                if (kind_unique[j] == kind_in[i]) {
+                    in_kind_unique = true;
+                    kind[i] = j + 1;
                     break;
                 }
             }
-            if (!kd_exist) {
-                nkd_vals[nkd] = kd[i];
-                kd_new[i] = nkd + 1;
+            if (!in_kind_unique) {
+                kind_unique[nkd] = kind_in[i];
+                kind[i] = nkd + 1;
                 ++nkd;
             }
         }
+
         std::string *kdname = new std::string[nkd];
-        //std::string kdname[nkd];
         for (int i = 0; i < nkd; i++) {
-            kdname[i] = atom_name[abs(nkd_vals[i]) % 118];
+            kdname[i] = atom_name[abs(kind_unique[i]) % 118];
         }
 
-
-        alm[id]->set_cell(nat, lavec, xcoord, kd_new, kdname);
+        alm[id]->set_cell(nat, lavec, xcoord, kind, kdname);
         delete [] kdname;
     }
 
