@@ -16,7 +16,7 @@ class ALM:
 
     """
 
-    def __init__(self, lavec, xcoord, kind):
+    def __init__(self, lavec, xcoord, atomic_numbers):
         """
 
         Parameters
@@ -29,7 +29,7 @@ class ALM:
             Fractional coordinates of atomic points.
             shape=(num_atoms, 3)
             dtype='double'
-        kind : array_like
+        atomic_numbers : array_like
             Atomic numbers.
             shape=(num_atoms,)
             dtype='intc'
@@ -39,7 +39,8 @@ class ALM:
         self._id = None
         self._lavec = np.array(lavec, dtype='double', order='C')
         self._xcoord = np.array(xcoord, dtype='double', order='C')
-        self._kind = np.array(kind, dtype='intc', order='C')
+        self._atomic_numbers = np.array(atomic_numbers,
+                                        dtype='intc', order='C')
         self._kind_indices = None
         self._iconst = 11
         self._verbosity = 0
@@ -515,8 +516,8 @@ class ALM:
         if self._id is None:
             self._show_error_message()
 
-        self._kind_indices = np.zeros_like(self._kind)
-        alm.set_cell(self._id, self._lavec, self._xcoord, self._kind,
+        self._kind_indices = np.zeros_like(self._atomic_numbers)
+        alm.set_cell(self._id, self._lavec, self._xcoord, self._atomic_numbers,
                      self._kind_indices)
 
     def _get_ndata_used(self):

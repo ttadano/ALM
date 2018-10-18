@@ -91,28 +91,28 @@ extern "C" {
                       const int nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
-                      const int kind_in[],
+                      const int atomic_numbers[],
                       int kind[])
     {
         int i, j, nkd;
         int kind_unique[nat];
         bool in_kind_unique;
 
-        kind_unique[0] = kind_in[0];
+        kind_unique[0] = atomic_numbers[0];
         kind[0] = 1;
         nkd = 1;
 
         for (i = 1; i < nat; ++i) {
             in_kind_unique = false;
             for (j = 0; j < nkd; ++j) {
-                if (kind_unique[j] == kind_in[i]) {
+                if (kind_unique[j] == atomic_numbers[i]) {
                     in_kind_unique = true;
                     kind[i] = j + 1;
                     break;
                 }
             }
             if (!in_kind_unique) {
-                kind_unique[nkd] = kind_in[i];
+                kind_unique[nkd] = atomic_numbers[i];
                 kind[i] = nkd + 1;
                 ++nkd;
             }
