@@ -200,21 +200,25 @@ static PyObject * py_set_cell(PyObject *self, PyObject *args)
   int id;
   PyArrayObject* py_lavec;
   PyArrayObject* py_xcoord;
-  PyArrayObject* py_kd;
-  if (!PyArg_ParseTuple(args, "iOOO",
-                              &id,
-                              &py_lavec,
-                              &py_xcoord,
-                              &py_kd)) {
+  PyArrayObject* py_kind_in;
+  PyArrayObject* py_kind_indices;
+
+  if (!PyArg_ParseTuple(args, "iOOOO",
+                        &id,
+                        &py_lavec,
+                        &py_xcoord,
+                        &py_kind_in,
+                        &py_kind_indices)) {
     return NULL;
   }
 
   double (*lavec)[3] = (double(*)[3])PyArray_DATA(py_lavec);
   double (*xcoord)[3] = (double(*)[3])PyArray_DATA(py_xcoord);
-  const int* kd = (int*)PyArray_DATA(py_kd);
-  const int nat = PyArray_DIMS(py_kd)[0];
+  const int* kind_in = (int*)PyArray_DATA(py_kind_in);
+  const int nat = PyArray_DIMS(py_kind_in)[0];
+  int* kind_indices = (int*)PyArray_DATA(py_kind_indices);
 
-  alm_set_cell(id, nat, lavec, xcoord, kd);
+  alm_set_cell(id, nat, lavec, xcoord, kind_in, kind_indices);
 
   Py_RETURN_NONE;
 }

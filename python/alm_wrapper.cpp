@@ -91,10 +91,11 @@ extern "C" {
                       const int nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
-                      const int kind_in[])
+                      const int kind_in[],
+                      int kind[])
     {
         int i, j, nkd;
-        int kind_unique[nat], kind[nat];
+        int kind_unique[nat];
         bool in_kind_unique;
 
         kind_unique[0] = kind_in[0];
