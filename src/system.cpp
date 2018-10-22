@@ -69,18 +69,16 @@ void System::set_supercell(const double lavec_in[3][3],
                            const int *kind_in,
                            const double xf_in[][3])
 {
-    unsigned int i, j, nkd;
-    int kd_count[nat_in];
-    int unique_nums[nat_in];
+    unsigned int i, j;
+    std::vector<int> unique_nums(nat_in);
     bool wrong_number = false;
     bool in_unique_nums;
 
     for (i = 0; i < nat_in; i++) {
-        kd_count[i] = 0;
         unique_nums[i] = 0;
     }
 
-    nkd = 0;
+    auto nkd = 0;
     for (i = 0; i < nat_in; i++) {
         in_unique_nums = false;
         for (j = 0; j < nkd; j++) {
