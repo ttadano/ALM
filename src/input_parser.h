@@ -65,7 +65,7 @@ namespace ALM_NS
         void split_str_by_space(const std::string,
                                 std::vector<std::string> &) const;
         bool is_endof_entry(const std::string) const;
-        void get_var_dict(const std::string,
+        void get_var_dict(const std::vector<std::string> &,
                           std::map<std::string,
                                    std::string> &);
 
@@ -73,5 +73,15 @@ namespace ALM_NS
         void assign_val(T &,
                         const std::string,
                         std::map<std::string, std::string>);
+
+        void parse_displacement_and_force_files(std::vector<std::vector<double>> &u,
+                                                std::vector<std::vector<double>> &f,
+                                                const int nat_in,
+                                                int &ndata,
+                                                const int nstart,
+                                                const int nend,
+                                                const int skip_s,
+                                                const int skip_e,
+                                                const std::string filename_in) const;
     };
 }

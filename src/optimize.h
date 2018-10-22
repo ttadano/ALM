@@ -29,7 +29,7 @@ namespace ALM_NS
     {
     public:
         // General optimization options
-        int optimizer;         // 1 : least-squares, 2 : elastic net
+        int optimizer; // 1 : least-squares, 2 : elastic net
         int use_sparse_solver; // 0: No, 1: Yes
         int maxnum_iteration;
         double tolerance_iteration;
@@ -99,6 +99,12 @@ namespace ALM_NS
                                         const int,
                                         const int);
 
+        void set_training_data(const std::vector<std::vector<double>> &u_train_in,
+                               const std::vector<std::vector<double>> &f_train_in);
+
+        void set_test_data(const std::vector<std::vector<double>> &u_test_in,
+                           const std::vector<std::vector<double>> &f_test_in);
+
 
         void get_matrix_elements_algebraic_constraint(const int,
                                                       const int,
@@ -145,6 +151,9 @@ namespace ALM_NS
         //       int use_sparseQR;
         double **u_in;
         double **f_in;
+
+        std::vector<std::vector<double>> u_train, f_train;
+        std::vector<std::vector<double>> u_test, f_test;
 
         OptimizerControl optcontrol;
         int ndata_used;

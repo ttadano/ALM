@@ -156,6 +156,105 @@ void InputParser::parse_displacement_and_force_files(double **u,
     ifs_force.close();
 }
 
+
+void InputParser::parse_displacement_and_force_files(std::vector<std::vector<double>> &u,
+                                                     std::vector<std::vector<double>> &f,
+                                                     const int nat_in,
+                                                     int &ndata,
+                                                     const int nstart,
+                                                     const int nend,
+                                                     const int skip_s,
+                                                     const int skip_e,
+                                                     const std::string filename_in) const
+{
+    int nrequired;
+
+    if (ndata == 0) {
+        nrequired = -1;
+    } else {
+        // Total number of data entries (displacement + force)
+        nrequired = 6 * nat_in * ndata;
+    }
+
+    std::vector<double> value_arr;
+
+    // Read displacements from DFILE
+    std::string line;
+    double val;
+    auto nline_u = 0;
+
+    // Open the target file and copy the data to 1D temporary vector
+    std::ifstream ifs_data;
+    ifs_data.open(filename_in.c_str(), std::ios::in);
+    if (!ifs_data) exit("openfiles", "cannot open DFFILE file");
+    auto reach_end = false;
+    while (std::getline(ifs_data >> std::ws, line)) {
+        if (line[0] != '#') {
+            
+            std::istringstream iss(line);
+
+            while (iss >> val)
+            {
+                value_arr.push_back(val);
+                ++nline_u;
+
+                if (nline_u == nrequired) {
+                    reach_end = true;
+                    break;
+                }
+            }
+        }
+
+        if (reach_end) break;
+    }
+    ifs_data.close();
+
+    // Check if the length of the vector is correct.
+    // Also, estimate ndata if it is not set. 
+    const auto n_entries = value_arr.size();
+
+    if (nrequired == -1) {
+        if (n_entries % (6 * nat_in) == 0) {
+            ndata = n_entries / (6 * nat_in);
+        } else {
+            exit("parse_displacement_and_force_files",
+                "The number of lines in DFFILE is indivisible by NAT");
+        }
+        if (nstart > ndata || nend > ndata || skip_s > ndata || skip_e > ndata) {
+            exit("parse_displacement_and_force_files",
+                "Input NSTART, NEND and SKIP are inconsistent with the estimated NDATA");
+        }
+    } else {
+        if (n_entries < nrequired) {
+            exit("parse_displacement_and_force_files",
+                "The number of lines in DFFILE is too small for the given NDATA = ",
+                ndata);
+        }
+    }
+
+    // Copy the data into 2D array
+    const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
+
+    u.resize(ndata_used, std::vector<double>(3 * nat_in));
+    f.resize(ndata_used, std::vector<double>(3 * nat_in));
+
+    auto idata = 0;
+    for (auto i = 0; i < ndata; ++i) {
+        if (i < nstart - 1) continue;
+        if (i >= skip_s && i < skip_e) continue;
+        if (i > nend - 1) break;
+
+        for (auto j = 0; j < nat_in; ++j) {
+            for (auto k = 0; k < 3; ++k) {
+                u[idata][3 * j + k] = value_arr[6 * nat_in * i + 6 * j + k];
+                f[idata][3 * j + k] = value_arr[6 * nat_in * i + 6 * j + k + 3];
+            }
+        }
+        ++idata;
+    }
+    value_arr.clear();
+}
+
 void InputParser::parse_input(ALM *alm)
 {
     // The order of calling methods in this method is important.
@@ -232,11 +331,12 @@ void InputParser::parse_general_vars(ALM *alm)
     int verbosity;
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
-    std::string str_allowed_list =
-        "PREFIX MODE NAT NKD KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
-                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST VERBOSITY";
-    std::string str_no_defaults = "PREFIX MODE NAT NKD KD";
-    std::vector<std::string> no_defaults;
+    const std::vector<std::string> input_list{
+        "PREFIX", "MODE", "NAT", "NKD", "KD", "PERIODIC", "PRINTSYM", "TOLERANCE",
+        "DBASIS", "TRIMEVEN", "VERBOSITY",
+        "MAGMOM", "NONCOLLINEAR", "TREVSYM", "HESSIAN", "TOL_CONST"
+    };
+    std::vector<std::string> no_defaults{"PREFIX", "MODE", "NAT", "NKD ", "KD"};
     std::map<std::string, std::string> general_var_dict;
 
     if (from_stdin) {
@@ -245,9 +345,7 @@ void InputParser::parse_general_vars(ALM *alm)
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, general_var_dict);
-
-    boost::split(no_defaults, str_no_defaults, boost::is_space());
+    get_var_dict(input_list, general_var_dict);
 
     for (const auto &it : no_defaults) {
         if (general_var_dict.find(it) == general_var_dict.end()) {
@@ -577,9 +675,8 @@ void InputParser::parse_interaction_vars()
     int *nbody_include;
 
     std::vector<std::string> nbody_v;
-    std::string str_allowed_list = "NORDER NBODY";
-    std::string str_no_defaults = "NORDER";
-    std::vector<std::string> no_defaults;
+    const std::vector<std::string> input_list{"NORDER", "NBODY"};
+    std::vector<std::string> no_defaults{"NORDER"};
     std::map<std::string, std::string> interaction_var_dict;
 
 
@@ -589,9 +686,7 @@ void InputParser::parse_interaction_vars()
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, interaction_var_dict);
-
-    boost::split(no_defaults, str_no_defaults, boost::is_space());
+    get_var_dict(input_list, interaction_var_dict);
 
     for (const auto &it : no_defaults) {
         if (interaction_var_dict.find(it) == interaction_var_dict.end()) {
@@ -651,14 +746,16 @@ void InputParser::parse_fitting_vars(ALM *alm)
     int constraint_flag;
     auto flag_sparse = 0;
     std::string rotation_axis;
-    std::string str_allowed_list =
-        "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML SPARSE \
-                                   LASSO_DNORM LASSO_ALPHA LASSO_MAXITER LASSO_TOL LASSO_CV LASSO_CVSET \
-                                   LASSO_FREQ LASSO_MAXALPHA LASSO_MINALPHA LASSO_NALPHA \
-                                   NDATA_TEST DFILE_TEST FFILE_TEST NSTART_TEST NEND_TEST SKIP STANDARDIZE \
-                                   SOLUTION_PATH DEBIAS_OLS L1_RATIO OPTIMIZER";
-    std::string str_no_defaults = "NDATA DFILE FFILE";
-    std::vector<std::string> no_defaults;
+    const std::vector<std::string> input_list{
+        "OPTIMIZER", "SPARSE", "ICONST", "ROTAXIS", "FC2XML", "FC3XML",
+        "NDATA", "NSTART", "NEND", "SKIP", "DFILE", "FFILE",
+        "NDATA_TEST", "NSTART_TEST", "NEND_TEST", "DFILE_TEST", "FFILE_TEST",
+        "L1_RATIO", "STANDARDIZE", "LASSO_DNORM",
+        "LASSO_ALPHA", "LASSO_MAXALPHA", "LASSO_MINALPHA", "LASSO_NALPHA",
+        "LASSO_CV", "LASSO_CVSET", "LASSO_MAXITER", "LASSO_TOL", "LASSO_FREQ",
+        "SOLUTION_PATH", "DEBIAS_OLS",
+    };
+    std::vector<std::string> no_defaults{"NDATA", "DFILE", "FFILE"};
     std::map<std::string, std::string> fitting_var_dict;
 
     int ndata_test, nstart_test, nend_test;
@@ -673,9 +770,7 @@ void InputParser::parse_fitting_vars(ALM *alm)
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, fitting_var_dict);
-
-    boost::split(no_defaults, str_no_defaults, boost::is_space());
+    get_var_dict(input_list, fitting_var_dict);
 
     for (const auto &it : no_defaults) {
         if (fitting_var_dict.find(it) == fitting_var_dict.end()) {
@@ -1144,7 +1239,7 @@ void InputParser::parse_cutoff_radii()
     deallocate(cutoff_radii_tmp);
 }
 
-void InputParser::get_var_dict(const std::string keywords,
+void InputParser::get_var_dict(const std::vector<std::string> &input_list,
                                std::map<std::string, std::string> &var_dict)
 {
     std::string line, key, val;
@@ -1154,7 +1249,9 @@ void InputParser::get_var_dict(const std::string keywords,
 
     std::set<std::string> keyword_set;
 
-    boost::split(keyword_set, keywords, boost::is_space());
+    for (const auto &it : input_list) {
+        keyword_set.insert(it);
+    }
 
     var_dict.clear();
 
