@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 set(CMAKE_MACOSX_RPATH 1)
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -fopenmp")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2")
 #set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_BUILD_TYPE RELEASE)
@@ -18,9 +18,11 @@ if(WIN32)
 endif()
 
 if (UNIX)
-  include_directories("/Users/tadano/src/spglib/include")
+  #set(ENV{BLA_VENDOR} "Intel10_64lp")
   find_package(LAPACK REQUIRED)
-  set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
+  #set(LAPACK_LIBRARIES "-lopenblas")
+  include_directories("$ENV{HOME}/ALM/spglib/include")
+  set(spglib "-L$ENV{HOME}/ALM/spglib/lib -lsymspg")
 endif()
 
 #

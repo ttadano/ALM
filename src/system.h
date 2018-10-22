@@ -67,7 +67,6 @@ namespace ALM_NS
 
         void set_supercell(const double [3][3],
                            const unsigned int,
-                           const unsigned int,
                            const int *,
                            const double [][3]);
         void set_kdname(const std::string *);

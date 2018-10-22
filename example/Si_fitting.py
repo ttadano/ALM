@@ -85,7 +85,7 @@ with ALM(lavec, xcoord, kd) as alm:
     #alm.set_constraint(translation=False)
     alm.set_displacement_and_force(disp, force)
     info = alm.optimize()
-    fc_values, elem_indices = alm.get_fc(1)
+    fc_values, elem_indices = alm.get_fc(1, mode='all')
     c = "xyz"
     for (fc, elem) in zip(fc_values, elem_indices):
         v1 = elem[0] // 3

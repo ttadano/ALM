@@ -66,11 +66,43 @@ void System::init(const int verbosity,
 
 void System::set_supercell(const double lavec_in[3][3],
                            const unsigned int nat_in,
-                           const unsigned int nkd_in,
-                           const int *kd_in,
+                           const int *kind_in,
                            const double xf_in[][3])
 {
-    unsigned int i, j;
+    unsigned int i, j, nkd;
+    int kd_count[nat_in];
+    int unique_nums[nat_in];
+    bool wrong_number = false;
+    bool in_unique_nums;
+
+    for (i = 0; i < nat_in; i++) {
+        kd_count[i] = 0;
+        unique_nums[i] = 0;
+    }
+
+    nkd = 0;
+    for (i = 0; i < nat_in; i++) {
+        in_unique_nums = false;
+        for (j = 0; j < nkd; j++) {
+            if (unique_nums[j] == kind_in[i]) {
+                in_unique_nums = true;
+                break;
+            }
+        }
+        if (!in_unique_nums) {
+            unique_nums[nkd] = kind_in[i];
+            nkd++;
+        }
+    }
+
+    for (i = 0; i < nkd; i++) {
+        if (unique_nums[i] > nkd) {
+            std::cout << " WARNING : integers assigned to atoms are wrong. "
+                      << " The numbers will be resorted." << std::endl;
+            wrong_number = true;
+            break;
+        }
+    }
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
@@ -82,7 +114,7 @@ void System::set_supercell(const double lavec_in[3][3],
 
     supercell.volume = volume(supercell.lattice_vector, Direct);
     supercell.number_of_atoms = nat_in;
-    supercell.number_of_elems = nkd_in;
+    supercell.number_of_elems = nkd;
     supercell.kind.clear();
     supercell.kind.shrink_to_fit();
     supercell.x_fractional.clear();
@@ -92,9 +124,22 @@ void System::set_supercell(const double lavec_in[3][3],
 
     std::vector<double> xtmp;
 
+    if (!wrong_number) {
+        for (i = 0; i < nat_in; ++i) {
+            supercell.kind.push_back(kind_in[i]);
+        }
+    } else {
+        for (i = 0; i < nat_in; ++i) {
+            for (j = 0; j < nkd; j++) {
+                if (kind_in[i] == unique_nums[j]) {
+                    supercell.kind.push_back(j + 1);
+                }
+            }
+        }
+    }
+
     xtmp.resize(3);
     for (i = 0; i < nat_in; ++i) {
-        supercell.kind.push_back(kd_in[i]);
         for (j = 0; j < 3; ++j) {
             xtmp[j] = xf_in[i][j];
         }

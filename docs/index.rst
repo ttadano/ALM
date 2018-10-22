@@ -10,6 +10,9 @@ Welcome to ALM's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   intro
+   compile-with-conda-packages
+   compile-with-makefile 
    modules
 
 

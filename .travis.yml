@@ -1,0 +1,44 @@
+language: python
+sudo: false
+dist: trusty
+
+python:
+  - '2.7'
+  - '3.6'
+
+before_install:
+- wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH="$HOME/miniconda/bin:$PATH"
+- echo $TRAVIS_PYTHON_VERSION
+- conda create --yes -n travis python="$TRAVIS_PYTHON_VERSION"
+- source activate travis
+
+install:
+- conda install --yes gcc_linux-64 gxx_linux-64 cmake boost eigen numpy
+- conda install --yes -c conda-forge openblas h5py
+- cd $HOME
+- pwd
+- mkdir ALM
+- cd ALM
+- git clone https://github.com/atztogo/spglib.git
+- cd spglib
+- mkdir _build && cd _build
+- cmake -DCMAKE_INSTALL_PREFIX="" ..
+- make
+- make DESTDIR=.. install
+- cd $TRAVIS_BUILD_DIR
+- pwd
+- export CPLUS_INCLUDE_PATH=$CONDA_PREFIX/include:$CONDA_PREFIX/include/eigen3:$HOME/ALM/spglib/include
+- echo $CPLUS_INCLUDE_PATH
+- echo $CC $CXX
+- export CC=$CXX
+- echo $CC
+- cd python
+- python setup.py build
+- pip install -e .
+- cd ../example
+- python sparse_Eigen.py
+
+script:
+- pwd
