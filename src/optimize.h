@@ -108,7 +108,6 @@ namespace ALM_NS
 
 
         void get_matrix_elements_algebraic_constraint(const int,
-                                                      const int,
                                                       double *,
                                                       double *,
                                                       double &,
@@ -142,14 +141,13 @@ namespace ALM_NS
         std::vector<std::vector<double>> u_test, f_test;
 
         OptimizerControl optcontrol;
-        int ndata_used;
+  //      int ndata_used;
 
         void set_default_variables();
         void deallocate_variables();
 
         void data_multiplier(const std::vector<std::vector<double>> &,
                              std::vector<std::vector<double>> &,
-                             const int,
                              const Symmetry *) const;
 
         int inprim_index(const int,
@@ -261,7 +259,6 @@ namespace ALM_NS
 
 
         void get_matrix_elements(const int,
-                                 const int,
                                  double *,
                                  double *,
                                  const Symmetry *,
@@ -269,7 +266,6 @@ namespace ALM_NS
 
 #ifdef WITH_SPARSE_SOLVER
         void get_matrix_elements_in_sparse_form(const int,
-                                                const int,
                                                 SpMat &,
                                                 Eigen::VectorXd &,
                                                 double &,

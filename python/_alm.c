@@ -20,7 +20,7 @@ static PyObject * py_optimize(PyObject *self, PyObject *args);
 static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
-static PyObject * py_get_ndata_used(PyObject *self, PyObject *args);
+//static PyObject * py_get_ndata_used(PyObject *self, PyObject *args);
 static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args);
 static PyObject * py_set_constraint_type(PyObject *self, PyObject *args);
 static PyObject * py_define(PyObject *self, PyObject *args);
@@ -75,7 +75,6 @@ static PyMethodDef _alm_methods[] = {
    METH_VARARGS, ""},
   {"get_number_of_displaced_atoms", py_get_number_of_displaced_atoms,
    METH_VARARGS, ""},
-  {"get_ndata_used", py_get_ndata_used, METH_VARARGS, ""},
   {"get_nrows_amat", py_get_nrows_amat, METH_VARARGS, ""},
   {"get_displacement_patterns", py_get_displacement_patterns, METH_VARARGS, ""},
   {"get_number_of_fc_elements", py_get_number_of_fc_elements, METH_VARARGS, ""},
@@ -432,6 +431,7 @@ static PyObject * py_get_number_of_irred_fc_elements(PyObject *self, PyObject *a
   return PyLong_FromLong((long) num_fc_elems);
 }
 
+/*
 static PyObject * py_get_ndata_used(PyObject *self, PyObject *args)
 {
   int id;
@@ -444,7 +444,7 @@ static PyObject * py_get_ndata_used(PyObject *self, PyObject *args)
 
   return PyLong_FromLong((long) ndata_used);
 }
-
+*/
 static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args)
 {
     int id;
@@ -452,9 +452,9 @@ static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "i", &id)) {
         return NULL;
     }
-    size_t ndata_used = alm_get_ndata_used(id);
+    size_t nrows = alm_get_nrows_sensing_matrix(id);
 
-    return PyLong_FromSize_t(ndata_used);
+    return PyLong_FromSize_t(nrows);
 }
 
 static PyObject * py_get_fc_origin(PyObject *self, PyObject *args)
@@ -544,13 +544,11 @@ static PyObject * py_set_fc(PyObject *self, PyObject *args)
 static PyObject * py_get_matrix_elements(PyObject *self, PyObject *args)
 {
   int id;
-  int ndata_used;
   PyArrayObject* py_amat;
   PyArrayObject* py_bvec;
 
-  if (!PyArg_ParseTuple(args, "iiOO",
+  if (!PyArg_ParseTuple(args, "iOO",
                               &id,
-                              &ndata_used,
                               &py_amat,
                               &py_bvec)) {
     return NULL;
@@ -559,7 +557,7 @@ static PyObject * py_get_matrix_elements(PyObject *self, PyObject *args)
   double (*amat) = (double*)PyArray_DATA(py_amat);
   double (*bvec) = (double*)PyArray_DATA(py_bvec);
 
-  alm_get_matrix_elements(id, ndata_used, amat, bvec);
+  alm_get_matrix_elements(id, amat, bvec);
 
   Py_RETURN_NONE;
 }

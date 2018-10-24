@@ -81,9 +81,9 @@ extern "C" {
     void alm_set_fc(const int id, double *fc_in);
 
     void alm_get_matrix_elements(const int id,
-                                 const int ndata_used,
                                  double *amat,
                                  double *bvec);
+    size_t alm_get_nrows_sensing_matrix(const int id);
 
     void alm_run_suggest(const int id);
     int alm_optimize(const int id,

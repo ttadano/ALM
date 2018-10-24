@@ -498,17 +498,18 @@ class ALM:
 
         maxorder = self._maxorder
         nat = len(self._xcoord)
-        ndata_used = self._get_ndata_used()
+        nrows = self._get_nrows_amat()
+      #  ndata_used = self._get_ndata_used()
 
         fc_length = 0
         for i in range(maxorder):
             fc_length += self._get_number_of_irred_fc_elements(i + 1)
 
-        amat = np.zeros(3 * nat * ndata_used * fc_length, dtype='double')
-        bvec = np.zeros(3 * nat * ndata_used)
-        alm.get_matrix_elements(self._id, ndata_used, amat, bvec)
+        amat = np.zeros(nrows * fc_length, dtype='double')
+        bvec = np.zeros(nrows)
+        alm.get_matrix_elements(self._id, amat, bvec)
 
-        return (np.reshape(amat, (3 * nat * ndata_used, fc_length), order='F'),
+        return (np.reshape(amat, (nrows, fc_length), order='F'),
                 bvec)
 
     def _set_cell(self):
@@ -520,13 +521,12 @@ class ALM:
         alm.set_cell(self._id, self._lavec, self._xcoord, self._atomic_numbers,
                      self._kind_indices)
 
-    def _get_ndata_used(self):
+    def _get_nrows_amat(self):
         """Private method to return the number of training data sets"""
         if self._id is None:
             self._show_error_message()
-
-        ndata_used = alm.get_ndata_used(self._id)
-        return ndata_used
+        nrows_amat = alm.get_nrows_amat(self._id)
+        return nrows_amat
 
     def _get_id(self):
         """Private method to return the instance ID"""

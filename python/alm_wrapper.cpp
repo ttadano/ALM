@@ -293,11 +293,10 @@ extern "C" {
     }
 
     void alm_get_matrix_elements(const int id,
-                                 const int ndata_used,
                                  double *amat,
                                  double *bvec)
     {
-        alm[id]->get_matrix_elements(ndata_used, amat, bvec);
+        alm[id]->get_matrix_elements(amat, bvec);
     }
 
     void alm_run_suggest(const int id)

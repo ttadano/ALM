@@ -83,6 +83,7 @@ disp = np.loadtxt("disp.dat").reshape((-1, 64, 3))[:22]
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
 with ALM(lavec, xcoord, kd) as alm:
     alm.define(2, [-1, 7.3])
+    alm.set_verbosity(1)
     alm.set_displacement_and_force(disp, force)
     info = alm.optimize()
 

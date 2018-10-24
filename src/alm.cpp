@@ -516,15 +516,13 @@ void ALM::set_fc(double *fc_in) const
                              constraint);
 }
 
-void ALM::get_matrix_elements(const int ndata_used,
-                              double *amat,
+void ALM::get_matrix_elements(double *amat,
                               double *bvec) const
 {
     const auto maxorder = interaction->get_maxorder();
     double fnorm;
 
     optimize->get_matrix_elements_algebraic_constraint(maxorder,
-                                                       ndata_used,
                                                        amat,
                                                        bvec,
                                                        fnorm,

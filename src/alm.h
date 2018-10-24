@@ -115,8 +115,7 @@ namespace ALM_NS
 
         void set_fc(double *fc_in) const;
 
-        void get_matrix_elements(const int ndata_used,
-                                 double *amat,
+        void get_matrix_elements(double *amat,
                                  double *bvec) const;
         void generate_force_constant();
         int run_optimize();

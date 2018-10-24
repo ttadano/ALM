@@ -50,7 +50,7 @@ Optimize::~Optimize()
 void Optimize::set_default_variables()
 {
     params = nullptr;
-    ndata_used = 0;
+//    ndata_used = 0;
 }
 
 void Optimize::deallocate_variables()
@@ -76,12 +76,12 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
     const int natmin = symmetry->get_nat_prim();
 
-    ndata_used = filedata_train.nend - filedata_train.nstart + 1
+    const auto ndata_used = filedata_train.nend - filedata_train.nstart + 1
         - filedata_train.skip_e + filedata_train.skip_s;
     const auto ndata_used_test = filedata_test.nend - filedata_test.nstart + 1;
     const int ntran = symmetry->get_ntran();
     auto info_fitting = 0;
-    const int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
+    const auto M = get_number_of_rows_sensing_matrix();
     const auto M_test = 3 * natmin * ndata_used_test * ntran;
     auto N = 0;
     auto N_new = 0;
@@ -94,7 +94,6 @@ int Optimize::optimize_main(const Symmetry *symmetry,
             N_new += constraint->get_index_bimap(i).size();
         }
     }
-
 
     if (verbosity > 0) {
         std::cout << " OPTIMIZATION" << std::endl;
@@ -284,10 +283,7 @@ int Optimize::least_squares(const int maxorder,
         // Calculate matrix elements for fitting
 
         double fnorm;
-        const unsigned long nrows = 3 * static_cast<long>(natmin)
-            * static_cast<long>(ndata_used)
-            * static_cast<long>(ntran);
-
+        const auto nrows = get_number_of_rows_sensing_matrix();
         const unsigned long ncols = static_cast<long>(N_new);
 
         if (optcontrol.use_sparse_solver) {
@@ -300,7 +296,6 @@ int Optimize::least_squares(const int maxorder,
             Eigen::VectorXd sp_bvec(nrows);
 
             get_matrix_elements_in_sparse_form(maxorder,
-                                               ndata_used,
                                                sp_amat,
                                                sp_bvec,
                                                fnorm,
@@ -308,7 +303,7 @@ int Optimize::least_squares(const int maxorder,
                                                fcs,
                                                constraint);
             if (verbosity > 0) {
-                std::cout << "Now, start fitting ..." << std::endl;
+                std::cout << " Now, start fitting ..." << std::endl;
             }
 
             info_fitting = run_eigen_sparseQR(sp_amat,
@@ -332,7 +327,6 @@ int Optimize::least_squares(const int maxorder,
             bvec.resize(nrows, 0.0);
 
             get_matrix_elements_algebraic_constraint(maxorder,
-                                                     ndata_used,
                                                      &amat[0],
                                                      &bvec[0],
                                                      fnorm,
@@ -365,10 +359,10 @@ int Optimize::least_squares(const int maxorder,
         }
 
         // Calculate matrix elements for fitting
-
-        const unsigned long nrows = 3 * static_cast<long>(natmin)
-            * static_cast<long>(ndata_used)
-            * static_cast<long>(ntran);
+        const auto nrows = get_number_of_rows_sensing_matrix();
+        // const unsigned long nrows = 3 * static_cast<long>(natmin)
+        //     * static_cast<long>(ndata_used)
+        //     * static_cast<long>(ntran);
 
         const unsigned long ncols = static_cast<long>(N);
 
@@ -376,7 +370,6 @@ int Optimize::least_squares(const int maxorder,
         bvec.resize(nrows, 0.0);
 
         get_matrix_elements(maxorder,
-                            ndata_used,
                             &amat[0],
                             &bvec[0],
                             symmetry,
@@ -474,7 +467,6 @@ int Optimize::elastic_net(const std::string job_prefix,
     bvec.resize(nrows, 0.0);
 
     get_matrix_elements_algebraic_constraint(maxorder,
-                                             ndata_used,
                                              &amat_1D[0],
                                              &bvec[0],
                                              fnorm,
@@ -506,7 +498,7 @@ int Optimize::elastic_net(const std::string job_prefix,
         //                           ndata_used_test);
 
         get_matrix_elements_algebraic_constraint(maxorder,
-                                                 ndata_used_test,
+//                                                 ndata_used_test,
                                                  &amat_1D_test[0],
                                                  &bvec_test[0],
                                                  fnorm_test,
@@ -1070,10 +1062,10 @@ void Optimize::set_fcs_values(const int maxorder,
     }
 }
 
-int Optimize::get_ndata_used() const
-{
-    return ndata_used;
-}
+// int Optimize::get_ndata_used() const
+// {
+//     return ndata_used;
+// }
 
 size_t Optimize::get_number_of_rows_sensing_matrix() const
 {
@@ -1359,7 +1351,6 @@ int Optimize::fit_algebraic_constraints(const int N,
 
 
 void Optimize::get_matrix_elements(const int maxorder,
-                                   const int ndata_fit,
                                    double *amat,
                                    double *bvec,
                                    const Symmetry *symmetry,
@@ -1371,8 +1362,9 @@ void Optimize::get_matrix_elements(const int maxorder,
     //std::cout << "size u_train = " << u_train.size() << std::endl;
     std::vector<std::vector<double>> u_multi, f_multi;
 
-    data_multiplier(u_train, u_multi, ndata_fit, symmetry);
-    data_multiplier(f_train, f_multi, ndata_fit, symmetry);
+    const auto ndata_fit = u_train.size();
+    data_multiplier(u_train, u_multi, symmetry);
+    data_multiplier(f_train, f_multi, symmetry);
 
    // std::cout << "size u_multi = " << u_multi.size() << std::endl;
 
@@ -1463,7 +1455,6 @@ void Optimize::get_matrix_elements(const int maxorder,
 
 
 void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
-                                                        const int ndata_fit,
                                                         double *amat,
                                                         double *bvec,
                                                         double &fnorm,
@@ -1476,12 +1467,14 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
 
     std::vector<std::vector<double>> u_multi, f_multi;
 
-    data_multiplier(u_train, u_multi, ndata_fit, symmetry);
-    data_multiplier(f_train, f_multi, ndata_fit, symmetry);
+    const auto ndata_fit = u_train.size();
+
+    data_multiplier(u_train, u_multi, symmetry);
+    data_multiplier(f_train, f_multi, symmetry);
 
     const int natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
-    const int nrows = natmin3 * ndata_fit * symmetry->get_ntran();
+    const auto nrows = u_train.size() * u_train[0].size();
     auto ncols = 0;
     auto ncols_new = 0;
 
@@ -1490,7 +1483,7 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
         ncols_new += constraint->get_index_bimap(i).size();
     }
 
-    const auto ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
+    const auto ncycle = ndata_fit * symmetry->get_ntran();
 
     std::vector<double> bvec_orig(nrows, 0.0);
 
@@ -1634,7 +1627,6 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
 
 #ifdef WITH_SPARSE_SOLVER
 void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
-                                                  const int ndata_fit,
                                                   SpMat &sp_amat,
                                                   Eigen::VectorXd &sp_bvec,
                                                   double &fnorm,
@@ -1648,12 +1640,13 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
     std::vector<T> nonzero_entries;
     std::vector<std::vector<double>> u_multi, f_multi;
 
-    data_multiplier(u_train, u_multi, ndata_fit, symmetry);
-    data_multiplier(f_train, f_multi, ndata_fit, symmetry);
+    const auto ndata_fit = u_train.size();
+    data_multiplier(u_train, u_multi, symmetry);
+    data_multiplier(f_train, f_multi, symmetry);
 
     const int natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
-    const int nrows = natmin3 * ndata_fit * symmetry->get_ntran();
+    const auto nrows = natmin3 * ndata_fit * symmetry->get_ntran();
     auto ncols = 0;
     auto ncols_new = 0;
 
@@ -1868,11 +1861,11 @@ void Optimize::recover_original_forceconstants(const int maxorder,
 
 void Optimize::data_multiplier(const std::vector<std::vector<double>> &data_in,
                                std::vector<std::vector<double>> &data_out,
-                               const int ndata_used,
                                const Symmetry *symmetry) const
 {
-    const int nat = symmetry->get_nat_prim() * symmetry->get_ntran();
-
+    const auto nat = symmetry->get_nat_prim() * symmetry->get_ntran();
+    const auto ndata_used = data_in.size();
+    
     auto idata = 0;
     for (auto i = 0; i < ndata_used; ++i) {
         std::vector<double> data_tmp(3 * nat, 0.0);
