@@ -37,8 +37,7 @@ library_dirs = []
 extra_link_args = []
 include_dirs = []
 
-#spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
-spglib_dir = "/Users/tadano/src/spglib/lib"
+spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
 include_dirs_numpy = [numpy.get_include()]
 include_dirs += include_dirs_numpy
 
