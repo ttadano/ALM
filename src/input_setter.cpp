@@ -184,35 +184,23 @@ void InputSetter::define(ALM *alm)
 
 
 void InputSetter::set_optimize_vars(ALM *alm,
-                                    const int ndata,
-                                    const int nstart,
-                                    const int nend,
-                                    const int skip_s,
-                                    const int skip_e,
-                                    const std::string dfile,
-                                    const std::string ffile,
-                                    const int ndata_test,
-                                    const int nstart_test,
-                                    const int nend_test,
-                                    const std::string dfile_test,
-                                    const std::string ffile_test,
+                                    const std::vector<std::vector<double>> &u_train_in,
+                                    const std::vector<std::vector<double>> &f_train_in,
+                                    const std::vector<std::vector<double>> &u_test_in,
+                                    const std::vector<std::vector<double>> &f_test_in,
                                     const OptimizerControl &optcontrol_in) const
 {
-    alm->optimize->set_ndata(ndata);
-    alm->optimize->set_nstart(nstart);
-    alm->optimize->set_nend(nend);
-    alm->optimize->set_skip_s(skip_s);
-    alm->optimize->set_skip_e(skip_e);
-
-    alm->files->file_disp = dfile;
-    alm->files->file_force = ffile;
-    alm->optimize->ndata_test = ndata_test;
-    alm->optimize->nstart_test = nstart_test;
-    alm->optimize->nend_test = nend_test;
-    alm->optimize->dfile_test = dfile_test;
-    alm->optimize->ffile_test = ffile_test;
-
+    alm->optimize->set_training_data(u_train_in, f_train_in);
+    alm->optimize->set_test_data(u_test_in, f_test_in);
     alm->optimize->set_optimizer_control(optcontrol_in);
+}
+
+void InputSetter::set_file_vars(ALM *alm,
+                                const DispForceFile &datfile_train_in,
+                                const DispForceFile &datfile_test_in) const
+{
+    alm->files->set_datfile_train(datfile_train_in);
+    alm->files->set_datfile_test(datfile_test_in);
 }
 
 void InputSetter::set_constraint_vars(ALM *alm,

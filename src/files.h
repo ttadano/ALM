@@ -15,6 +15,28 @@
 
 namespace ALM_NS
 {
+    class DispForceFile
+    {
+    public:
+        std::string filename;
+        int ndata, nstart, nend;
+        int skip_s, skip_e;
+
+        DispForceFile()
+        {
+            filename = "";
+            ndata = 0;
+            nstart = 0;
+            nend = 0;
+            skip_s = 0;
+            skip_e = 0;
+        }
+
+        ~DispForceFile() = default;
+        DispForceFile(const DispForceFile &obj) = default;
+        DispForceFile& operator=(const DispForceFile &obj) = default;
+    };
+
     class Files
     {
     public:
@@ -25,13 +47,18 @@ namespace ALM_NS
 
         bool print_hessian;
         std::string file_fcs, file_hes;
-        std::string file_disp, file_force;
 
         void set_prefix(const std::string);
         std::string get_prefix() const;
+        void set_datfile_train(const DispForceFile &dat_in);
+        void set_datfile_test(const DispForceFile &dat_in);
+        DispForceFile get_datfile_train() const;
+        DispForceFile get_datfile_test() const;
+
 
     private:
 
         std::string job_title;
+        DispForceFile datfile_train, datfile_test;
     };
 }

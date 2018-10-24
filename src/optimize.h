@@ -11,6 +11,7 @@
 #pragma once
 
 #include <vector>
+#include "files.h"
 #ifdef WITH_SPARSE_SOLVER
 #include <Eigen/SparseCore>
 typedef Eigen::SparseMatrix<double, Eigen::ColMajor> SpMat;
@@ -90,14 +91,14 @@ namespace ALM_NS
                           const std::vector<std::string> &str_order,
                           const unsigned int nat,
                           const int verbosity,
-                          const std::string file_disp,
-                          const std::string file_force,
+                          const DispForceFile &filedat_train,
+                          const DispForceFile &filedat_test,
                           Timer *timer);
 
-        void set_displacement_and_force(const double * const *,
-                                        const double * const *,
-                                        const int,
-                                        const int);
+        //void set_displacement_and_force(const double * const *,
+        //                                const double * const *,
+        //                                const int,
+        //                                const int);
 
         void set_training_data(const std::vector<std::vector<double>> &u_train_in,
                                const std::vector<std::vector<double>> &f_train_in);
@@ -122,35 +123,20 @@ namespace ALM_NS
 
 
         int get_ndata_used() const;
-
-        int get_ndata() const;
-        void set_ndata(const int);
-        int get_nstart() const;
-        void set_nstart(const int);
-        int get_nend() const;
-        void set_nend(const int);
-        int get_skip_s() const;
-        void set_skip_s(const int);
-        int get_skip_e() const;
-        void set_skip_e(const int);
+        size_t get_number_of_rows_sensing_matrix() const;
         double* get_params() const;
-        //int get_use_sparseQR() const;
-        //void set_use_sparseQR(const int);
 
         void set_optimizer_control(const OptimizerControl &);
         OptimizerControl get_optimizer_control() const;
 
-        int ndata_test, nstart_test, nend_test;
-        std::string dfile_test, ffile_test;
+        //int ndata_test, nstart_test, nend_test;
+        //std::string dfile_test, ffile_test;
 
     private:
 
-        int ndata, nstart, nend;
-        int skip_s, skip_e;
         double *params;
-        //       int use_sparseQR;
-        double **u_in;
-        double **f_in;
+        /*    double **u_in;
+            double **f_in;*/
 
         std::vector<std::vector<double>> u_train, f_train;
         std::vector<std::vector<double>> u_test, f_test;
@@ -161,7 +147,7 @@ namespace ALM_NS
         void set_default_variables();
         void deallocate_variables();
 
-        void data_multiplier(const double * const *,
+        void data_multiplier(const std::vector<std::vector<double>> &,
                              std::vector<std::vector<double>> &,
                              const int,
                              const Symmetry *) const;
@@ -189,10 +175,8 @@ namespace ALM_NS
                         const int N_new,
                         const int M,
                         const int M_test,
-                        double **&u,
-                        double **&f,
-                        double **&u_test,
-                        double **&f_test,
+                        const int ndata_used,
+                        const int ndata_used_test,
                         const Symmetry *symmetry,
                         const std::vector<std::string> &str_order,
                         const Fcs *fcs,

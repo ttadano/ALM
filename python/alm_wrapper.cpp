@@ -148,9 +148,14 @@ extern "C" {
         alm[id]->set_displacement_and_force(u_in, f_in, nat, ndata_used);
     }
 
-    int alm_get_ndata_used(const int id)
+ /*   int alm_get_ndata_used(const int id)
     {
         return alm[id]->get_ndata_used();
+    }*/
+
+    size_t alm_get_nrows_sensing_matrix(const int id)
+    {
+        return alm[id]->get_nrows_sensing_matrix();
     }
 
     void alm_set_constraint_type(const int id,

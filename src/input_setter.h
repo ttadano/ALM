@@ -57,19 +57,15 @@ namespace ALM_NS
                               double tolerance_constraint);
 
         void set_optimize_vars(ALM *alm,
-                               int ndata,
-                               int nstart,
-                               int nend,
-                               int skip_s,
-                               int skip_e,
-                               std::string dfile,
-                               std::string ffile,
-                               const int ndata_test,
-                               const int nstart_test,
-                               const int nend_test,
-                               const std::string dfile_test,
-                               const std::string ffile_test,
+                               const std::vector<std::vector<double>> &u_train_in,
+                               const std::vector<std::vector<double>> &f_train_in,
+                               const std::vector<std::vector<double>> &u_test_in,
+                               const std::vector<std::vector<double>> &f_test_in,
                                const OptimizerControl &optcontrol_in) const;
+
+        void set_file_vars(ALM *alm,
+                           const DispForceFile &datfile_train_in,
+                           const DispForceFile &datfile_test_in) const;
 
         void set_constraint_vars(ALM *alm,
                                  int constraint_flag,

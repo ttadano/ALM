@@ -67,13 +67,14 @@ namespace ALM_NS
         void set_constraint_type(int constraint_flag) const;
         void set_rotation_axis(std::string rotation_axis) const;
         void set_sparse_mode(int sparse_mode) const;
-        void set_fitting_filenames(std::string dfile,
-                                   std::string ffile) const;
+        //void set_fitting_filenames(std::string dfile,
+        //                           std::string ffile) const;
         void define(const int maxorder,
                     const unsigned int nkd,
                     const int *nbody_include,
                     const double * const * const *cutoff_radii);
-        int get_ndata_used() const;
+        //int get_ndata_used() const;
+        size_t get_nrows_sensing_matrix() const;
         Cell get_supercell() const;
         std::string* get_kdname() const;
         Spin get_spin() const;

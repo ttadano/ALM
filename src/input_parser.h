@@ -30,18 +30,18 @@ namespace ALM_NS
                  const int narg,
                  const char * const *arg);
 
-        void parse_displacement_and_force(ALM *alm) const;
+      //  void parse_displacement_and_force(ALM *alm) const;
 
-        void parse_displacement_and_force_files(double **u,
-                                                double **f,
-                                                const int nat_in,
-                                                const int ndata,
-                                                const int nstart,
-                                                const int nend,
-                                                const int skip_s,
-                                                const int skip_e,
-                                                const std::string file_disp,
-                                                const std::string file_force) const;
+        //void parse_displacement_and_force_files(double **u,
+        //                                        double **f,
+        //                                        const int nat_in,
+        //                                        const int ndata,
+        //                                        const int nstart,
+        //                                        const int nend,
+        //                                        const int skip_s,
+        //                                        const int skip_e,
+        //                                        const std::string file_disp,
+        //                                        const std::string file_force) const;
         std::string str_magmom;
 
     private:
@@ -69,6 +69,8 @@ namespace ALM_NS
                           std::map<std::string,
                                    std::string> &);
 
+        bool is_data_range_consistent(const DispForceFile &datfile_in) const;
+
         template <typename T>
         void assign_val(T &,
                         const std::string,
@@ -76,12 +78,6 @@ namespace ALM_NS
 
         void parse_displacement_and_force_files(std::vector<std::vector<double>> &u,
                                                 std::vector<std::vector<double>> &f,
-                                                const int nat_in,
-                                                int &ndata,
-                                                const int nstart,
-                                                const int nend,
-                                                const int skip_s,
-                                                const int skip_e,
-                                                const std::string filename_in) const;
+                                                DispForceFile &datfile_in) const;
     };
 }

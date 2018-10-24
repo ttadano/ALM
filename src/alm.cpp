@@ -149,15 +149,20 @@ void ALM::set_displacement_and_force(const double *u_in,
                                      const int nat,
                                      const int ndata_used) const
 {
-    double **u;
-    double **f;
+    //double **u;
+    //double **f;
 
-    optimize->set_ndata(ndata_used);
-    optimize->set_nstart(1);
-    optimize->set_nend(ndata_used);
+    //optimize->set_ndata(ndata_used);
+    //optimize->set_nstart(1);
+    //optimize->set_nend(ndata_used);
 
-    allocate(u, ndata_used, 3 * nat);
-    allocate(f, ndata_used, 3 * nat);
+    //allocate(u, ndata_used, 3 * nat);
+    //allocate(f, ndata_used, 3 * nat);
+
+    std::vector<std::vector<double>> u, f;
+
+    u.resize(ndata_used, std::vector<double>(3 * nat));
+    f.resize(ndata_used, std::vector<double>(3 * nat));
 
     for (auto i = 0; i < ndata_used; i++) {
         for (auto j = 0; j < 3 * nat; j++) {
@@ -165,10 +170,13 @@ void ALM::set_displacement_and_force(const double *u_in,
             f[i][j] = f_in[i * nat * 3 + j];
         }
     }
-    optimize->set_displacement_and_force(u, f, nat, ndata_used);
+    optimize->set_training_data(u, f);
+    u.clear();
+    f.clear();
+  //  optimize->set_displacement_and_force(u, f, nat, ndata_used);
 
-    deallocate(u);
-    deallocate(f);
+    //deallocate(u);
+    //deallocate(f);
 }
 
 void ALM::set_constraint_type(const int constraint_flag) const // ICONST
@@ -188,13 +196,13 @@ void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
     optimize->set_optimizer_control(optctrl);
 }
 
-void ALM::set_fitting_filenames(const std::string dfile,
-                                // DFILE
-                                const std::string ffile) const // FFILE
-{
-    files->file_disp = dfile;
-    files->file_force = ffile;
-}
+//void ALM::set_fitting_filenames(const std::string dfile,
+//                                // DFILE
+//                                const std::string ffile) const // FFILE
+//{
+//    files->file_disp = dfile;
+//    files->file_force = ffile;
+//}
 
 void ALM::define(const int maxorder,
                  const unsigned int nkd,
@@ -209,9 +217,14 @@ void ALM::define(const int maxorder,
 }
 
 
-int ALM::get_ndata_used() const
+//int ALM::get_ndata_used() const
+//{
+//    return optimize->get_ndata_used();
+//}
+
+size_t ALM::get_nrows_sensing_matrix() const
 {
-    return optimize->get_ndata_used();
+    return optimize->get_number_of_rows_sensing_matrix();
 }
 
 Cell ALM::get_supercell() const
@@ -567,8 +580,8 @@ int ALM::run_optimize()
                                               str_order,
                                               system->get_supercell().number_of_atoms,
                                               verbosity,
-                                              files->file_disp,
-                                              files->file_force,
+                                              files->get_datfile_train(),
+                                              files->get_datfile_test(),
                                               timer);
     return info;
 }

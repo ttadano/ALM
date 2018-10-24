@@ -34,3 +34,24 @@ std::string Files::get_prefix() const
 {
     return job_title;
 }
+
+void Files::set_datfile_train(const DispForceFile &dat_in)
+{
+    datfile_train = dat_in;
+}
+
+void Files::set_datfile_test(const DispForceFile &dat_in)
+{
+    datfile_test = dat_in;
+}
+
+DispForceFile Files::get_datfile_train() const
+{
+    return datfile_train;
+}
+
+DispForceFile Files::get_datfile_test() const
+{
+    return datfile_test;
+}
+

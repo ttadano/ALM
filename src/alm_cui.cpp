@@ -35,6 +35,7 @@ void ALMCUI::run(const int narg,
     // alm->mode is set herein.
     auto input_parser = new InputParser();
     input_parser->run(alm, narg, arg);
+    delete input_parser;
 
     if (alm->get_verbosity() > 0) {
         std::cout << " +-----------------------------------------------------------------+" << std::endl;
@@ -58,11 +59,10 @@ void ALMCUI::run(const int narg,
         writer->write_input_vars(alm);
     }
 
-    if (alm->get_run_mode() == "optimize") {
-        input_parser->parse_displacement_and_force(alm);
-    }
+    //if (alm->get_run_mode() == "optimize") {
+    //    input_parser->parse_displacement_and_force(alm);
+    //}
 
-    delete input_parser;
 
     alm->run();
 

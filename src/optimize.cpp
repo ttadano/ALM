@@ -50,29 +50,13 @@ Optimize::~Optimize()
 void Optimize::set_default_variables()
 {
     params = nullptr;
-    u_in = nullptr;
-    f_in = nullptr;
-    ndata = 0;
-    nstart = 1;
-    nend = 0;
-    skip_s = 0;
-    skip_e = 0;
     ndata_used = 0;
-    ndata_test = 0;
-    nstart_test = 0;
-    nend_test = 0;
 }
 
 void Optimize::deallocate_variables()
 {
     if (params) {
         deallocate(params);
-    }
-    if (u_in) {
-        deallocate(u_in);
-    }
-    if (f_in) {
-        deallocate(f_in);
     }
 }
 
@@ -84,15 +68,17 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                             const std::vector<std::string> &str_order,
                             const unsigned int nat,
                             const int verbosity,
-                            const std::string file_disp,
-                            const std::string file_force,
+                            const DispForceFile &filedata_train,
+                            const DispForceFile &filedata_test,
                             Timer *timer)
 {
     timer->start_clock("optimize");
 
     const int natmin = symmetry->get_nat_prim();
-    const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
-    const auto ndata_used_test = nend_test - nstart_test + 1;
+
+    ndata_used = filedata_train.nend - filedata_train.nstart + 1
+        - filedata_train.skip_e + filedata_train.skip_s;
+    const auto ndata_used_test = filedata_test.nend - filedata_test.nstart + 1;
     const int ntran = symmetry->get_ntran();
     auto info_fitting = 0;
     const int M = 3 * natmin * static_cast<long>(ndata_used) * ntran;
@@ -115,23 +101,25 @@ int Optimize::optimize_main(const Symmetry *symmetry,
         std::cout << " ============" << std::endl << std::endl;
 
         std::cout << "  Reference files" << std::endl;
-        std::cout << "   Displacement: " << file_disp << std::endl;
-        std::cout << "   Force       : " << file_force << std::endl;
+        std::cout << "   Displacement: " << filedata_train.filename << std::endl;
+        //      std::cout << "   Force       : " << file_force << std::endl;
         std::cout << std::endl;
 
-        std::cout << "  NSTART = " << nstart << "; NEND = " << nend;
-        if (skip_s < skip_e) std::cout << ": SKIP = " << skip_s + 1 << "-" << skip_e;
+        std::cout << "  NSTART = " << filedata_train.nstart << "; NEND = " << filedata_train.nend;
+        if (filedata_train.skip_s < filedata_train.skip_e)
+            std::cout << ": SKIP = " << filedata_train.skip_s << "-" <<
+                filedata_train.skip_e - 1;
         std::cout << std::endl;
         std::cout << "  " << ndata_used
             << " entries will be used for optimization." << std::endl << std::endl;
 
         if (optcontrol.cross_validation_mode == 2) {
             std::cout << "  Validation test files" << std::endl;
-            std::cout << "   Displacement: " << dfile_test << std::endl;
-            std::cout << "   Force       : " << ffile_test << std::endl;
+            std::cout << "   Displacement: " << filedata_test.filename << std::endl;
+            //       std::cout << "   Force       : " << ffile_test << std::endl;
             std::cout << std::endl;
 
-            std::cout << "  NSTART = " << nstart_test << "; NEND = " << nend_test << std::endl;
+            std::cout << "  NSTART = " << filedata_test.nstart << "; NEND = " << filedata_test.nend << std::endl;
             std::cout << "  " << ndata_used_test
                 << " entries will be used for validation." << std::endl << std::endl;
         }
@@ -145,49 +133,49 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
     // Parse displacement and force data sets from files
 
-    double **u = nullptr;
-    double **f = nullptr;
-    double **u_test = nullptr;
-    double **f_test = nullptr;
+    //double **u = nullptr;
+    //double **f = nullptr;
+    //double **u_test = nullptr;
+    //double **f_test = nullptr;
 
-    const auto input_parser = new InputParser();
+    //const auto input_parser = new InputParser();
 
-    allocate(u, ndata_used, 3 * nat);
-    allocate(f, ndata_used, 3 * nat);
+    //allocate(u, ndata_used, 3 * nat);
+    //allocate(f, ndata_used, 3 * nat);
 
-    if (optcontrol.optimizer == 1 && !u_in || optcontrol.optimizer == 2) {
-        // This if condition is necessary because DFILE and FFILE are not
-        // defined when the method is called via API.
-        input_parser->parse_displacement_and_force_files(u,
-                                                         f,
-                                                         nat,
-                                                         ndata,
-                                                         nstart,
-                                                         nend,
-                                                         skip_s,
-                                                         skip_e,
-                                                         file_disp,
-                                                         file_force);
-    }
-    if (optcontrol.optimizer == 2 &&
-        optcontrol.cross_validation_mode == 1) {
+    //if (optcontrol.optimizer == 1 && !u_in || optcontrol.optimizer == 2) {
+    //    // This if condition is necessary because DFILE and FFILE are not
+    //    // defined when the method is called via API.
+    //    input_parser->parse_displacement_and_force_files(u,
+    //                                                     f,
+    //                                                     nat,
+    //                                                     ndata,
+    //                                                     nstart,
+    //                                                     nend,
+    //                                                     skip_s,
+    //                                                     skip_e,
+    //                                                     file_disp,
+    //                                                     file_force);
+    //}
+    //if (optcontrol.optimizer == 2 &&
+    //    optcontrol.cross_validation_mode == 1) {
 
-        allocate(u_test, ndata_used_test, 3 * nat);
-        allocate(f_test, ndata_used_test, 3 * nat);
+    //    allocate(u_test, ndata_used_test, 3 * nat);
+    //    allocate(f_test, ndata_used_test, 3 * nat);
 
-        input_parser->parse_displacement_and_force_files(u_test,
-                                                         f_test,
-                                                         nat,
-                                                         ndata_test,
-                                                         nstart_test,
-                                                         nend_test,
-                                                         0,
-                                                         0,
-                                                         dfile_test,
-                                                         ffile_test);
-    }
+    //    input_parser->parse_displacement_and_force_files(u_test,
+    //                                                     f_test,
+    //                                                     nat,
+    //                                                     ndata_test,
+    //                                                     nstart_test,
+    //                                                     nend_test,
+    //                                                     0,
+    //                                                     0,
+    //                                                     dfile_test,
+    //                                                     ffile_test);
+    //}
 
-    delete input_parser;
+    // delete input_parser;
 
     // Run optimization and obtain force constants
 
@@ -221,10 +209,8 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                                    N_new,
                                    M,
                                    M_test,
-                                   u,
-                                   f,
-                                   u_test,
-                                   f_test,
+                                   ndata_used,
+                                   ndata_used_test,
                                    symmetry,
                                    str_order,
                                    fcs,
@@ -234,18 +220,18 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                                    fcs_tmp);
     }
 
-    if (u) {
-        deallocate(u);
-    }
-    if (f) {
-        deallocate(f);
-    }
-    if (u_test) {
-        deallocate(u_test);
-    }
-    if (f_test) {
-        deallocate(f_test);
-    }
+    /*   if (u) {
+           deallocate(u);
+       }
+       if (f) {
+           deallocate(f);
+       }
+       if (u_test) {
+           deallocate(u_test);
+       }
+       if (f_test) {
+           deallocate(f_test);
+       }*/
 
     if (info_fitting == 0) {
         // I should copy fcs_tmp to parameters in the Fcs class?
@@ -436,10 +422,8 @@ int Optimize::elastic_net(const std::string job_prefix,
                           const int N_new,
                           const int M,
                           const int M_test,
-                          double **&u,
-                          double **&f,
-                          double **&u_test,
-                          double **&f_test,
+                          const int ndata_used,
+                          const int ndata_used_test,
                           const Symmetry *symmetry,
                           const std::vector<std::string> &str_order,
                           const Fcs *fcs,
@@ -452,7 +436,6 @@ int Optimize::elastic_net(const std::string job_prefix,
     int i, j;
     auto fnorm = 0.0;
     auto fnorm_test = 0.0;
-    const auto ndata_used_test = nend_test - nstart_test + 1;
 
     std::vector<double> param_tmp(N_new);
 
@@ -471,7 +454,7 @@ int Optimize::elastic_net(const std::string job_prefix,
         const auto inv_dnorm = 1.0 / optcontrol.displacement_scaling_factor;
         for (i = 0; i < ndata_used; ++i) {
             for (j = 0; j < 3 * nat; ++j) {
-                u[i][j] *= inv_dnorm;
+                u_train[i][j] *= inv_dnorm;
             }
         }
         // Scale force constants
@@ -490,11 +473,6 @@ int Optimize::elastic_net(const std::string job_prefix,
     amat_1D.resize(nrows * ncols, 0.0);
     bvec.resize(nrows, 0.0);
 
-    set_displacement_and_force(u,
-                               f,
-                               nat,
-                               ndata_used);
-
     get_matrix_elements_algebraic_constraint(maxorder,
                                              ndata_used,
                                              &amat_1D[0],
@@ -504,15 +482,6 @@ int Optimize::elastic_net(const std::string job_prefix,
                                              fcs,
                                              constraint);
 
-    if (u) {
-        deallocate(u);
-        u = nullptr;
-    }
-
-    if (f) {
-        deallocate(f);
-        f = nullptr;
-    }
 
     if (optcontrol.cross_validation_mode == 1) {
         nrows = 3 * static_cast<long>(natmin)
@@ -531,10 +500,10 @@ int Optimize::elastic_net(const std::string job_prefix,
             }
         }
 
-        set_displacement_and_force(u_test,
-                                   f_test,
-                                   nat,
-                                   ndata_used_test);
+        //set_displacement_and_force(u_test,
+        //                           f_test,
+        //                           nat,
+        //                           ndata_used_test);
 
         get_matrix_elements_algebraic_constraint(maxorder,
                                                  ndata_used_test,
@@ -544,10 +513,10 @@ int Optimize::elastic_net(const std::string job_prefix,
                                                  symmetry,
                                                  fcs,
                                                  constraint);
-        deallocate(u_test);
-        u_test = nullptr;
-        deallocate(f_test);
-        f_test = nullptr;
+        //deallocate(u_test);
+        //u_test = nullptr;
+        //deallocate(f_test);
+        //f_test = nullptr;
     }
 
     // Scale back force constants
@@ -1042,29 +1011,26 @@ double Optimize::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
 }
 
 
-void Optimize::set_displacement_and_force(const double * const *disp_in,
-                                          const double * const *force_in,
-                                          const int nat,
-                                          const int ndata_used_in)
+void Optimize::set_training_data(const std::vector<std::vector<double>> &u_train_in,
+                                 const std::vector<std::vector<double>> &f_train_in)
 {
-    ndata_used = ndata_used_in;
+    u_train.clear();
+    f_train.clear();
+    u_train = u_train_in;
+    f_train = f_train_in;
+    u_train.shrink_to_fit();
+    f_train.shrink_to_fit();
+}
 
-    if (u_in) {
-        deallocate(u_in);
-    }
-    allocate(u_in, ndata_used, 3 * nat);
-
-    if (f_in) {
-        deallocate(f_in);
-    }
-    allocate(f_in, ndata_used, 3 * nat);
-
-    for (auto i = 0; i < ndata_used; i++) {
-        for (auto j = 0; j < 3 * nat; j++) {
-            u_in[i][j] = disp_in[i][j];
-            f_in[i][j] = force_in[i][j];
-        }
-    }
+void Optimize::set_test_data(const std::vector<std::vector<double>> &u_test_in,
+                             const std::vector<std::vector<double>> &f_test_in)
+{
+    u_test.clear();
+    f_test.clear();
+    u_test = u_test_in;
+    f_test = f_test_in;
+    u_test.shrink_to_fit();
+    f_test.shrink_to_fit();
 }
 
 void Optimize::set_fcs_values(const int maxorder,
@@ -1107,6 +1073,11 @@ void Optimize::set_fcs_values(const int maxorder,
 int Optimize::get_ndata_used() const
 {
     return ndata_used;
+}
+
+size_t Optimize::get_number_of_rows_sensing_matrix() const
+{
+    return u_train.size() * u_train[0].size();
 }
 
 
@@ -1396,11 +1367,15 @@ void Optimize::get_matrix_elements(const int maxorder,
 {
     int i, j;
     long irow;
-
+    //std::cout << "ndata_fit = " << ndata_fit << std::endl;
+    //std::cout << "size u_train = " << u_train.size() << std::endl;
     std::vector<std::vector<double>> u_multi, f_multi;
 
-    data_multiplier(u_in, u_multi, ndata_fit, symmetry);
-    data_multiplier(f_in, f_multi, ndata_fit, symmetry);
+    data_multiplier(u_train, u_multi, ndata_fit, symmetry);
+    data_multiplier(f_train, f_multi, ndata_fit, symmetry);
+
+   // std::cout << "size u_multi = " << u_multi.size() << std::endl;
+
 
     const int natmin = symmetry->get_nat_prim();
     const int natmin3 = 3 * natmin;
@@ -1501,8 +1476,8 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
 
     std::vector<std::vector<double>> u_multi, f_multi;
 
-    data_multiplier(u_in, u_multi, ndata_fit, symmetry);
-    data_multiplier(f_in, f_multi, ndata_fit, symmetry);
+    data_multiplier(u_train, u_multi, ndata_fit, symmetry);
+    data_multiplier(f_train, f_multi, ndata_fit, symmetry);
 
     const int natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
@@ -1673,8 +1648,8 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
     std::vector<T> nonzero_entries;
     std::vector<std::vector<double>> u_multi, f_multi;
 
-    data_multiplier(u_in, u_multi, ndata_fit, symmetry);
-    data_multiplier(f_in, f_multi, ndata_fit, symmetry);
+    data_multiplier(u_train, u_multi, ndata_fit, symmetry);
+    data_multiplier(f_train, f_multi, ndata_fit, symmetry);
 
     const int natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
@@ -1891,7 +1866,7 @@ void Optimize::recover_original_forceconstants(const int maxorder,
 }
 
 
-void Optimize::data_multiplier(const double * const *data_in,
+void Optimize::data_multiplier(const std::vector<std::vector<double>> &data_in,
                                std::vector<std::vector<double>> &data_out,
                                const int ndata_used,
                                const Symmetry *symmetry) const
@@ -1978,55 +1953,6 @@ double Optimize::gamma(const int n,
     return static_cast<double>(nsame_to_front) / static_cast<double>(denom);
 }
 
-int Optimize::get_ndata() const
-{
-    return ndata;
-}
-
-void Optimize::set_ndata(const int ndata_in)
-{
-    ndata = ndata_in;
-}
-
-int Optimize::get_nstart() const
-{
-    return nstart;
-}
-
-void Optimize::set_nstart(const int nstart_in)
-{
-    nstart = nstart_in;
-}
-
-int Optimize::get_nend() const
-{
-    return nend;
-}
-
-void Optimize::set_nend(const int nend_in)
-{
-    nend = nend_in;
-}
-
-int Optimize::get_skip_s() const
-{
-    return skip_s;
-}
-
-void Optimize::set_skip_s(const int skip_s_in)
-{
-    skip_s = skip_s_in;
-}
-
-int Optimize::get_skip_e() const
-{
-    return skip_e;
-}
-
-void Optimize::set_skip_e(const int skip_e_in)
-{
-    skip_e = skip_e_in;
-}
 
 double* Optimize::get_params() const
 {

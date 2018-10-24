@@ -77,10 +77,10 @@ void Writer::write_input_vars(const ALM *alm) const
 
     } else if (alm->get_run_mode() == "fitting") {
         std::cout << " Fitting:" << std::endl;
-        std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
-        std::cout << "  FFILE = " << alm->files->file_force << std::endl;
-        std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
-            << "; NEND = " << alm->optimize->get_nend() << std::endl;
+        //std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
+        //std::cout << "  FFILE = " << alm->files->file_force << std::endl;
+        //std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
+        //    << "; NEND = " << alm->optimize->get_nend() << std::endl;
         std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
         std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
         std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
@@ -89,11 +89,11 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << std::endl;
     } else if (alm->get_run_mode() == "lasso") {
         std::cout << " Fitting:" << std::endl;
-        std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
-        std::cout << "  FFILE = " << alm->files->file_force << std::endl;
-        std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
-            << "; NEND = " << alm->optimize->get_nend() << std::endl;
-        std::cout << "  SKIP = " << alm->optimize->get_skip_s() + 1 << "-" << alm->optimize->get_skip_e() << std::endl;
+        //std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
+        //std::cout << "  FFILE = " << alm->files->file_force << std::endl;
+        //std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
+        //    << "; NEND = " << alm->optimize->get_nend() << std::endl;
+        //std::cout << "  SKIP = " << alm->optimize->get_skip_s() + 1 << "-" << alm->optimize->get_skip_e() << std::endl;
         std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
         std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
         std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
@@ -372,8 +372,8 @@ void Writer::write_misc_xml(ALM *alm)
     std::string str_pos[3];
 
     pt.put("Data.ALM_version", ALAMODE_VERSION);
-    pt.put("Data.Fitting.DisplaceFile", alm->files->file_disp);
-    pt.put("Data.Fitting.ForceFile", alm->files->file_force);
+    //pt.put("Data.Fitting.DisplaceFile", alm->files->file_disp);
+    //pt.put("Data.Fitting.ForceFile", alm->files->file_force);
     pt.put("Data.Fitting.Constraint", alm->constraint->get_constraint_mode());
 
     pt.put("Data.Structure.NumberOfAtoms", system_structure.nat);

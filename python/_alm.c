@@ -21,6 +21,7 @@ static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
 static PyObject * py_get_ndata_used(PyObject *self, PyObject *args);
+static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args);
 static PyObject * py_set_constraint_type(PyObject *self, PyObject *args);
 static PyObject * py_define(PyObject *self, PyObject *args);
 static PyObject * py_generate_force_constant(PyObject *self, PyObject *args);
@@ -75,6 +76,7 @@ static PyMethodDef _alm_methods[] = {
   {"get_number_of_displaced_atoms", py_get_number_of_displaced_atoms,
    METH_VARARGS, ""},
   {"get_ndata_used", py_get_ndata_used, METH_VARARGS, ""},
+  {"get_nrows_amat", py_get_nrows_amat, METH_VARARGS, ""},
   {"get_displacement_patterns", py_get_displacement_patterns, METH_VARARGS, ""},
   {"get_number_of_fc_elements", py_get_number_of_fc_elements, METH_VARARGS, ""},
   {"get_number_of_irred_fc_elements", py_get_number_of_irred_fc_elements, METH_VARARGS, ""},
@@ -443,6 +445,17 @@ static PyObject * py_get_ndata_used(PyObject *self, PyObject *args)
   return PyLong_FromLong((long) ndata_used);
 }
 
+static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args)
+{
+    int id;
+
+    if (!PyArg_ParseTuple(args, "i", &id)) {
+        return NULL;
+    }
+    size_t ndata_used = alm_get_ndata_used(id);
+
+    return PyLong_FromSize_t(ndata_used);
+}
 
 static PyObject * py_get_fc_origin(PyObject *self, PyObject *args)
 {
