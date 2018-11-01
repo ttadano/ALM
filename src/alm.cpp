@@ -173,7 +173,7 @@ void ALM::set_displacement_and_force(const double *u_in,
     optimize->set_training_data(u, f);
     u.clear();
     f.clear();
-  //  optimize->set_displacement_and_force(u, f, nat, ndata_used);
+    //  optimize->set_displacement_and_force(u, f, nat, ndata_used);
 
     //deallocate(u);
     //deallocate(f);
@@ -522,13 +522,29 @@ void ALM::get_matrix_elements(double *amat,
     const auto maxorder = interaction->get_maxorder();
     double fnorm;
 
+    std::vector<double> amat_vec;
+    std::vector<double> bvec_vec;
+
     optimize->get_matrix_elements_algebraic_constraint(maxorder,
-                                                       amat,
-                                                       bvec,
+                                                       amat_vec,
+                                                       bvec_vec,
+                                                       optimize->get_u_train(),
+                                                       optimize->get_f_train(),
                                                        fnorm,
                                                        symmetry,
                                                        fcs,
                                                        constraint);
+    // Is this really safe?
+    auto i = 0;
+    for (const auto it : amat_vec) {
+        amat[i++] = it;
+    }
+    i = 0;
+    for (const auto it : bvec_vec) {
+        bvec[i++] = it;
+    }
+    //amat = amat_vec.data();
+    //bvec = bvec_vec.data();
 }
 
 

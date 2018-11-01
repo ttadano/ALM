@@ -30,7 +30,6 @@ using namespace ALM_NS;
 InputParser::InputParser()
 {
     input_setter = new InputSetter();
-    nat = 0;
 }
 
 InputParser::~InputParser()
@@ -771,9 +770,11 @@ void InputParser::parse_fitting_vars(ALM *alm)
         auto str_optimizer = fitting_var_dict["OPTIMIZER"];
         boost::to_lower(str_optimizer);
 
-        if (str_optimizer == "ols" || str_optimizer == "ls" || str_optimizer == "least-squares") {
+        if (str_optimizer == "ols" || str_optimizer == "ls"
+            || str_optimizer == "least-squares" || str_optimizer == "1") {
             optcontrol.optimizer = 1;
-        } else if (str_optimizer == "enet" || str_optimizer == "elastic-net") {
+        } else if (str_optimizer == "enet" || str_optimizer == "elastic-net"
+            || str_optimizer == "2") {
             optcontrol.optimizer = 2;
         } else {
             exit("parse_fitting_vars", "Invalid OPTIMIZER-tag");
@@ -836,23 +837,14 @@ void InputParser::parse_fitting_vars(ALM *alm)
         if (!fitting_var_dict["DFILE"].empty() || !fitting_var_dict["FFILE"].empty()) {
             std::cout << " Sorry. DFILE and FFILE tags are obsolate.\n";
             std::cout << " Please use DFFILE instead.\n";
-            std::cout << " DFFILE can be created easily by the unix paste command as:\n";
-            std::cout << " > paste DFILE FFILE > DFFILE\n";
+            std::cout << " DFFILE can be created easily by the unix paste command as:\n\n";
+            std::cout << " > paste DFILE FFILE > DFFILE\n\n";
             exit("parse_fitting_vars", "Obsolate tag: DFILE, FFILE");
         } else {
             exit("parse_fitting_vars", "DFFILE tag must be given.");
         }
     }
     datfile_train.filename = fitting_var_dict["DFFILE"];
-
-    // Initialize the variables handling data range with zeros.
-    // If they are given in input, the values will be updated.
-    // If they don't change after passing this section, they will be set automatically.
-    //auto ndata = 0;
-    //auto nstart = 0;
-    //auto nend = 0;
-    //auto skip_s = 0;
-    //auto skip_e = 0;
 
     if (!fitting_var_dict["NDATA"].empty()) {
         assign_val(datfile_train.ndata, "NDATA", fitting_var_dict);
@@ -885,7 +877,7 @@ void InputParser::parse_fitting_vars(ALM *alm)
              "NDATA, NSTART, NEND and SKIP tags are inconsistent.");
     }
 
-    // Parse u_tmp1 and f_tmp1 from DFFILE and assign ndata if it's not.
+    // Parse u_tmp1 and f_tmp1 from DFFILE and set ndata if it's not.
     parse_displacement_and_force_files(u_tmp1,
                                        f_tmp1,
                                        datfile_train);
@@ -920,14 +912,17 @@ void InputParser::parse_fitting_vars(ALM *alm)
              "NDATA_TEST, NSTART_TEST and NEND_TEST tags are inconsistent.");
     }
 
-    parse_displacement_and_force_files(u_tmp2,
-                                       f_tmp2,
-                                       datfile_test);
+    if (optcontrol.cross_validation_mode == 2) {
+        parse_displacement_and_force_files(u_tmp2,
+            f_tmp2,
+            datfile_test);
 
-    if (!is_data_range_consistent(datfile_test)) {
-        exit("parse_fitting_vars",
-             "NDATA_TEST, NSTART_TEST and NEND_TEST tags are inconsistent.");
+        if (!is_data_range_consistent(datfile_test)) {
+            exit("parse_fitting_vars",
+                "NDATA_TEST, NSTART_TEST and NEND_TEST tags are inconsistent.");
+        }
     }
+    
 
     input_setter->set_optimize_vars(alm,
                                     u_tmp1, f_tmp1,

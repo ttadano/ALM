@@ -50,7 +50,6 @@ Optimize::~Optimize()
 void Optimize::set_default_variables()
 {
     params = nullptr;
-//    ndata_used = 0;
 }
 
 void Optimize::deallocate_variables()
@@ -101,7 +100,6 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
         std::cout << "  Reference files" << std::endl;
         std::cout << "   Displacement: " << filedata_train.filename << std::endl;
-        //      std::cout << "   Force       : " << file_force << std::endl;
         std::cout << std::endl;
 
         std::cout << "  NSTART = " << filedata_train.nstart << "; NEND = " << filedata_train.nend;
@@ -115,7 +113,6 @@ int Optimize::optimize_main(const Symmetry *symmetry,
         if (optcontrol.cross_validation_mode == 2) {
             std::cout << "  Validation test files" << std::endl;
             std::cout << "   Displacement: " << filedata_test.filename << std::endl;
-            //       std::cout << "   Force       : " << ffile_test << std::endl;
             std::cout << std::endl;
 
             std::cout << "  NSTART = " << filedata_test.nstart << "; NEND = " << filedata_test.nend << std::endl;
@@ -129,52 +126,6 @@ int Optimize::optimize_main(const Symmetry *symmetry,
         }
         std::cout << '\n';
     }
-
-    // Parse displacement and force data sets from files
-
-    //double **u = nullptr;
-    //double **f = nullptr;
-    //double **u_test = nullptr;
-    //double **f_test = nullptr;
-
-    //const auto input_parser = new InputParser();
-
-    //allocate(u, ndata_used, 3 * nat);
-    //allocate(f, ndata_used, 3 * nat);
-
-    //if (optcontrol.optimizer == 1 && !u_in || optcontrol.optimizer == 2) {
-    //    // This if condition is necessary because DFILE and FFILE are not
-    //    // defined when the method is called via API.
-    //    input_parser->parse_displacement_and_force_files(u,
-    //                                                     f,
-    //                                                     nat,
-    //                                                     ndata,
-    //                                                     nstart,
-    //                                                     nend,
-    //                                                     skip_s,
-    //                                                     skip_e,
-    //                                                     file_disp,
-    //                                                     file_force);
-    //}
-    //if (optcontrol.optimizer == 2 &&
-    //    optcontrol.cross_validation_mode == 1) {
-
-    //    allocate(u_test, ndata_used_test, 3 * nat);
-    //    allocate(f_test, ndata_used_test, 3 * nat);
-
-    //    input_parser->parse_displacement_and_force_files(u_test,
-    //                                                     f_test,
-    //                                                     nat,
-    //                                                     ndata_test,
-    //                                                     nstart_test,
-    //                                                     nend_test,
-    //                                                     0,
-    //                                                     0,
-    //                                                     dfile_test,
-    //                                                     ffile_test);
-    //}
-
-    // delete input_parser;
 
     // Run optimization and obtain force constants
 
@@ -200,6 +151,11 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
         // Use elastic net 
 
+        if (!constraint->get_constraint_algebraic()) {
+            exit("optimize_main",
+                 "Sorry, ICONST=10 or ICONST = 11 must be used when using elastic net.");
+        }
+
         info_fitting = elastic_net(file_prefix,
                                    maxorder,
                                    natmin,
@@ -218,19 +174,6 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                                    verbosity,
                                    fcs_tmp);
     }
-
-    /*   if (u) {
-           deallocate(u);
-       }
-       if (f) {
-           deallocate(f);
-       }
-       if (u_test) {
-           deallocate(u_test);
-       }
-       if (f_test) {
-           deallocate(f_test);
-       }*/
 
     if (info_fitting == 0) {
         // I should copy fcs_tmp to parameters in the Fcs class?
@@ -298,6 +241,8 @@ int Optimize::least_squares(const int maxorder,
             get_matrix_elements_in_sparse_form(maxorder,
                                                sp_amat,
                                                sp_bvec,
+                                               u_train,
+                                               f_train,
                                                fnorm,
                                                symmetry,
                                                fcs,
@@ -327,8 +272,10 @@ int Optimize::least_squares(const int maxorder,
             bvec.resize(nrows, 0.0);
 
             get_matrix_elements_algebraic_constraint(maxorder,
-                                                     &amat[0],
-                                                     &bvec[0],
+                                                     amat,
+                                                     bvec,
+                                                     u_train,
+                                                     f_train,
                                                      fnorm,
                                                      symmetry,
                                                      fcs,
@@ -358,20 +305,11 @@ int Optimize::least_squares(const int maxorder,
             std::cout << "  Use a solver for dense matrix." << std::endl;
         }
 
-        // Calculate matrix elements for fitting
-        const auto nrows = get_number_of_rows_sensing_matrix();
-        // const unsigned long nrows = 3 * static_cast<long>(natmin)
-        //     * static_cast<long>(ndata_used)
-        //     * static_cast<long>(ntran);
-
-        const unsigned long ncols = static_cast<long>(N);
-
-        amat.resize(nrows * ncols, 0.0);
-        bvec.resize(nrows, 0.0);
-
         get_matrix_elements(maxorder,
-                            &amat[0],
-                            &bvec[0],
+                            amat,
+                            bvec,
+                            u_train,
+                            f_train,
                             symmetry,
                             fcs);
 
@@ -463,25 +401,21 @@ int Optimize::elastic_net(const std::string job_prefix,
     std::vector<double> amat_1D, amat_1D_test;
     std::vector<double> bvec, bvec_test;
 
-    amat_1D.resize(nrows * ncols, 0.0);
-    bvec.resize(nrows, 0.0);
-
     get_matrix_elements_algebraic_constraint(maxorder,
-                                             &amat_1D[0],
-                                             &bvec[0],
+                                             amat_1D,
+                                             bvec,
+                                             u_train,
+                                             f_train,
                                              fnorm,
                                              symmetry,
                                              fcs,
                                              constraint);
 
 
-    if (optcontrol.cross_validation_mode == 1) {
+    if (optcontrol.cross_validation_mode == 2) {
         nrows = 3 * static_cast<long>(natmin)
             * static_cast<long>(ndata_used_test)
             * static_cast<long>(ntran);
-
-        amat_1D_test.resize(nrows * ncols, 0.0);
-        bvec_test.resize(nrows, 0.0);
 
         if (scale_displacement) {
             const auto inv_dnorm = 1.0 / optcontrol.displacement_scaling_factor;
@@ -492,23 +426,15 @@ int Optimize::elastic_net(const std::string job_prefix,
             }
         }
 
-        //set_displacement_and_force(u_test,
-        //                           f_test,
-        //                           nat,
-        //                           ndata_used_test);
-
         get_matrix_elements_algebraic_constraint(maxorder,
-//                                                 ndata_used_test,
-                                                 &amat_1D_test[0],
-                                                 &bvec_test[0],
+                                                 amat_1D_test,
+                                                 bvec_test,
+                                                 u_test,
+                                                 f_test,
                                                  fnorm_test,
                                                  symmetry,
                                                  fcs,
                                                  constraint);
-        //deallocate(u_test);
-        //u_test = nullptr;
-        //deallocate(f_test);
-        //f_test = nullptr;
     }
 
     // Scale back force constants
@@ -1025,6 +951,17 @@ void Optimize::set_test_data(const std::vector<std::vector<double>> &u_test_in,
     f_test.shrink_to_fit();
 }
 
+std::vector<std::vector<double>> Optimize::get_u_train() const
+{
+    return u_train;
+}
+
+std::vector<std::vector<double>> Optimize::get_f_train() const
+{
+    return f_train;
+}
+
+
 void Optimize::set_fcs_values(const int maxorder,
                               double *fc_in,
                               std::vector<int> *nequiv,
@@ -1061,11 +998,6 @@ void Optimize::set_fcs_values(const int maxorder,
         params[i] = param_out[i];
     }
 }
-
-// int Optimize::get_ndata_used() const
-// {
-//     return ndata_used;
-// }
 
 size_t Optimize::get_number_of_rows_sensing_matrix() const
 {
@@ -1351,31 +1283,42 @@ int Optimize::fit_algebraic_constraints(const int N,
 
 
 void Optimize::get_matrix_elements(const int maxorder,
-                                   double *amat,
-                                   double *bvec,
+                                   std::vector<double> &amat,
+                                   std::vector<double> &bvec,
+                                   const std::vector<std::vector<double>> &u_in,
+                                   const std::vector<std::vector<double>> &f_in,
                                    const Symmetry *symmetry,
                                    const Fcs *fcs) const
 {
     int i, j;
     long irow;
-    //std::cout << "ndata_fit = " << ndata_fit << std::endl;
-    //std::cout << "size u_train = " << u_train.size() << std::endl;
+    const auto natmin = symmetry->get_nat_prim();
+    const auto natmin3 = 3 * natmin;
     std::vector<std::vector<double>> u_multi, f_multi;
 
-    const auto ndata_fit = u_train.size();
-    data_multiplier(u_train, u_multi, symmetry);
-    data_multiplier(f_train, f_multi, symmetry);
+    if (u_in.size() != f_in.size()) {
+        exit("get_matrix_elements",
+             "The lengths of displacement array and force array are diferent.");
+    }
 
-   // std::cout << "size u_multi = " << u_multi.size() << std::endl;
-
-
-    const int natmin = symmetry->get_nat_prim();
-    const int natmin3 = 3 * natmin;
+    const auto ndata_fit = u_in.size();
+    const auto ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
+    const auto nrows = ndata_fit * u_in[0].size();
     auto ncols = 0;
+    for (i = 0; i < maxorder; ++i) {
+        ncols += fcs->get_nequiv()[i].size();
+    }
 
-    for (i = 0; i < maxorder; ++i) ncols += fcs->get_nequiv()[i].size();
+    if (amat.size() != nrows * ncols) {
+        amat.resize(nrows * ncols, 0.0);
+    }
+    if (bvec.size() != nrows) {
+        bvec.resize(nrows, 0.0);
+    }
 
-    const long ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
+    data_multiplier(u_in, u_multi, symmetry);
+    data_multiplier(f_in, f_multi, symmetry);
+
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -1455,8 +1398,10 @@ void Optimize::get_matrix_elements(const int maxorder,
 
 
 void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
-                                                        double *amat,
-                                                        double *bvec,
+                                                        std::vector<double> &amat,
+                                                        std::vector<double> &bvec,
+                                                        const std::vector<std::vector<double>> &u_in,
+                                                        const std::vector<std::vector<double>> &f_in,
                                                         double &fnorm,
                                                         const Symmetry *symmetry,
                                                         const Fcs *fcs,
@@ -1465,16 +1410,16 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
     int i, j;
     long irow;
 
-    std::vector<std::vector<double>> u_multi, f_multi;
+    if (u_in.size() != f_in.size()) {
+        exit("get_matrix_elements",
+             "The lengths of displacement array and force array are diferent.");
+    }
 
-    const auto ndata_fit = u_train.size();
 
-    data_multiplier(u_train, u_multi, symmetry);
-    data_multiplier(f_train, f_multi, symmetry);
-
+    const auto ndata_fit = u_in.size();
     const int natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
-    const auto nrows = u_train.size() * u_train[0].size();
+    const auto nrows = u_in.size() * u_in[0].size();
     auto ncols = 0;
     auto ncols_new = 0;
 
@@ -1485,8 +1430,18 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
 
     const auto ncycle = ndata_fit * symmetry->get_ntran();
 
-    std::vector<double> bvec_orig(nrows, 0.0);
+    if (amat.size() != nrows * ncols_new) {
+        amat.resize(nrows * ncols_new, 0.0);
+    }
+    if (bvec.size() != nrows) {
+        bvec.resize(nrows, 0.0);
+    }
 
+    std::vector<double> bvec_orig(nrows, 0.0);
+    std::vector<std::vector<double>> u_multi, f_multi;
+
+    data_multiplier(u_in, u_multi, symmetry);
+    data_multiplier(f_in, f_multi, symmetry);
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -1623,12 +1578,17 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
         fnorm += bvec_orig[i] * bvec_orig[i];
     }
     fnorm = std::sqrt(fnorm);
+
+    u_multi.clear();
+    f_multi.clear();
 }
 
 #ifdef WITH_SPARSE_SOLVER
 void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
                                                   SpMat &sp_amat,
                                                   Eigen::VectorXd &sp_bvec,
+                                                  const std::vector<std::vector<double>> &u_in,
+                                                  const std::vector<std::vector<double>> &f_in,
                                                   double &fnorm,
                                                   const Symmetry *symmetry,
                                                   const Fcs *fcs,
@@ -1638,15 +1598,17 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
     long irow;
     typedef Eigen::Triplet<double> T;
     std::vector<T> nonzero_entries;
-    std::vector<std::vector<double>> u_multi, f_multi;
 
-    const auto ndata_fit = u_train.size();
-    data_multiplier(u_train, u_multi, symmetry);
-    data_multiplier(f_train, f_multi, symmetry);
+    if (u_in.size() != f_in.size()) {
+        exit("get_matrix_elements",
+            "The lengths of displacement array and force array are diferent.");
+    }
 
+    const auto ndata_fit = u_in.size();
     const int natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
-    const auto nrows = natmin3 * ndata_fit * symmetry->get_ntran();
+    const auto nrows = u_in.size() * u_in[0].size();
+
     auto ncols = 0;
     auto ncols_new = 0;
 
@@ -1655,10 +1617,13 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
         ncols_new += constraint->get_index_bimap(i).size();
     }
 
-    const auto ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
+    const auto ncycle = ndata_fit * symmetry->get_ntran();
 
     std::vector<double> bvec_orig(nrows, 0.0);
+    std::vector<std::vector<double>> u_multi, f_multi;
 
+    data_multiplier(u_in, u_multi, symmetry);
+    data_multiplier(f_in, f_multi, symmetry);
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -1865,7 +1830,7 @@ void Optimize::data_multiplier(const std::vector<std::vector<double>> &data_in,
 {
     const auto nat = symmetry->get_nat_prim() * symmetry->get_ntran();
     const auto ndata_used = data_in.size();
-    
+
     auto idata = 0;
     for (auto i = 0; i < ndata_used; ++i) {
         std::vector<double> data_tmp(3 * nat, 0.0);
@@ -2126,7 +2091,7 @@ void Optimize::set_optimizer_control(const OptimizerControl &optcontrol_in)
 {
     // Check the validity of the options before copying it.
 
-    if (optcontrol_in.cross_validation_mode < 0 || optcontrol_in.cross_validation_mode > 1) {
+    if (optcontrol_in.cross_validation_mode < 0 || optcontrol_in.cross_validation_mode > 2) {
         exit("set_optimizer_control", "cross_validation_mode must be 0 or 1");
     }
     if (optcontrol_in.optimizer == 2) {
@@ -2134,7 +2099,7 @@ void Optimize::set_optimizer_control(const OptimizerControl &optcontrol_in)
             exit("set_optimizer_control", "L1_RATIO must be 0 < L1_RATIO <= 1.");
         }
 
-        if (optcontrol_in.cross_validation_mode == 1) {
+        if (optcontrol_in.cross_validation_mode >= 1) {
             if (optcontrol_in.l1_alpha_min >= optcontrol_in.l1_alpha_max) {
                 exit("set_optimizer_control", "L1_ALPHA_MIN must be smaller than L1_ALPHA_MAX.");
             }

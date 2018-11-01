@@ -95,25 +95,25 @@ namespace ALM_NS
                           const DispForceFile &filedat_test,
                           Timer *timer);
 
-        //void set_displacement_and_force(const double * const *,
-        //                                const double * const *,
-        //                                const int,
-        //                                const int);
-
         void set_training_data(const std::vector<std::vector<double>> &u_train_in,
                                const std::vector<std::vector<double>> &f_train_in);
 
         void set_test_data(const std::vector<std::vector<double>> &u_test_in,
                            const std::vector<std::vector<double>> &f_test_in);
 
+        std::vector<std::vector<double>> get_u_train() const;
+        std::vector<std::vector<double>> get_f_train() const;
 
-        void get_matrix_elements_algebraic_constraint(const int,
-                                                      double *,
-                                                      double *,
-                                                      double &,
-                                                      const Symmetry *,
-                                                      const Fcs *,
-                                                      const Constraint *) const;
+
+        void get_matrix_elements_algebraic_constraint(const int maxorder,
+                                                      std::vector<double> &amat,
+                                                      std::vector<double> &bvec,
+                                                      const std::vector<std::vector<double>> &u_in,
+                                                      const std::vector<std::vector<double>> &f_in,
+                                                      double &fnorm,
+                                                      const Symmetry *symmetry,
+                                                      const Fcs *fcs,
+                                                      const Constraint *constraint) const;
 
         void set_fcs_values(const int,
                             double *,
@@ -121,27 +121,20 @@ namespace ALM_NS
                             const Constraint *);
 
 
-        int get_ndata_used() const;
         size_t get_number_of_rows_sensing_matrix() const;
         double* get_params() const;
 
         void set_optimizer_control(const OptimizerControl &);
         OptimizerControl get_optimizer_control() const;
 
-        //int ndata_test, nstart_test, nend_test;
-        //std::string dfile_test, ffile_test;
-
     private:
 
         double *params;
-        /*    double **u_in;
-            double **f_in;*/
 
         std::vector<std::vector<double>> u_train, f_train;
         std::vector<std::vector<double>> u_test, f_test;
 
         OptimizerControl optcontrol;
-  //      int ndata_used;
 
         void set_default_variables();
         void deallocate_variables();
@@ -258,20 +251,24 @@ namespace ALM_NS
                                  const int) const;
 
 
-        void get_matrix_elements(const int,
-                                 double *,
-                                 double *,
+        void get_matrix_elements(const int maxorder,
+                                 std::vector<double> &amat,
+                                 std::vector<double> &bvec,
+                                 const std::vector<std::vector<double>> &u_in,
+                                 const std::vector<std::vector<double>> &f_in,
                                  const Symmetry *,
                                  const Fcs *) const;
 
 #ifdef WITH_SPARSE_SOLVER
-        void get_matrix_elements_in_sparse_form(const int,
-                                                SpMat &,
-                                                Eigen::VectorXd &,
-                                                double &,
-                                                const Symmetry *,
-                                                const Fcs *,
-                                                const Constraint *);
+        void get_matrix_elements_in_sparse_form(const int maxorder,
+                                                SpMat &sp_amat,
+                                                Eigen::VectorXd &sp_bvec,
+                                                const std::vector<std::vector<double>> &u_in,
+                                                const std::vector<std::vector<double>> &f_in,
+                                                double &fnorm,
+                                                const Symmetry *symmetry,
+                                                const Fcs *fcs,
+                                                const Constraint *constraint);
 
         int run_eigen_sparseQR(const SpMat &,
                                const Eigen::VectorXd &,
