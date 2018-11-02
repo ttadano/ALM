@@ -50,12 +50,12 @@ set(soserial "1")
 # Source code
 include_directories("${PROJECT_SOURCE_DIR}/src")
 set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
+            ${PROJECT_SOURCE_DIR}/src/cluster.cpp
             ${PROJECT_SOURCE_DIR}/src/constraint.cpp
             ${PROJECT_SOURCE_DIR}/src/fcs.cpp
             ${PROJECT_SOURCE_DIR}/src/files.cpp
             ${PROJECT_SOURCE_DIR}/src/input_parser.cpp
             ${PROJECT_SOURCE_DIR}/src/input_setter.cpp
-            ${PROJECT_SOURCE_DIR}/src/interaction.cpp
             ${PROJECT_SOURCE_DIR}/src/optimize.cpp
             ${PROJECT_SOURCE_DIR}/src/patterndisp.cpp
             ${PROJECT_SOURCE_DIR}/src/rref.cpp
@@ -65,12 +65,12 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/src/alm.cpp
             ${PROJECT_SOURCE_DIR}/src/writer.cpp)
 
 set(HEADERS ${PROJECT_SOURCE_DIR}/src/alm.h
+            ${PROJECT_SOURCE_DIR}/src/cluster.h
             ${PROJECT_SOURCE_DIR}/src/constraint.h
             ${PROJECT_SOURCE_DIR}/src/fcs.h
             ${PROJECT_SOURCE_DIR}/src/files.h
             ${PROJECT_SOURCE_DIR}/src/input_parser.h
             ${PROJECT_SOURCE_DIR}/src/input_setter.h
-            ${PROJECT_SOURCE_DIR}/src/interaction.h
             ${PROJECT_SOURCE_DIR}/src/optimize.h
             ${PROJECT_SOURCE_DIR}/src/patterndisp.h
             ${PROJECT_SOURCE_DIR}/src/rref.h

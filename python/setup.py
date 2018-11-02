@@ -53,12 +53,12 @@ include_dirs += include_dirs_numpy
 if compile_with_sources:
     cpp_files = ['alm.cpp',
                  'alm_cui.cpp',
+                 'cluster.cpp',
                  'constraint.cpp',
                  'fcs.cpp',
                  'files.cpp',
                  'input_parser.cpp',
                  'input_setter.cpp',
-                 'interaction.cpp',
                  'main.cpp',
                  'optimize.cpp',
                  'patterndisp.cpp',
