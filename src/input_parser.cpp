@@ -690,7 +690,7 @@ void InputParser::parse_optimize_vars(ALM *alm)
     }
 
     if (!fitting_var_dict["LASSO_DNORM"].empty()) {
-        optcontrol.displacement_scaling_factor
+        optcontrol.displacement_normalization_factor
             = boost::lexical_cast<double>(fitting_var_dict["LASSO_DNORM"]);
     }
     if (!fitting_var_dict["LASSO_ALPHA"].empty()) {
@@ -734,7 +734,7 @@ void InputParser::parse_optimize_vars(ALM *alm)
     }
 
 
-    DispForceFile datfile_train, datfile_test;
+    DispForceFile datfile_train;
 
     if (fitting_var_dict["DFFILE"].empty()) {
         if (!fitting_var_dict["DFILE"].empty() || !fitting_var_dict["FFILE"].empty()) {
@@ -791,7 +791,7 @@ void InputParser::parse_optimize_vars(ALM *alm)
              "NDATA, NSTART, NEND and SKIP tags are inconsistent.");
     }
 
-    datfile_test = datfile_train;
+    auto datfile_test = datfile_train;
     datfile_test.skip_s = 0;
     datfile_test.skip_e = 0;
 

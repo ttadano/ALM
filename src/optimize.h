@@ -38,7 +38,7 @@ namespace ALM_NS
 
         // Options related to L1-regularized optimization
         int standardize;
-        double displacement_scaling_factor;
+        double displacement_normalization_factor;
         int debiase_after_l1opt;
 
         // cross-validation related variables
@@ -59,7 +59,7 @@ namespace ALM_NS
             tolerance_iteration = 1.0e-15;
             output_frequency = 1000;
             standardize = 1;
-            displacement_scaling_factor = 1.0;
+            displacement_normalization_factor = 1.0;
             debiase_after_l1opt = 0;
             cross_validation_mode = 0;
             nset_cross_validation = 1;
@@ -160,19 +160,13 @@ namespace ALM_NS
 
         int elastic_net(const std::string job_prefix,
                         const int maxorder,
-                        const int natmin,
-                        const int ntran,
-                        const int N,
                         const int N_new,
                         const int M,
                         const int M_test,
-                        const int ndata_used,
-                        const int ndata_used_test,
                         const Symmetry *symmetry,
                         const std::vector<std::string> &str_order,
                         const Fcs *fcs,
                         Constraint *constraint,
-                        const unsigned int nat,
                         const int verbosity,
                         std::vector<double> &param_out);
 
@@ -220,6 +214,20 @@ namespace ALM_NS
 
         double get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
                                       const Eigen::VectorXd &bvec) const;
+
+        void apply_scaler_displacement(std::vector<std::vector<double>> &u_inout,
+                                       const double normalization_factor,
+                                       const bool scale_back = false);
+
+        void apply_scaler_constraint(const int maxorder,
+                                     const double normalization_factor,
+                                     Constraint *constraint,
+                                     const bool scale_back = false);
+
+        void apply_scaler_force_constants(const int maxorder,
+                                          const double normalization_factor,
+                                          Constraint *constraint,
+                                          std::vector<double> &param_inout);
 
 
         int fit_without_constraints(const int,

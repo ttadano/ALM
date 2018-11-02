@@ -106,7 +106,7 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "; LASSO_MAXALPHA = " << optctrl.l1_alpha_max << std::endl;
         std::cout << "  LASSO_NALPHA = " << optctrl.num_l1_alpha << std::endl;
         std::cout << "  STANDARDIZE = " << optctrl.standardize << std::endl;
-        std::cout << "  LASSO_DNORM = " << optctrl.displacement_scaling_factor << std::endl;
+        std::cout << "  LASSO_DNORM = " << optctrl.displacement_normalization_factor << std::endl;
         std::cout << "  LASSO_TOL = " << optctrl.tolerance_iteration << std::endl;
         std::cout << "  LASSO_MAXITER = " << optctrl.maxnum_iteration << std::endl;
         std::cout << "  LASSO_CV = " << std::setw(5) << optctrl.cross_validation_mode << std::endl;

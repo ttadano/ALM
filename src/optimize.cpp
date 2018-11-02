@@ -158,19 +158,13 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
         info_fitting = elastic_net(file_prefix,
                                    maxorder,
-                                   natmin,
-                                   ntran,
-                                   N,
                                    N_new,
                                    M,
                                    M_test,
-                                   ndata_used,
-                                   ndata_used_test,
                                    symmetry,
                                    str_order,
                                    fcs,
                                    constraint,
-                                   nat,
                                    verbosity,
                                    fcs_tmp);
     }
@@ -347,54 +341,39 @@ int Optimize::least_squares(const int maxorder,
 
 int Optimize::elastic_net(const std::string job_prefix,
                           const int maxorder,
-                          const int natmin,
-                          const int ntran,
-                          const int N,
                           const int N_new,
                           const int M,
                           const int M_test,
-                          const int ndata_used,
-                          const int ndata_used_test,
                           const Symmetry *symmetry,
                           const std::vector<std::string> &str_order,
                           const Fcs *fcs,
                           Constraint *constraint,
-                          const unsigned int nat,
                           const int verbosity,
                           std::vector<double> &param_out)
 {
     auto info_fitting = 0;
-    int i, j;
+    int i;
     auto fnorm = 0.0;
     auto fnorm_test = 0.0;
 
     std::vector<double> param_tmp(N_new);
 
-    unsigned long nrows = 3 * static_cast<long>(natmin)
-        * static_cast<long>(ndata_used)
-        * static_cast<long>(ntran);
-
-    const unsigned long ncols = static_cast<long>(N_new);
-
     const int scale_displacement
-        = std::abs(optcontrol.displacement_scaling_factor - 1.0) > eps
+        = std::abs(optcontrol.displacement_normalization_factor - 1.0) > eps
         && optcontrol.standardize == 0;
 
     // Scale displacements if DNORM is not 1 and the data is not standardized.
     if (scale_displacement) {
-        const auto inv_dnorm = 1.0 / optcontrol.displacement_scaling_factor;
-        for (i = 0; i < ndata_used; ++i) {
-            for (j = 0; j < 3 * nat; ++j) {
-                u_train[i][j] *= inv_dnorm;
-            }
-        }
-        // Scale force constants
-        for (i = 0; i < maxorder; ++i) {
-            const auto scale_factor = std::pow(optcontrol.displacement_scaling_factor, i + 1);
-            for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
-                const auto scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
-                constraint->set_const_fix_val_to_fix(i, j, scaled_val);
-            }
+        apply_scaler_displacement(u_train,
+                                  optcontrol.displacement_normalization_factor);
+        apply_scaler_constraint(maxorder,
+                                optcontrol.displacement_normalization_factor,
+                                constraint);
+
+        if (optcontrol.cross_validation_mode == 2) {
+            apply_scaler_displacement(u_test,
+                                      optcontrol.displacement_normalization_factor);
+
         }
     }
 
@@ -413,19 +392,6 @@ int Optimize::elastic_net(const std::string job_prefix,
 
 
     if (optcontrol.cross_validation_mode == 2) {
-        nrows = 3 * static_cast<long>(natmin)
-            * static_cast<long>(ndata_used_test)
-            * static_cast<long>(ntran);
-
-        if (scale_displacement) {
-            const auto inv_dnorm = 1.0 / optcontrol.displacement_scaling_factor;
-            for (i = 0; i < ndata_used_test; ++i) {
-                for (j = 0; j < 3 * nat; ++j) {
-                    u_test[i][j] *= inv_dnorm;
-                }
-            }
-        }
-
         get_matrix_elements_algebraic_constraint(maxorder,
                                                  amat_1D_test,
                                                  bvec_test,
@@ -440,12 +406,17 @@ int Optimize::elastic_net(const std::string job_prefix,
     // Scale back force constants
 
     if (scale_displacement) {
-        for (i = 0; i < maxorder; ++i) {
-            const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
-            for (j = 0; j < constraint->get_const_fix(i).size(); ++j) {
-                const auto scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
-                constraint->set_const_fix_val_to_fix(i, j, scaled_val);
-            }
+        apply_scaler_displacement(u_train,
+                                  optcontrol.displacement_normalization_factor,
+                                  true);
+        apply_scaler_constraint(maxorder,
+                                optcontrol.displacement_normalization_factor,
+                                constraint,
+                                true);
+        if (optcontrol.cross_validation_mode == 2) {
+            apply_scaler_displacement(u_test,
+                                      optcontrol.displacement_normalization_factor,
+                                      true);
         }
     }
 
@@ -502,15 +473,10 @@ int Optimize::elastic_net(const std::string job_prefix,
     }
 
     if (scale_displacement) {
-        auto k = 0;
-        for (i = 0; i < maxorder; ++i) {
-            const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
-
-            for (j = 0; j < constraint->get_index_bimap(i).size(); ++j) {
-                param_tmp[k] *= scale_factor;
-                ++k;
-            }
-        }
+        apply_scaler_force_constants(maxorder,
+                                     optcontrol.displacement_normalization_factor,
+                                     constraint,
+                                     param_tmp);
     }
 
     recover_original_forceconstants(maxorder,
@@ -580,7 +546,7 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
         std::cout << "   LASSO_NALPHA = " << std::setw(5) << optcontrol.num_l1_alpha << std::endl;
         std::cout << "   LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
         std::cout << "   LASSO_MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
-        std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
+        std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
         std::cout << std::endl;
 
         if (optcontrol.standardize) {
@@ -599,7 +565,7 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
     ofs_cv.open(file_cv.c_str(), std::ios::out);
 
     ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
-    ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
+    ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
     ofs_cv << "# LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
     ofs_cv << "# L1 ALPHA, Fitting error, Validation error, Num. zero IFCs (2nd, 3rd, ...) " << std::endl;
 
@@ -687,7 +653,7 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
             for (auto i = 0; i < N_new; ++i) params_tmp[i] = x[i];
             auto k = 0;
             for (auto i = 0; i < maxorder; ++i) {
-                const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_scaling_factor, i + 1);
+                const auto scale_factor = 1.0 / std::pow(optcontrol.displacement_normalization_factor, i + 1);
 
                 for (auto j = 0; j < constraint->get_index_bimap(i).size(); ++j) {
                     params_tmp[k] *= scale_factor * factor_std(k);
@@ -757,7 +723,7 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
         std::cout << "   LASSO_ALPHA  (L1) = " << std::setw(15) << optcontrol.l1_alpha << std::endl;
         std::cout << "   LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
         std::cout << "   LASSO_MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
-        std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_scaling_factor << std::endl;
+        std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
 
         std::cout << std::endl;
         if (optcontrol.standardize) {
@@ -926,6 +892,69 @@ double Optimize::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
     lambda_max /= static_cast<double>(Amat.rows());
 
     return lambda_max;
+}
+
+void ALM_NS::Optimize::apply_scaler_displacement(std::vector<std::vector<double>> &u_inout,
+                                                 const double normalization_factor,
+                                                 const bool scale_back)
+{
+    const auto nrows = u_inout.size();
+    const auto ncols = u_inout[0].size();
+
+    if (scale_back) {
+        for (auto i = 0; i < nrows; ++i) {
+            for (auto j = 0; j < ncols; ++j) {
+                u_inout[i][j] *= normalization_factor;
+            }
+        }
+    } else {
+        const auto inv_scale_factor = 1.0 / normalization_factor;
+        for (auto i = 0; i < nrows; ++i) {
+            for (auto j = 0; j < ncols; ++j) {
+                u_inout[i][j] *= inv_scale_factor;
+            }
+        }
+    }
+}
+
+void Optimize::apply_scaler_constraint(const int maxorder,
+                                       const double normalization_factor,
+                                       Constraint *constraint,
+                                       const bool scale_back)
+{
+    if (scale_back) {
+        for (auto i = 0; i < maxorder; ++i) {
+            const auto scale_factor = 1.0 / std::pow(normalization_factor, i + 1);
+            for (auto j = 0; j < constraint->get_const_fix(i).size(); ++j) {
+                const auto scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
+                constraint->set_const_fix_val_to_fix(i, j, scaled_val);
+            }
+        }
+    } else {
+        for (auto i = 0; i < maxorder; ++i) {
+            const auto scale_factor = std::pow(normalization_factor, i + 1);
+            for (auto j = 0; j < constraint->get_const_fix(i).size(); ++j) {
+                const auto scaled_val = constraint->get_const_fix(i)[j].val_to_fix * scale_factor;
+                constraint->set_const_fix_val_to_fix(i, j, scaled_val);
+            }
+        }
+    }
+}
+
+void Optimize::apply_scaler_force_constants(const int maxorder,
+                                            const double normalization_factor,
+                                            Constraint *constraint,
+                                            std::vector<double> &param_inout)
+{
+    auto k = 0;
+    for (auto i = 0; i < maxorder; ++i) {
+        const auto scale_factor = 1.0 / std::pow(normalization_factor, i + 1);
+
+        for (auto j = 0; j < constraint->get_index_bimap(i).size(); ++j) {
+            param_inout[k] *= scale_factor;
+            ++k;
+        }
+    }
 }
 
 
@@ -1415,7 +1444,6 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
              "The lengths of displacement array and force array are diferent.");
     }
 
-
     const auto ndata_fit = u_in.size();
     const int natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
@@ -1601,7 +1629,7 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
 
     if (u_in.size() != f_in.size()) {
         exit("get_matrix_elements",
-            "The lengths of displacement array and force array are diferent.");
+             "The lengths of displacement array and force array are diferent.");
     }
 
     const auto ndata_fit = u_in.size();
