@@ -277,7 +277,7 @@ static PyObject * py_set_constraint_type(PyObject *self, PyObject *args)
 static PyObject * py_define(PyObject *self, PyObject *args)
 {
   int id;
-  size_t maxorder;
+  int maxorder;
 
   PyArrayObject* py_nbody_include;
   PyArrayObject* py_cutoff_radii;

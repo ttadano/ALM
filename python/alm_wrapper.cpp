@@ -161,7 +161,7 @@ extern "C" {
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
 
     void alm_define(const int id,
-                    const size_t maxorder,
+                    const int maxorder,
                     const size_t nkd,
                     const int *nbody_include,
                     const double *cutoff_radii_in)

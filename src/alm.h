@@ -70,7 +70,7 @@ namespace ALM_NS
         //void set_fitting_filenames(std::string dfile,
         //                           std::string ffile) const;
         void define(const int maxorder,
-                    const unsigned int nkd,
+                    const size_t nkd,
                     const int *nbody_include,
                     const double * const * const *cutoff_radii);
         //int get_ndata_used() const;

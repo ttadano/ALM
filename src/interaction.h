@@ -201,7 +201,7 @@ namespace ALM_NS
                          const std::vector<int> &) const;
 
         void define(const int,
-                    const unsigned int,
+                    const size_t,
                     const int *,
                     const double * const * const *);
         size_t get_maxorder() const;

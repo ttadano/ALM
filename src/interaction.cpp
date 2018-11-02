@@ -479,11 +479,11 @@ size_t Interaction::get_maxorder() const
 }
 
 void Interaction::define(const int maxorder_in,
-                         const unsigned int nkd,
+                         const size_t nkd,
                          const int *nbody_include_in,
                          const double * const * const *cutoff_radii_in)
 {
-    maxorder = maxorder_in;
+    maxorder = static_cast<size_t>(maxorder_in);
     if (nbody_include) {
         deallocate(nbody_include);
     }
@@ -503,8 +503,8 @@ void Interaction::define(const int maxorder_in,
     }
 
     for (auto i = 0; i < maxorder; ++i) {
-        for (unsigned int j = 0; j < nkd; ++j) {
-            for (unsigned int k = 0; k < nkd; ++k) {
+        for (size_t j = 0; j < nkd; ++j) {
+            for (size_t k = 0; k < nkd; ++k) {
                 cutoff_radii[i][j][k] = cutoff_radii_in[i][j][k];
             }
         }

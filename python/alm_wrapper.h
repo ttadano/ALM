@@ -41,7 +41,7 @@ extern "C" {
     // void set_fitting_filenames(const std::string dfile,
     //                           const std::string ffile);
     void alm_define(const int id,
-                    const size_t maxorder,
+                    const int maxorder,
                     const size_t nkd,
                     const int *nbody_include,
                     const double *cutoff_radii);
