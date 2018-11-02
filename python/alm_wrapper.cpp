@@ -92,7 +92,7 @@ extern "C" {
                       const double lavec[3][3],
                       const double xcoord[][3],
                       const int atomic_numbers[],
-                      size_t kind[])
+                      int kind[])
     {
         size_t i, j, nkd;
         int kind_unique[nat];
@@ -117,7 +117,6 @@ extern "C" {
                 ++nkd;
             }
         }
-
         std::string *kdname = new std::string[nkd];
         for (int i = 0; i < nkd; i++) {
             kdname[i] = atom_name[abs(kind_unique[i]) % 118];
@@ -148,11 +147,6 @@ extern "C" {
         alm[id]->set_displacement_and_force(u_in, f_in, nat, ndata_used);
     }
 
- /*   int alm_get_ndata_used(const int id)
-    {
-        return alm[id]->get_ndata_used();
-    }*/
-
     size_t alm_get_nrows_sensing_matrix(const int id)
     {
         return alm[id]->get_nrows_sensing_matrix();
@@ -165,8 +159,6 @@ extern "C" {
     }
 
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
-    // void set_fitting_filenames(const std::string dfile,
-    //                            const std::string ffile);
 
     void alm_define(const int id,
                     const size_t maxorder,

@@ -66,7 +66,7 @@ void System::init(const int verbosity,
 
 void System::set_supercell(const double lavec_in[3][3],
                            const size_t nat_in,
-                           const size_t *kind_in,
+                           const int *kind_in,
                            const double xf_in[][3])
 {
     size_t i, j;
@@ -130,7 +130,7 @@ void System::set_supercell(const double lavec_in[3][3],
         for (i = 0; i < nat_in; ++i) {
             for (j = 0; j < nkd; j++) {
                 if (kind_in[i] == unique_nums[j]) {
-                    supercell.kind.push_back(j + 1);
+                    supercell.kind.push_back(static_cast<int>(j + 1));
                 }
             }
         }

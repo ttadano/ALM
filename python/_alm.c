@@ -216,7 +216,7 @@ static PyObject * py_set_cell(PyObject *self, PyObject *args)
   double (*lavec)[3] = (double(*)[3])PyArray_DATA(py_lavec);
   double (*xcoord)[3] = (double(*)[3])PyArray_DATA(py_xcoord);
   const int* kind_in = (int*)PyArray_DATA(py_kind_in);
-  const int nat = PyArray_DIMS(py_kind_in)[0];
+  const size_t nat = (size_t)PyArray_DIMS(py_kind_in)[0];
   int* kind_indices = (int*)PyArray_DATA(py_kind_indices);
 
   alm_set_cell(id, nat, lavec, xcoord, kind_in, kind_indices);
@@ -253,8 +253,8 @@ static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args)
   const double* u = (double*)PyArray_DATA(py_u);
   const double* f = (double*)PyArray_DATA(py_f);
 
-  const int ndata_used = PyArray_DIMS(py_f)[0];
-  const int nat = PyArray_DIMS(py_f)[1];
+  const size_t ndata_used = (size_t)PyArray_DIMS(py_f)[0];
+  const size_t nat = (size_t)PyArray_DIMS(py_f)[1];
   alm_set_displacement_and_force(id, u, f, nat, ndata_used);
 
   Py_RETURN_NONE;
@@ -276,12 +276,13 @@ static PyObject * py_set_constraint_type(PyObject *self, PyObject *args)
 
 static PyObject * py_define(PyObject *self, PyObject *args)
 {
-  int id, maxorder;
+  int id;
+  size_t maxorder;
 
   PyArrayObject* py_nbody_include;
   PyArrayObject* py_cutoff_radii;
 
-  unsigned int nkd;
+  size_t nkd;
   double *cutoff_radii;
 
   if (!PyArg_ParseTuple(args, "iiOO",
@@ -297,7 +298,7 @@ static PyObject * py_define(PyObject *self, PyObject *args)
     cutoff_radii = NULL;
     nkd = 0;
   } else {
-    nkd = PyArray_DIMS(py_cutoff_radii)[1];
+    nkd = (size_t)PyArray_DIMS(py_cutoff_radii)[1];
     cutoff_radii = (double*)PyArray_DATA(py_cutoff_radii);
   }
 

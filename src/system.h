@@ -67,11 +67,11 @@ namespace ALM_NS
 
         void set_supercell(const double [3][3],
                            const size_t,
-                           const size_t *,
+                           const int *,
                            const double [][3]);
         void set_kdname(const std::string *);
         void set_periodicity(const int [3]);
-        void set_spin_variables(const unsigned int nat,
+        void set_spin_variables(const size_t nat,
                                 const bool,
                                 const int,
                                 const int,

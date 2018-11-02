@@ -79,7 +79,7 @@ namespace ALM_NS
 
     private:
         size_t nat, nkd;
-        size_t *kd;
+        int *kd;
         double lavec[3][3];
         double (*xcoord)[3]; // fractional coordinate
         std::string *kdname;
