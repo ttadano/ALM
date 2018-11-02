@@ -39,7 +39,7 @@ ALM::~ALM()
 {
     delete files;
     delete system;
-    delete interaction;
+    delete cluster;
     delete fcs;
     delete symmetry;
     delete optimize;
@@ -52,7 +52,7 @@ void ALM::create()
 {
     files = new Files();
     system = new System();
-    interaction = new Interaction();
+    cluster = new Cluster();
     fcs = new Fcs();
     symmetry = new Symmetry();
     optimize = new Optimize();
@@ -210,10 +210,10 @@ void ALM::define(const int maxorder,
                  const double * const * const *cutoff_radii)
 {
     // nkd = 0 means cutoff_radii undefined (hopefully nullptr).
-    interaction->define(maxorder,
-                        nkd,
-                        nbody_include,
-                        cutoff_radii);
+    cluster->define(maxorder,
+                    nkd,
+                    nbody_include,
+                    cutoff_radii);
 }
 
 
@@ -264,12 +264,12 @@ const std::vector<std::vector<int>>& ALM::get_atom_mapping_by_pure_translations(
 
 int ALM::get_maxorder() const
 {
-    return interaction->get_maxorder();
+    return cluster->get_maxorder();
 }
 
 int* ALM::get_nbody_include() const
 {
-    return interaction->get_nbody_include();
+    return cluster->get_nbody_include();
 }
 
 int ALM::get_number_of_displacement_patterns(const int fc_order) const
@@ -347,7 +347,7 @@ int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
     if (!ready_to_fit) {
         constraint->setup(system,
                           fcs,
-                          interaction,
+                          cluster,
                           symmetry,
                           run_mode,
                           verbosity,
@@ -368,7 +368,7 @@ void ALM::get_fc_origin(double *fc_values,
 
     int i;
 
-    const auto maxorder = interaction->get_maxorder();
+    const auto maxorder = cluster->get_maxorder();
     if (fc_order > maxorder) {
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
         exit(EXIT_FAILURE);
@@ -409,7 +409,7 @@ void ALM::get_fc_irreducible(double *fc_values,
     int i;
     double fc_elem;
 
-    const auto maxorder = interaction->get_maxorder();
+    const auto maxorder = cluster->get_maxorder();
     if (fc_order > maxorder) {
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
         exit(EXIT_FAILURE);
@@ -418,7 +418,7 @@ void ALM::get_fc_irreducible(double *fc_values,
     if (!ready_to_fit) {
         constraint->setup(system,
                           fcs,
-                          interaction,
+                          cluster,
                           symmetry,
                           run_mode,
                           verbosity,
@@ -461,7 +461,7 @@ void ALM::get_fc_all(double *fc_values,
     double fc_elem;
     const auto ntran = symmetry->get_ntran();
 
-    const auto maxorder = interaction->get_maxorder();
+    const auto maxorder = cluster->get_maxorder();
     if (fc_order > maxorder) {
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
         exit(EXIT_FAILURE);
@@ -510,7 +510,7 @@ void ALM::get_fc_all(double *fc_values,
 
 void ALM::set_fc(double *fc_in) const
 {
-    optimize->set_fcs_values(interaction->get_maxorder(),
+    optimize->set_fcs_values(cluster->get_maxorder(),
                              fc_in,
                              fcs->get_nequiv(),
                              constraint);
@@ -519,7 +519,7 @@ void ALM::set_fc(double *fc_in) const
 void ALM::get_matrix_elements(double *amat,
                               double *bvec) const
 {
-    const auto maxorder = interaction->get_maxorder();
+    const auto maxorder = cluster->get_maxorder();
     double fnorm;
 
     std::vector<double> amat_vec;
@@ -574,17 +574,17 @@ int ALM::run_optimize()
     if (!ready_to_fit) {
         constraint->setup(system,
                           fcs,
-                          interaction,
+                          cluster,
                           symmetry,
                           run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
     }
-    const auto maxorder = interaction->get_maxorder();
+    const auto maxorder = cluster->get_maxorder();
     std::vector<std::string> str_order(maxorder);
     for (auto i = 0; i < maxorder; ++i) {
-        str_order[i] = interaction->get_ordername(i);
+        str_order[i] = cluster->get_ordername(i);
     }
     const auto info = optimize->optimize_main(symmetry,
                                               constraint,
@@ -602,7 +602,7 @@ int ALM::run_optimize()
 
 void ALM::run_suggest() const
 {
-    displace->gen_displacement_pattern(interaction,
+    displace->gen_displacement_pattern(cluster,
                                        symmetry,
                                        fcs,
                                        constraint,
@@ -624,12 +624,12 @@ void ALM::initialize_structure()
 
 void ALM::initialize_interaction()
 {
-    // Build interaction & force constant table
-    interaction->init(system,
-                      symmetry,
-                      verbosity,
-                      timer);
-    fcs->init(interaction,
+    // Build cluster & force constant table
+    cluster->init(system,
+                  symmetry,
+                  verbosity,
+                  timer);
+    fcs->init(cluster,
               symmetry,
               system->get_supercell().number_of_atoms,
               verbosity,

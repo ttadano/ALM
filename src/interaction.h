@@ -1,5 +1,5 @@
 /*
- interaction.h
+ cluster.h
 
  Copyright (c) 2014 Terumasa Tadano
 
@@ -180,11 +180,11 @@ namespace ALM_NS
         }
     };
 
-    class Interaction
+    class Cluster
     {
     public:
-        Interaction();
-        ~Interaction();
+        Cluster();
+        ~Cluster();
 
         void init(const System *system,
                   const Symmetry *symmetry,
@@ -223,9 +223,9 @@ namespace ALM_NS
         std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **interaction_cluster;
 
-        std::vector<DistInfo> **distall;       // Distance of all pairs (i,j) under the PBC
+        std::vector<DistInfo> **distall; // Distance of all pairs (i,j) under the PBC
         std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
-        // Interaction many-body clusters with mirrow image information
+        // Interacting many-body clusters with mirrow image information
 
         void set_default_variables();
         void deallocate_variables();

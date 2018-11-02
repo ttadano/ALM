@@ -38,14 +38,14 @@ Fcs::~Fcs()
     deallocate_variables();
 };
 
-void Fcs::init(const Interaction *interaction,
+void Fcs::init(const Cluster *cluster,
                const Symmetry *symmetry,
                const unsigned int number_of_atoms,
                const int verbosity,
                Timer *timer)
 {
     int i;
-    const auto maxorder = interaction->get_maxorder();
+    const auto maxorder = cluster->get_maxorder();
 
     timer->start_clock("fcs");
 
@@ -73,7 +73,7 @@ void Fcs::init(const Interaction *interaction,
     for (i = 0; i < maxorder; ++i) {
         generate_force_constant_table(i,
                                       number_of_atoms,
-                                      interaction->get_cluster_list(i),
+                                      cluster->get_cluster_list(i),
                                       symmetry,
                                       "Cartesian",
                                       fc_table[i],
@@ -86,7 +86,7 @@ void Fcs::init(const Interaction *interaction,
         std::cout << std::endl;
         for (i = 0; i < maxorder; ++i) {
             std::cout << "  Number of " << std::setw(9)
-                << interaction->get_ordername(i)
+                << cluster->get_ordername(i)
                 << " FCs : " << nequiv[i].size();
             std::cout << std::endl;
         }
@@ -304,7 +304,7 @@ void Fcs::generate_force_constant_table(const int order,
             }
 
         } // close xyz component loop
-    }     // close atom number loop (iterator)
+    } // close atom number loop (iterator)
 
     deallocate(xyzcomponent);
     list_found.clear();
@@ -481,7 +481,7 @@ void Fcs::get_constraint_symmetry(const int nat,
                 }
 
             } // close isym loop
-        }     // close ii loop
+        } // close ii loop
 
         deallocate(ind);
         deallocate(atm_index);

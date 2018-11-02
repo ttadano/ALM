@@ -96,7 +96,7 @@ void System::set_supercell(const double lavec_in[3][3],
     for (i = 0; i < nkd; i++) {
         if (unique_nums[i] > nkd) {
             std::cout << " WARNING : integers assigned to atoms are wrong. "
-                      << " The numbers will be resorted." << std::endl;
+                << " The numbers will be resorted." << std::endl;
             wrong_number = true;
             break;
         }

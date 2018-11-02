@@ -205,7 +205,7 @@ namespace ALM_NS
 
         void setup(const System *system,
                    const Fcs *fcs,
-                   const Interaction *interaction,
+                   const Cluster *cluster,
                    const Symmetry *symmetry,
                    const std::string alm_mode,
                    const int verbosity,
@@ -289,7 +289,7 @@ namespace ALM_NS
 
         void generate_rotational_constraint(const System *,
                                             const Symmetry *,
-                                            const Interaction *,
+                                            const Cluster *,
                                             const Fcs *,
                                             const int,
                                             const double);
@@ -320,13 +320,13 @@ namespace ALM_NS
         // const_symmetry is updated.
         void generate_symmetry_constraint_in_cartesian(int,
                                                        const Symmetry *,
-                                                       const Interaction *,
+                                                       const Cluster *,
                                                        const Fcs *,
                                                        const int);
 
         void get_constraint_translation(const Cell &,
                                         const Symmetry *,
-                                        const Interaction *,
+                                        const Cluster *,
                                         const Fcs *,
                                         const int,
                                         const std::vector<FcProperty> &,
@@ -337,7 +337,7 @@ namespace ALM_NS
         // const_translation is updated.
         void generate_translational_constraint(const Cell &,
                                                const Symmetry *,
-                                               const Interaction *,
+                                               const Cluster *,
                                                const Fcs *,
                                                const int);
 

@@ -156,7 +156,7 @@ void Symmetry::set_default_variables()
     printsymmetry = false;
     ntran = 0;
     nat_prim = 0;
-    tolerance = 1e-6;
+    tolerance = 1e-3;
     use_internal_symm_finder = false;
 }
 

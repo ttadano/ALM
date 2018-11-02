@@ -35,7 +35,7 @@ Displace::~Displace()
     deallocate_variables();
 }
 
-void Displace::gen_displacement_pattern(const Interaction *interaction,
+void Displace::gen_displacement_pattern(const Cluster *cluster,
                                         const Symmetry *symmetry,
                                         const Fcs *fcs,
                                         const Constraint *constraint,
@@ -43,7 +43,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
                                         const int verbosity)
 {
     int i, j, m, order;
-    const auto maxorder = interaction->get_maxorder();
+    const auto maxorder = cluster->get_maxorder();
     std::string preferred_basis;
     std::vector<int> group_tmp;
     std::vector<std::map<unsigned int, double>> *constsym;
@@ -94,7 +94,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
 
         fcs->generate_force_constant_table(order,
                                            system->get_supercell().number_of_atoms,
-                                           interaction->get_cluster_list(order),
+                                           cluster->get_cluster_list(order),
                                            symmetry, preferred_basis,
                                            fc_table[order], nequiv[order],
                                            fc_zeros[order], false);
@@ -124,7 +124,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
     if (verbosity > 0) {
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of free" << std::setw(9)
-                << interaction->get_ordername(order) << " FCs : "
+                << cluster->get_ordername(order) << " FCs : "
                 << index_bimap_tmp[order].size() << std::endl;
         }
         std::cout << std::endl;
@@ -203,7 +203,7 @@ void Displace::gen_displacement_pattern(const Interaction *interaction,
 
         for (order = 0; order < maxorder; ++order) {
             std::cout << "  Number of disp. patterns for " << std::setw(9)
-                << interaction->get_ordername(order) << " : "
+                << cluster->get_ordername(order) << " : "
                 << pattern_all[order].size() << std::endl;
         }
         std::cout << std::endl;

@@ -1,5 +1,5 @@
 /*
-interaction.cpp
+cluster.cpp
 
 Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
@@ -26,22 +26,22 @@ or http://opensource.org/licenses/mit-license.php for information.
 
 using namespace ALM_NS;
 
-Interaction::Interaction()
+Cluster::Cluster()
 {
     set_default_variables();
 }
 
-Interaction::~Interaction()
+Cluster::~Cluster()
 {
     deallocate_variables();
 }
 
-void Interaction::init(const System *system,
-                       const Symmetry *symmetry,
-                       const int verbosity,
-                       Timer *timer)
+void Cluster::init(const System *system,
+                   const Symmetry *symmetry,
+                   const int verbosity,
+                   Timer *timer)
 {
-    timer->start_clock("interaction");
+    timer->start_clock("cluster");
 
     int i, j, k;
     const auto nat = system->get_supercell().number_of_atoms;
@@ -166,13 +166,13 @@ void Interaction::init(const System *system,
         std::cout << std::endl;
     }
 
-    timer->stop_clock("interaction");
+    timer->stop_clock("cluster");
 }
 
-void Interaction::generate_pairs(const int natmin,
-                                 const std::vector<std::vector<int>> &map_p2s,
-                                 std::set<IntList> *pair_out,
-                                 const std::set<InteractionCluster> * const *interaction_cluster) const
+void Cluster::generate_pairs(const int natmin,
+                             const std::vector<std::vector<int>> &map_p2s,
+                             std::set<IntList> *pair_out,
+                             const std::set<InteractionCluster> * const *interaction_cluster) const
 {
     int j;
     int *pair_tmp;
@@ -206,7 +206,7 @@ void Interaction::generate_pairs(const int natmin,
     }
 }
 
-void Interaction::set_default_variables()
+void Cluster::set_default_variables()
 {
     maxorder = 0;
     nbody_include = nullptr;
@@ -218,7 +218,7 @@ void Interaction::set_default_variables()
     interaction_cluster = nullptr;
 }
 
-void Interaction::deallocate_variables()
+void Cluster::deallocate_variables()
 {
     if (nbody_include) {
         deallocate(nbody_include);
@@ -250,8 +250,8 @@ void Interaction::deallocate_variables()
     }
 }
 
-double Interaction::distance(const double *x1,
-                             const double *x2) const
+double Cluster::distance(const double *x1,
+                         const double *x2) const
 {
     auto dist = std::pow(x1[0] - x2[0], 2) + std::pow(x1[1] - x2[1], 2) + std::pow(x1[2] - x2[2], 2);
     dist = std::sqrt(dist);
@@ -259,9 +259,9 @@ double Interaction::distance(const double *x1,
     return dist;
 }
 
-void Interaction::get_pairs_of_minimum_distance(const int nat,
-                                                const double * const * const *xc_in,
-                                                const int *exist)
+void Cluster::get_pairs_of_minimum_distance(const int nat,
+                                            const double * const * const *xc_in,
+                                            const int *exist)
 {
     int i, j;
     double vec[3];
@@ -306,11 +306,11 @@ void Interaction::get_pairs_of_minimum_distance(const int nat,
     }
 }
 
-void Interaction::print_neighborlist(const int nat,
-                                     const int natmin,
-                                     const std::vector<std::vector<int>> &map_p2s,
-                                     const std::vector<int> &kd,
-                                     const std::string *kdname) const
+void Cluster::print_neighborlist(const int nat,
+                                 const int natmin,
+                                 const std::vector<std::vector<int>> &map_p2s,
+                                 const std::vector<int> &kd,
+                                 const std::string *kdname) const
 {
     //
     // Print the list of neighboring atoms and distances
@@ -424,12 +424,12 @@ void Interaction::print_neighborlist(const int nat,
 }
 
 
-void Interaction::generate_interaction_information_by_cutoff(const int nat,
-                                                             const int natmin,
-                                                             const std::vector<int> &kd,
-                                                             const std::vector<std::vector<int>> &map_p2s,
-                                                             const double * const *rc,
-                                                             std::vector<int> *interaction_list) const
+void Cluster::generate_interaction_information_by_cutoff(const int nat,
+                                                         const int natmin,
+                                                         const std::vector<int> &kd,
+                                                         const std::vector<std::vector<int>> &map_p2s,
+                                                         const double * const *rc,
+                                                         std::vector<int> *interaction_list) const
 {
     for (auto i = 0; i < natmin; ++i) {
 
@@ -458,10 +458,10 @@ void Interaction::generate_interaction_information_by_cutoff(const int nat,
     }
 }
 
-void Interaction::set_interaction_by_cutoff(const unsigned int nat,
-                                            const std::vector<int> &kd,
-                                            const unsigned int nat_prim,
-                                            const std::vector<std::vector<int>> &map_p2s)
+void Cluster::set_interaction_by_cutoff(const unsigned int nat,
+                                        const std::vector<int> &kd,
+                                        const unsigned int nat_prim,
+                                        const std::vector<std::vector<int>> &map_p2s)
 {
     for (auto order = 0; order < maxorder; ++order) {
         generate_interaction_information_by_cutoff(nat,
@@ -473,15 +473,15 @@ void Interaction::set_interaction_by_cutoff(const unsigned int nat,
     }
 }
 
-size_t Interaction::get_maxorder() const
+size_t Cluster::get_maxorder() const
 {
     return maxorder;
 }
 
-void Interaction::define(const int maxorder_in,
-                         const size_t nkd,
-                         const int *nbody_include_in,
-                         const double * const * const *cutoff_radii_in)
+void Cluster::define(const int maxorder_in,
+                     const size_t nkd,
+                     const int *nbody_include_in,
+                     const double * const * const *cutoff_radii_in)
 {
     maxorder = static_cast<size_t>(maxorder_in);
     if (nbody_include) {
@@ -494,7 +494,7 @@ void Interaction::define(const int maxorder_in,
     }
 
     // nkd == 0: Use current values, which are probably default values
-    // defined at Interaction::init().
+    // defined at Cluster::init().
     if (nkd > 0) {
         if (cutoff_radii) {
             deallocate(cutoff_radii);
@@ -511,38 +511,38 @@ void Interaction::define(const int maxorder_in,
     }
 }
 
-int* Interaction::get_nbody_include() const
+int* Cluster::get_nbody_include() const
 {
     return nbody_include;
 }
 
-std::string Interaction::get_ordername(const unsigned int order) const
+std::string Cluster::get_ordername(const unsigned int order) const
 {
     return str_order[order];
 }
 
-const std::set<IntList>& Interaction::get_cluster_list(const unsigned int order) const
+const std::set<IntList>& Cluster::get_cluster_list(const unsigned int order) const
 {
     return cluster_list[order];
 }
 
-const std::vector<int>& Interaction::get_interaction_pair(const unsigned int order,
-                                                          const unsigned int atom_index) const
+const std::vector<int>& Cluster::get_interaction_pair(const unsigned int order,
+                                                      const unsigned int atom_index) const
 {
     return interaction_pair[order][atom_index];
 }
 
-const std::set<InteractionCluster>& Interaction::get_interaction_cluster(const unsigned int order,
-                                                                         const unsigned int atom_index) const
+const std::set<InteractionCluster>& Cluster::get_interaction_cluster(const unsigned int order,
+                                                                     const unsigned int atom_index) const
 {
     return interaction_cluster[order][atom_index];
 }
 
-void Interaction::print_interaction_information(const int natmin,
-                                                const std::vector<std::vector<int>> &map_p2s,
-                                                const std::vector<int> &kd,
-                                                const std::string *kdname,
-                                                const std::vector<int> * const *interaction_list)
+void Cluster::print_interaction_information(const int natmin,
+                                            const std::vector<std::vector<int>> &map_p2s,
+                                            const std::vector<int> &kd,
+                                            const std::string *kdname,
+                                            const std::vector<int> * const *interaction_list)
 {
     std::vector<int> intlist;
 
@@ -596,10 +596,10 @@ void Interaction::print_interaction_information(const int natmin,
 }
 
 
-bool Interaction::is_incutoff(const int n,
-                              const int *atomnumlist,
-                              const int order,
-                              const std::vector<int> &kd) const
+bool Cluster::is_incutoff(const int n,
+                          const int *atomnumlist,
+                          const int order,
+                          const std::vector<int> &kd) const
 {
     for (auto i = 0; i < n; ++i) {
         const auto iat = atomnumlist[i];
@@ -622,7 +622,7 @@ bool Interaction::is_incutoff(const int n,
 }
 
 
-void Interaction::set_ordername()
+void Cluster::set_ordername()
 {
     str_order.resize(maxorder);
     str_order[0] = "HARMONIC";
@@ -632,8 +632,8 @@ void Interaction::set_ordername()
     }
 }
 
-int Interaction::nbody(const int n,
-                       const int *arr) const
+int Cluster::nbody(const int n,
+                   const int *arr) const
 {
     std::vector<int> v(n);
 
@@ -649,22 +649,22 @@ int Interaction::nbody(const int n,
     return ret;
 }
 
-bool Interaction::satisfy_nbody_rule(const int nelem,
-                                     const int *arr,
-                                     const int order) const
+bool Cluster::satisfy_nbody_rule(const int nelem,
+                                 const int *arr,
+                                 const int order) const
 {
     return nbody(nelem, arr) <= nbody_include[order];
 }
 
 
-void Interaction::calc_interaction_clusters(const int natmin,
-                                            const std::vector<int> &kd,
-                                            const std::vector<std::vector<int>> &map_p2s,
-                                            const double * const * const *x_image,
-                                            const int *exist)
+void Cluster::calc_interaction_clusters(const int natmin,
+                                        const std::vector<int> &kd,
+                                        const std::vector<std::vector<int>> &map_p2s,
+                                        const double * const * const *x_image,
+                                        const int *exist)
 {
     //
-    // Calculate the complete set of interaction clusters for all orders.
+    // Calculate the complete set of clusters for all orders.
     //
 
     for (int order = 0; order < maxorder; ++order) {
@@ -681,17 +681,17 @@ void Interaction::calc_interaction_clusters(const int natmin,
 }
 
 
-void Interaction::set_interaction_cluster(const int order,
-                                          const int natmin,
-                                          const std::vector<int> &kd,
-                                          const std::vector<std::vector<int>> &map_p2s,
-                                          const std::vector<int> *interaction_pair_in,
-                                          const double * const * const *x_image,
-                                          const int *exist,
-                                          std::set<InteractionCluster> *interaction_cluster_out)
+void Cluster::set_interaction_cluster(const int order,
+                                      const int natmin,
+                                      const std::vector<int> &kd,
+                                      const std::vector<std::vector<int>> &map_p2s,
+                                      const std::vector<int> *interaction_pair_in,
+                                      const double * const * const *x_image,
+                                      const int *exist,
+                                      std::set<InteractionCluster> *interaction_cluster_out)
 {
     //
-    // Calculate a set of interaction clusters for the given order
+    // Calculate a set of clusters for the given order
     //
 
     int j, k;
@@ -765,7 +765,7 @@ void Interaction::set_interaction_cluster(const int order,
 
             data_vec.clear();
 
-            // First, we generate all possible combinations of interaction clusters.
+            // First, we generate all possible combinations of clusters.
             CombinationWithRepetition<int> g(intlist.begin(), intlist.end(), order + 1);
             do {
                 auto data = g.now();
@@ -816,7 +816,7 @@ void Interaction::set_interaction_cluster(const int order,
                     cell_vector.clear();
 
                     // Loop over the cell images of atom 'jat' and add to the list
-                    // as a candidate for the interaction cluster.
+                    // as a candidate for the cluster.
                     // The mirror images whose distance is larger than the minimum value
                     // of the distance(iat, jat) can be added to the cell_vector list.
                     for (const auto &it : distall[iat][jat]) {
@@ -875,7 +875,7 @@ void Interaction::set_interaction_cluster(const int order,
 
                 if (!distance_list.empty()) {
                     // If the distance_list is not empty, there is a set of mirror images
-                    // that satisfies the condition of the interaction.
+                    // that satisfies the condition of the cluster.
 
                     pairs_icell.clear();
                     for (j = 0; j < intpair_uniq.size(); ++j) {
@@ -918,10 +918,10 @@ void Interaction::set_interaction_cluster(const int order,
 }
 
 
-void Interaction::cell_combination(const std::vector<std::vector<int>> &array,
-                                   const int i,
-                                   const std::vector<int> &accum,
-                                   std::vector<std::vector<int>> &comb) const
+void Cluster::cell_combination(const std::vector<std::vector<int>> &array,
+                               const int i,
+                               const std::vector<int> &accum,
+                               std::vector<std::vector<int>> &comb) const
 {
     if (i == array.size()) {
         comb.push_back(accum);

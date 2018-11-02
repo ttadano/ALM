@@ -54,4 +54,3 @@ DispForceFile Files::get_datfile_test() const
 {
     return datfile_test;
 }
-

@@ -124,7 +124,7 @@ namespace ALM_NS
         Displace();
         ~Displace();
 
-        void gen_displacement_pattern(const Interaction *interaction,
+        void gen_displacement_pattern(const Cluster *cluster,
                                       const Symmetry *symmetry,
                                       const Fcs *fcs,
                                       const Constraint *constraint,

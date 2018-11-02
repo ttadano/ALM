@@ -29,7 +29,7 @@ namespace ALM_NS
         ALM();
         ~ALM();
 
-        class Interaction *interaction;
+        class Cluster *cluster;
         class Fcs *fcs;
         class Symmetry *symmetry;
         class Optimize *optimize;

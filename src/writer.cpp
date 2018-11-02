@@ -63,9 +63,9 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << std::endl;
 
     std::cout << " Interaction:" << std::endl;
-    std::cout << "  NORDER = " << alm->interaction->get_maxorder() << std::endl;
+    std::cout << "  NORDER = " << alm->cluster->get_maxorder() << std::endl;
     std::cout << "  NBODY = ";
-    for (i = 0; i < alm->interaction->get_maxorder(); ++i)
+    for (i = 0; i < alm->cluster->get_maxorder(); ++i)
         std::cout << std::setw(3) << alm->get_nbody_include()[i];
 
     std::cout << std::endl << std::endl;
@@ -132,7 +132,7 @@ void Writer::writeall(ALM *alm)
     //   write_in_QEformat(alm);
 
     const auto print_thirdorderpy_fc3 = false;
-    if (alm->interaction->get_maxorder() > 1 && print_thirdorderpy_fc3) {
+    if (alm->cluster->get_maxorder() > 1 && print_thirdorderpy_fc3) {
         write_fc3_thirdorderpy_format(alm);
     }
 
@@ -147,7 +147,7 @@ void Writer::write_force_constants(ALM *alm) const
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
 
-    const auto maxorder = alm->interaction->get_maxorder();
+    const auto maxorder = alm->cluster->get_maxorder();
 
     ofs_fcs.open(alm->files->file_fcs.c_str(), std::ios::out);
     if (!ofs_fcs) exit("write_force_constants", "cannot open fcs file");
@@ -196,10 +196,10 @@ void Writer::write_force_constants(ALM *alm) const
                 std::sort(atom_tmp.begin(), atom_tmp.end());
 
                 auto iter_cluster
-                    = alm->interaction->get_interaction_cluster(order, j).
+                    = alm->cluster->get_interaction_cluster(order, j).
                            find(InteractionCluster(atom_tmp, cell_dummy));
 
-                if (iter_cluster == alm->interaction->get_interaction_cluster(order, j).end()) {
+                if (iter_cluster == alm->cluster->get_interaction_cluster(order, j).end()) {
                     std::cout << std::setw(5) << j;
                     for (l = 0; l < order + 1; ++l) {
                         std::cout << std::setw(5) << atom_tmp[l];
@@ -281,7 +281,7 @@ void Writer::write_force_constants(ALM *alm) const
 
 void Writer::write_displacement_pattern(ALM *alm) const
 {
-    const auto maxorder = alm->interaction->get_maxorder();
+    const auto maxorder = alm->cluster->get_maxorder();
 
     std::ofstream ofs_pattern;
     std::string file_disp_pattern;
@@ -326,7 +326,7 @@ void Writer::write_displacement_pattern(ALM *alm) const
         ofs_pattern.close();
 
         if (alm->get_verbosity() > 0) {
-            std::cout << "  " << alm->interaction->get_ordername(order)
+            std::cout << "  " << alm->cluster->get_ordername(order)
                 << " : " << file_disp_pattern << std::endl;
         }
 
@@ -442,7 +442,7 @@ void Writer::write_misc_xml(ALM *alm)
 
     auto ihead = 0;
     auto k = 0;
-    const auto nelem = alm->interaction->get_maxorder() + 1;
+    const auto nelem = alm->cluster->get_maxorder() + 1;
     int *pair_tmp;
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
@@ -462,9 +462,9 @@ void Writer::write_misc_xml(ALM *alm)
         atom_tmp.clear();
         atom_tmp.push_back(pair_tmp[1]);
 
-        iter_cluster = alm->interaction->get_interaction_cluster(0, j).find(
+        iter_cluster = alm->cluster->get_interaction_cluster(0, j).find(
             InteractionCluster(atom_tmp, cell_dummy));
-        if (iter_cluster == alm->interaction->get_interaction_cluster(0, j).end()) {
+        if (iter_cluster == alm->cluster->get_interaction_cluster(0, j).end()) {
             exit("load_reference_system_xml",
                  "Cubic force constant is not found.");
         }
@@ -483,7 +483,7 @@ void Writer::write_misc_xml(ALM *alm)
     ihead = 0;
 
 
-    if (alm->interaction->get_maxorder() > 1) {
+    if (alm->cluster->get_maxorder() > 1) {
 
         pt.put("Data.ForceConstants.CubicUnique.NFC3", alm->fcs->get_nequiv()[1].size());
 
@@ -499,9 +499,9 @@ void Writer::write_misc_xml(ALM *alm)
             }
             std::sort(atom_tmp.begin(), atom_tmp.end());
 
-            iter_cluster = alm->interaction->get_interaction_cluster(1, j).find(
+            iter_cluster = alm->cluster->get_interaction_cluster(1, j).find(
                 InteractionCluster(atom_tmp, cell_dummy));
-            if (iter_cluster == alm->interaction->get_interaction_cluster(1, j).end()) {
+            if (iter_cluster == alm->cluster->get_interaction_cluster(1, j).end()) {
                 exit("load_reference_system_xml",
                      "Cubic force constant is not found.");
             }
@@ -539,10 +539,10 @@ void Writer::write_misc_xml(ALM *alm)
         atom_tmp.clear();
         atom_tmp.push_back(pair_tmp[1]);
 
-        iter_cluster = alm->interaction->get_interaction_cluster(0, j).find(
+        iter_cluster = alm->cluster->get_interaction_cluster(0, j).find(
             InteractionCluster(atom_tmp, cell_dummy));
 
-        if (iter_cluster != alm->interaction->get_interaction_cluster(0, j).end()) {
+        if (iter_cluster != alm->cluster->get_interaction_cluster(0, j).end()) {
             multiplicity = (*iter_cluster).cell.size();
 
             for (imult = 0; imult < multiplicity; ++imult) {
@@ -571,7 +571,7 @@ void Writer::write_misc_xml(ALM *alm)
 
     // Print anharmonic force constants to the xml file.
 
-    for (auto order = 1; order < alm->interaction->get_maxorder(); ++order) {
+    for (auto order = 1; order < alm->cluster->get_maxorder(); ++order) {
 
         std::sort(alm->fcs->get_fc_table()[order].begin(), alm->fcs->get_fc_table()[order].end());
 
@@ -596,10 +596,10 @@ void Writer::write_misc_xml(ALM *alm)
                 + std::to_string(order + 2)
                 + ".FC" + std::to_string(order + 2);
 
-            iter_cluster = alm->interaction->get_interaction_cluster(order, j).find(
+            iter_cluster = alm->cluster->get_interaction_cluster(order, j).find(
                 InteractionCluster(atom_tmp, cell_dummy));
 
-            if (iter_cluster != alm->interaction->get_interaction_cluster(order, j).end()) {
+            if (iter_cluster != alm->cluster->get_interaction_cluster(order, j).end()) {
                 multiplicity = (*iter_cluster).cell.size();
 
                 for (imult = 0; imult < multiplicity; ++imult) {
@@ -832,7 +832,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
             atom_tmp[0] = pair_tmp[1];
             atom_tmp[1] = pair_tmp[2];
         }
-        iter_cluster = alm->interaction->get_interaction_cluster(1, j).find(InteractionCluster(atom_tmp, cell_dummy));
+        iter_cluster = alm->cluster->get_interaction_cluster(1, j).find(InteractionCluster(atom_tmp, cell_dummy));
 
         if (!has_element[j][pair_tmp[1]][pair_tmp[2]]) {
             nelems += (*iter_cluster).cell.size();
@@ -883,9 +883,9 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
                             swapped = false;
                         }
 
-                        iter_cluster = alm->interaction->get_interaction_cluster(1, i).find(
+                        iter_cluster = alm->cluster->get_interaction_cluster(1, i).find(
                             InteractionCluster(atom_tmp, cell_dummy));
-                        if (iter_cluster == alm->interaction->get_interaction_cluster(1, i).end()) {
+                        if (iter_cluster == alm->cluster->get_interaction_cluster(1, i).end()) {
                             exit("write_misc_xml", "This cannot happen.");
                         }
 
