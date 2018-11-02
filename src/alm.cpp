@@ -13,7 +13,7 @@
 #include "fcs.h"
 #include "files.h"
 #include "optimize.h"
-#include "interaction.h"
+#include "cluster.h"
 #include "memory.h"
 #include "patterndisp.h"
 #include "symmetry.h"

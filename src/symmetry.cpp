@@ -10,7 +10,7 @@
 
 #include "symmetry.h"
 #include "error.h"
-#include "interaction.h"
+#include "cluster.h"
 #include "memory.h"
 #include "mathfunctions.h"
 #include "system.h"

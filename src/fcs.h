@@ -15,7 +15,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
-#include "interaction.h"
+#include "cluster.h"
 #include "symmetry.h"
 #include "timer.h"
 

@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 #include <set>
-#include "interaction.h"
+#include "cluster.h"
 #include "symmetry.h"
 #include "fcs.h"
 #include "constraint.h"

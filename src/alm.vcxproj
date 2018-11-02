@@ -84,12 +84,12 @@
   <ItemGroup>
     <ClCompile Include="alm.cpp" />
     <ClCompile Include="alm_cui.cpp" />
+    <ClCompile Include="cluster.cpp" />
     <ClCompile Include="constraint.cpp" />
     <ClCompile Include="fcs.cpp" />
     <ClCompile Include="files.cpp" />
     <ClCompile Include="input_parser.cpp" />
     <ClCompile Include="input_setter.cpp" />
-    <ClCompile Include="interaction.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="optimize.cpp" />
     <ClCompile Include="patterndisp.cpp" />
@@ -102,6 +102,7 @@
   <ItemGroup>
     <ClInclude Include="alm.h" />
     <ClInclude Include="alm_cui.h" />
+    <ClInclude Include="cluster.h" />
     <ClInclude Include="combination.h" />
     <ClInclude Include="constraint.h" />
     <ClInclude Include="error.h" />
@@ -109,7 +110,6 @@
     <ClInclude Include="files.h" />
     <ClInclude Include="input_parser.h" />
     <ClInclude Include="input_setter.h" />
-    <ClInclude Include="interaction.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="optimize.h" />
     <ClInclude Include="patterndisp.h" />

@@ -8,7 +8,7 @@ Please see the file 'LICENCE.txt' in the root directory
 or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include "interaction.h"
+#include "cluster.h"
 #include "combination.h"
 #include "constants.h"
 #include "fcs.h"

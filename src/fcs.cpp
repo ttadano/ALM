@@ -12,7 +12,7 @@
 #include "constants.h"
 #include "constraint.h"
 #include "error.h"
-#include "interaction.h"
+#include "cluster.h"
 #include "mathfunctions.h"
 #include "memory.h"
 #include "rref.h"

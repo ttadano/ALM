@@ -18,7 +18,7 @@
 #include <map>
 #include "constants.h"
 #include "fcs.h"
-#include "interaction.h"
+#include "cluster.h"
 #include "system.h"
 #include "timer.h"
 

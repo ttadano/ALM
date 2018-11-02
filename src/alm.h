@@ -12,7 +12,7 @@
 
 #include <string>
 #include "system.h"
-#include "interaction.h"
+#include "cluster.h"
 #include "fcs.h"
 #include "symmetry.h"
 #include "optimize.h"

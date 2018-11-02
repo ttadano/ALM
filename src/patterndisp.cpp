@@ -15,7 +15,7 @@ or http://opensource.org/licenses/mit-license.php for information.
 #include "error.h"
 #include "system.h"
 #include "fcs.h"
-#include "interaction.h"
+#include "cluster.h"
 #include "symmetry.h"
 #include "constants.h"
 #include "mathfunctions.h"
