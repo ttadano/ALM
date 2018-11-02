@@ -33,7 +33,7 @@ System::~System()
 void System::init(const int verbosity,
                   Timer *timer)
 {
-    const unsigned int nat = supercell.number_of_atoms;
+    const auto nat = supercell.number_of_atoms;
 
     timer->start_clock("system");
 
@@ -65,20 +65,20 @@ void System::init(const int verbosity,
 }
 
 void System::set_supercell(const double lavec_in[3][3],
-                           const unsigned int nat_in,
-                           const int *kind_in,
+                           const size_t nat_in,
+                           const size_t *kind_in,
                            const double xf_in[][3])
 {
-    unsigned int i, j;
-    std::vector<int> unique_nums(nat_in);
-    bool wrong_number = false;
+    size_t i, j;
+    std::vector<size_t> unique_nums(nat_in);
+    auto wrong_number = false;
     bool in_unique_nums;
 
     for (i = 0; i < nat_in; i++) {
         unique_nums[i] = 0;
     }
 
-    auto nkd = 0;
+    size_t nkd = 0;
     for (i = 0; i < nat_in; i++) {
         in_unique_nums = false;
         for (j = 0; j < nkd; j++) {
@@ -201,13 +201,13 @@ int* System::get_periodicity() const
 
 void System::set_kdname(const std::string *kdname_in)
 {
-    const int nkd = supercell.number_of_elems;
+    const auto nkd = supercell.number_of_elems;
 
     if (kdname) {
         deallocate(kdname);
     }
     allocate(kdname, nkd);
-    for (unsigned int i = 0; i < nkd; ++i) {
+    for (size_t i = 0; i < nkd; ++i) {
         kdname[i] = kdname_in[i];
     }
 }
@@ -269,7 +269,7 @@ void System::frac2cart(double **xf) const
     double *x_tmp;
     allocate(x_tmp, 3);
 
-    for (auto i = 0; i < supercell.number_of_atoms; ++i) {
+    for (size_t i = 0; i < supercell.number_of_atoms; ++i) {
 
         rotvec(x_tmp, xf[i], supercell.lattice_vector);
 
@@ -346,7 +346,7 @@ void System::deallocate_variables()
     }
 }
 
-void System::set_spin_variables(const unsigned int nat_in,
+void System::set_spin_variables(const size_t nat_in,
                                 const bool lspin_in,
                                 const int noncol_in,
                                 const int trev_sym_in,
@@ -358,7 +358,7 @@ void System::set_spin_variables(const unsigned int nat_in,
     spin.magmom.clear();
 
     std::vector<double> vec(3);
-    for (auto i = 0; i < nat_in; ++i) {
+    for (size_t i = 0; i < nat_in; ++i) {
         for (auto j = 0; j < 3; ++j) {
             vec[j] = magmom_in[i][j];
         }

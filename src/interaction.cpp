@@ -473,7 +473,7 @@ void Interaction::set_interaction_by_cutoff(const unsigned int nat,
     }
 }
 
-int Interaction::get_maxorder() const
+size_t Interaction::get_maxorder() const
 {
     return maxorder;
 }

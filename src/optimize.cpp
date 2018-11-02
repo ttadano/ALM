@@ -136,8 +136,6 @@ int Optimize::optimize_main(const Symmetry *symmetry,
         // Use ordinary least-squares
 
         info_fitting = least_squares(maxorder,
-                                     natmin,
-                                     ntran,
                                      N,
                                      N_new,
                                      M,
@@ -196,8 +194,6 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 }
 
 int Optimize::least_squares(const int maxorder,
-                            const int natmin,
-                            const int ntran,
                             const int N,
                             const int N_new,
                             const int M,
@@ -1858,19 +1854,20 @@ void Optimize::data_multiplier(const std::vector<std::vector<double>> &data_in,
 {
     const auto nat = symmetry->get_nat_prim() * symmetry->get_ntran();
     const auto ndata_used = data_in.size();
+    const auto ntran = symmetry->get_ntran();
+
+    data_out.resize(ntran * ndata_used, std::vector<double>(3 * nat));
 
     auto idata = 0;
     for (auto i = 0; i < ndata_used; ++i) {
-        std::vector<double> data_tmp(3 * nat, 0.0);
 
         for (auto itran = 0; itran < symmetry->get_ntran(); ++itran) {
             for (auto j = 0; j < nat; ++j) {
                 const auto n_mapped = symmetry->get_map_sym()[j][symmetry->get_symnum_tran()[itran]];
                 for (auto k = 0; k < 3; ++k) {
-                    data_tmp[3 * n_mapped + k] = data_in[i][3 * j + k];
+                    data_out[idata][3 * n_mapped + k] = data_in[i][3 * j + k];
                 }
             }
-            data_out.emplace_back(data_tmp);
             ++idata;
         }
     }

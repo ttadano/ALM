@@ -17,11 +17,11 @@ extern "C" {
     // void set_displacement_basis(const std::string str_disp_basis);
     // void set_periodicity(const int is_periodic[3]);
     void alm_set_cell(const int id,
-                      const int nat,
+                      const size_t nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
                       const int kd[],
-                      int kind[]);
+                      size_t kind[]);
     void alm_set_verbosity(const int id,
                            const int verbosity);
     // void set_magnetic_params(const double* const * magmom,
@@ -32,8 +32,8 @@ extern "C" {
     void alm_set_displacement_and_force(const int id,
                                         const double* u_in,
                                         const double* f_in,
-                                        const int nat,
-                                        const int ndata_used);
+                                        const size_t nat,
+                                        const size_t ndata_used);
     int alm_get_ndata_used(const int id);
     void alm_set_constraint_type(const int id,
                                  const int constraint_flag); // ICONST
@@ -41,8 +41,8 @@ extern "C" {
     // void set_fitting_filenames(const std::string dfile,
     //                           const std::string ffile);
     void alm_define(const int id,
-                    const int maxorder,
-                    const unsigned int nkd,
+                    const size_t maxorder,
+                    const size_t nkd,
                     const int *nbody_include,
                     const double *cutoff_radii);
     void alm_generate_force_constant(const int id);

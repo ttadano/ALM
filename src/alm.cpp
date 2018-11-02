@@ -116,10 +116,10 @@ void ALM::set_periodicity(const int is_periodic[3]) const // PERIODIC
     system->set_periodicity(is_periodic);
 }
 
-void ALM::set_cell(const int nat,
+void ALM::set_cell(const size_t nat,
                    const double lavec[3][3],
                    const double xcoord[][3],
-                   const int kind[],
+                   const size_t kind[],
                    const std::string kdname[]) const
 {
     system->set_supercell(lavec, nat, kind, xcoord);

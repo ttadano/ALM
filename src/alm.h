@@ -49,10 +49,10 @@ namespace ALM_NS
         void set_displacement_param(bool trim_dispsign_for_evenfunc) const;
         void set_displacement_basis(std::string str_disp_basis) const;
         void set_periodicity(const int is_periodic[3]) const;
-        void set_cell(int nat,
+        void set_cell(size_t nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
-                      const int kind[],
+                      const size_t kind[],
                       const std::string kdname[]) const;
         void set_magnetic_params(const unsigned int nat,
                                  const double (*magmom)[3],

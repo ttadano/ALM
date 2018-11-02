@@ -120,12 +120,12 @@ namespace ALM_NS
         const std::vector<SymmetryOperation>& get_SymmData() const;
         const std::vector<std::vector<int>>& get_map_sym() const;
         const std::vector<int>& get_symnum_tran() const;
-        unsigned int get_nsym() const;
-        unsigned int get_ntran() const;
-        unsigned int get_nat_prim() const;
+        size_t get_nsym() const;
+        size_t get_ntran() const;
+        size_t get_nat_prim() const;
 
     private:
-        unsigned int nsym, ntran, nat_prim;
+        size_t nsym, ntran, nat_prim;
         std::vector<std::vector<int>> map_sym;   // [nat, nsym]
         std::vector<std::vector<int>> map_p2s;   // [nat_prim, ntran]
         std::vector<Maps> map_s2p;               // [nat]

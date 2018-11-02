@@ -204,7 +204,7 @@ namespace ALM_NS
                     const unsigned int,
                     const int *,
                     const double * const * const *);
-        int get_maxorder() const;
+        size_t get_maxorder() const;
         int* get_nbody_include() const;
         std::string get_ordername(const unsigned int order) const;
         const std::set<IntList>& get_cluster_list(const unsigned int order) const;
@@ -215,7 +215,7 @@ namespace ALM_NS
 
     private:
 
-        int maxorder;
+        size_t maxorder;
         int *nbody_include;
         double ***cutoff_radii;
         std::vector<std::string> str_order;

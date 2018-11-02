@@ -147,8 +147,6 @@ namespace ALM_NS
                          const Symmetry *) const;
 
         int least_squares(const int maxorder,
-                          const int natmin,
-                          const int ntran,
                           const int N,
                           const int N_new,
                           const int M,

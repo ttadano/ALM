@@ -40,8 +40,8 @@ namespace ALM_NS
         double lattice_vector[3][3];
         double reciprocal_lattice_vector[3][3];
         double volume;
-        unsigned int number_of_atoms;
-        unsigned int number_of_elems;
+        size_t number_of_atoms;
+        size_t number_of_elems;
         std::vector<int> kind;
         std::vector<std::vector<double>> x_fractional;
         std::vector<std::vector<double>> x_cartesian;
@@ -66,8 +66,8 @@ namespace ALM_NS
         void frac2cart(double **) const;
 
         void set_supercell(const double [3][3],
-                           const unsigned int,
-                           const int *,
+                           const size_t,
+                           const size_t *,
                            const double [][3]);
         void set_kdname(const std::string *);
         void set_periodicity(const int [3]);

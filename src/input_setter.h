@@ -78,8 +78,8 @@ namespace ALM_NS
         void set_geometric_structure(ALM *alm) const;
 
     private:
-        int nat, nkd;
-        int *kd;
+        size_t nat, nkd;
+        size_t *kd;
         double lavec[3][3];
         double (*xcoord)[3]; // fractional coordinate
         std::string *kdname;
@@ -91,7 +91,7 @@ namespace ALM_NS
         int trevsym;
         std::string str_magmom;
 
-        int maxorder;
+        size_t maxorder;
         int *nbody_include;
         double ***cutoff_radii;
     };

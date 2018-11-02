@@ -30,18 +30,6 @@ namespace ALM_NS
                  const int narg,
                  const char * const *arg);
 
-        //  void parse_displacement_and_force(ALM *alm) const;
-
-        //void parse_displacement_and_force_files(double **u,
-        //                                        double **f,
-        //                                        const int nat_in,
-        //                                        const int ndata,
-        //                                        const int nstart,
-        //                                        const int nend,
-        //                                        const int skip_s,
-        //                                        const int skip_e,
-        //                                        const std::string file_disp,
-        //                                        const std::string file_force) const;
         std::string str_magmom;
 
     private:
@@ -49,9 +37,9 @@ namespace ALM_NS
         bool from_stdin;
         std::string *kdname;
         std::string mode;
-        int maxorder;
-        int nat;
-        int nkd;
+        size_t maxorder;
+        size_t nat;
+        size_t nkd;
         InputSetter *input_setter;
 
         void parse_input(ALM *alm);

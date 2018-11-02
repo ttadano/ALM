@@ -28,7 +28,7 @@ namespace ALM_NS
     public:
         std::vector<int> elems; // flattened index of (iatom, icoordinate) in the supercell
         double sign;            // factor (+1 or -1) to convert the mother FC to the child
-        int mother;             // index of the reducible force constants
+        size_t mother;             // index of the reducible force constants
 
         FcProperty();
 
@@ -38,11 +38,11 @@ namespace ALM_NS
         FcProperty(const int n,
                    const double c,
                    const int *arr,
-                   const int m)
+                   const size_t m)
         {
             sign = c;
             mother = m;
-            for (int i = 0; i < n; ++i) {
+            for (auto i = 0; i < n; ++i) {
                 elems.push_back(arr[i]);
             }
         }

@@ -17,14 +17,12 @@
 #include "memory.h"
 #include "rref.h"
 #include "symmetry.h"
-#include "system.h"
 #include "timer.h"
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include <cmath>
 #include "../external/combination.hpp"
-#include <boost/lexical_cast.hpp>
 #include <unordered_set>
 #include <boost/algorithm/string/case_conv.hpp>
 
@@ -47,7 +45,7 @@ void Fcs::init(const Interaction *interaction,
                Timer *timer)
 {
     int i;
-    int maxorder = interaction->get_maxorder();
+    const auto maxorder = interaction->get_maxorder();
 
     timer->start_clock("fcs");
 
@@ -180,7 +178,7 @@ void Fcs::generate_force_constant_table(const int order,
     fc_vec.clear();
     ndup.clear();
     fc_zeros.clear();
-    int nmother = 0;
+    size_t nmother = 0;
 
     nxyz = static_cast<int>(std::pow(3.0, order + 2));
 

@@ -88,13 +88,13 @@ extern "C" {
     // is made by finding unique numbers (i.e., kind_uniqe) in kind_in
     // and keeping the order, e.g., [8, 8, 4, 4] --> [1, 1, 2, 2].
     void alm_set_cell(const int id,
-                      const int nat,
+                      const size_t nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
                       const int atomic_numbers[],
-                      int kind[])
+                      size_t kind[])
     {
-        int i, j, nkd;
+        size_t i, j, nkd;
         int kind_unique[nat];
         bool in_kind_unique;
 
@@ -142,8 +142,8 @@ extern "C" {
     void alm_set_displacement_and_force(const int id,
                                         const double* u_in,
                                         const double* f_in,
-                                        const int nat,
-                                        const int ndata_used)
+                                        const size_t nat,
+                                        const size_t ndata_used)
     {
         alm[id]->set_displacement_and_force(u_in, f_in, nat, ndata_used);
     }
@@ -169,8 +169,8 @@ extern "C" {
     //                            const std::string ffile);
 
     void alm_define(const int id,
-                    const int maxorder,
-                    const unsigned int nkd,
+                    const size_t maxorder,
+                    const size_t nkd,
                     const int *nbody_include,
                     const double *cutoff_radii_in)
     {
@@ -180,9 +180,9 @@ extern "C" {
         if (nkd > 0) {
             ALM_NS::allocate(cutoff_radii, maxorder, nkd, nkd);
             count = 0;
-            for (int i = 0; i < maxorder; i++) {
-                for (unsigned int j = 0; j < nkd; j++) {
-                    for (unsigned int k = 0; k < nkd; k++) {
+            for (size_t i = 0; i < maxorder; i++) {
+                for (size_t j = 0; j < nkd; j++) {
+                    for (size_t k = 0; k < nkd; k++) {
                         cutoff_radii[i][j][k] = cutoff_radii_in[count];
                         count++;
                     }
@@ -210,16 +210,15 @@ extern "C" {
     int alm_get_atom_mapping_by_pure_translations(const int id,
                                                   int *map_p2s)
     {
-        unsigned int count = 0;
-        unsigned int ntran, nat_prim;
+        const auto map_p2s_vv = alm[id]->get_atom_mapping_by_pure_translations();
 
-        const std::vector<std::vector<int>> map_p2s_vv = alm[id]->get_atom_mapping_by_pure_translations();
+        auto nat_prim = map_p2s_vv.size();
+        auto ntran = map_p2s_vv[0].size();
 
-        nat_prim = map_p2s_vv.size();
-        ntran = map_p2s_vv[0].size();
+        size_t count = 0;
 
-        for (unsigned int i = 0; i < ntran; i++) {
-            for (unsigned int j = 0; j < nat_prim; j++) {
+        for (size_t i = 0; i < ntran; i++) {
+            for (size_t j = 0; j < nat_prim; j++) {
                 map_p2s[count] = map_p2s_vv[j][i];
                 count++;
             }

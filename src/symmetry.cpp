@@ -84,17 +84,17 @@ const std::vector<int>& Symmetry::get_symnum_tran() const
     return symnum_tran;
 }
 
-unsigned int Symmetry::get_nsym() const
+size_t Symmetry::get_nsym() const
 {
     return nsym;
 }
 
-unsigned int Symmetry::get_ntran() const
+size_t Symmetry::get_ntran() const
 {
     return ntran;
 }
 
-unsigned int Symmetry::get_nat_prim() const
+size_t Symmetry::get_nat_prim() const
 {
     return nat_prim;
 }
