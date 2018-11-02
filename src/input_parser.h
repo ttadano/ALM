@@ -30,7 +30,7 @@ namespace ALM_NS
                  const int narg,
                  const char * const *arg);
 
-      //  void parse_displacement_and_force(ALM *alm) const;
+        //  void parse_displacement_and_force(ALM *alm) const;
 
         //void parse_displacement_and_force_files(double **u,
         //                                        double **f,
@@ -60,7 +60,7 @@ namespace ALM_NS
         void parse_atomic_positions(ALM *alm);
         void parse_interaction_vars();
         void parse_cutoff_radii();
-        void parse_fitting_vars(ALM *alm);
+        void parse_optimize_vars(ALM *alm);
         int locate_tag(const std::string);
         void split_str_by_space(const std::string,
                                 std::vector<std::string> &) const;

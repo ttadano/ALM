@@ -59,103 +59,6 @@ void InputParser::run(ALM *alm,
     parse_input(alm);
 }
 
-//void InputParser::parse_displacement_and_force(ALM *alm) const
-//{
-//    const int nat = alm->get_supercell().number_of_atoms;
-//    const auto ndata = alm->optimize->get_ndata();
-//    const auto nstart = alm->optimize->get_nstart();
-//    const auto nend = alm->optimize->get_nend();
-//    const auto skip_s = alm->optimize->get_skip_s();
-//    const auto skip_e = alm->optimize->get_skip_e();
-//    const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
-//    double **u;
-//    double **f;
-//
-//    // Read displacement-force training data set from files
-//    const auto file_disp = alm->files->file_disp;
-//    const auto file_force = alm->files->file_force;
-//
-//    allocate(u, ndata_used, 3 * nat);
-//    allocate(f, ndata_used, 3 * nat);
-//    parse_displacement_and_force_files(u, f, nat,
-//                                       ndata, nstart, nend,
-//                                       skip_s, skip_e,
-//                                       file_disp, file_force);
-//    alm->optimize->set_displacement_and_force(u, f, nat, ndata_used);
-//    deallocate(u);
-//    deallocate(f);
-//}
-
-//
-// This works independently from InputParser.
-//
-//void InputParser::parse_displacement_and_force_files(double **u,
-//                                                     double **f,
-//                                                     const int nat_in,
-//                                                     const int ndata,
-//                                                     const int nstart,
-//                                                     const int nend,
-//                                                     const int skip_s,
-//                                                     const int skip_e,
-//                                                     const std::string file_disp,
-//                                                     const std::string file_force) const
-//{
-//    double u_in, f_in;
-//    std::ifstream ifs_disp, ifs_force;
-//
-//    ifs_disp.open(file_disp.c_str(), std::ios::in);
-//    if (!ifs_disp) exit("openfiles", "cannot open disp file");
-//    ifs_force.open(file_force.c_str(), std::ios::in);
-//    if (!ifs_force) exit("openfiles", "cannot open force file");
-//
-//    const unsigned int nreq = 3 * nat_in * ndata;
-//
-//    std::vector<double> u_tmp(nreq), f_tmp(nreq);
-//
-//    // Read displacements from DFILE
-//
-//    unsigned int nline_u = 0;
-//    while (ifs_disp >> u_in) {
-//        u_tmp[nline_u++] = u_in;
-//        if (nline_u == nreq) break;
-//    }
-//    if (nline_u < nreq)
-//        exit("data_multiplier",
-//             "The number of lines in DFILE is too small for the given NDATA = ",
-//             ndata);
-//
-//    // Read forces from FFILE
-//
-//    unsigned int nline_f = 0;
-//    while (ifs_force >> f_in) {
-//        f_tmp[nline_f++] = f_in;
-//        if (nline_f == nreq) break;
-//    }
-//    if (nline_f < nreq)
-//        exit("data_multiplier",
-//             "The number of lines in FFILE is too small for the given NDATA = ",
-//             ndata);
-//
-//    auto idata = 0;
-//    for (auto i = 0; i < ndata; ++i) {
-//        if (i < nstart - 1) continue;
-//        if (i >= skip_s && i < skip_e) continue;
-//        if (i > nend - 1) break;
-//
-//        for (auto j = 0; j < nat_in; ++j) {
-//            for (auto k = 0; k < 3; ++k) {
-//                u[idata][3 * j + k] = u_tmp[3 * nat_in * i + 3 * j + k];
-//                f[idata][3 * j + k] = f_tmp[3 * nat_in * i + 3 * j + k];
-//            }
-//        }
-//        ++idata;
-//    }
-//    u_tmp.clear();
-//    f_tmp.clear();
-//    ifs_disp.close();
-//    ifs_force.close();
-//}
-//
 
 void InputParser::parse_displacement_and_force_files(std::vector<std::vector<double>> &u,
                                                      std::vector<std::vector<double>> &f,
@@ -304,7 +207,7 @@ void InputParser::parse_input(ALM *alm)
                 warn("parse_input", "&fitting field is deprecated. Please use &optimize instead.");
             }
         }
-        parse_fitting_vars(alm);
+        parse_optimize_vars(alm);
     }
 
     deallocate(kdname);
@@ -734,7 +637,7 @@ void InputParser::parse_interaction_vars()
 }
 
 
-void InputParser::parse_fitting_vars(ALM *alm)
+void InputParser::parse_optimize_vars(ALM *alm)
 {
     // This method must not be called before setting NAT by parse_general_vars.
 
@@ -777,7 +680,7 @@ void InputParser::parse_fitting_vars(ALM *alm)
             || str_optimizer == "2") {
             optcontrol.optimizer = 2;
         } else {
-            exit("parse_fitting_vars", "Invalid OPTIMIZER-tag");
+            exit("parse_optimize_vars", "Invalid OPTIMIZER-tag");
         }
     }
 
@@ -839,9 +742,9 @@ void InputParser::parse_fitting_vars(ALM *alm)
             std::cout << " Please use DFFILE instead.\n";
             std::cout << " DFFILE can be created easily by the unix paste command as:\n\n";
             std::cout << " > paste DFILE FFILE > DFFILE\n\n";
-            exit("parse_fitting_vars", "Obsolate tag: DFILE, FFILE");
+            exit("parse_optimize_vars", "Obsolate tag: DFILE, FFILE");
         } else {
-            exit("parse_fitting_vars", "DFFILE tag must be given.");
+            exit("parse_optimize_vars", "DFFILE tag must be given.");
         }
     }
     datfile_train.filename = fitting_var_dict["DFFILE"];
@@ -868,12 +771,12 @@ void InputParser::parse_fitting_vars(ALM *alm)
             datfile_train.skip_s = boost::lexical_cast<int>(str_entry[0]);
             datfile_train.skip_e = boost::lexical_cast<int>(str_entry[1]) + 1;
         } else {
-            exit("parse_fitting_vars", "Invalid format for the SKIP-tag.");
+            exit("parse_optimize_vars", "Invalid format for the SKIP-tag.");
         }
     }
 
     if (!is_data_range_consistent(datfile_train)) {
-        exit("parse_fitting_vars",
+        exit("parse_optimize_vars",
              "NDATA, NSTART, NEND and SKIP tags are inconsistent.");
     }
 
@@ -884,7 +787,7 @@ void InputParser::parse_fitting_vars(ALM *alm)
 
     // Check consistency again
     if (!is_data_range_consistent(datfile_train)) {
-        exit("parse_fitting_vars",
+        exit("parse_optimize_vars",
              "NDATA, NSTART, NEND and SKIP tags are inconsistent.");
     }
 
@@ -908,21 +811,21 @@ void InputParser::parse_fitting_vars(ALM *alm)
     }
 
     if (!is_data_range_consistent(datfile_test)) {
-        exit("parse_fitting_vars",
+        exit("parse_optimize_vars",
              "NDATA_TEST, NSTART_TEST and NEND_TEST tags are inconsistent.");
     }
 
     if (optcontrol.cross_validation_mode == 2) {
         parse_displacement_and_force_files(u_tmp2,
-            f_tmp2,
-            datfile_test);
+                                           f_tmp2,
+                                           datfile_test);
 
         if (!is_data_range_consistent(datfile_test)) {
-            exit("parse_fitting_vars",
-                "NDATA_TEST, NSTART_TEST and NEND_TEST tags are inconsistent.");
+            exit("parse_optimize_vars",
+                 "NDATA_TEST, NSTART_TEST and NEND_TEST tags are inconsistent.");
         }
     }
-    
+
 
     input_setter->set_optimize_vars(alm,
                                     u_tmp1, f_tmp1,
@@ -942,13 +845,13 @@ void InputParser::parse_fitting_vars(ALM *alm)
 
     auto fc2_file = fitting_var_dict["FC2XML"];
     auto fc3_file = fitting_var_dict["FC3XML"];
-    bool fix_harmonic = !fc2_file.empty();
-    bool fix_cubic = !fc3_file.empty();
+    const bool fix_harmonic = !fc2_file.empty();
+    const bool fix_cubic = !fc3_file.empty();
 
     if (constraint_flag % 10 >= 2) {
         rotation_axis = fitting_var_dict["ROTAXIS"];
         if (rotation_axis.empty()) {
-            exit("parse_fitting_vars",
+            exit("parse_optimize_vars",
                  "ROTAXIS has to be given when ICONST=2 or 3");
         }
     }
@@ -1378,11 +1281,11 @@ void InputParser::get_var_dict(const std::vector<std::string> &input_list,
 
 bool InputParser::is_data_range_consistent(const DispForceFile &datfile_in) const
 {
-    auto ndata = datfile_in.ndata;
-    auto nstart = datfile_in.nstart;
-    auto nend = datfile_in.nend;
-    auto skip_s = datfile_in.skip_s;
-    auto skip_e = datfile_in.skip_e;
+    const auto ndata = datfile_in.ndata;
+    const auto nstart = datfile_in.nstart;
+    const auto nend = datfile_in.nend;
+    const auto skip_s = datfile_in.skip_s;
+    const auto skip_e = datfile_in.skip_e;
 
     if (ndata < 0 || nstart < 0 || nend < 0 || skip_s < 0 || skip_e < 0) return false;
 
