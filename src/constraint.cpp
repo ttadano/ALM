@@ -867,7 +867,6 @@ void Constraint::get_constraint_translation(const Cell &supercell,
     std::vector<std::vector<int>> data_vec;
     std::vector<FcProperty> list_vec;
     std::vector<int> const_now;
-    std::vector<std::vector<int>> const_mat;
 
     typedef std::vector<ConstraintIntegerElement> ConstEntry;
     std::vector<ConstEntry> constraint_all;
@@ -875,8 +874,6 @@ void Constraint::get_constraint_translation(const Cell &supercell,
     ConstEntry const_tmp;
 
     if (order < 0) return;
-
-    const_mat.clear();
 
     if (nparams == 0) return;
 
@@ -1140,14 +1137,15 @@ void Constraint::generate_rotational_constraint(const System *system,
     int icrd, jcrd;
     int order;
     const auto maxorder = cluster->get_maxorder();
-    const int natmin = symmetry->get_nat_prim();
+    const auto natmin = symmetry->get_nat_prim();
     int mu, nu;
-    int ixyz, nxyz, nxyz2;
+    int ixyz, nxyz{ 0 }, nxyz2;
     int mu_lambda, lambda;
     int levi_factor;
 
     int *ind;
-    int **xyzcomponent, **xyzcomponent2;
+    int **xyzcomponent = nullptr;
+    int **xyzcomponent2 = nullptr;
     int *nparams, nparam_sub;
     int *interaction_index, *interaction_atom;
     int *interaction_tmp;
@@ -1365,7 +1363,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                         do {
                             auto data = g.now();
 
-                            for (auto idata = 0; idata < data.size(); ++idata) {
+                            for (size_t idata = 0; idata < data.size(); ++idata) {
                                 interaction_atom[idata + 1] = data[idata];
                             }
 
@@ -1795,7 +1793,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
     try {
         read_xml(file_to_fix, pt);
     }
-    catch (std::exception &e) {
+    catch (std::exception) {
         if (order == 0) {
             auto str_error = "Cannot open file FC2XML ( " + file_to_fix + " )";
         } else if (order == 1) {
@@ -1804,9 +1802,9 @@ void Constraint::fix_forceconstants_to_file(const int order,
         exit("fix_forceconstants_to_file", file_to_fix.c_str());
     }
 
-    const auto nat_ref = boost::lexical_cast<int>(
+    const auto nat_ref = boost::lexical_cast<size_t>(
         get_value_from_xml(pt, "Data.Structure.NumberOfAtoms"));
-    const auto ntran_ref = boost::lexical_cast<int>(
+    const auto ntran_ref = boost::lexical_cast<size_t>(
         get_value_from_xml(pt, "Data.Symmetry.NumberOfTranslations"));
     const auto natmin_ref = nat_ref / ntran_ref;
 
@@ -1930,8 +1928,8 @@ bool Constraint::is_allzero(const std::vector<double> &vec,
                             const int nshift) const
 {
     loc = -1;
-    auto n = vec.size();
-    for (int i = 0; i < n; ++i) {
+    const auto n = vec.size();
+    for (auto i = nshift; i < n; ++i) {
         if (std::abs(vec[i]) > tol) {
             loc = i;
             return false;

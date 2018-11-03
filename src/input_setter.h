@@ -10,7 +10,6 @@
 
 #pragma once
 
-//#include "alm.h"
 #include "alm.h"
 #include <string>
 
@@ -24,7 +23,7 @@ namespace ALM_NS
 
         void set_cell_parameter(const double a,
                                 const double lavec_in[3][3]);
-        void set_atomic_positions(const int nat_in,
+        void set_atomic_positions(const size_t nat_in,
                                   const int *kd_in,
                                   const double (*xcoord_in)[3]);
         void set_geometric_structure(ALM *alm);
@@ -32,9 +31,9 @@ namespace ALM_NS
         void set_interaction_vars(const int maxorder_in,
                                   const int *nbody_include_in);
         void set_cutoff_radii(const int maxorder_in,
-                              const unsigned int nkd_in,
+                              const size_t nkd_in,
                               const double * const * const *cutoff_radii_in);
-        void define(ALM *alm);
+        void define(ALM *alm) const;
 
         void set_general_vars(ALM *alm,
                               std::string prefix,

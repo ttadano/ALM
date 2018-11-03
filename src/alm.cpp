@@ -14,7 +14,6 @@
 #include "files.h"
 #include "optimize.h"
 #include "cluster.h"
-#include "memory.h"
 #include "patterndisp.h"
 #include "symmetry.h"
 #include "system.h"
@@ -81,17 +80,17 @@ int ALM::get_verbosity() const
     return verbosity;
 }
 
-void ALM::set_output_filename_prefix(const std::string prefix) // PREFIX
+void ALM::set_output_filename_prefix(const std::string prefix) const // PREFIX
 {
     files->set_prefix(prefix);
 }
 
-void ALM::set_print_symmetry(const int printsymmetry) // PRINTSYM
+void ALM::set_print_symmetry(const int printsymmetry) const // PRINTSYM
 {
     symmetry->set_print_symmetry(printsymmetry);
 }
 
-void ALM::set_print_hessian(const bool print_hessian) // HESSIAN
+void ALM::set_print_hessian(const bool print_hessian) const // HESSIAN
 {
     files->print_hessian = print_hessian;
 }
@@ -149,16 +148,6 @@ void ALM::set_displacement_and_force(const double *u_in,
                                      const int nat,
                                      const int ndata_used) const
 {
-    //double **u;
-    //double **f;
-
-    //optimize->set_ndata(ndata_used);
-    //optimize->set_nstart(1);
-    //optimize->set_nend(ndata_used);
-
-    //allocate(u, ndata_used, 3 * nat);
-    //allocate(f, ndata_used, 3 * nat);
-
     std::vector<std::vector<double>> u, f;
 
     u.resize(ndata_used, std::vector<double>(3 * nat));
@@ -173,10 +162,6 @@ void ALM::set_displacement_and_force(const double *u_in,
     optimize->set_training_data(u, f);
     u.clear();
     f.clear();
-    //  optimize->set_displacement_and_force(u, f, nat, ndata_used);
-
-    //deallocate(u);
-    //deallocate(f);
 }
 
 void ALM::set_constraint_type(const int constraint_flag) const // ICONST
@@ -207,7 +192,7 @@ void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
 void ALM::define(const int maxorder,
                  const size_t nkd,
                  const int *nbody_include,
-                 const double * const * const *cutoff_radii)
+                 const double * const * const *cutoff_radii) const
 {
     // nkd = 0 means cutoff_radii undefined (hopefully nullptr).
     cluster->define(maxorder,
@@ -215,12 +200,6 @@ void ALM::define(const int maxorder,
                     nbody_include,
                     cutoff_radii);
 }
-
-
-//int ALM::get_ndata_used() const
-//{
-//    return optimize->get_ndata_used();
-//}
 
 size_t ALM::get_nrows_sensing_matrix() const
 {
@@ -285,7 +264,7 @@ void ALM::get_number_of_displaced_atoms(int *numbers,
 {
     const auto order = fc_order - 1;
 
-    for (auto i = 0; i < displace->get_pattern_all(order).size(); ++i) {
+    for (size_t i = 0; i < displace->get_pattern_all(order).size(); ++i) {
         numbers[i] = displace->get_pattern_all(order)[i].atoms.size();
     }
 }
@@ -300,7 +279,7 @@ int ALM::get_displacement_patterns(int *atom_indices,
     auto i_atom = 0;
     auto i_disp = 0;
     for (const auto &displacements : displace->get_pattern_all(order)) {
-        for (auto j = 0; j < displacements.atoms.size(); ++j) {
+        for (size_t j = 0; j < displacements.atoms.size(); ++j) {
             atom_indices[i_atom] = displacements.atoms[j];
             ++i_atom;
             for (auto k = 0; k < 3; ++k) {
@@ -366,8 +345,6 @@ void ALM::get_fc_origin(double *fc_values,
     // Return a set of force constants Phi(i,j,k,...) where i is an atom
     // inside the primitive cell at origin.
 
-    int i;
-
     const auto maxorder = cluster->get_maxorder();
     if (fc_order > maxorder) {
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
@@ -377,7 +354,7 @@ void ALM::get_fc_origin(double *fc_values,
     auto ishift = 0;
     int ip;
 
-    for (int order = 0; order < fc_order; ++order) {
+    for (auto order = 0; order < fc_order; ++order) {
 
         if (fcs->get_nequiv()[order].empty()) { continue; }
 
@@ -388,7 +365,7 @@ void ALM::get_fc_origin(double *fc_values,
 
                 ip = it.mother + ishift;
                 fc_values[id] = optimize->get_params()[ip] * it.sign;
-                for (i = 0; i < fc_order + 1; ++i) {
+                for (auto i = 0; i < fc_order + 1; ++i) {
                     elem_indices[id * (fc_order + 1) + i] = it.elems[i];
                 }
                 ++id;
@@ -406,7 +383,6 @@ void ALM::get_fc_irreducible(double *fc_values,
 {
     // Return an irreducible set of force constants.
 
-    int i;
     double fc_elem;
 
     const auto maxorder = cluster->get_maxorder();
@@ -440,7 +416,7 @@ void ALM::get_fc_irreducible(double *fc_values,
 
                 fc_elem = optimize->get_params()[iold];
                 fc_values[inew] = fc_elem;
-                for (i = 0; i < fc_order + 1; ++i) {
+                for (auto i = 0; i < fc_order + 1; ++i) {
                     elem_indices[inew * (fc_order + 1) + i] =
                         fcs->get_fc_table()[order][it.right].elems[i];
                 }
@@ -490,7 +466,7 @@ void ALM::get_fc_all(double *fc_values,
                     xyz_tmp[i] = it.elems[i] % 3;
                 }
 
-                for (auto itran = 0; itran < ntran; ++itran) {
+                for (size_t itran = 0; itran < ntran; ++itran) {
                     for (i = 0; i < fc_order + 1; ++i) {
                         pair_tran[i] = symmetry->get_map_sym()[pair_tmp[i]][symmetry->get_symnum_tran()[itran]];
                     }
@@ -534,7 +510,7 @@ void ALM::get_matrix_elements(double *amat,
                                                        symmetry,
                                                        fcs,
                                                        constraint);
-    // Is this really safe?
+    // This may be inefficient.
     auto i = 0;
     for (const auto it : amat_vec) {
         amat[i++] = it;
@@ -592,7 +568,6 @@ int ALM::run_optimize()
                                               maxorder,
                                               files->get_prefix(),
                                               str_order,
-                                              system->get_supercell().number_of_atoms,
                                               verbosity,
                                               files->get_datfile_train(),
                                               files->get_datfile_test(),

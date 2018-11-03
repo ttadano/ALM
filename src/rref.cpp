@@ -135,7 +135,7 @@ void rref(std::vector<std::vector<double>> &mat,
 }
 
 
-void rref_sparse(const int ncols,
+void rref_sparse(const size_t ncols,
                  ConstraintSparseForm &sp_constraint,
                  const double tolerance)
 {
@@ -154,8 +154,8 @@ void rref_sparse(const int ncols,
     //    double zero_criterion = tolerance * 1.0e-3;
     const auto zero_criterion = eps15;
 
-    auto nrank = 0;
-    auto icol = 0;
+    size_t nrank = 0;
+    size_t icol = 0;
 
     std::set<unsigned int>::iterator it_found;
     std::map<unsigned int, double>::iterator it_elem;

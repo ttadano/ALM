@@ -18,6 +18,7 @@ Global
 		{0FFEA662-D4F1-4D18-A920-B61EE02A7F21}.Release|Win32.ActiveCfg = Release|Win32
 		{0FFEA662-D4F1-4D18-A920-B61EE02A7F21}.Release|Win32.Build.0 = Release|Win32
 		{0FFEA662-D4F1-4D18-A920-B61EE02A7F21}.Release|x64.ActiveCfg = Release|Win32
+		{0FFEA662-D4F1-4D18-A920-B61EE02A7F21}.Release|x64.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

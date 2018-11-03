@@ -42,7 +42,7 @@ void Displace::gen_displacement_pattern(const Cluster *cluster,
                                         const System *system,
                                         const int verbosity)
 {
-    int i, j, m, order;
+    int order;
     const auto maxorder = cluster->get_maxorder();
     std::string preferred_basis;
     std::vector<int> group_tmp;
@@ -59,7 +59,7 @@ void Displace::gen_displacement_pattern(const Cluster *cluster,
     std::vector<ConstraintTypeFix> *const_fix_tmp;
     std::vector<ConstraintTypeRelate> *const_relate_tmp;
     boost::bimap<int, int> *index_bimap_tmp;
-    const bool do_rref = true;
+    const auto do_rref = true;
 
     if (verbosity > 0) {
         std::cout << " DISPLACEMENT PATTERN" << std::endl;
@@ -141,9 +141,8 @@ void Displace::gen_displacement_pattern(const Cluster *cluster,
     for (order = 0; order < maxorder; ++order) {
         include_set[order].clear();
 
-        for (boost::bimap<int, int>::const_iterator it = index_bimap_tmp[order].begin();
-             it != index_bimap_tmp[order].end(); ++it) {
-            include_set[order].insert((*it).right);
+        for (const auto &it : index_bimap_tmp[order]) {
+            include_set[order].insert(it.right);
         }
     }
 
@@ -158,9 +157,9 @@ void Displace::gen_displacement_pattern(const Cluster *cluster,
 
     for (order = 0; order < maxorder; ++order) {
 
-        m = 0;
+        auto m = 0;
 
-        for (i = 0; i < nequiv[order].size(); ++i) {
+        for (size_t i = 0; i < nequiv[order].size(); ++i) {
 
             if (include_set[order].find(i) != include_set[order].end()) {
 
@@ -169,7 +168,7 @@ void Displace::gen_displacement_pattern(const Cluster *cluster,
                 // Store first order + 1 indexes as a necessary displacement pattern.
                 // Here, duplicate entries will be removed.
                 // For example, (iij) will be reduced to (ij).
-                for (j = 0; j < order + 1; ++j) {
+                for (auto j = 0; j < order + 1; ++j) {
                     group_tmp.push_back(fc_table[order][m].elems[j]);
                 }
                 group_tmp.erase(std::unique(group_tmp.begin(), group_tmp.end()),
@@ -242,14 +241,14 @@ void Displace::deallocate_variables()
     deallocate(pattern_all);
 }
 
-void Displace::generate_pattern_all(const int N,
-                                    const int nat,
+void Displace::generate_pattern_all(const int maxorder,
+                                    const size_t nat,
                                     const double lavec[3][3],
                                     const Symmetry *symmetry,
                                     const std::set<DispAtomSet> *dispset_in,
                                     const std::string preferred_basis) const
 {
-    int i, j;
+    size_t i, j;
     int order;
     int atom_tmp, natom_disp;
     double sign_double;
@@ -260,14 +259,14 @@ void Displace::generate_pattern_all(const int N,
     std::vector<std::vector<int>> *sign_prod, sign_reduced;
 
 
-    allocate(sign_prod, N);
+    allocate(sign_prod, maxorder);
 
-    for (order = 0; order < N; ++order) {
+    for (order = 0; order < maxorder; ++order) {
         vec_tmp.clear();
         generate_signvecs(order + 1, sign_prod[order], vec_tmp);
     }
 
-    for (order = 0; order < N; ++order) {
+    for (order = 0; order < maxorder; ++order) {
 
         pattern_all[order].clear();
 
@@ -363,15 +362,16 @@ void Displace::generate_signvecs(const int N,
     }
 }
 
-void Displace::find_unique_sign_pairs(const int N,
-                                      const int nat,
+void Displace::find_unique_sign_pairs(const int natom_disp_in,
+                                      const size_t nat,
                                       const Symmetry *symmetry,
                                       const std::vector<std::vector<int>> sign_in,
                                       const std::vector<int> &pair_in,
                                       std::vector<std::vector<int>> &sign_out,
                                       const std::string preferred_basis) const
 {
-    int isym, i, j, k;
+    size_t isym, i;
+    int j, k;
     int mapped_atom;
     int mapped_index;
 
@@ -411,6 +411,8 @@ void Displace::find_unique_sign_pairs(const int N,
         disp[pair_in[i] / 3][pair_in[i] % 3] = 1.0;
     }
 
+    size_t natom_disp = static_cast<size_t>(natom_disp_in);
+
     // Find symmetry operations which can be used to
     // reduce the number of sign patterns (+, -) of displacements
 
@@ -419,7 +421,7 @@ void Displace::find_unique_sign_pairs(const int N,
         flag_avail = true;
         pair_tmp.clear();
 
-        for (i = 0; i < N; ++i) {
+        for (i = 0; i < natom_disp; ++i) {
             if (!flag_avail) break;
 
             mapped_atom = symmetry->get_map_sym()[pair_in[i] / 3][isym];
@@ -499,7 +501,7 @@ void Displace::find_unique_sign_pairs(const int N,
             }
         }
 
-        for (i = 0; i < N; ++i) {
+        for (i = 0; i < natom_disp; ++i) {
             disp[pair_in[i] / 3][pair_in[i] % 3] = static_cast<double>(it[i]);
         }
 
@@ -550,7 +552,7 @@ void Displace::find_unique_sign_pairs(const int N,
                 sign_tmp.push_back(index_for_sort[i].sign);
             }
 
-            if ((sign_tmp.size() == N) &&
+            if ((sign_tmp.size() == natom_disp) &&
                 (std::find(sign_found.begin(), sign_found.end(), sign_tmp) == sign_found.end())) {
                 sign_found.push_back(sign_tmp);
                 std::sort(sign_found.begin(), sign_found.end());

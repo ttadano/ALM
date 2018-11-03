@@ -70,7 +70,7 @@ void System::set_supercell(const double lavec_in[3][3],
                            const double xf_in[][3])
 {
     size_t i, j;
-    std::vector<size_t> unique_nums(nat_in);
+    std::vector<int> unique_nums(nat_in);
     auto wrong_number = false;
     bool in_unique_nums;
 
@@ -94,7 +94,7 @@ void System::set_supercell(const double lavec_in[3][3],
     }
 
     for (i = 0; i < nkd; i++) {
-        if (unique_nums[i] > nkd) {
+        if (static_cast<size_t>(unique_nums[i]) > nkd) {
             std::cout << " WARNING : integers assigned to atoms are wrong. "
                 << " The numbers will be resorted." << std::endl;
             wrong_number = true;
@@ -507,7 +507,7 @@ void System::generate_coordinate_of_periodic_images()
 void System::print_structure_stdout(const Cell &cell)
 {
     using namespace std;
-    int i;
+    size_t i;
 
     cout << " SYSTEM" << endl;
     cout << " ======" << endl << endl;
@@ -575,7 +575,7 @@ void System::print_magmom_stdout() const
     using namespace std;
 
     cout << "  MAGMOM is given. The magnetic moments of each atom are as follows:" << endl;
-    for (auto i = 0; i < supercell.number_of_atoms; ++i) {
+    for (size_t i = 0; i < supercell.number_of_atoms; ++i) {
         cout << setw(6) << i + 1;
         cout << setw(5) << spin.magmom[i][0];
         cout << setw(5) << spin.magmom[i][1];

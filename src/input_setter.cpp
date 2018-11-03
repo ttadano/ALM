@@ -24,6 +24,7 @@ InputSetter::InputSetter()
 {
     nat = 0;
     nkd = 0;
+    maxorder = 0;
     kd = nullptr;
     kdname = nullptr;
 
@@ -93,16 +94,16 @@ void InputSetter::set_interaction_vars(const int maxorder_in,
 }
 
 void InputSetter::set_cutoff_radii(const int maxorder_in,
-                                   const unsigned int nkd_in,
+                                   const size_t nkd_in,
                                    const double * const * const *cutoff_radii_in)
 {
     if (cutoff_radii) {
         deallocate(cutoff_radii);
     }
     allocate(cutoff_radii, maxorder_in, nkd_in, nkd_in);
-    for (unsigned int i = 0; i < maxorder_in; i++) {
-        for (unsigned int j = 0; j < nkd_in; j++) {
-            for (unsigned int k = 0; k < nkd_in; k++) {
+    for (auto i = 0; i < maxorder_in; i++) {
+        for (size_t j = 0; j < nkd_in; j++) {
+            for (size_t k = 0; k < nkd_in; k++) {
                 cutoff_radii[i][j][k] = cutoff_radii_in[i][j][k];
             }
         }
@@ -129,7 +130,7 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const double tolerance,
                                    const double tolerance_constraint)
 {
-    int i, j;
+    size_t i;
 
     alm->files->set_prefix(prefix);
     alm->set_run_mode(mode);
@@ -153,7 +154,7 @@ void InputSetter::set_general_vars(ALM *alm,
     allocate(magmom, nat);
 
     for (i = 0; i < nat; i ++) {
-        for (j = 0; j < 3; j++) {
+        for (auto j = 0; j < 3; j++) {
             magmom[i][j] = magmom_in[i][j];
         }
     }
@@ -174,7 +175,7 @@ void InputSetter::set_general_vars(ALM *alm,
     }
 }
 
-void InputSetter::define(ALM *alm)
+void InputSetter::define(ALM *alm) const
 {
     alm->define(maxorder,
                 nkd,
@@ -220,7 +221,7 @@ void InputSetter::set_constraint_vars(ALM *alm,
 }
 
 
-void InputSetter::set_atomic_positions(const int nat_in,
+void InputSetter::set_atomic_positions(const size_t nat_in,
                                        const int *kd_in,
                                        const double (*xcoord_in)[3])
 {
@@ -233,7 +234,7 @@ void InputSetter::set_atomic_positions(const int nat_in,
     allocate(xcoord, nat_in);
     allocate(kd, nat_in);
 
-    for (auto i = 0; i < nat_in; ++i) {
+    for (size_t i = 0; i < nat_in; ++i) {
         kd[i] = kd_in[i];
         for (auto j = 0; j < 3; ++j) {
             xcoord[i][j] = xcoord_in[i][j];

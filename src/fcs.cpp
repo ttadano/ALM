@@ -130,8 +130,8 @@ void Fcs::generate_force_constant_table(const int order,
                                         const std::string basis,
                                         std::vector<FcProperty> &fc_vec,
                                         std::vector<int> &ndup,
-                                        std::vector<FcProperty> &fc_zeros,
-                                        const bool store_zeros) const
+                                        std::vector<FcProperty> &fc_zeros_out,
+                                        const bool store_zeros_in) const
 {
     int i, j;
     int i1, i2;
@@ -177,7 +177,7 @@ void Fcs::generate_force_constant_table(const int order,
 
     fc_vec.clear();
     ndup.clear();
-    fc_zeros.clear();
+    fc_zeros_out.clear();
     size_t nmother = 0;
 
     nxyz = static_cast<int>(std::pow(3.0, order + 2));
@@ -291,10 +291,10 @@ void Fcs::generate_force_constant_table(const int order,
             } // close symmetry loop
 
             if (is_zero) {
-                if (store_zeros) {
+                if (store_zeros_in) {
                     for (auto it = fc_vec.rbegin(); it != fc_vec.rbegin() + ndeps; ++it) {
                         (*it).mother = -1;
-                        fc_zeros.push_back(*it);
+                        fc_zeros_out.push_back(*it);
                     }
                 }
                 for (i = 0; i < ndeps; ++i) fc_vec.pop_back();
@@ -336,7 +336,7 @@ void Fcs::get_constraint_symmetry(const int nat,
                                   const Symmetry *symmetry,
                                   const int order,
                                   const std::string basis,
-                                  const std::vector<FcProperty> &fc_table,
+                                  const std::vector<FcProperty> &fc_table_in,
                                   const int nparams,
                                   const double tolerance,
                                   ConstraintSparseForm &const_out,
@@ -365,7 +365,7 @@ void Fcs::get_constraint_symmetry(const int nat,
 
     const int nsym = symmetry->get_SymmData().size();
     const int natmin = symmetry->get_nat_prim();
-    const int nfcs = fc_table.size();
+    const int nfcs = fc_table_in.size();
     const auto use_compatible = false;
 
     if (nparams == 0) return;
@@ -390,7 +390,7 @@ void Fcs::get_constraint_symmetry(const int nat,
 
     // Generate temporary list of parameters
     list_found.clear();
-    for (const auto &p : fc_table) {
+    for (const auto &p : fc_table_in) {
         for (i = 0; i < order + 2; ++i) index_tmp[i] = p.elems[i];
         list_found.insert(FcProperty(order + 2, p.sign,
                                      index_tmp, p.mother));
@@ -429,7 +429,7 @@ void Fcs::get_constraint_symmetry(const int nat,
 #pragma omp for private(i, isym, ixyz), schedule(static)
 #endif
         for (int ii = 0; ii < nfcs; ++ii) {
-            FcProperty list_tmp = fc_table[ii];
+            FcProperty list_tmp = fc_table_in[ii];
 
             for (i = 0; i < order + 2; ++i) {
                 atm_index[i] = list_tmp.elems[i] / 3;

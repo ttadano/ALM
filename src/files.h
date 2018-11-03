@@ -11,7 +11,6 @@
 #pragma once
 
 #include <string>
-#include <fstream>
 
 namespace ALM_NS
 {
@@ -19,8 +18,8 @@ namespace ALM_NS
     {
     public:
         std::string filename;
-        int ndata, nstart, nend;
-        int skip_s, skip_e;
+        size_t ndata, nstart, nend;
+        size_t skip_s, skip_e;
 
         DispForceFile()
         {

@@ -65,7 +65,6 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                             const int maxorder,
                             const std::string file_prefix,
                             const std::vector<std::string> &str_order,
-                            const unsigned int nat,
                             const int verbosity,
                             const DispForceFile &filedata_train,
                             const DispForceFile &filedata_test,
@@ -73,12 +72,12 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 {
     timer->start_clock("optimize");
 
-    const int natmin = symmetry->get_nat_prim();
+    const auto natmin = symmetry->get_nat_prim();
 
     const auto ndata_used = filedata_train.nend - filedata_train.nstart + 1
         - filedata_train.skip_e + filedata_train.skip_s;
     const auto ndata_used_test = filedata_test.nend - filedata_test.nstart + 1;
-    const int ntran = symmetry->get_ntran();
+    const auto ntran = symmetry->get_ntran();
     auto info_fitting = 0;
     const auto M = get_number_of_rows_sensing_matrix();
     const auto M_test = 3 * natmin * ndata_used_test * ntran;
@@ -436,16 +435,13 @@ int Optimize::elastic_net(const std::string job_prefix,
     } else if (optcontrol.cross_validation_mode == 0) {
 
         // Optimize with a given L1 coefficient (l1_alpha)
-        info_fitting = run_elastic_net_optimization(maxorder,
-                                                    M,
+        info_fitting = run_elastic_net_optimization(M,
                                                     N_new,
                                                     amat_1D,
                                                     bvec,
                                                     fnorm,
-                                                    str_order,
                                                     verbosity,
                                                     param_tmp);
-
     }
 
     if (verbosity > 0 && info_fitting == 0) {
@@ -676,13 +672,11 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
 }
 
 
-int Optimize::run_elastic_net_optimization(const int maxorder,
-                                           const int M,
+int Optimize::run_elastic_net_optimization(const int M,
                                            const int N_new,
                                            std::vector<double> &amat_1D,
                                            std::vector<double> &bvec,
                                            const double fnorm,
-                                           const std::vector<std::string> &str_order,
                                            const int verbosity,
                                            std::vector<double> &param_out)
 {
@@ -781,7 +775,7 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
 int Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
                                                    const Eigen::VectorXd &b_in,
                                                    const Eigen::VectorXd &factor_std,
-                                                   std::vector<double> &params,
+                                                   std::vector<double> &params_inout,
                                                    const int verbosity)
 {
     // Perform OLS fitting to the features selected by LASSO for reducing the bias.
@@ -797,7 +791,7 @@ int Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
     std::vector<int> nonzero_index, zero_index;
 
     for (auto i = 0; i < N_new; ++i) {
-        if (std::abs(params[i]) >= eps) {
+        if (std::abs(params_inout[i]) >= eps) {
             nonzero_index.push_back(i);
         } else {
             zero_index.push_back(i);
@@ -812,9 +806,9 @@ int Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
     }
     Eigen::VectorXd x_nonzero = A_nonzero.colPivHouseholderQr().solve(b_in);
 
-    for (auto i = 0; i < N_new; ++i) params[i] = 0.0;
+    for (auto i = 0; i < N_new; ++i) params_inout[i] = 0.0;
     for (auto i = 0; i < N_nonzero; ++i) {
-        params[nonzero_index[i]] = x_nonzero[i] * factor_std[nonzero_index[i]];
+        params_inout[nonzero_index[i]] = x_nonzero[i] * factor_std[nonzero_index[i]];
     }
 
     return 0;
@@ -1880,7 +1874,7 @@ int Optimize::inprim_index(const int n,
     const auto atmn = n / 3;
     const auto crdn = n % 3;
 
-    for (auto i = 0; i < symmetry->get_nat_prim(); ++i) {
+    for (size_t i = 0; i < symmetry->get_nat_prim(); ++i) {
         if (symmetry->get_map_p2s()[i][0] == atmn) {
             in = 3 * i + crdn;
             break;
@@ -2015,7 +2009,7 @@ int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
                                  const int maxorder,
                                  const Fcs *fcs,
                                  const Constraint *constraint,
-                                 const int verbosity)
+                                 const int verbosity) const
 {
     //    Eigen::BenchTimer t;
 
@@ -2074,8 +2068,8 @@ int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
     
     */
     auto res = sp_bvec - sp_mat * x;
-    auto res2norm = res.squaredNorm();
-    auto nparams = x.size();
+    const auto res2norm = res.squaredNorm();
+    const auto nparams = x.size();
     std::vector<double> param_irred(nparams);
 
     for (auto i = 0; i < nparams; ++i) {
@@ -2156,7 +2150,7 @@ void Optimize::coordinate_descent(const int M,
                                   const int verbosity) const
 {
     int i, j;
-    double diff;
+    auto diff{0.0};
     Eigen::VectorXd beta(N), delta(N);
     Eigen::VectorXd res(N);
     bool do_print_log;

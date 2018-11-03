@@ -36,10 +36,10 @@ Writer::~Writer() {}
 
 void Writer::write_input_vars(const ALM *alm) const
 {
-    unsigned int i;
+    size_t i;
 
-    const int nat = alm->get_supercell().number_of_atoms;
-    const int nkd = alm->get_supercell().number_of_elems;
+    const auto nat = alm->get_supercell().number_of_atoms;
+    const auto nkd = alm->get_supercell().number_of_elems;
 
     alm->timer->start_clock("writer");
 
@@ -65,9 +65,9 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << " Interaction:" << std::endl;
     std::cout << "  NORDER = " << alm->cluster->get_maxorder() << std::endl;
     std::cout << "  NBODY = ";
-    for (i = 0; i < alm->cluster->get_maxorder(); ++i)
-        std::cout << std::setw(3) << alm->get_nbody_include()[i];
-
+    for (auto m = 0; m < alm->cluster->get_maxorder(); ++m) {
+        std::cout << std::setw(3) << alm->get_nbody_include()[m];
+    }
     std::cout << std::endl << std::endl;
 
 
@@ -314,7 +314,7 @@ void Writer::write_displacement_pattern(ALM *alm) const
 
             ofs_pattern << std::setw(5) << counter << ":"
                 << std::setw(5) << entry.atoms.size() << std::endl;
-            for (auto i = 0; i < entry.atoms.size(); ++i) {
+            for (size_t i = 0; i < entry.atoms.size(); ++i) {
                 ofs_pattern << std::setw(7) << entry.atoms[i] + 1;
                 for (auto j = 0; j < 3; ++j) {
                     ofs_pattern << std::setw(15) << entry.directions[3 * i + j];
@@ -339,7 +339,7 @@ void Writer::write_misc_xml(ALM *alm)
 {
     SystemInfo system_structure;
 
-    int i, j;
+    size_t i, j;
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
@@ -672,7 +672,7 @@ void Writer::write_hessian(ALM *alm) const
         const auto ip = fctmp.mother;
 
         for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
-        for (auto itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
+        for (size_t itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
             for (i = 0; i < 2; ++i) {
                 pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }
@@ -717,12 +717,12 @@ std::string Writer::double2string(const double d,
 
 void Writer::write_in_QEformat(ALM *alm) const
 {
-    int i, j;
+    size_t i, j;
     int pair_tmp[2];
     int pair_tran[2];
     std::ofstream ofs_hes;
     double **hessian;
-    const int nat3 = 3 * alm->get_supercell().number_of_atoms;
+    const auto nat3 = 3 * alm->get_supercell().number_of_atoms;
 
     allocate(hessian, nat3, nat3);
 
@@ -737,7 +737,7 @@ void Writer::write_in_QEformat(ALM *alm) const
         const auto ip = fctmp.mother;
 
         for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
-        for (auto itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
+        for (size_t itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
             for (i = 0; i < 2; ++i) {
                 pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }

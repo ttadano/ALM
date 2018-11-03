@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <set>
 #include <iterator>
@@ -27,17 +28,14 @@ namespace ALM_NS
     public:
         std::vector<int> iarray;
 
-        IntList()
-        {
-            iarray.clear();
-        }
-
-        IntList(const IntList &a) : iarray(a.iarray) {};
+        IntList() = default;
+        ~IntList() = default;
+        IntList(const IntList &a) = default;
 
         IntList(const int n,
                 const int *arr)
         {
-            for (int i = 0; i < n; ++i) {
+            for (auto i = 0; i < n; ++i) {
                 iarray.push_back(arr[i]);
             }
         }
@@ -50,10 +48,10 @@ namespace ALM_NS
 
         bool operator==(const IntList &a) const
         {
-            int n = iarray.size();
-            int n_ = a.iarray.size();
+            const auto n = iarray.size();
+            const auto n_ = a.iarray.size();
             if (n != n_) return false;
-            for (int i = 0; i < n; ++i) {
+            for (size_t i = 0; i < n; ++i) {
                 if (iarray[i] != a.iarray[i]) return false;
             }
             return true;
@@ -66,9 +64,11 @@ namespace ALM_NS
     public:
         int cell;
         double dist;
-        double relvec[3];
+        double relvec[3]{};
 
-        DistInfo();
+        DistInfo() = default;
+        ~DistInfo() = default;
+        DistInfo(const DistInfo &obj) = default;
 
         DistInfo(const int n,
                  const double d,
@@ -76,14 +76,7 @@ namespace ALM_NS
         {
             cell = n;
             dist = d;
-            for (int i = 0; i < 3; ++i) relvec[i] = x[i];
-        }
-
-        DistInfo(const DistInfo &obj)
-        {
-            cell = obj.cell;
-            dist = obj.dist;
-            for (int i = 0; i < 3; ++i) relvec[i] = obj.relvec[i];
+            for (auto i = 0; i < 3; ++i) relvec[i] = x[i];
         }
 
         bool operator<(const DistInfo &a) const
@@ -99,7 +92,7 @@ namespace ALM_NS
         int atom;
         double dist;
 
-        DistList();
+        DistList() = default;
 
         DistList(const int n,
                  const double dist_tmp) : atom(n), dist(dist_tmp) { };
@@ -119,11 +112,11 @@ namespace ALM_NS
         std::vector<int> cell;
         std::vector<double> dist;
 
-        MinDistList();
+        MinDistList() = default;
 
-        MinDistList(const std::vector<int> &cell_in,
-                    const std::vector<double> &dist_in)
-            : cell(cell_in), dist(dist_in) {};
+        MinDistList(std::vector<int> cell_in,
+                    std::vector<double> dist_in)
+            : cell(std::move(cell_in)), dist(std::move(dist_in)) {};
 
         static bool compare_sum_distance(const MinDistList &a,
                                          const MinDistList &b)
@@ -161,16 +154,16 @@ namespace ALM_NS
         std::vector<std::vector<int>> cell;
         double distmax;
 
-        InteractionCluster();
+        InteractionCluster() = default;
 
-        InteractionCluster(const std::vector<int> &atom_in,
-                           const std::vector<std::vector<int>> &cell_in,
+        InteractionCluster(std::vector<int> atom_in,
+                           std::vector<std::vector<int>> cell_in,
                            const double dist_in)
-            : atom(atom_in), cell(cell_in), distmax(dist_in) {};
+            : atom(std::move(atom_in)), cell(std::move(cell_in)), distmax(dist_in) {};
 
-        InteractionCluster(const std::vector<int> &atom_in,
-                           const std::vector<std::vector<int>> &cell_in)
-            : atom(atom_in), cell(cell_in), distmax(0.0) {};
+        InteractionCluster(std::vector<int> atom_in,
+                           std::vector<std::vector<int>> cell_in)
+            : atom(std::move(atom_in)), cell(std::move(cell_in)), distmax(0.0) {};
 
 
         bool operator<(const InteractionCluster &a) const
@@ -191,20 +184,21 @@ namespace ALM_NS
                   const int verbosity,
                   Timer *timer);
 
-        bool satisfy_nbody_rule(const int,
-                                const int *,
-                                const int) const;
+        bool satisfy_nbody_rule(const int nelem,
+                                const int *arr,
+                                const int order) const;
 
-        bool is_incutoff(const int,
-                         const int *,
-                         const int,
-                         const std::vector<int> &) const;
+        bool is_incutoff(const int n,
+                         const int *atomnumlist,
+                         const size_t order,
+                         const std::vector<int> &kd) const;
 
-        void define(const int,
-                    const size_t,
-                    const int *,
-                    const double * const * const *);
-        size_t get_maxorder() const;
+        void define(const int maxorder_in,
+                    const size_t nkd,
+                    const int *nbody_include_in,
+                    const double * const * const *cutoff_radii_in);
+
+        int get_maxorder() const;
         int* get_nbody_include() const;
         std::string get_ordername(const unsigned int order) const;
         const std::set<IntList>& get_cluster_list(const unsigned int order) const;
@@ -215,7 +209,7 @@ namespace ALM_NS
 
     private:
 
-        size_t maxorder;
+        int maxorder;
         int *nbody_include;
         double ***cutoff_radii;
         std::vector<std::string> str_order;
@@ -223,7 +217,7 @@ namespace ALM_NS
         std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **interaction_cluster;
 
-        std::vector<DistInfo> **distall; // Distance of all pairs (i,j) under the PBC
+        std::vector<DistInfo> **distall;       // Distance of all pairs (i,j) under the PBC
         std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
         // Interacting many-body clusters with mirrow image information
 
@@ -232,9 +226,9 @@ namespace ALM_NS
 
         // can be made const function, but mindist_pairs is modified
         // in this function.
-        void get_pairs_of_minimum_distance(const int,
-                                           const double * const * const *,
-                                           const int *);
+        void get_pairs_of_minimum_distance(const size_t nat,
+                                           const double * const * const *xc_in,
+                                           const int *exist) const;
 
         void generate_interaction_information_by_cutoff(const int,
                                                         const int,
@@ -243,13 +237,13 @@ namespace ALM_NS
                                                         const double * const *,
                                                         std::vector<int> *) const;
 
-        void set_interaction_by_cutoff(const unsigned int,
-                                       const std::vector<int> &,
-                                       const unsigned int,
-                                       const std::vector<std::vector<int>> &);
+        void set_interaction_by_cutoff(const size_t nat,
+                                       const std::vector<int> &kd,
+                                       const size_t nat_prim,
+                                       const std::vector<std::vector<int>> &map_p2s) const;
 
-        void print_neighborlist(const int,
-                                const int,
+        void print_neighborlist(const size_t,
+                                const size_t,
                                 const std::vector<std::vector<int>> &,
                                 const std::vector<int> &,
                                 const std::string *) const;
@@ -266,30 +260,29 @@ namespace ALM_NS
         int nbody(const int,
                   const int *) const;
 
-        void calc_interaction_clusters(const int,
-                                       const std::vector<int> &,
-                                       const std::vector<std::vector<int>> &,
-                                       const double * const *const *,
-                                       const int *);
+        void calc_interaction_clusters(const size_t natmin,
+                                       const std::vector<int> &kd,
+                                       const std::vector<std::vector<int>> &map_p2s,
+                                       const double * const * const *x_image,
+                                       const int *exist) const;
 
-        void set_interaction_cluster(const int,
-                                     const int,
-                                     const std::vector<int> &,
-                                     const std::vector<std::vector<int>> &,
-                                     const std::vector<int> *,
-                                     const double * const * const*,
-                                     const int *,
-                                     std::set<InteractionCluster> *);
+        void set_interaction_cluster(const int order,
+                                     const size_t natmin,
+                                     const std::vector<int> &kd,
+                                     const std::vector<std::vector<int>> &map_p2s,
+                                     const std::vector<int> *interaction_pair_in,
+                                     const double * const * const *x_image,
+                                     const int *exist,
+                                     std::set<InteractionCluster> *interaction_cluster_out) const;
 
         void cell_combination(const std::vector<std::vector<int>> &,
-                              const int,
+                              const size_t,
                               const std::vector<int> &,
                               std::vector<std::vector<int>> &) const;
 
-        void generate_pairs(const int,
-                            const std::vector<std::vector<int>> &,
-                            std::set<IntList> *,
-                            const std::set<InteractionCluster> * const *) const;
+        void generate_pairs(const size_t natmin,
+                            const std::vector<std::vector<int>> &map_p2s,
+                            std::set<IntList> *pair_out) const;
     };
 }
 

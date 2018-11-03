@@ -21,7 +21,7 @@ namespace ALM_NS
     public:
         double x, y, z;
         int kind;
-        int atom, tran;
+        size_t atom, tran;
 
         AtomProperty() = default;;
 
@@ -46,8 +46,8 @@ namespace ALM_NS
     public:
         double lattice_vector[3][3];
         std::vector<AtomProperty> atoms;
-        int nat, natmin, ntran;
-        int nspecies;
+        size_t nat, natmin, ntran;
+        size_t nspecies;
 
         SystemInfo() = default;;
     };

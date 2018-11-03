@@ -42,9 +42,9 @@ namespace ALM_NS
         std::string get_run_mode() const;
         void set_verbosity(int verbosity_in);
         int get_verbosity() const;
-        void set_output_filename_prefix(std::string prefix);
-        void set_print_symmetry(int printsymmetry);
-        void set_print_hessian(bool print_hessian);
+        void set_output_filename_prefix(std::string prefix) const;
+        void set_print_symmetry(int printsymmetry) const;
+        void set_print_hessian(bool print_hessian) const;
         void set_symmetry_tolerance(double tolerance) const;
         void set_displacement_param(bool trim_dispsign_for_evenfunc) const;
         void set_displacement_basis(std::string str_disp_basis) const;
@@ -72,7 +72,7 @@ namespace ALM_NS
         void define(const int maxorder,
                     const size_t nkd,
                     const int *nbody_include,
-                    const double * const * const *cutoff_radii);
+                    const double * const * const *cutoff_radii) const;
         //int get_ndata_used() const;
         size_t get_nrows_sensing_matrix() const;
         Cell get_supercell() const;

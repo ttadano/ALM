@@ -15,7 +15,6 @@
 #include "optimize.h"
 #include "input_setter.h"
 #include "memory.h"
-#include "system.h"
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -136,7 +135,7 @@ void InputParser::parse_displacement_and_force_files(std::vector<std::vector<dou
     f.resize(ndata_used, std::vector<double>(3 * nat));
 
     auto idata = 0;
-    for (auto i = 0; i < datfile_in.ndata; ++i) {
+    for (size_t i = 0; i < datfile_in.ndata; ++i) {
         if (i < datfile_in.nstart - 1) continue;
         if (i >= datfile_in.skip_s - 1 && i < datfile_in.skip_e - 1) continue; // When skip_s == skip_e, skip nothing.
         if (i > datfile_in.nend - 1) break;
@@ -182,7 +181,7 @@ void InputParser::parse_input(ALM *alm)
         exit("parse_input",
              "&position entry not found in the input file");
     }
-    parse_atomic_positions(alm);
+    parse_atomic_positions();
     input_setter->set_geometric_structure(alm);
 
     if (!locate_tag("&interaction")) {
@@ -204,7 +203,8 @@ void InputParser::parse_input(ALM *alm)
                 exit("parse_input",
                      "&optimize entry not found in the input file");
             } else {
-                warn("parse_input", "&fitting field is deprecated. Please use &optimize instead.");
+                warn("parse_input",
+                     "&fitting field is deprecated. Please use &optimize instead.");
             }
         }
         parse_optimize_vars(alm);
@@ -215,14 +215,14 @@ void InputParser::parse_input(ALM *alm)
 
 void InputParser::parse_general_vars(ALM *alm)
 {
-    int i, j;
+    size_t i;
     std::string str_tmp, str_disp_basis;
     int printsymmetry, is_periodic[3];
-    int icount, ncount;
+    size_t icount, ncount;
     auto trim_dispsign_for_evenfunc = true;
     bool print_hessian;
     int noncollinear, trevsym;
-    double **magmom, magmag;
+    double **magmom, magmag{0.0};
     double tolerance;
     double tolerance_constraint;
     int verbosity;
@@ -334,7 +334,7 @@ void InputParser::parse_general_vars(ALM *alm)
     auto lspin = false;
 
     for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
+        for (size_t j = 0; j < 3; ++j) {
             magmom[i][j] = 0.0;
         }
     }
@@ -400,11 +400,12 @@ void InputParser::parse_general_vars(ALM *alm)
                             exit("parse_general_vars",
                                  "Please place '*' without space for the MAGMOM-tag.");
                         }
+                        ncount = 0;
                         try {
                             magmag = boost::lexical_cast<double>(str_split[1]);
-                            ncount = static_cast<int>(boost::lexical_cast<double>(str_split[0]));
+                            ncount = static_cast<size_t>(boost::lexical_cast<double>(str_split[0]));
                         }
-                        catch (std::exception &e) {
+                        catch (std::exception) {
                             exit("parse_general_vars", "Bad format for MAGMOM.");
                         }
 
@@ -606,7 +607,7 @@ void InputParser::parse_interaction_vars()
         for (i = 0; i < maxorder; ++i) {
             nbody_include[i] = i + 2;
         }
-    } else if (nbody_v.size() == maxorder) {
+    } else if (nbody_v.size() == static_cast<size_t>(maxorder)) {
         for (i = 0; i < maxorder; ++i) {
             try {
                 nbody_include[i] = boost::lexical_cast<int>(nbody_v[i]);
@@ -626,7 +627,6 @@ void InputParser::parse_interaction_vars()
         warn("parce_input",
              "Harmonic interaction is always 2 body (except on-site 1 body)");
     }
-
 
     input_setter->set_interaction_vars(maxorder, nbody_include);
 
@@ -845,8 +845,8 @@ void InputParser::parse_optimize_vars(ALM *alm)
 
     auto fc2_file = fitting_var_dict["FC2XML"];
     auto fc3_file = fitting_var_dict["FC3XML"];
-    const bool fix_harmonic = !fc2_file.empty();
-    const bool fix_cubic = !fc3_file.empty();
+    const auto fix_harmonic = !fc2_file.empty();
+    const auto fix_cubic = !fc3_file.empty();
 
     if (constraint_flag % 10 >= 2) {
         rotation_axis = fitting_var_dict["ROTAXIS"];
@@ -867,9 +867,8 @@ void InputParser::parse_optimize_vars(ALM *alm)
     fitting_var_dict.clear();
 }
 
-void InputParser::parse_atomic_positions(ALM *alm)
+void InputParser::parse_atomic_positions()
 {
-    int i, j;
     std::string line, line_wo_comment;
     std::string str_tmp;
     std::string::size_type pos_first_comment_tag;
@@ -882,7 +881,6 @@ void InputParser::parse_atomic_positions(ALM *alm)
     } else {
         ifs_input.ignore();
     }
-
 
     str_v.clear();
 
@@ -935,7 +933,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
     allocate(kd, nat);
 
 
-    for (i = 0; i < nat; ++i) {
+    for (size_t i = 0; i < nat; ++i) {
 
         split_str_by_space(str_v[i], pos_line);
 
@@ -950,7 +948,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
                      i + 1);
             }
 
-            for (j = 0; j < 3; ++j) {
+            for (auto j = 0; j < 3; ++j) {
                 xeq[i][j] = boost::lexical_cast<double>(pos_line[j + 1]);
             }
 
@@ -1022,7 +1020,7 @@ void InputParser::parse_cutoff_radii()
 
     }
 
-    int i, j, k;
+    size_t i, j, k;
     int order;
     std::vector<std::string> cutoff_line;
     std::set<std::string> element_allowed;
@@ -1055,10 +1053,9 @@ void InputParser::parse_cutoff_radii()
     element_allowed.insert("*");
     kd_map.insert(std::map<std::string, int>::value_type("*", -1));
 
-    for (std::vector<std::string>::const_iterator it = str_cutoff.begin();
-         it != str_cutoff.end(); ++it) {
+    for (const auto &it : str_cutoff) {
 
-        split_str_by_space(*it, cutoff_line);
+        split_str_by_space(it, cutoff_line);
 
         if (cutoff_line.size() < maxorder + 1) {
             exit("parse_cutoff_radii",
@@ -1242,7 +1239,7 @@ void InputParser::get_var_dict(const std::vector<std::string> &input_list,
 
                 // Split the input entry by '='
 
-                std::string str_tmp = boost::trim_copy(it);
+                auto str_tmp = boost::trim_copy(it);
 
                 if (!str_tmp.empty()) {
 
@@ -1324,20 +1321,19 @@ int InputParser::locate_tag(const std::string key)
         }
         return ret;
 
-    } else {
-
-        ifs_input.clear();
-        ifs_input.seekg(0, std::ios_base::beg);
-
-        while (ifs_input >> line) {
-            boost::to_lower(line);
-            if (line == key) {
-                ret = 1;
-                break;
-            }
-        }
-        return ret;
     }
+
+    ifs_input.clear();
+    ifs_input.seekg(0, std::ios_base::beg);
+
+    while (ifs_input >> line) {
+        boost::to_lower(line);
+        if (line == key) {
+            ret = 1;
+            break;
+        }
+    }
+    return ret;
 }
 
 bool InputParser::is_endof_entry(const std::string str) const
@@ -1353,7 +1349,7 @@ void InputParser::split_str_by_space(const std::string str,
 
     str_vec.clear();
 
-    while (1) {
+    while (true) {
         str_tmp.clear();
         is >> str_tmp;
         if (str_tmp.empty()) {
@@ -1377,7 +1373,7 @@ void InputParser::assign_val(T &val,
         }
         catch (std::exception &e) {
             std::cout << e.what() << std::endl;
-            std::string str_tmp = "Invalid entry for the " + key + " tag.\n";
+            auto str_tmp = "Invalid entry for the " + key + " tag.\n";
             str_tmp += " Please check the input value.";
             exit("assign_val", str_tmp.c_str());
         }

@@ -37,7 +37,7 @@ namespace ALM_NS
         bool from_stdin;
         std::string *kdname;
         std::string mode;
-        size_t maxorder;
+        int maxorder;
         size_t nat;
         size_t nkd;
         InputSetter *input_setter;
@@ -45,7 +45,7 @@ namespace ALM_NS
         void parse_input(ALM *alm);
         void parse_general_vars(ALM *alm);
         void parse_cell_parameter();
-        void parse_atomic_positions(ALM *alm);
+        void parse_atomic_positions();
         void parse_interaction_vars();
         void parse_cutoff_radii();
         void parse_optimize_vars(ALM *alm);

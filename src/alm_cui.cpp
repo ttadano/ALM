@@ -59,11 +59,6 @@ void ALMCUI::run(const int narg,
         writer->write_input_vars(alm);
     }
 
-    //if (alm->get_run_mode() == "optimize") {
-    //    input_parser->parse_displacement_and_force(alm);
-    //}
-
-
     alm->run();
 
     if (alm->get_run_mode() == "optimize") {

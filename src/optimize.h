@@ -30,7 +30,7 @@ namespace ALM_NS
     {
     public:
         // General optimization options
-        int optimizer; // 1 : least-squares, 2 : elastic net
+        int optimizer;         // 1 : least-squares, 2 : elastic net
         int use_sparse_solver; // 0: No, 1: Yes
         int maxnum_iteration;
         double tolerance_iteration;
@@ -72,7 +72,6 @@ namespace ALM_NS
         }
 
         ~OptimizerControl() = default;
-
         OptimizerControl(const OptimizerControl &obj) = default;
         OptimizerControl& operator=(const OptimizerControl &obj) = default;
     };
@@ -89,10 +88,9 @@ namespace ALM_NS
                           const int maxorder,
                           const std::string file_prefix,
                           const std::vector<std::string> &str_order,
-                          const unsigned int nat,
                           const int verbosity,
-                          const DispForceFile &filedat_train,
-                          const DispForceFile &filedat_test,
+                          const DispForceFile &filedata_train,
+                          const DispForceFile &filedata_test,
                           Timer *timer);
 
         void set_training_data(const std::vector<std::vector<double>> &u_train_in,
@@ -184,20 +182,18 @@ namespace ALM_NS
                                             const int verbosity,
                                             std::vector<double> &param_out);
 
-        int run_elastic_net_optimization(const int maxorder,
-                                         const int M,
+        int run_elastic_net_optimization(const int M,
                                          const int N_new,
                                          std::vector<double> &amat_1D,
                                          std::vector<double> &bvec,
                                          const double fnorm,
-                                         const std::vector<std::string> &str_order,
                                          const int verbosity,
                                          std::vector<double> &param_out);
 
         int run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
                                                  const Eigen::VectorXd &b_in,
                                                  const Eigen::VectorXd &factor_std,
-                                                 std::vector<double> &params,
+                                                 std::vector<double> &params_inout,
                                                  const int verbosity);
 
         void get_standardizer(const Eigen::MatrixXd &Amat,
@@ -283,7 +279,7 @@ namespace ALM_NS
                                const int,
                                const Fcs *,
                                const Constraint *,
-                               const int);
+                               const int) const;
 #endif
 
         void recover_original_forceconstants(const int,
@@ -305,7 +301,7 @@ namespace ALM_NS
         // Moved from lasso.h
         void coordinate_descent(const int M,
                                 const int N,
-                                const double l1_alpha,
+                                const double alpha,
                                 const int warm_start,
                                 Eigen::VectorXd &x,
                                 const Eigen::MatrixXd &A,
