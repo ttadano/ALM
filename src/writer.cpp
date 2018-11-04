@@ -172,11 +172,11 @@ void Writer::write_force_constants(ALM *alm) const
         str_fcs[order] = "*FC" + std::to_string(order + 2);
     }
 
-    auto k = 0;
+    size_t k = 0;
 
     for (order = 0; order < maxorder; ++order) {
 
-        auto m = 0;
+        size_t m = 0;
 
         if (!alm->fcs->get_nequiv()[order].empty()) {
 
@@ -209,7 +209,7 @@ void Writer::write_force_constants(ALM *alm) const
                          "This cannot happen.");
                 }
 
-                const int multiplicity = (*iter_cluster).cell.size();
+                const auto multiplicity = (*iter_cluster).cell.size();
                 const auto distmax = (*iter_cluster).distmax;
                 ofs_fcs << std::setw(4) << multiplicity;
 
@@ -440,14 +440,14 @@ void Writer::write_misc_xml(ALM *alm)
 
     pt.put("Data.ForceConstants.HarmonicUnique.NFC2", alm->fcs->get_nequiv()[0].size());
 
-    auto ihead = 0;
-    auto k = 0;
+    size_t ihead = 0;
+    size_t k = 0;
     const auto nelem = alm->cluster->get_maxorder() + 1;
     int *pair_tmp;
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
     std::set<InteractionCluster>::iterator iter_cluster;
-    int multiplicity;
+    size_t multiplicity;
 
 
     allocate(pair_tmp, nelem);
@@ -520,7 +520,7 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    int ip;
+    size_t ip;
     int imult;
     std::string elementname = "Data.ForceConstants.HARMONIC.FC2";
 
@@ -567,7 +567,7 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    int ishift = alm->fcs->get_nequiv()[0].size();
+    auto ishift = alm->fcs->get_nequiv()[0].size();
 
     // Print anharmonic force constants to the xml file.
 
@@ -649,14 +649,14 @@ void Writer::write_misc_xml(ALM *alm)
 
 void Writer::write_hessian(ALM *alm) const
 {
-    int i, j;
+    size_t i, j;
     int pair_tmp[2];
     int pair_tran[2];
     std::ofstream ofs_hes;
     double **hessian;
 
     //ALMCore *alm = alm->get_alm();
-    const int nat3 = 3 * alm->get_supercell().number_of_atoms;
+    const auto nat3 = 3 * alm->get_supercell().number_of_atoms;
 
     allocate(hessian, nat3, nat3);
 
@@ -774,16 +774,16 @@ void Writer::write_in_QEformat(ALM *alm) const
 
 void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
 {
-    int i, j, k;
+    size_t i, j, k;
     int pair_tmp[3], coord_tmp[3];
     std::ofstream ofs_fc3;
     double ***fc3;
     int ***has_element;
-    auto nelems = 0;
-    const int nat3 = 3 * alm->get_supercell().number_of_atoms;
-    const int natmin = alm->symmetry->get_nat_prim();
-    const int nat = alm->get_supercell().number_of_atoms;
-    const int ntran = alm->symmetry->get_ntran();
+    size_t nelems = 0;
+    const auto nat3 = 3 * alm->get_supercell().number_of_atoms;
+    const auto natmin = alm->symmetry->get_nat_prim();
+    const auto nat = alm->get_supercell().number_of_atoms;
+    const auto ntran = alm->symmetry->get_ntran();
 
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
@@ -812,7 +812,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
         }
     }
 
-    const int ishift = alm->fcs->get_nequiv()[0].size();
+    const auto ishift = alm->fcs->get_nequiv()[0].size();
 
     for (auto it = alm->fcs->get_fc_table()[1].begin(); it != alm->fcs->get_fc_table()[1].end(); ++it) {
         auto fctmp = *it;
@@ -889,14 +889,14 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
                             exit("write_misc_xml", "This cannot happen.");
                         }
 
-                        const int multiplicity = (*iter_cluster).cell.size();
+                        const auto multiplicity = (*iter_cluster).cell.size();
 
                         const auto jat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[0]].
                             atom_num][0];
                         const auto kat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[1]].
                             atom_num][0];
 
-                        for (auto imult = 0; imult < multiplicity; ++imult) {
+                        for (size_t imult = 0; imult < multiplicity; ++imult) {
                             auto cell_now = (*iter_cluster).cell[imult];
 
                             for (auto m = 0; m < 3; ++m) {

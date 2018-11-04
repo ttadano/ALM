@@ -2,10 +2,10 @@
 
 #include "fcs.h"
 
-void rref(const int nrows,
-          const int ncols,
+void rref(const size_t nrows,
+          const size_t ncols,
           double **mat,
-          int &nrank,
+          size_t &nrank,
           const double tolerance = 1.0e-12);
 
 void rref(std::vector<std::vector<double>> &mat,

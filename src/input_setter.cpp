@@ -88,7 +88,7 @@ void InputSetter::set_interaction_vars(const int maxorder_in,
         deallocate(nbody_include);
     }
     allocate(nbody_include, maxorder);
-    for (unsigned int i = 0; i < maxorder; i++) {
+    for (auto i = 0; i < maxorder; i++) {
         nbody_include[i] = nbody_include_in[i];
     }
 }
@@ -116,8 +116,8 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const int verbosity,
                                    const std::string str_disp_basis,
                                    const std::string str_magmom,
-                                   const int nat_in,
-                                   const int nkd_in,
+                                   const size_t nat_in,
+                                   const size_t nkd_in,
                                    const int printsymmetry,
                                    const int is_periodic_in[3],
                                    const bool trim_dispsign_for_evenfunc,

@@ -29,7 +29,7 @@ namespace ALM_NS
     public:
         std::vector<double> w_const;
 
-        ConstraintClass();
+        ConstraintClass() = default;
 
         ConstraintClass(const ConstraintClass &a) = default;
 
@@ -54,10 +54,10 @@ namespace ALM_NS
     class ConstraintTypeFix
     {
     public:
-        unsigned int p_index_target;
+        size_t p_index_target;
         double val_to_fix;
 
-        ConstraintTypeFix(const unsigned int index_in,
+        ConstraintTypeFix(const size_t index_in,
                           const double val_in) :
             p_index_target(index_in), val_to_fix(val_in) { }
     };
@@ -65,23 +65,23 @@ namespace ALM_NS
     class ConstraintTypeRelate
     {
     public:
-        unsigned int p_index_target;
+        size_t p_index_target;
         std::vector<double> alpha;
-        std::vector<unsigned int> p_index_orig;
+        std::vector<size_t> p_index_orig;
 
-        ConstraintTypeRelate(const unsigned int index_in,
+        ConstraintTypeRelate(const size_t index_in,
                              std::vector<double> alpha_in,
-                             std::vector<unsigned int> p_index_in) :
+                             std::vector<size_t> p_index_in) :
             p_index_target(index_in), alpha(std::move(alpha_in)), p_index_orig(std::move(p_index_in)) { }
     };
 
     inline bool equal_within_eps12(const std::vector<double> &a,
                                    const std::vector<double> &b)
     {
-        const int n = a.size();
-        const int m = b.size();
+        const auto n = a.size();
+        const auto m = b.size();
         if (n != m) return false;
-        for (auto i = 0; i < n; ++i) {
+        for (size_t i = 0; i < n; ++i) {
             if (std::abs(a[i] - b[i]) > eps12) return false;
         }
         return true;
@@ -91,10 +91,10 @@ namespace ALM_NS
     {
         // For sparse representation
     public:
-        unsigned int col;
+        size_t col;
         int val;
 
-        ConstraintIntegerElement(const unsigned int col_in,
+        ConstraintIntegerElement(const size_t col_in,
                                  const int val_in) :
             col(col_in), val(val_in) {}
     };
@@ -103,11 +103,11 @@ namespace ALM_NS
     inline bool operator<(const std::vector<ConstraintIntegerElement> &obj1,
                           const std::vector<ConstraintIntegerElement> &obj2)
     {
-        const int len1 = obj1.size();
-        const int len2 = obj2.size();
+        const auto len1 = obj1.size();
+        const auto len2 = obj2.size();
         const auto min = (std::min)(len1, len2);
 
-        for (auto i = 0; i < min; ++i) {
+        for (size_t i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
                 return true;
             }
@@ -128,11 +128,11 @@ namespace ALM_NS
     inline bool operator==(const std::vector<ConstraintIntegerElement> &obj1,
                            const std::vector<ConstraintIntegerElement> &obj2)
     {
-        const int len1 = obj1.size();
-        const int len2 = obj2.size();
+        const auto len1 = obj1.size();
+        const auto len2 = obj2.size();
         if (len1 != len2) return false;
 
-        for (auto i = 0; i < len1; ++i) {
+        for (size_t i = 0; i < len1; ++i) {
             if (obj1[i].col != obj2[i].col || obj1[i].val != obj2[i].val) {
                 return false;
             }
@@ -144,10 +144,10 @@ namespace ALM_NS
     {
         // For sparse representation
     public:
-        unsigned int col;
+        size_t col;
         double val;
 
-        ConstraintDoubleElement(const unsigned int col_in,
+        ConstraintDoubleElement(const size_t col_in,
                                 const double val_in) :
             col(col_in), val(val_in) {}
     };
@@ -156,11 +156,11 @@ namespace ALM_NS
     inline bool operator<(const std::vector<ConstraintDoubleElement> &obj1,
                           const std::vector<ConstraintDoubleElement> &obj2)
     {
-        const int len1 = obj1.size();
-        const int len2 = obj2.size();
+        const auto len1 = obj1.size();
+        const auto len2 = obj2.size();
         const auto min = (std::min)(len1, len2);
 
-        for (auto i = 0; i < min; ++i) {
+        for (size_t i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
                 return true;
             }
@@ -181,11 +181,11 @@ namespace ALM_NS
     inline bool operator==(const std::vector<ConstraintDoubleElement> &obj1,
                            const std::vector<ConstraintDoubleElement> &obj2)
     {
-        const int len1 = obj1.size();
-        const int len2 = obj2.size();
+        const auto len1 = obj1.size();
+        const auto len2 = obj2.size();
         if (len1 != len2) return false;
 
-        for (auto i = 0; i < len1; ++i) {
+        for (size_t i = 0; i < len1; ++i) {
             if (obj1[i].col != obj2[i].col || (std::abs(obj1[i].val - obj2[i].val) > 1.0e-10)) {
                 return false;
             }
@@ -193,8 +193,8 @@ namespace ALM_NS
         return true;
     }
 
-    inline bool operator<(const std::map<unsigned int, double> &obj1,
-                          const std::map<unsigned int, double> &obj2)
+    inline bool operator<(const std::map<size_t, double> &obj1,
+                          const std::map<size_t, double> &obj2)
     {
         return obj1.begin()->first < obj2.begin()->first;
     }
@@ -213,12 +213,12 @@ namespace ALM_NS
                    const int verbosity,
                    Timer *timer);
 
-        void get_mapping_constraint(const int,
-                                    const std::vector<int> *,
-                                    const ConstraintSparseForm *,
-                                    std::vector<ConstraintTypeFix> *,
-                                    std::vector<ConstraintTypeRelate> *,
-                                    boost::bimap<int, int> *) const;
+        void get_mapping_constraint(const int nmax,
+                                    const std::vector<size_t> *nequiv,
+                                    const ConstraintSparseForm *const_in,
+                                    std::vector<ConstraintTypeFix> *const_fix_out,
+                                    std::vector<ConstraintTypeRelate> *const_relate_out,
+                                    boost::bimap<size_t, size_t> *index_bimap_out) const;
 
         int get_constraint_mode() const;
         void set_constraint_mode(const int);
@@ -246,11 +246,11 @@ namespace ALM_NS
 
         const ConstraintSparseForm& get_const_symmetry(const int) const;
         const std::vector<ConstraintTypeFix>& get_const_fix(const int) const;
-        void set_const_fix_val_to_fix(const int,
-                                      const int,
-                                      const double);
+        void set_const_fix_val_to_fix(const int order,
+                                      const size_t idx,
+                                      const double val);
         const std::vector<ConstraintTypeRelate>& get_const_relate(const int) const;
-        const boost::bimap<int, int>& get_index_bimap(const int) const;
+        const boost::bimap<size_t, size_t>& get_index_bimap(const int) const;
 
     private:
 
@@ -273,7 +273,7 @@ namespace ALM_NS
         std::vector<ConstraintTypeFix> *const_fix;
         std::vector<ConstraintTypeRelate> *const_relate;
         std::vector<ConstraintTypeRelate> *const_relate_rotation;
-        boost::bimap<int, int> *index_bimap;
+        boost::bimap<size_t, size_t> *index_bimap;
 
         bool impose_inv_T, impose_inv_R, exclude_last_R;
 
@@ -297,9 +297,9 @@ namespace ALM_NS
                                             const double);
 
         // const_mat and const_rhs are updated.
-        int calc_constraint_matrix(const int,
-                                   const std::vector<int> *,
-                                   const int) const;
+        size_t calc_constraint_matrix(const int maxorder,
+                                      const std::vector<size_t> *nequiv,
+                                      const size_t nparams) const;
 
         void print_constraint(const ConstraintSparseForm &) const;
 
@@ -315,25 +315,25 @@ namespace ALM_NS
                         const int nshift = 0) const;
 
 
-        void remove_redundant_rows(const int,
-                                   std::vector<ConstraintClass> &,
+        void remove_redundant_rows(const size_t n,
+                                   std::vector<ConstraintClass> &Constraint_vec,
                                    const double tolerance = eps12) const;
 
         // const_symmetry is updated.
-        void generate_symmetry_constraint_in_cartesian(int,
-                                                       const Symmetry *,
-                                                       const Cluster *,
-                                                       const Fcs *,
-                                                       const int);
+        void generate_symmetry_constraint_in_cartesian(const size_t nat,
+                                                       const Symmetry *symmetry,
+                                                       const Cluster *cluster,
+                                                       const Fcs *fcs,
+                                                       const int verbosity);
 
-        void get_constraint_translation(const Cell &,
-                                        const Symmetry *,
-                                        const Cluster *,
-                                        const Fcs *,
-                                        const int,
-                                        const std::vector<FcProperty> &,
-                                        const int,
-                                        ConstraintSparseForm &,
+        void get_constraint_translation(const Cell &supercell,
+                                        const Symmetry *symmetry,
+                                        const Cluster *cluster,
+                                        const Fcs *fcs,
+                                        const int order,
+                                        const std::vector<FcProperty> &fc_table,
+                                        const size_t nparams,
+                                        ConstraintSparseForm &const_out,
                                         const bool do_rref = false) const;
 
         // const_translation is updated.

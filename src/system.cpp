@@ -413,7 +413,7 @@ void System::set_atomtype_group()
         set_type.insert(type_tmp);
     }
 
-    const int natomtypes = set_type.size();
+    const auto natomtypes = set_type.size();
     atomtype_group.resize(natomtypes);
 
     for (i = 0; i < supercell.number_of_atoms; ++i) {

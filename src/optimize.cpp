@@ -81,8 +81,8 @@ int Optimize::optimize_main(const Symmetry *symmetry,
     auto info_fitting = 0;
     const auto M = get_number_of_rows_sensing_matrix();
     const auto M_test = 3 * natmin * ndata_used_test * ntran;
-    auto N = 0;
-    auto N_new = 0;
+    size_t N = 0;
+    size_t N_new = 0;
     for (auto i = 0; i < maxorder; ++i) {
         N += fcs->get_nequiv()[i].size();
     }
@@ -193,9 +193,9 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 }
 
 int Optimize::least_squares(const int maxorder,
-                            const int N,
-                            const int N_new,
-                            const int M,
+                            const size_t N,
+                            const size_t N_new,
+                            const size_t M,
                             const int verbosity,
                             const Symmetry *symmetry,
                             const Fcs *fcs,
@@ -336,9 +336,9 @@ int Optimize::least_squares(const int maxorder,
 
 int Optimize::elastic_net(const std::string job_prefix,
                           const int maxorder,
-                          const int N_new,
-                          const int M,
-                          const int M_test,
+                          const size_t N_new,
+                          const size_t M,
+                          const size_t M_test,
                           const Symmetry *symmetry,
                           const std::vector<std::string> &str_order,
                           const Fcs *fcs,
@@ -445,7 +445,7 @@ int Optimize::elastic_net(const std::string job_prefix,
     }
 
     if (verbosity > 0 && info_fitting == 0) {
-        auto iparam = 0;
+        size_t iparam = 0;
         std::vector<int> nzero_lasso(maxorder);
 
         for (i = 0; i < maxorder; ++i) {
@@ -620,7 +620,7 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
         const auto res2 = fdiff_test.dot(fdiff_test) / (fnorm_test * fnorm_test);
 
         // Count the number of zero parameters
-        auto iparam = 0;
+        size_t iparam = 0;
 
         for (auto i = 0; i < maxorder; ++i) {
             nzero_lasso[i] = 0;
@@ -798,7 +798,7 @@ int Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
         }
     }
 
-    const int N_nonzero = nonzero_index.size();
+    const auto N_nonzero = nonzero_index.size();
     Eigen::MatrixXd A_nonzero(M, N_nonzero);
 
     for (auto i = 0; i < N_nonzero; ++i) {
@@ -983,16 +983,16 @@ std::vector<std::vector<double>> Optimize::get_f_train() const
 
 void Optimize::set_fcs_values(const int maxorder,
                               double *fc_in,
-                              std::vector<int> *nequiv,
+                              std::vector<size_t> *nequiv,
                               const Constraint *constraint)
 {
     // fc_in: irreducible set of force constants
     // fc_length: dimension of params (can differ from that of fc_in)
 
-    int i;
+    size_t i;
 
-    auto N = 0;
-    auto Nirred = 0;
+    size_t N = 0;
+    size_t Nirred = 0;
     for (i = 0; i < maxorder; ++i) {
         N += nequiv[i].size();
         Nirred += constraint->get_index_bimap(i).size();
@@ -1024,8 +1024,8 @@ size_t Optimize::get_number_of_rows_sensing_matrix() const
 }
 
 
-int Optimize::fit_without_constraints(const int N,
-                                      const int M,
+int Optimize::fit_without_constraints(const size_t N,
+                                      const size_t M,
                                       double *amat,
                                       const double *bvec,
                                       double *param_out,
@@ -1099,9 +1099,9 @@ int Optimize::fit_without_constraints(const int N,
     return INFO;
 }
 
-int Optimize::fit_with_constraints(const int N,
-                                   const int M,
-                                   const int P,
+int Optimize::fit_with_constraints(const size_t N,
+                                   const size_t M,
+                                   const size_t P,
                                    double *amat,
                                    const double *bvec,
                                    double *param_out,
@@ -1109,7 +1109,7 @@ int Optimize::fit_with_constraints(const int N,
                                    double *dvec,
                                    const int verbosity) const
 {
-    int i, j;
+    size_t i, j;
     int N_tmp, M_tmp, P_tmp;
     double *fsum2;
     double *mat_tmp;
@@ -1121,8 +1121,8 @@ int Optimize::fit_with_constraints(const int N,
     allocate(fsum2, M);
     allocate(mat_tmp, (M + P) * N);
 
-    unsigned long k = 0;
-    unsigned long l = 0;
+    size_t k = 0;
+    size_t l = 0;
 
     // Concatenate two matrices as 1D array
     for (j = 0; j < N; ++j) {
@@ -1173,7 +1173,7 @@ int Optimize::fit_with_constraints(const int N,
 
     // Fitting
 
-    auto LWORK = P + std::min<int>(M, N) + 10 * std::max<int>(M, N);
+    auto LWORK = static_cast<int>(P) + std::min<int>(M, N) + 10 * std::max<int>(M, N);
     int INFO;
     double *WORK, *x;
     allocate(WORK, LWORK);
@@ -1214,8 +1214,8 @@ int Optimize::fit_with_constraints(const int N,
     return INFO;
 }
 
-int Optimize::fit_algebraic_constraints(const int N,
-                                        const int M,
+int Optimize::fit_algebraic_constraints(const size_t N,
+                                        const size_t M,
                                         double *amat,
                                         const double *bvec,
                                         std::vector<double> &param_out,
@@ -1309,7 +1309,7 @@ void Optimize::get_matrix_elements(const int maxorder,
                                    const Symmetry *symmetry,
                                    const Fcs *fcs) const
 {
-    int i, j;
+    size_t i, j;
     long irow;
     const auto natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
@@ -1321,9 +1321,9 @@ void Optimize::get_matrix_elements(const int maxorder,
     }
 
     const auto ndata_fit = u_in.size();
-    const auto ncycle = static_cast<long>(ndata_fit) * symmetry->get_ntran();
+    const auto ncycle = ndata_fit * symmetry->get_ntran();
     const auto nrows = ndata_fit * u_in[0].size();
-    auto ncols = 0;
+    size_t ncols = 0;
     for (i = 0; i < maxorder; ++i) {
         ncols += fcs->get_nequiv()[i].size();
     }
@@ -1345,8 +1345,8 @@ void Optimize::get_matrix_elements(const int maxorder,
     {
         int *ind;
         int mm, order, iat, k;
-        int im, iparam;
-        long idata;
+        size_t im, iparam;
+        size_t idata;
         double amat_tmp;
         double **amat_orig_tmp;
 
@@ -1426,7 +1426,7 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
                                                         const Fcs *fcs,
                                                         const Constraint *constraint) const
 {
-    int i, j;
+    size_t i, j;
     long irow;
 
     if (u_in.size() != f_in.size()) {
@@ -1435,11 +1435,11 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
     }
 
     const auto ndata_fit = u_in.size();
-    const int natmin = symmetry->get_nat_prim();
+    const auto natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
     const auto nrows = u_in.size() * u_in[0].size();
-    auto ncols = 0;
-    auto ncols_new = 0;
+    size_t ncols = 0;
+    size_t ncols_new = 0;
 
     for (i = 0; i < maxorder; ++i) {
         ncols += fcs->get_nequiv()[i].size();
@@ -1467,10 +1467,10 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
     {
         int *ind;
         int mm, order, iat, k;
-        int im, iparam;
-        long idata;
-        int ishift;
-        int iold, inew;
+        size_t im;
+        size_t idata;
+        size_t ishift, iparam;
+        size_t iold, inew;
         double amat_tmp;
         double **amat_orig_tmp;
         double **amat_mod_tmp;
@@ -1612,9 +1612,9 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
                                                   const Fcs *fcs,
                                                   const Constraint *constraint)
 {
-    int i, j;
+    size_t i, j;
     long irow;
-    typedef Eigen::Triplet<double> T;
+    typedef Eigen::Triplet<double, size_t> T;
     std::vector<T> nonzero_entries;
 
     if (u_in.size() != f_in.size()) {
@@ -1623,12 +1623,12 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
     }
 
     const auto ndata_fit = u_in.size();
-    const int natmin = symmetry->get_nat_prim();
+    const auto natmin = symmetry->get_nat_prim();
     const auto natmin3 = 3 * natmin;
     const auto nrows = u_in.size() * u_in[0].size();
 
-    auto ncols = 0;
-    auto ncols_new = 0;
+    size_t ncols = 0;
+    size_t ncols_new = 0;
 
     for (i = 0; i < maxorder; ++i) {
         ncols += fcs->get_nequiv()[i].size();
@@ -1649,10 +1649,10 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
     {
         int *ind;
         int mm, order, iat, k;
-        int im, iparam;
-        long idata;
-        int ishift;
-        int iold, inew;
+        size_t im, iparam;
+        size_t idata;
+        size_t ishift;
+        size_t iold, inew;
         double amat_tmp;
         double **amat_orig_tmp;
         double **amat_mod_tmp;
@@ -1795,19 +1795,19 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
 void Optimize::recover_original_forceconstants(const int maxorder,
                                                const std::vector<double> &param_in,
                                                std::vector<double> &param_out,
-                                               const std::vector<int> *nequiv,
+                                               const std::vector<size_t> *nequiv,
                                                const Constraint *constraint) const
 {
     // Expand the given force constants into the larger sets
     // by using the constraint matrix.
 
-    int i, j, k;
-    auto ishift = 0;
-    auto iparam = 0;
+    size_t i, j, k;
+    size_t ishift = 0;
+    size_t iparam = 0;
     double tmp;
-    int inew, iold;
+    size_t inew, iold;
 
-    unsigned int nparams = 0;
+    size_t nparams = 0;
 
     for (i = 0; i < maxorder; ++i) nparams += nequiv[i].size();
 
@@ -1945,16 +1945,16 @@ int Optimize::factorial(const int n) const
 }
 
 
-int Optimize::rankQRD(const int m,
-                      const int n,
+int Optimize::rankQRD(const size_t m,
+                      const size_t n,
                       double *mat,
                       const double tolerance) const
 {
     // Return the rank of matrix mat revealed by the column pivoting QR decomposition
     // The matrix mat is destroyed.
 
-    auto m_ = m;
-    auto n_ = n;
+    auto m_ = static_cast<int>(m);
+    auto n_ = static_cast<int>(n);
 
     auto LDA = m_;
 

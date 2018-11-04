@@ -16,37 +16,37 @@
 
 namespace ALM_NS
 {
-    inline unsigned long memsize_in_MB(const int size_of_one,
-                                       const unsigned int n1)
+    inline size_t memsize_in_MB(const size_t size_of_one,
+                                const size_t n1)
     {
-        const unsigned long n = n1 * size_of_one;
+        const auto n = n1 * size_of_one;
         return n / 1000000;
     }
 
-    inline unsigned long memsize_in_MB(const int size_of_one,
-                                       const unsigned int n1,
-                                       const unsigned int n2)
+    inline size_t memsize_in_MB(const size_t size_of_one,
+                                const size_t n1,
+                                const size_t n2)
     {
-        const unsigned long n = n1 * n2 * size_of_one;
+        const auto n = n1 * n2 * size_of_one;
         return n / 1000000;
     }
 
-    inline unsigned long memsize_in_MB(const int size_of_one,
-                                       const unsigned int n1,
-                                       const unsigned int n2,
-                                       const unsigned int n3)
+    inline size_t memsize_in_MB(const size_t size_of_one,
+                                const size_t n1,
+                                const size_t n2,
+                                const size_t n3)
     {
-        const unsigned long n = n1 * n2 * n3 * size_of_one;
+        const auto n = n1 * n2 * n3 * size_of_one;
         return n / 1000000;
     }
 
-    inline unsigned long memsize_in_MB(const int size_of_one,
-                                       const unsigned int n1,
-                                       const unsigned int n2,
-                                       const unsigned int n3,
-                                       const unsigned int n4)
+    inline size_t memsize_in_MB(const size_t size_of_one,
+                                const size_t n1,
+                                const size_t n2,
+                                const size_t n3,
+                                const size_t n4)
     {
-        const unsigned long n = n1 * n2 * n3 * n4 * size_of_one;
+        const auto n = n1 * n2 * n3 * n4 * size_of_one;
         return n / 1000000;
     }
 
@@ -56,7 +56,7 @@ namespace ALM_NS
 
     template <typename T>
     T* allocate(T *&arr,
-                const unsigned int n1)
+                const size_t n1)
     {
         try {
             arr = new T[n1];
@@ -72,13 +72,13 @@ namespace ALM_NS
 
     template <typename T>
     T** allocate(T **&arr,
-                 const unsigned int n1,
-                 const unsigned int n2)
+                 const size_t n1,
+                 const size_t n2)
     {
         try {
             arr = new T *[n1];
             arr[0] = new T[n1 * n2];
-            for (unsigned int i = 1; i < n1; ++i) {
+            for (size_t i = 1; i < n1; ++i) {
                 arr[i] = arr[0] + i * n2;
             }
         }
@@ -93,17 +93,17 @@ namespace ALM_NS
 
     template <typename T>
     T*** allocate(T ***&arr,
-                  const unsigned int n1,
-                  const unsigned int n2,
-                  const unsigned int n3)
+                  const size_t n1,
+                  const size_t n2,
+                  const size_t n3)
     {
         try {
             arr = new T **[n1];
             arr[0] = new T *[n1 * n2];
             arr[0][0] = new T[n1 * n2 * n3];
-            for (unsigned int i = 0; i < n1; ++i) {
+            for (size_t i = 0; i < n1; ++i) {
                 arr[i] = arr[0] + i * n2;
-                for (unsigned int j = 0; j < n2; ++j) {
+                for (size_t j = 0; j < n2; ++j) {
                     arr[i][j] = arr[0][0] + i * n2 * n3 + j * n3;
                 }
             }
@@ -120,10 +120,10 @@ namespace ALM_NS
 
     template <typename T>
     T**** allocate(T ****&arr,
-                   const unsigned int n1,
-                   const unsigned int n2,
-                   const unsigned int n3,
-                   const unsigned int n4)
+                   const size_t n1,
+                   const size_t n2,
+                   const size_t n3,
+                   const size_t n4)
     {
         try {
             arr = new T ***[n1];
@@ -131,11 +131,11 @@ namespace ALM_NS
             arr[0][0] = new T *[n1 * n2 * n3];
             arr[0][0][0] = new T[n1 * n2 * n3 * n4];
 
-            for (unsigned int i = 0; i < n1; ++i) {
+            for (size_t i = 0; i < n1; ++i) {
                 arr[i] = arr[0] + i * n2;
-                for (unsigned int j = 0; j < n2; ++j) {
+                for (size_t j = 0; j < n2; ++j) {
                     arr[i][j] = arr[0][0] + i * n2 * n3 + j * n3;
-                    for (unsigned int k = 0; k < n3; ++k) {
+                    for (size_t k = 0; k < n3; ++k) {
                         arr[i][j][k] = arr[0][0][0] + i * n2 * n3 * n4 + j * n3 * n4 + k * n4;
                     }
                 }

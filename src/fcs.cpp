@@ -20,11 +20,18 @@
 #include "timer.h"
 #include <iostream>
 #include <iomanip>
+#include <limits>
+#include <cstddef>
 #include <string>
 #include <cmath>
 #include "../external/combination.hpp"
 #include <unordered_set>
 #include <boost/algorithm/string/case_conv.hpp>
+
+#if defined(_WIN32) || defined(_WIN64)
+#undef min
+#undef max
+#endif
 
 using namespace ALM_NS;
 
@@ -40,7 +47,7 @@ Fcs::~Fcs()
 
 void Fcs::init(const Cluster *cluster,
                const Symmetry *symmetry,
-               const unsigned int number_of_atoms,
+               const size_t number_of_atoms,
                const int verbosity,
                Timer *timer)
 {
@@ -124,16 +131,16 @@ void Fcs::deallocate_variables()
 
 
 void Fcs::generate_force_constant_table(const int order,
-                                        const unsigned int nat,
+                                        const size_t nat,
                                         const std::set<IntList> &pairs,
                                         const Symmetry *symm_in,
                                         const std::string basis,
                                         std::vector<FcProperty> &fc_vec,
-                                        std::vector<int> &ndup,
+                                        std::vector<size_t> &ndup,
                                         std::vector<FcProperty> &fc_zeros_out,
                                         const bool store_zeros_in) const
 {
-    int i, j;
+    size_t i, j;
     int i1, i2;
     int i_prim;
     int *atmn, *atmn_mapped;
@@ -146,7 +153,7 @@ void Fcs::generate_force_constant_table(const int order,
 
     int **xyzcomponent;
 
-    int nsym = symm_in->get_SymmData().size();
+    const auto nsym = symm_in->get_SymmData().size();
     bool is_zero;
     bool *is_searched;
     int **map_sym;
@@ -208,7 +215,7 @@ void Fcs::generate_force_constant_table(const int order,
 
             // Search symmetrically-dependent parameter set
 
-            int ndeps = 0;
+            size_t ndeps = 0;
 
             for (isym = 0; isym < nsym_in_use; ++isym) {
 
@@ -293,7 +300,7 @@ void Fcs::generate_force_constant_table(const int order,
             if (is_zero) {
                 if (store_zeros_in) {
                     for (auto it = fc_vec.rbegin(); it != fc_vec.rbegin() + ndeps; ++it) {
-                        (*it).mother = -1;
+                        (*it).mother = std::numeric_limits<size_t>::max();
                         fc_zeros_out.push_back(*it);
                     }
                 }
@@ -322,9 +329,9 @@ void Fcs::generate_force_constant_table(const int order,
 
     if (!ndup.empty()) {
         std::sort(fc_vec.begin(), fc_vec.begin() + ndup[0]);
-        int nbegin = ndup[0];
-        int nend;
-        for (int mm = 1; mm < ndup.size(); ++mm) {
+        size_t nbegin = ndup[0];
+        size_t nend;
+        for (size_t mm = 1; mm < ndup.size(); ++mm) {
             nend = nbegin + ndup[mm];
             std::sort(fc_vec.begin() + nbegin, fc_vec.begin() + nend);
             nbegin += ndup[mm];
@@ -332,12 +339,12 @@ void Fcs::generate_force_constant_table(const int order,
     }
 }
 
-void Fcs::get_constraint_symmetry(const int nat,
+void Fcs::get_constraint_symmetry(const size_t nat,
                                   const Symmetry *symmetry,
                                   const int order,
                                   const std::string basis,
                                   const std::vector<FcProperty> &fc_table_in,
-                                  const int nparams,
+                                  const size_t nparams,
                                   const double tolerance,
                                   ConstraintSparseForm &const_out,
                                   const bool do_rref) const
@@ -363,9 +370,9 @@ void Fcs::get_constraint_symmetry(const int nat,
 
     if (order < 0) return;
 
-    const int nsym = symmetry->get_SymmData().size();
-    const int natmin = symmetry->get_nat_prim();
-    const int nfcs = fc_table_in.size();
+    const auto nsym = symmetry->get_SymmData().size();
+    const auto natmin = symmetry->get_nat_prim();
+    const auto nfcs = fc_table_in.size();
     const auto use_compatible = false;
 
     if (nparams == 0) return;
@@ -428,7 +435,7 @@ void Fcs::get_constraint_symmetry(const int nat,
 #ifdef _OPENMP
 #pragma omp for private(i, isym, ixyz), schedule(static)
 #endif
-        for (int ii = 0; ii < nfcs; ++ii) {
+        for (long ii = 0; ii < nfcs; ++ii) {
             FcProperty list_tmp = fc_table_in[ii];
 
             for (i = 0; i < order + 2; ++i) {
@@ -507,7 +514,7 @@ void Fcs::get_constraint_symmetry(const int nat,
                                      constraint_all.end()),
                          constraint_all.end());
 
-    typedef std::map<unsigned int, double> ConstDoubleEntry;
+    typedef std::map<size_t, double> ConstDoubleEntry;
     ConstDoubleEntry const_tmp2;
     auto division_factor = 1.0;
     int counter;
@@ -530,7 +537,7 @@ void Fcs::get_constraint_symmetry(const int nat,
     if (do_rref) rref_sparse(nparams, const_out, tolerance);
 }
 
-std::vector<int>* Fcs::get_nequiv() const
+std::vector<size_t>* Fcs::get_nequiv() const
 {
     return nequiv;
 }
@@ -540,7 +547,7 @@ std::vector<FcProperty>* Fcs::get_fc_table() const
     return fc_table;
 }
 
-void Fcs::get_available_symmop(const unsigned int nat,
+void Fcs::get_available_symmop(const size_t nat,
                                const Symmetry *symmetry,
                                const std::string basis,
                                int &nsym_avail,
@@ -628,19 +635,19 @@ bool Fcs::is_ascending(const int n,
 
 int Fcs::get_minimum_index_in_primitive(const int n,
                                         const int *arr,
-                                        const int nat,
-                                        const int natmin,
+                                        const size_t nat,
+                                        const size_t natmin,
                                         const std::vector<std::vector<int>> &map_p2s) const
 {
-    int i, j, atmnum;
+    int i, atmnum;
 
-    std::vector<int> ind(n, 3 * nat);
+    std::vector<size_t> ind(n, 3 * nat);
 
     for (i = 0; i < n; ++i) {
 
         atmnum = arr[i] / 3;
 
-        for (j = 0; j < natmin; ++j) {
+        for (size_t j = 0; j < natmin; ++j) {
             if (map_p2s[j][0] == atmnum) {
                 ind[i] = arr[i];
             }
@@ -662,11 +669,11 @@ int Fcs::get_minimum_index_in_primitive(const int n,
 
 bool Fcs::is_inprim(const int n,
                     const int *arr,
-                    const int natmin,
+                    const size_t natmin,
                     const std::vector<std::vector<int>> &map_p2s) const
 {
     for (auto i = 0; i < n; ++i) {
-        for (auto j = 0; j < natmin; ++j) {
+        for (size_t j = 0; j < natmin; ++j) {
             if (map_p2s[j][0] == arr[i]) return true;
         }
     }
@@ -674,12 +681,12 @@ bool Fcs::is_inprim(const int n,
 }
 
 bool Fcs::is_inprim(const int n,
-                    const int natmin,
+                    const size_t natmin,
                     const std::vector<std::vector<int>> &map_p2s) const
 {
     const auto atmn = n / 3;
 
-    for (auto i = 0; i < natmin; ++i) {
+    for (size_t i = 0; i < natmin; ++i) {
         if (map_p2s[i][0] == atmn) return true;
     }
 

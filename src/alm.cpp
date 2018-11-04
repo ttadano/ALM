@@ -125,7 +125,7 @@ void ALM::set_cell(const size_t nat,
     system->set_kdname(kdname);
 }
 
-void ALM::set_magnetic_params(const unsigned int nat,
+void ALM::set_magnetic_params(const size_t nat,
                               const double (*magmom)[3],
                               // MAGMOM
                               const bool lspin,
@@ -255,7 +255,7 @@ int ALM::get_number_of_displacement_patterns(const int fc_order) const
 // harmonic=1, ...
 {
     const auto order = fc_order - 1;
-    return displace->get_pattern_all(order).size();
+    return static_cast<int>(displace->get_pattern_all(order).size());
 }
 
 void ALM::get_number_of_displaced_atoms(int *numbers,
@@ -265,7 +265,7 @@ void ALM::get_number_of_displaced_atoms(int *numbers,
     const auto order = fc_order - 1;
 
     for (size_t i = 0; i < displace->get_pattern_all(order).size(); ++i) {
-        numbers[i] = displace->get_pattern_all(order)[i].atoms.size();
+        numbers[i] = static_cast<int>(displace->get_pattern_all(order)[i].atoms.size());
     }
 }
 
@@ -306,9 +306,9 @@ int ALM::get_number_of_fc_elements(const int fc_order) const
 
     if (fcs->get_nequiv()[order].empty()) { return 0; }
     auto id = 0;
-    const int num_unique_elems = fcs->get_nequiv()[order].size();
+    const auto num_unique_elems = fcs->get_nequiv()[order].size();
 
-    for (auto iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
+    for (size_t iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
         const auto num_equiv_elems = fcs->get_nequiv()[order][iuniq];
         id += num_equiv_elems;
     }
@@ -351,8 +351,8 @@ void ALM::get_fc_origin(double *fc_values,
         exit(EXIT_FAILURE);
     }
 
-    auto ishift = 0;
-    int ip;
+    size_t ishift = 0;
+    size_t ip;
 
     for (auto order = 0; order < fc_order; ++order) {
 
@@ -402,8 +402,8 @@ void ALM::get_fc_irreducible(double *fc_values,
         ready_to_fit = true;
     }
 
-    auto ishift = 0;
-    int inew, iold;
+    size_t ishift = 0;
+    size_t inew, iold;
 
     for (auto order = 0; order < fc_order; ++order) {
 
@@ -443,8 +443,8 @@ void ALM::get_fc_all(double *fc_values,
         exit(EXIT_FAILURE);
     }
 
-    auto ishift = 0;
-    int ip;
+    size_t ishift = 0;
+    size_t ip;
     std::vector<int> pair_tmp(fc_order + 1);
     std::vector<int> pair_tran(fc_order + 1);
     std::vector<int> xyz_tmp(fc_order + 1);

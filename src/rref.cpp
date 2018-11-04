@@ -6,23 +6,23 @@
 #include <algorithm>
 
 
-void rref(const int nrows,
-          const int ncols,
+void rref(const size_t nrows,
+          const size_t ncols,
           double **mat,
-          int &nrank,
+          size_t &nrank,
           const double tolerance)
 {
     // Return the reduced row echelon form (rref) of matrix mat.
     // In addition, rank of the matrix is estimated.
 
-    int jcol;
+    size_t jcol;
     double tmp;
 
     nrank = 0;
 
-    auto icol = 0;
+    size_t icol = 0;
 
-    for (auto irow = 0; irow < nrows; ++irow) {
+    for (size_t irow = 0; irow < nrows; ++irow) {
 
         auto pivot = irow;
 
@@ -76,20 +76,18 @@ void rref(std::vector<std::vector<double>> &mat,
     // Return the reduced row echelon form (rref) of matrix mat.
     // In addition, rank of the matrix is estimated.
 
-    int irow, icol, jrow, jcol;
-    int pivot;
+    size_t jcol;
     double tmp;
 
-    int nrank = 0;
+    size_t nrank = 0;
+    size_t icol = 0;
 
-    icol = 0;
+    const auto nrows = mat.size();
+    const auto ncols = mat[0].size();
 
-    int nrows = mat.size();
-    int ncols = mat[0].size();
+    for (size_t irow = 0; irow < nrows; ++irow) {
 
-    for (irow = 0; irow < nrows; ++irow) {
-
-        pivot = irow;
+        auto pivot = irow;
 
         while (std::abs(mat[pivot][icol]) < tolerance) {
             ++pivot;
@@ -120,7 +118,7 @@ void rref(std::vector<std::vector<double>> &mat,
             mat[irow][jcol] *= tmp;
         }
 
-        for (jrow = 0; jrow < nrows; ++jrow) {
+        for (size_t jrow = 0; jrow < nrows; ++jrow) {
             if (jrow == irow) continue;
 
             tmp = mat[jrow][icol];
@@ -144,8 +142,8 @@ void rref_sparse(const size_t ncols,
     // Column ordering may improve the stability, but I'm not sure.
     // Smaller tolerance is preferable.
 
-    const int nrows = sp_constraint.size();
-    int jrow;
+    const auto nrows = sp_constraint.size();
+    size_t jrow;
     double scaling_factor;
     double division_factor;
 
@@ -157,10 +155,10 @@ void rref_sparse(const size_t ncols,
     size_t nrank = 0;
     size_t icol = 0;
 
-    std::set<unsigned int>::iterator it_found;
-    std::map<unsigned int, double>::iterator it_elem;
+   // std::set<unsigned int>::iterator it_found;
+    std::map<size_t, double>::iterator it_elem;
 
-    for (auto irow = 0; irow < nrows; ++irow) {
+    for (size_t irow = 0; irow < nrows; ++irow) {
 
         auto pivot = irow;
 
@@ -244,7 +242,7 @@ void rref_sparse(const size_t ncols,
     // Remove emptry entries from the sp_constraint vector
     sp_constraint.erase(std::remove_if(sp_constraint.begin(),
                                        sp_constraint.end(),
-                                       [](const std::map<unsigned int, double> &obj) { return obj.empty(); }),
+                                       [](const std::map<size_t, double> &obj) { return obj.empty(); }),
                         sp_constraint.end());
     sp_constraint.shrink_to_fit();
 }

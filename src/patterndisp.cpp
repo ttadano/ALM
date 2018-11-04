@@ -46,19 +46,19 @@ void Displace::gen_displacement_pattern(const Cluster *cluster,
     const auto maxorder = cluster->get_maxorder();
     std::string preferred_basis;
     std::vector<int> group_tmp;
-    std::vector<std::map<unsigned int, double>> *constsym;
+    std::vector<std::map<size_t, double>> *constsym;
     std::vector<std::vector<double>> const_tmp;
 
     std::vector<int> pairs;
     std::set<int> *include_set;
     std::set<DispAtomSet> *dispset;
 
-    std::vector<int> *nequiv;
+    std::vector<size_t> *nequiv;
     std::vector<FcProperty> *fc_table, *fc_zeros;
 
     std::vector<ConstraintTypeFix> *const_fix_tmp;
     std::vector<ConstraintTypeRelate> *const_relate_tmp;
-    boost::bimap<int, int> *index_bimap_tmp;
+    boost::bimap<size_t, size_t> *index_bimap_tmp;
     const auto do_rref = true;
 
     if (verbosity > 0) {
@@ -157,7 +157,7 @@ void Displace::gen_displacement_pattern(const Cluster *cluster,
 
     for (order = 0; order < maxorder; ++order) {
 
-        auto m = 0;
+        size_t m = 0;
 
         for (size_t i = 0; i < nequiv[order].size(); ++i) {
 
@@ -250,8 +250,6 @@ void Displace::generate_pattern_all(const int maxorder,
 {
     size_t i, j;
     int order;
-    int atom_tmp, natom_disp;
-    double sign_double;
     double disp_tmp[3];
 
     std::vector<int> atoms, vec_tmp, nums;
@@ -278,7 +276,7 @@ void Displace::generate_pattern_all(const int maxorder,
 
             for (i = 0; i < (*it).atomset.size(); ++i) {
 
-                atom_tmp = (*it).atomset[i] / 3;
+                auto atom_tmp = (*it).atomset[i] / 3;
 
                 nums.push_back((*it).atomset[i]);
                 atoms.push_back(atom_tmp);
@@ -291,7 +289,7 @@ void Displace::generate_pattern_all(const int maxorder,
                 for (j = 0; j < 3; ++j) directions.push_back(disp_tmp[j]);
             }
 
-            natom_disp = atoms.size();
+            const auto natom_disp = atoms.size();
 
             if (trim_dispsign_for_evenfunc) {
                 find_unique_sign_pairs(natom_disp, nat, symmetry,
@@ -312,7 +310,7 @@ void Displace::generate_pattern_all(const int maxorder,
                 directions.clear();
 
                 for (i = 0; i < it2.size(); ++i) {
-                    sign_double = static_cast<double>(it2[i]);
+                    const auto sign_double = static_cast<double>(it2[i]);
 
                     for (j = 0; j < 3; ++j) {
                         disp_tmp[j] = directions_copy[3 * i + j] * sign_double;
@@ -411,7 +409,7 @@ void Displace::find_unique_sign_pairs(const int natom_disp_in,
         disp[pair_in[i] / 3][pair_in[i] % 3] = 1.0;
     }
 
-    size_t natom_disp = static_cast<size_t>(natom_disp_in);
+    const size_t natom_disp = static_cast<size_t>(natom_disp_in);
 
     // Find symmetry operations which can be used to
     // reduce the number of sign patterns (+, -) of displacements

@@ -41,8 +41,8 @@ namespace ALM_NS
                               int verbosity,
                               std::string str_disp_basis,
                               std::string str_magmom,
-                              int nat_in,
-                              int nkd_in,
+                              size_t nat_in,
+                              size_t nkd_in,
                               int printsymmetry,
                               const int is_periodic_in[3],
                               bool trim_dispsign_for_evenfunc,
@@ -90,7 +90,7 @@ namespace ALM_NS
         int trevsym;
         std::string str_magmom;
 
-        size_t maxorder;
+        int maxorder;
         int *nbody_include;
         double ***cutoff_radii;
     };

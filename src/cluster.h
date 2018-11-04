@@ -89,13 +89,13 @@ namespace ALM_NS
         // This class is used only in print_neighborlist. Can be replaced by a more generalic function.
     {
     public:
-        int atom;
+        size_t atom;
         double dist;
 
         DistList() = default;
 
-        DistList(const int n,
-                 const double dist_tmp) : atom(n), dist(dist_tmp) { };
+        DistList(const size_t atom_,
+                 const double dist_) : atom(atom_), dist(dist_) { };
 
         bool operator<(const DistList &a) const
         {
@@ -203,9 +203,9 @@ namespace ALM_NS
         std::string get_ordername(const unsigned int order) const;
         const std::set<IntList>& get_cluster_list(const unsigned int order) const;
         const std::vector<int>& get_interaction_pair(const unsigned int order,
-                                                     const unsigned int atom_index) const;
+                                                     const size_t atom_index) const;
         const std::set<InteractionCluster>& get_interaction_cluster(const unsigned int order,
-                                                                    const unsigned int atom_index) const;
+                                                                    const size_t atom_index) const;
 
     private:
 
@@ -230,12 +230,12 @@ namespace ALM_NS
                                            const double * const * const *xc_in,
                                            const int *exist) const;
 
-        void generate_interaction_information_by_cutoff(const int,
-                                                        const int,
-                                                        const std::vector<int> &,
-                                                        const std::vector<std::vector<int>> &,
-                                                        const double * const *,
-                                                        std::vector<int> *) const;
+        void generate_interaction_information_by_cutoff(const size_t nat,
+                                                        const size_t natmin,
+                                                        const std::vector<int> &kd,
+                                                        const std::vector<std::vector<int>> &map_p2s,
+                                                        const double * const *rc,
+                                                        std::vector<int> *interaction_list) const;
 
         void set_interaction_by_cutoff(const size_t nat,
                                        const std::vector<int> &kd,
@@ -248,11 +248,11 @@ namespace ALM_NS
                                 const std::vector<int> &,
                                 const std::string *) const;
 
-        void print_interaction_information(const int,
-                                           const std::vector<std::vector<int>> &,
-                                           const std::vector<int> &,
-                                           const std::string *,
-                                           const std::vector<int> * const *);
+        void print_interaction_information(const size_t natmin,
+                                           const std::vector<std::vector<int>> &map_p2s,
+                                           const std::vector<int> &kd,
+                                           const std::string *kdname,
+                                           const std::vector<int> * const *interaction_list);
 
         void set_ordername();
         double distance(const double *,

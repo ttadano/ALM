@@ -113,10 +113,10 @@ namespace ALM_NS
                                                       const Fcs *fcs,
                                                       const Constraint *constraint) const;
 
-        void set_fcs_values(const int,
-                            double *,
-                            std::vector<int> *,
-                            const Constraint *);
+        void set_fcs_values(const int maxorder,
+                            double *fc_in,
+                            std::vector<size_t> *nequiv,
+                            const Constraint *constraint);
 
 
         size_t get_number_of_rows_sensing_matrix() const;
@@ -145,9 +145,9 @@ namespace ALM_NS
                          const Symmetry *) const;
 
         int least_squares(const int maxorder,
-                          const int N,
-                          const int N_new,
-                          const int M,
+                          const size_t N,
+                          const size_t N_new,
+                          const size_t M,
                           const int verbosity,
                           const Symmetry *symmetry,
                           const Fcs *fcs,
@@ -156,9 +156,9 @@ namespace ALM_NS
 
         int elastic_net(const std::string job_prefix,
                         const int maxorder,
-                        const int N_new,
-                        const int M,
-                        const int M_test,
+                        const size_t N_new,
+                        const size_t M,
+                        const size_t M_test,
                         const Symmetry *symmetry,
                         const std::vector<std::string> &str_order,
                         const Fcs *fcs,
@@ -224,33 +224,33 @@ namespace ALM_NS
                                           std::vector<double> &param_inout);
 
 
-        int fit_without_constraints(const int,
-                                    const int,
-                                    double *,
-                                    const double *,
-                                    double *,
-                                    const int) const;
+        int fit_without_constraints(const size_t N,
+                                    const size_t M,
+                                    double *amat,
+                                    const double *bvec,
+                                    double *param_out,
+                                    const int verbosity) const;
 
-        int fit_algebraic_constraints(const int,
-                                      const int,
-                                      double *,
-                                      const double *,
-                                      std::vector<double> &,
-                                      const double,
-                                      const int,
-                                      const Fcs *,
-                                      const Constraint *,
-                                      const int) const;
+        int fit_algebraic_constraints(const size_t N,
+                                      const size_t M,
+                                      double *amat,
+                                      const double *bvec,
+                                      std::vector<double> &param_out,
+                                      const double fnorm,
+                                      const int maxorder,
+                                      const Fcs *fcs,
+                                      const Constraint *constraint,
+                                      const int verbosity) const;
 
-        int fit_with_constraints(const int,
-                                 const int,
-                                 const int,
-                                 double *,
-                                 const double *,
-                                 double *,
-                                 const double * const *,
-                                 double *,
-                                 const int) const;
+        int fit_with_constraints(const size_t N,
+                                 const size_t M,
+                                 const size_t P,
+                                 double *amat,
+                                 const double *bvec,
+                                 double *param_out,
+                                 const double * const *cmat,
+                                 double *dvec,
+                                 const int verbosity) const;
 
 
         void get_matrix_elements(const int maxorder,
@@ -282,17 +282,17 @@ namespace ALM_NS
                                const int) const;
 #endif
 
-        void recover_original_forceconstants(const int,
-                                             const std::vector<double> &,
-                                             std::vector<double> &,
-                                             const std::vector<int> *,
-                                             const Constraint *) const;
+        void recover_original_forceconstants(const int maxorder,
+                                             const std::vector<double> &param_in,
+                                             std::vector<double> &param_out,
+                                             const std::vector<size_t> *nequiv,
+                                             const Constraint *constraint) const;
 
         int factorial(const int) const;
-        int rankQRD(const int,
-                    const int,
-                    double *,
-                    const double) const;
+        int rankQRD(const size_t m,
+                    const size_t n,
+                    double *mat,
+                    const double tolerance) const;
 
         double gamma(const int,
                      const int *) const;

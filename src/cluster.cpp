@@ -186,7 +186,7 @@ void Cluster::generate_pairs(const size_t natmin,
             const auto iat = map_p2s[i][0];
 
             for (const auto &it : interaction_cluster[order][i]) {
-                
+
                 pair_tmp[0] = iat;
                 for (auto j = 0; j < order + 1; ++j) {
                     pair_tmp[j + 1] = it.atom[j];
@@ -417,21 +417,21 @@ void Cluster::print_neighborlist(const size_t nat,
 }
 
 
-void Cluster::generate_interaction_information_by_cutoff(const int nat,
-                                                         const int natmin,
+void Cluster::generate_interaction_information_by_cutoff(const size_t nat,
+                                                         const size_t natmin,
                                                          const std::vector<int> &kd,
                                                          const std::vector<std::vector<int>> &map_p2s,
                                                          const double * const *rc,
                                                          std::vector<int> *interaction_list) const
 {
-    for (auto i = 0; i < natmin; ++i) {
+    for (size_t i = 0; i < natmin; ++i) {
 
         interaction_list[i].clear();
 
         const auto iat = map_p2s[i][0];
         const auto ikd = kd[iat] - 1;
 
-        for (auto jat = 0; jat < nat; ++jat) {
+        for (size_t jat = 0; jat < nat; ++jat) {
 
             const auto jkd = kd[jat] - 1;
             const auto cutoff_tmp = rc[ikd][jkd];
@@ -520,18 +520,18 @@ const std::set<IntList>& Cluster::get_cluster_list(const unsigned int order) con
 }
 
 const std::vector<int>& Cluster::get_interaction_pair(const unsigned int order,
-                                                      const unsigned int atom_index) const
+                                                      const size_t atom_index) const
 {
     return interaction_pair[order][atom_index];
 }
 
 const std::set<InteractionCluster>& Cluster::get_interaction_cluster(const unsigned int order,
-                                                                     const unsigned int atom_index) const
+                                                                     const size_t atom_index) const
 {
     return interaction_cluster[order][atom_index];
 }
 
-void Cluster::print_interaction_information(const int natmin,
+void Cluster::print_interaction_information(const size_t natmin,
                                             const std::vector<std::vector<int>> &map_p2s,
                                             const std::vector<int> &kd,
                                             const std::string *kdname,
@@ -546,7 +546,7 @@ void Cluster::print_interaction_information(const int natmin,
 
         std::cout << std::endl << "   ***" << str_order[order] << "***" << std::endl;
 
-        for (auto i = 0; i < natmin; ++i) {
+        for (size_t i = 0; i < natmin; ++i) {
 
             if (interaction_list[order][i].empty()) {
                 std::cout << "   No interacting atoms! Skipped." << std::endl;
@@ -636,10 +636,10 @@ int Cluster::nbody(const int n,
     std::stable_sort(v.begin(), v.end());
     v.erase(std::unique(v.begin(), v.end()), v.end());
 
-    const int ret = v.size();
+    const auto ret = v.size();
     v.clear();
 
-    return ret;
+    return static_cast<int>(ret);
 }
 
 bool Cluster::satisfy_nbody_rule(const int nelem,
@@ -775,9 +775,9 @@ void Cluster::set_interaction_cluster(const int order,
 
             intlist.clear();
 
-            const int ndata = data_vec.size();
+            const auto ndata = data_vec.size();
 
-            for (auto idata = 0; idata < ndata; ++idata) {
+            for (size_t idata = 0; idata < ndata; ++idata) {
 
                 data_now = data_vec[idata];
 

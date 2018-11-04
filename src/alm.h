@@ -54,7 +54,7 @@ namespace ALM_NS
                       const double xcoord[][3],
                       const int kind[],
                       const std::string kdname[]) const;
-        void set_magnetic_params(const unsigned int nat,
+        void set_magnetic_params(const size_t nat,
                                  const double (*magmom)[3],
                                  const bool lspin,
                                  const int noncollinear,
