@@ -19,7 +19,7 @@
 #include "symmetry.h"
 #include "timer.h"
 
-typedef std::vector<std::map<unsigned int, double>> ConstraintSparseForm;
+using ConstraintSparseForm = std::vector<std::map<unsigned int, double>>;
 
 namespace ALM_NS
 {
@@ -32,9 +32,7 @@ namespace ALM_NS
 
         FcProperty();
 
-        FcProperty(const FcProperty &obj) :
-            elems(obj.elems), sign(obj.sign), mother(obj.mother) { }
-
+        FcProperty(const FcProperty &obj) = default;
         FcProperty(const int n,
                    const double c,
                    const int *arr,

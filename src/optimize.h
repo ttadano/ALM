@@ -14,7 +14,7 @@
 #include "files.h"
 #ifdef WITH_SPARSE_SOLVER
 #include <Eigen/SparseCore>
-typedef Eigen::SparseMatrix<double, Eigen::ColMajor> SpMat;
+using SpMat = Eigen::SparseMatrix<double, Eigen::ColMajor>;
 #endif
 
 #include "constraint.h"

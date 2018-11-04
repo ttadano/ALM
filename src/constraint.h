@@ -110,14 +110,15 @@ namespace ALM_NS
         for (auto i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
                 return true;
-            } else if (obj1[i].col > obj2[i].col) {
+            }
+            if (obj1[i].col > obj2[i].col) {
                 return false;
-            } else {
-                if (obj1[i].val < obj2[i].val) {
-                    return true;
-                } else if (obj1[i].val > obj2[i].val) {
-                    return false;
-                }
+            }
+            if (obj1[i].val < obj2[i].val) {
+                return true;
+            }
+            if (obj1[i].val > obj2[i].val) {
+                return false;
             }
         }
         return false;
@@ -162,14 +163,15 @@ namespace ALM_NS
         for (auto i = 0; i < min; ++i) {
             if (obj1[i].col < obj2[i].col) {
                 return true;
-            } else if (obj1[i].col > obj2[i].col) {
+            }
+            if (obj1[i].col > obj2[i].col) {
                 return false;
-            } else {
-                if (obj1[i].val < obj2[i].val) {
-                    return true;
-                } else if (obj1[i].val > obj2[i].val) {
-                    return false;
-                }
+            }
+            if (obj1[i].val < obj2[i].val) {
+                return true;
+            }
+            if (obj1[i].val > obj2[i].val) {
+                return false;
             }
         }
         return false;

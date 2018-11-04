@@ -30,9 +30,9 @@
 
 using namespace ALM_NS;
 
-Writer::Writer() {}
+Writer::Writer() = default;
 
-Writer::~Writer() {}
+Writer::~Writer() = default;
 
 void Writer::write_input_vars(const ALM *alm) const
 {
