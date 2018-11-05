@@ -617,7 +617,7 @@ void Constraint::set_constraint_mode(const int constraint_mode_in)
     constraint_mode = constraint_mode_in;
 }
 
-int Constraint::get_number_of_constraints() const
+size_t Constraint::get_number_of_constraints() const
 {
     return number_of_constraints;
 }

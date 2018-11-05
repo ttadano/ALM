@@ -219,8 +219,8 @@ extern "C" {
         return ntran;
     }
 
-    int alm_get_number_of_displacement_patterns(const int id,
-                                                const int fc_order) // harmonic=1,
+    size_t alm_get_number_of_displacement_patterns(const int id,
+                                                   const int fc_order) // harmonic=1,
     {
         return alm[id]->get_number_of_displacement_patterns(fc_order);
     }
@@ -242,14 +242,14 @@ extern "C" {
                                                   fc_order);
     }
 
-    int alm_get_number_of_fc_elements(const int id,
-                                      const int fc_order)  // harmonic=1, ...
+    size_t alm_get_number_of_fc_elements(const int id,
+                                         const int fc_order)  // harmonic=1, ...
     {
         return alm[id]->get_number_of_fc_elements(fc_order);
     }
 
-    int alm_get_number_of_irred_fc_elements(const int id,
-                                            const int fc_order)
+    size_t alm_get_number_of_irred_fc_elements(const int id,
+                                               const int fc_order)
     {
         return alm[id]->get_number_of_irred_fc_elements(fc_order);
     }

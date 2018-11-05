@@ -251,11 +251,11 @@ int* ALM::get_nbody_include() const
     return cluster->get_nbody_include();
 }
 
-int ALM::get_number_of_displacement_patterns(const int fc_order) const
+size_t ALM::get_number_of_displacement_patterns(const int fc_order) const
 // harmonic=1, ...
 {
     const auto order = fc_order - 1;
-    return static_cast<int>(displace->get_pattern_all(order).size());
+    return displace->get_pattern_all(order).size();
 }
 
 void ALM::get_number_of_displaced_atoms(int *numbers,
@@ -299,13 +299,13 @@ int ALM::get_displacement_patterns(int *atom_indices,
     return -1;
 }
 
-int ALM::get_number_of_fc_elements(const int fc_order) const
+size_t ALM::get_number_of_fc_elements(const int fc_order) const
 // harmonic=1, ...
 {
     const auto order = fc_order - 1;
 
     if (fcs->get_nequiv()[order].empty()) { return 0; }
-    auto id = 0;
+    size_t id = 0;
     const auto num_unique_elems = fcs->get_nequiv()[order].size();
 
     for (size_t iuniq = 0; iuniq < num_unique_elems; ++iuniq) {
@@ -315,7 +315,7 @@ int ALM::get_number_of_fc_elements(const int fc_order) const
     return id;
 }
 
-int ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
+size_t ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, ...
 {
     // Returns the number of irreducible force constants for the given order.
     // The irreducible force constant means a set of independent force constants

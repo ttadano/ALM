@@ -29,9 +29,10 @@ namespace ALM_NS
         std::exit(EXIT_FAILURE);
     }
 
-    inline void exit(const char *file,
-                     const char *message,
-                     const int info)
+    template <typename T>
+    void exit(const char *file,
+              const char *message,
+              const T info)
     {
         std::cout << " ERROR in " << file << "  MESSAGE: " << message << info << std::endl;
         std::exit(EXIT_FAILURE);

@@ -20,7 +20,6 @@ static PyObject * py_optimize(PyObject *self, PyObject *args);
 static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
-//static PyObject * py_get_ndata_used(PyObject *self, PyObject *args);
 static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args);
 static PyObject * py_set_constraint_type(PyObject *self, PyObject *args);
 static PyObject * py_define(PyObject *self, PyObject *args);
@@ -345,7 +344,7 @@ static PyObject * py_get_number_of_displacement_patterns
 {
   int id;
   int fc_order;
-  int num_patterns;
+  size_t num_patterns;
 
   if (!PyArg_ParseTuple(args, "ii",
                               &id,
@@ -355,7 +354,7 @@ static PyObject * py_get_number_of_displacement_patterns
 
   num_patterns = alm_get_number_of_displacement_patterns(id, fc_order);
 
-  return PyLong_FromLong((long) num_patterns);
+  return PyLong_FromSize_t(num_patterns);
 }
 
 static PyObject * py_get_number_of_displaced_atoms(PyObject *self, PyObject *args)
@@ -412,9 +411,9 @@ static PyObject * py_get_number_of_fc_elements(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  const int num_fc_elems = alm_get_number_of_fc_elements(id, fc_order);
+  const size_t num_fc_elems = alm_get_number_of_fc_elements(id, fc_order);
 
-  return PyLong_FromLong((long) num_fc_elems);
+  return PyLong_FromSize_t(num_fc_elems);
 }
 
 static PyObject * py_get_number_of_irred_fc_elements(PyObject *self, PyObject *args)
@@ -427,25 +426,12 @@ static PyObject * py_get_number_of_irred_fc_elements(PyObject *self, PyObject *a
     return NULL;
   }
 
-  const int num_fc_elems = alm_get_number_of_irred_fc_elements(id, fc_order);
+  const size_t num_fc_elems = alm_get_number_of_irred_fc_elements(id, fc_order);
 
-  return PyLong_FromLong((long) num_fc_elems);
+  return PyLong_FromSize_t(num_fc_elems);
 }
 
-/*
-static PyObject * py_get_ndata_used(PyObject *self, PyObject *args)
-{
-  int id;
 
-  if (!PyArg_ParseTuple(args, "i",
-                              &id)) {
-    return NULL;
-  }
-  const int ndata_used = alm_get_ndata_used(id);
-
-  return PyLong_FromLong((long) ndata_used);
-}
-*/
 static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args)
 {
     int id;

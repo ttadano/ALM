@@ -34,7 +34,7 @@ extern "C" {
                                         const double* f_in,
                                         const size_t nat,
                                         const size_t ndata_used);
-    int alm_get_ndata_used(const int id);
+
     void alm_set_constraint_type(const int id,
                                  const int constraint_flag); // ICONST
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
@@ -48,8 +48,8 @@ extern "C" {
     void alm_generate_force_constant(const int id);
     int alm_get_atom_mapping_by_pure_translations(const int id,
                                                   int *map_p2s);
-    int alm_get_number_of_displacement_patterns(const int id,
-                                                const int fc_order); // harmonic=1,
+    size_t alm_get_number_of_displacement_patterns(const int id,
+                                                   const int fc_order); // harmonic=1,
     void alm_get_number_of_displaced_atoms(const int id,
                                            int *numbers,
                                            const int fc_order); // harmonic=1,
@@ -57,11 +57,11 @@ extern "C" {
                                       int *atom_indices,
                                       double *disp_patterns,
                                       const int fc_order); // harmonic=1,
-    int alm_get_number_of_fc_elements(const int id,
-                                      const int fc_order); // harmonic=1, ...
+    size_t alm_get_number_of_fc_elements(const int id,
+                                         const int fc_order); // harmonic=1, ...
 
-    int alm_get_number_of_irred_fc_elements(const int id,
-                                            const int fc_order); // harmonic=1, ...
+    size_t alm_get_number_of_irred_fc_elements(const int id,
+                                               const int fc_order); // harmonic=1, ...
 
     void alm_get_fc_origin(const int id,
                     double *fc_value,

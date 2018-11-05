@@ -34,12 +34,12 @@ namespace ALM_NS
 
     private:
         std::ifstream ifs_input;
-        bool from_stdin;
-        std::string *kdname;
+        bool from_stdin{};
+        std::string *kdname{};
         std::string mode;
-        int maxorder;
-        size_t nat;
-        size_t nkd;
+        int maxorder{};
+        size_t nat{};
+        size_t nkd{};
         InputSetter *input_setter;
 
         void parse_input(ALM *alm);

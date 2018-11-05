@@ -481,9 +481,9 @@ int Optimize::elastic_net(const std::string job_prefix,
 
 int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
                                               const int maxorder,
-                                              const int M,
-                                              const int M_test,
-                                              const int N_new,
+                                              const size_t M,
+                                              const size_t M_test,
+                                              const size_t N_new,
                                               std::vector<double> &amat_1D,
                                               std::vector<double> &bvec,
                                               const double fnorm,
@@ -672,8 +672,8 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
 }
 
 
-int Optimize::run_elastic_net_optimization(const int M,
-                                           const int N_new,
+int Optimize::run_elastic_net_optimization(const size_t M,
+                                           const size_t N_new,
                                            std::vector<double> &amat_1D,
                                            std::vector<double> &bvec,
                                            const double fnorm,

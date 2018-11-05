@@ -222,7 +222,7 @@ namespace ALM_NS
 
         int get_constraint_mode() const;
         void set_constraint_mode(const int);
-        int get_number_of_constraints() const;
+        size_t get_number_of_constraints() const;
         std::string get_fc_file(const int) const;
         void set_fc_file(const int,
                          const std::string);
@@ -255,7 +255,7 @@ namespace ALM_NS
     private:
 
         int constraint_mode;
-        int number_of_constraints;
+        size_t number_of_constraints;
         std::string fc2_file, fc3_file;
         bool fix_harmonic, fix_cubic;
         int constraint_algebraic;

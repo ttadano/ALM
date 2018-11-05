@@ -29,14 +29,14 @@ namespace ALM_NS
         ALM();
         ~ALM();
 
-        class Cluster *cluster;
-        class Fcs *fcs;
-        class Symmetry *symmetry;
-        class Optimize *optimize;
-        class Constraint *constraint;
-        class Files *files;
-        class Displace *displace;
-        class Timer *timer;
+        class Cluster *cluster{};
+        class Fcs *fcs{};
+        class Symmetry *symmetry{};
+        class Optimize *optimize{};
+        class Constraint *constraint{};
+        class Files *files{};
+        class Displace *displace{};
+        class Timer *timer{};
 
         void set_run_mode(std::string run_mode_in);
         std::string get_run_mode() const;
@@ -87,14 +87,14 @@ namespace ALM_NS
         int get_maxorder() const;
         int* get_nbody_include() const;
 
-        int get_number_of_displacement_patterns(int fc_order) const; // harmonic=1, ...
+        size_t get_number_of_displacement_patterns(const int fc_order) const; // harmonic=1, ...
         void get_number_of_displaced_atoms(int *numbers,
                                            int fc_order) const; // harmonic=1, ...
         int get_displacement_patterns(int *atom_indices,
                                       double *disp_patterns,
                                       int fc_order) const; // harmonic=1, ...
-        int get_number_of_fc_elements(int fc_order) const; // harmonic=2, ...
-        int get_number_of_irred_fc_elements(int fc_order); // harmonic=2, ...
+        size_t get_number_of_fc_elements(const int fc_order) const; // harmonic=2, ...
+        size_t get_number_of_irred_fc_elements(const int fc_order); // harmonic=2, ...
 
         void get_fc_origin(double *fc_values,
                            int *elem_indices,
@@ -123,7 +123,7 @@ namespace ALM_NS
         void run();
 
     private:
-        class System *system;
+        class System *system{};
 
         std::string run_mode;
         int verbosity;
