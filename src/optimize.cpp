@@ -435,7 +435,7 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
         std::cout << "   CV_MINALPHA = " << std::setw(15) << optcontrol.l1_alpha_min;
         std::cout << " CV_MAXALPHA = " << std::setw(15) << optcontrol.l1_alpha_max << std::endl;
         std::cout << "   CV_NALPHA = " << std::setw(5) << optcontrol.num_l1_alpha << std::endl;
-        std::cout << "   ITER_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+        std::cout << "   CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
         std::cout << "   MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
         std::cout << "   DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
         std::cout << std::endl;
@@ -443,10 +443,10 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
         if (optcontrol.standardize) {
             std::cout << "  STANDARDIZE = 1 : Standardization will be performed for matrix A and vector b." << std::
                 endl;
-            std::cout << "                    The LASSO_DNORM-tag will be neglected." << std::endl;
+            std::cout << "                    The ENET_DNORM-tag will be neglected." << std::endl;
         } else {
             std::cout << "  STANDARDIZE = 0 : No standardization of matrix A and vector b." << std::endl;
-            std::cout << "                    Columns of matrix A will be scaled by the LASSO_DNORM value." << std::
+            std::cout << "                    Columns of matrix A will be scaled by the ENET_DNORM value." << std::
                 endl;
         }
         std::cout << std::endl;
@@ -544,13 +544,13 @@ void Optimize::run_enetcv_manual(const std::string job_prefix,
             scale_beta.resize(A.cols());
             get_standardizer(A, mean, dev, factor_std, scale_beta);
         }
-        std::cout << "  Recommended LASSO_MAXALPHA = "
+        std::cout << "  Recommended CV_MAXALPHA = "
             << get_esimated_max_alpha(A, b, mean, dev)
             << std::endl << std::endl;
     }
 
-    const auto file_coef = job_prefix + ".lasso_coef";
-    const auto file_cv = job_prefix + ".lasso_cv";
+    const auto file_coef = job_prefix + ".solution_path";
+    const auto file_cv = job_prefix + ".enet_cv";
 
     compute_alphas(alphas);
 
@@ -686,13 +686,13 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
                 scale_beta.resize(A.cols());
                 get_standardizer(A, mean, dev, factor_std, scale_beta);
             }
-            std::cout << "  Recommended LASSO_MAXALPHA = "
+            std::cout << "  Recommended CV_MAXALPHA = "
                 << get_esimated_max_alpha(A, b, mean, dev)
                 << std::endl << std::endl;
         }
 
-        const auto file_coef = job_prefix + ".lasso_coef" + std::to_string(iset + 1);
-        const auto file_cv = job_prefix + ".lasso_cvset" + std::to_string(iset + 1);
+        const auto file_coef = job_prefix + ".solution_path" + std::to_string(iset + 1);
+        const auto file_cv = job_prefix + ".enet_cvset" + std::to_string(iset + 1);
 
 
         run_enet_solution_path(maxorder, A, b, A_test, b_test,
@@ -720,7 +720,7 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
         validation_error_accum.emplace_back(validation_error);
     }
 
-    const auto file_cvscore = job_prefix + ".lasso_cvscore";
+    const auto file_cvscore = job_prefix + ".cvscore";
     const auto ialpha_minimum = write_cvscore_to_file(file_cvscore,
                                                       alphas,
                                                       training_error_accum,
@@ -744,7 +744,7 @@ void Optimize::write_cvresult_to_file(const std::string file_out,
     ofs_cv.open(file_out.c_str(), std::ios::out);
     ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
     ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
-    ofs_cv << "# LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+    ofs_cv << "# CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
     ofs_cv << "# L1 ALPHA, Fitting error, Validation error, Num. zero IFCs (2nd, 3rd, ...) " << std::endl;
 
     const auto maxorder = nonzeros[0].size();
@@ -807,7 +807,7 @@ int Optimize::write_cvscore_to_file(const std::string file_out,
     ofs_cv.open(file_out.c_str(), std::ios::out);
     ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
     ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
-    ofs_cv << "# LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+    ofs_cv << "# CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
     ofs_cv << "# " << nsets << "-fold cross-validation scores" << std::endl;
     ofs_cv << "# L1 ALPHA, Fitting error (mean, std), Validation error (mean, std) " << std::endl;
 
@@ -1052,18 +1052,18 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
 
     if (verbosity > 0) {
         std::cout << "  Lasso minimization with the following parameters:" << std::endl;
-        std::cout << "   LASSO_ALPHA  (L1) = " << std::setw(15) << optcontrol.l1_alpha << std::endl;
-        std::cout << "   LASSO_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
-        std::cout << "   LASSO_MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
+        std::cout << "   L1_ALPHA  (L1) = " << std::setw(15) << optcontrol.l1_alpha << std::endl;
+        std::cout << "   CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+        std::cout << "   MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
         std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
 
         std::cout << std::endl;
         if (optcontrol.standardize) {
             std::cout << " STANDARDIZE = 1 : Standardization will be performed for matrix A and vector b." << std::endl;
-            std::cout << "                   The LASSO_DNORM-tag will be neglected." << std::endl;
+            std::cout << "                   The ENET_DNORM-tag will be neglected." << std::endl;
         } else {
             std::cout << " STANDARDIZE = 0 : No standardization of matrix A and vector b." << std::endl;
-            std::cout << "                   Columns of matrix A will be scaled by the LASSO_DNORM value." << std::endl;
+            std::cout << "                   Columns of matrix A will be scaled by the ENET_DNORM value." << std::endl;
         }
     }
 

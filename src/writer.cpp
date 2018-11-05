@@ -101,16 +101,16 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << std::endl;
         const auto optctrl = alm->optimize->get_optimizer_control();
         std::cout << " Lasso:" << std::endl;
-        std::cout << "  LASSO_ALPHA = " << optctrl.l1_alpha << std::endl;
-        std::cout << "  LASSO_MINALPHA = " << optctrl.l1_alpha_min;
-        std::cout << "; LASSO_MAXALPHA = " << optctrl.l1_alpha_max << std::endl;
-        std::cout << "  LASSO_NALPHA = " << optctrl.num_l1_alpha << std::endl;
+        std::cout << "  L1_ALPHA = " << optctrl.l1_alpha << std::endl;
+        std::cout << "  CV_MINALPHA = " << optctrl.l1_alpha_min;
+        std::cout << "; CV_MAXALPHA = " << optctrl.l1_alpha_max << std::endl;
+        std::cout << "  CV_NALPHA = " << optctrl.num_l1_alpha << std::endl;
         std::cout << "  STANDARDIZE = " << optctrl.standardize << std::endl;
-        std::cout << "  LASSO_DNORM = " << optctrl.displacement_normalization_factor << std::endl;
-        std::cout << "  LASSO_TOL = " << optctrl.tolerance_iteration << std::endl;
-        std::cout << "  LASSO_MAXITER = " << optctrl.maxnum_iteration << std::endl;
-        std::cout << "  LASSO_CV = " << std::setw(5) << optctrl.cross_validation << std::endl;
-        std::cout << "  LASSO_FREQ = " << std::setw(5) << optctrl.output_frequency << std::endl;
+        std::cout << "  ENET_DNORM = " << optctrl.displacement_normalization_factor << std::endl;
+        std::cout << "  CONV_TOL = " << optctrl.tolerance_iteration << std::endl;
+        std::cout << "  MAXITER = " << optctrl.maxnum_iteration << std::endl;
+        std::cout << "  CV = " << std::setw(5) << optctrl.cross_validation << std::endl;
+        std::cout << "  NWRITE = " << std::setw(5) << optctrl.output_frequency << std::endl;
         std::cout << std::endl;
     }
     std::cout << " -------------------------------------------------------------------" << std::endl;

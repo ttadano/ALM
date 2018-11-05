@@ -650,13 +650,13 @@ void InputParser::parse_optimize_vars(ALM *alm)
     std::vector<std::vector<double>> u_tmp2, f_tmp2;
 
     const std::vector<std::string> input_list{
-        "OPTIMIZER", "SPARSE", "ICONST", "ROTAXIS", "FC2XML", "FC3XML",
-        "NDATA", "NSTART", "NEND", "SKIP", "DFILE", "FFILE",
-        "NDATA_TEST", "NSTART_TEST", "NEND_TEST", "DFILE_TEST", "FFILE_TEST",
-        "L1_RATIO", "STANDARDIZE", "LASSO_DNORM",
-        "LASSO_ALPHA", "LASSO_MAXALPHA", "LASSO_MINALPHA", "LASSO_NALPHA",
-        "LASSO_CV", "LASSO_MAXITER", "LASSO_TOL", "LASSO_FREQ",
-        "SOLUTION_PATH", "DEBIAS_OLS", "DFFILE"
+        "OPTIMIZER", "SPARSE",
+        "ICONST", "ROTAXIS", "FC2XML", "FC3XML",
+        "NDATA", "NSTART", "NEND", "SKIP", "DFILE", "FFILE", "DFFILE",
+        "NDATA_TEST", "NSTART_TEST", "NEND_TEST", "DFILE_TEST", "FFILE_TEST", "DFFILE_TEST",
+        "L1_RATIO", "STANDARDIZE", "ENET_DNORM",
+        "L1_ALPHA", "CV_MAXALPHA", "CV_MINALPHA", "CV_NALPHA",
+        "CV", "MAXITER", "CONV_TOL", "NWRITE", "SOLUTION_PATH", "DEBIAS_OLS"
     };
 
     std::map<std::string, std::string> fitting_var_dict;
@@ -689,33 +689,33 @@ void InputParser::parse_optimize_vars(ALM *alm)
         optcontrol.use_sparse_solver = flag_sparse;
     }
 
-    if (!fitting_var_dict["LASSO_DNORM"].empty()) {
+    if (!fitting_var_dict["ENET_DNORM"].empty()) {
         optcontrol.displacement_normalization_factor
-            = boost::lexical_cast<double>(fitting_var_dict["LASSO_DNORM"]);
+            = boost::lexical_cast<double>(fitting_var_dict["ENET_DNORM"]);
     }
-    if (!fitting_var_dict["LASSO_ALPHA"].empty()) {
-        optcontrol.l1_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_ALPHA"]);
+    if (!fitting_var_dict["L1_ALPHA"].empty()) {
+        optcontrol.l1_alpha = boost::lexical_cast<double>(fitting_var_dict["L1_ALPHA"]);
     }
-    if (!fitting_var_dict["LASSO_MINALPHA"].empty()) {
-        optcontrol.l1_alpha_min = boost::lexical_cast<double>(fitting_var_dict["LASSO_MINALPHA"]);
+    if (!fitting_var_dict["CV_MINALPHA"].empty()) {
+        optcontrol.l1_alpha_min = boost::lexical_cast<double>(fitting_var_dict["CV_MINALPHA"]);
     }
-    if (!fitting_var_dict["LASSO_MAXALPHA"].empty()) {
-        optcontrol.l1_alpha_max = boost::lexical_cast<double>(fitting_var_dict["LASSO_MAXALPHA"]);
+    if (!fitting_var_dict["CV_MAXALPHA"].empty()) {
+        optcontrol.l1_alpha_max = boost::lexical_cast<double>(fitting_var_dict["CV_MAXALPHA"]);
     }
-    if (!fitting_var_dict["LASSO_NALPHA"].empty()) {
-        optcontrol.num_l1_alpha = boost::lexical_cast<int>(fitting_var_dict["LASSO_NALPHA"]);
+    if (!fitting_var_dict["CV_NALPHA"].empty()) {
+        optcontrol.num_l1_alpha = boost::lexical_cast<int>(fitting_var_dict["CV_NALPHA"]);
     }
-    if (!fitting_var_dict["LASSO_TOL"].empty()) {
-        optcontrol.tolerance_iteration = boost::lexical_cast<double>(fitting_var_dict["LASSO_TOL"]);
+    if (!fitting_var_dict["CONV_TOL"].empty()) {
+        optcontrol.tolerance_iteration = boost::lexical_cast<double>(fitting_var_dict["CONV_TOL"]);
     }
-    if (!fitting_var_dict["LASSO_MAXITER"].empty()) {
-        optcontrol.maxnum_iteration = boost::lexical_cast<int>(fitting_var_dict["LASSO_MAXITER"]);
+    if (!fitting_var_dict["MAXITER"].empty()) {
+        optcontrol.maxnum_iteration = boost::lexical_cast<int>(fitting_var_dict["MAXITER"]);
     }
-    if (!fitting_var_dict["LASSO_CV"].empty()) {
-        optcontrol.cross_validation = boost::lexical_cast<int>(fitting_var_dict["LASSO_CV"]);
+    if (!fitting_var_dict["CV"].empty()) {
+        optcontrol.cross_validation = boost::lexical_cast<int>(fitting_var_dict["CV"]);
     }
-    if (!fitting_var_dict["LASSO_FREQ"].empty()) {
-        optcontrol.output_frequency = boost::lexical_cast<int>(fitting_var_dict["LASSO_FREQ"]);
+    if (!fitting_var_dict["NWRITE"].empty()) {
+        optcontrol.output_frequency = boost::lexical_cast<int>(fitting_var_dict["NWRITE"]);
     }
     if (!fitting_var_dict["STANDARDIZE"].empty()) {
         optcontrol.standardize = boost::lexical_cast<int>(fitting_var_dict["STANDARDIZE"]);
