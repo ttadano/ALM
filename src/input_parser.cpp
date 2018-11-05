@@ -1284,10 +1284,13 @@ bool InputParser::is_data_range_consistent(const DispForceFile &datfile_in) cons
     const auto skip_s = datfile_in.skip_s;
     const auto skip_e = datfile_in.skip_e;
 
-    if (ndata < 0 || nstart < 0 || nend < 0 || skip_s < 0 || skip_e < 0) return false;
-
-    if (nstart > 0 && skip_s > 0 && skip_s > nstart) return false;
-    if (nend > 0 && skip_e > 0 && skip_e > nend) return false;
+    // std::cout << "ndata = " << ndata << '\n';
+    // std::cout << "nstart= " << nstart << '\n';
+    // std::cout << "nend  = " << nend << '\n';
+    // std::cout << "skip_s= " << skip_s << '\n';
+    // std::cout << "skip_e= " << skip_e << '\n';
+    if (nstart > 0 && skip_s > 0 && skip_s < nstart) return false;
+    if (nend > 0 && skip_e > 0 && (skip_e - 1) > nend) return false;
     if (nstart > 0 && nend > 0 && nstart > nend) return false;
     if (skip_s > 0 && skip_e > 0 && skip_s >= skip_e) return false;
 
@@ -1295,7 +1298,7 @@ bool InputParser::is_data_range_consistent(const DispForceFile &datfile_in) cons
         if (nstart > 0 && nstart > ndata) return false;
         if (nend > 0 && nend > ndata) return false;
         if (skip_s > 0 && skip_s > ndata) return false;
-        if (skip_e > 0 && skip_e > ndata) return false;
+        if (skip_e > 0 && (skip_e - 1) > ndata) return false;
     }
 
     return true;
