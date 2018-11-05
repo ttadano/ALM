@@ -30,7 +30,7 @@ namespace ALM_NS
     {
     public:
         // General optimization options
-        int optimizer;         // 1 : least-squares, 2 : elastic net
+        int optimizer; // 1 : least-squares, 2 : elastic net
         int use_sparse_solver; // 0: No, 1: Yes
         int maxnum_iteration;
         double tolerance_iteration;
@@ -42,8 +42,7 @@ namespace ALM_NS
         int debiase_after_l1opt;
 
         // cross-validation related variables
-        int cross_validation_mode;
-        int nset_cross_validation;
+        int cross_validation; // 0 : No CV mode, -1 or > 0: CV mode
         double l1_alpha; // L1-regularization coefficient
         double l1_alpha_min;
         double l1_alpha_max;
@@ -56,13 +55,12 @@ namespace ALM_NS
             optimizer = 1;
             use_sparse_solver = 0;
             maxnum_iteration = 10000;
-            tolerance_iteration = 1.0e-15;
+            tolerance_iteration = 1.0e-8;
             output_frequency = 1000;
             standardize = 1;
             displacement_normalization_factor = 1.0;
             debiase_after_l1opt = 0;
-            cross_validation_mode = 0;
-            nset_cross_validation = 1;
+            cross_validation = 0;
             l1_alpha = 0.0;
             l1_alpha_min = 1.0e-4;
             l1_alpha_max = 1.0;
@@ -158,7 +156,6 @@ namespace ALM_NS
                         const int maxorder,
                         const size_t N_new,
                         const size_t M,
-                        const size_t M_test,
                         const Symmetry *symmetry,
                         const std::vector<std::string> &str_order,
                         const Fcs *fcs,
@@ -169,59 +166,92 @@ namespace ALM_NS
 
         int run_elastic_net_crossvalidation(const std::string job_prefix,
                                             const int maxorder,
-                                            const size_t M,
-                                            const size_t M_test,
-                                            const size_t N_new,
-                                            std::vector<double> &amat_1D,
-                                            std::vector<double> &bvec,
-                                            const double fnorm,
-                                            std::vector<double> &amat_1D_test,
-                                            std::vector<double> &bvec_test,
-                                            const double fnorm_test,
+                                            const Fcs *fcs,
+                                            const Symmetry *symmetry,
                                             const Constraint *constraint,
-                                            const int verbosity,
-                                            std::vector<double> &param_out);
+                                            const int verbosity);
 
-        int run_elastic_net_optimization(const size_t M,
+        void run_enetcv_manual(const std::string job_prefix,
+                               const int maxorder,
+                               const Fcs *fcs,
+                               const Symmetry *symmetry,
+                               const Constraint *constraint,
+                               const int verbosity);
+
+        void run_enetcv_auto(const std::string job_prefix,
+                             const int maxorder,
+                             const Fcs *fcs,
+                             const Symmetry *symmetry,
+                             const Constraint *constraint,
+                             const int verbosity);
+
+        void write_cvresult_to_file(const std::string file_out,
+                                    const std::vector<double> &alphas,
+                                    const std::vector<double> &training_error,
+                                    const std::vector<double> &validation_error,
+                                    const std::vector<std::vector<int>> &nonzeros) const;
+
+        int write_cvscore_to_file(const std::string file_out,
+                                  const std::vector<double> &alphas,
+                                  const std::vector<std::vector<double>> &training_error_accum,
+                                  const std::vector<std::vector<double>> &validation_error_accum) const;
+
+        int get_ialpha_at_minimum_validation_error(const std::vector<double> &validation_error) const;
+
+
+        int run_elastic_net_optimization(const int maxorder,
+                                         const size_t M,
                                          const size_t N_new,
-                                         std::vector<double> &amat_1D,
-                                         std::vector<double> &bvec,
-                                         const double fnorm,
+                                         const Fcs *fcs,
+                                         const Symmetry *symmetry,
+                                         const Constraint *constraint,
                                          const int verbosity,
-                                         std::vector<double> &param_out);
+                                         std::vector<double> &param_out) const;
 
         int run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
                                                  const Eigen::VectorXd &b_in,
                                                  const Eigen::VectorXd &factor_std,
                                                  std::vector<double> &params_inout,
-                                                 const int verbosity);
+                                                 const int verbosity) const;
+
+        void get_number_of_zero_coefs(const int maxorder,
+                                      const Constraint *constraint,
+                                      const Eigen::VectorXd &x,
+                                      std::vector<int> &nzeros) const;
 
         void get_standardizer(const Eigen::MatrixXd &Amat,
                               Eigen::VectorXd &mean,
                               Eigen::VectorXd &dev,
                               Eigen::VectorXd &factor_std,
-                              Eigen::VectorXd &scale_beta);
+                              Eigen::VectorXd &scale_beta) const;
 
         void apply_standardizer(Eigen::MatrixXd &Amat,
                                 const Eigen::VectorXd &mean,
-                                const Eigen::VectorXd &dev);
+                                const Eigen::VectorXd &dev) const;
 
         double get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
-                                      const Eigen::VectorXd &bvec) const;
+                                      const Eigen::VectorXd &bvec,
+                                      const Eigen::VectorXd &mean,
+                                      const Eigen::VectorXd &dev) const;
 
         void apply_scaler_displacement(std::vector<std::vector<double>> &u_inout,
                                        const double normalization_factor,
-                                       const bool scale_back = false);
+                                       const bool scale_back = false) const;
 
         void apply_scaler_constraint(const int maxorder,
                                      const double normalization_factor,
                                      Constraint *constraint,
-                                     const bool scale_back = false);
+                                     const bool scale_back = false) const;
 
         void apply_scaler_force_constants(const int maxorder,
                                           const double normalization_factor,
-                                          Constraint *constraint,
-                                          std::vector<double> &param_inout);
+                                          const Constraint *constraint,
+                                          std::vector<double> &param_inout) const;
+
+        void apply_scalers(const int maxorder,
+                           Constraint *constraint);
+        void finalize_scalers(const int maxorder,
+                              Constraint *constraint);
 
 
         int fit_without_constraints(const size_t N,
@@ -270,7 +300,7 @@ namespace ALM_NS
                                                 double &fnorm,
                                                 const Symmetry *symmetry,
                                                 const Fcs *fcs,
-                                                const Constraint *constraint);
+                                                const Constraint *constraint) const;
 
         int run_eigen_sparseQR(const SpMat &,
                                const Eigen::VectorXd &,
@@ -297,8 +327,6 @@ namespace ALM_NS
         double gamma(const int,
                      const int *) const;
 
-
-        // Moved from lasso.h
         void coordinate_descent(const int M,
                                 const int N,
                                 const double alpha,
@@ -313,6 +341,23 @@ namespace ALM_NS
                                 const double fnorm,
                                 const Eigen::VectorXd &scale_beta,
                                 const int verbosity) const;
+
+        void run_enet_solution_path(const int maxorder,
+                                    Eigen::MatrixXd &A,
+                                    Eigen::VectorXd &b,
+                                    Eigen::MatrixXd &A_test,
+                                    Eigen::VectorXd &b_test,
+                                    const double fnorm,
+                                    const double fnorm_test,
+                                    const std::string file_coef,
+                                    const int verbosity,
+                                    const Constraint *constraint,
+                                    const std::vector<double> &alphas,
+                                    std::vector<double> &training_error,
+                                    std::vector<double> &validation_error,
+                                    std::vector<std::vector<int>> &nonzeros) const;
+
+        void compute_alphas(std::vector<double> &alphas) const;
     };
 
     inline double shrink(const double x,

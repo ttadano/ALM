@@ -655,7 +655,7 @@ void InputParser::parse_optimize_vars(ALM *alm)
         "NDATA_TEST", "NSTART_TEST", "NEND_TEST", "DFILE_TEST", "FFILE_TEST",
         "L1_RATIO", "STANDARDIZE", "LASSO_DNORM",
         "LASSO_ALPHA", "LASSO_MAXALPHA", "LASSO_MINALPHA", "LASSO_NALPHA",
-        "LASSO_CV", "LASSO_CVSET", "LASSO_MAXITER", "LASSO_TOL", "LASSO_FREQ",
+        "LASSO_CV", "LASSO_MAXITER", "LASSO_TOL", "LASSO_FREQ",
         "SOLUTION_PATH", "DEBIAS_OLS", "DFFILE"
     };
 
@@ -712,10 +712,7 @@ void InputParser::parse_optimize_vars(ALM *alm)
         optcontrol.maxnum_iteration = boost::lexical_cast<int>(fitting_var_dict["LASSO_MAXITER"]);
     }
     if (!fitting_var_dict["LASSO_CV"].empty()) {
-        optcontrol.cross_validation_mode = boost::lexical_cast<int>(fitting_var_dict["LASSO_CV"]);
-    }
-    if (!fitting_var_dict["LASSO_CVSET"].empty()) {
-        optcontrol.nset_cross_validation = boost::lexical_cast<int>(fitting_var_dict["LASSO_CVSET"]);
+        optcontrol.cross_validation = boost::lexical_cast<int>(fitting_var_dict["LASSO_CV"]);
     }
     if (!fitting_var_dict["LASSO_FREQ"].empty()) {
         optcontrol.output_frequency = boost::lexical_cast<int>(fitting_var_dict["LASSO_FREQ"]);
@@ -741,7 +738,7 @@ void InputParser::parse_optimize_vars(ALM *alm)
             std::cout << " Sorry. DFILE and FFILE tags are obsolate.\n";
             std::cout << " Please use DFFILE instead.\n";
             std::cout << " DFFILE can be created easily by the unix paste command as:\n\n";
-            std::cout << " > paste DFILE FFILE > DFFILE\n\n";
+            std::cout << " $ paste DFILE FFILE > DFFILE\n\n";
             exit("parse_optimize_vars", "Obsolate tag: DFILE, FFILE");
         } else {
             exit("parse_optimize_vars", "DFFILE tag must be given.");
@@ -815,7 +812,7 @@ void InputParser::parse_optimize_vars(ALM *alm)
              "NDATA_TEST, NSTART_TEST and NEND_TEST tags are inconsistent.");
     }
 
-    if (optcontrol.cross_validation_mode == 2) {
+    if (optcontrol.cross_validation == -1) {
         parse_displacement_and_force_files(u_tmp2,
                                            f_tmp2,
                                            datfile_test);

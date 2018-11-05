@@ -109,7 +109,7 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  LASSO_DNORM = " << optctrl.displacement_normalization_factor << std::endl;
         std::cout << "  LASSO_TOL = " << optctrl.tolerance_iteration << std::endl;
         std::cout << "  LASSO_MAXITER = " << optctrl.maxnum_iteration << std::endl;
-        std::cout << "  LASSO_CV = " << std::setw(5) << optctrl.cross_validation_mode << std::endl;
+        std::cout << "  LASSO_CV = " << std::setw(5) << optctrl.cross_validation << std::endl;
         std::cout << "  LASSO_FREQ = " << std::setw(5) << optctrl.output_frequency << std::endl;
         std::cout << std::endl;
     }
