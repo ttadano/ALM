@@ -53,7 +53,7 @@ def run_apidoc(_):
     output_path = cur_dir
     main(['-e','-f','-o', output_path, module])
 
-def setup(app)
+def setup(app):
     # overrides for wide tables in RTD theme
     app.add_stylesheet('theme_overrides.css')
     # trigger the run_apidoc
