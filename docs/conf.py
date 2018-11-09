@@ -19,7 +19,7 @@
 #
 import os
 import sys
-#sys.path.insert(0, os.path.abspath('../'))
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'python', 'alm'))
 
 # -- General configuration ------------------------------------------------
 
@@ -34,13 +34,13 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.mathjax',
               'sphinx.ext.napoleon']
 
 def run_apidoc(_):
-    from sphinx.apidoc import main
+    from sphinx.ext.apidoc import main
     parentFolder = os.path.join(os.path.dirname(__file__), '..')
     cur_dir = os.path.abspath(os.path.dirname(__file__))
     sys.path.append(parentFolder)
     module = os.path.join(parentFolder,'python','alm')
-    output_path = cur_dir
-    main(['-e','-f','-o', output_path, module])
+    output_path = '.'
+    main(['-f','-o', output_path, module])
 
 def setup(app):
     # overrides for wide tables in RTD theme
