@@ -20,6 +20,9 @@
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+#sys.path.insert(0, os.path.abspath('../python/alm'))
+#sys.path.insert(0, os.path.abspath('../python'))
+#sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration ------------------------------------------------
 
@@ -37,7 +40,7 @@ def run_apidoc(_):
     from sphinx.ext.apidoc import main
     parentFolder = os.path.join(os.path.dirname(__file__), '..')
     cur_dir = os.path.abspath(os.path.dirname(__file__))
-    sys.path.append(parentFolder)
+    print(sys.path)
     module = os.path.join(parentFolder,'python','alm')
     output_path = '.'
     main(['-f','-o', output_path, module])
