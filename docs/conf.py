@@ -21,17 +21,6 @@ import os
 import sys
 #sys.path.insert(0, os.path.abspath('../'))
 
-root_dir = os.path.abspath('../') 
-
-try:
-    # This succeeds = the project is already installed.
-    # This directive avoids Readthedocs to fail
-    import my_project
-except ImportError:
-    sys.path.insert(0, root_dir)
-    import my_project
-
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
