@@ -2555,7 +2555,7 @@ void Optimize::coordinate_descent(const int M,
                                   const int verbosity) const
 {
     int i, j;
-    auto diff{0.0};
+    double diff{0.0};
     Eigen::VectorXd beta(N), delta(N);
     Eigen::VectorXd res(N);
     bool do_print_log;
