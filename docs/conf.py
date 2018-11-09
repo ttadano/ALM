@@ -21,6 +21,16 @@ import os
 import sys
 #sys.path.insert(0, os.path.abspath('../'))
 
+root_dir = os.path.abspath('../') 
+
+try:
+    # This succeeds = the project is already installed.
+    # This directive avoids Readthedocs to fail
+    import my_project
+except ImportError:
+    sys.path.insert(0, root_dir)
+    import my_project
+
 
 # -- General configuration ------------------------------------------------
 
@@ -33,6 +43,21 @@ import sys
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.mathjax',
               'sphinx.ext.napoleon']
+
+def run_apidoc(_):
+    from sphinx.apidoc import main
+    parentFolder = os.path.join(os.path.dirname(__file__), '..')
+    cur_dir = os.path.abspath(os.path.dirname(__file__))
+    sys.path.append(parentFolder)
+    module = os.path.join(parentFolder,'python','alm')
+    output_path = cur_dir
+    main(['-e','-f','-o', output_path, module])
+
+def setup(app)
+    # overrides for wide tables in RTD theme
+    app.add_stylesheet('theme_overrides.css')
+    # trigger the run_apidoc
+    app.connect('builder-inited', run_apidoc)
 
 autoclass_content = 'both'
 # Add any paths that contain templates here, relative to this directory.
