@@ -923,6 +923,7 @@ void Optimize::run_enet_solution_path(const int maxorder,
             initialize_mode = 1;
         }
 
+#pragma omp parallel for
         for (auto i = 0; i < N_new; ++i) {
             scale_beta_enet(i) = 1.0 / (1.0 / scale_beta(i) + (1.0 - optcontrol.l1_ratio) * l1_alpha);
         }
@@ -1081,6 +1082,7 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
     grad0 = A.transpose() * b;
     grad = grad0;
 
+#pragma omp parallel for
     for (i = 0; i < N_new; ++i) {
         scale_beta(i) = 1.0 / (1.0 / scale_beta(i) + (1.0 - optcontrol.l1_ratio) * optcontrol.l1_alpha);
     }
@@ -2590,6 +2592,7 @@ void Optimize::coordinate_descent(const int M,
                 delta(i) -= beta(i);
                 if (std::abs(delta(i)) > 0.0) {
                     if (!has_prod[i]) {
+#pragma omp parallel for
                         for (j = 0; j < N; ++j) {
                             Prod(j, i) = A.col(j).dot(A.col(i));
                         }
@@ -2599,7 +2602,13 @@ void Optimize::coordinate_descent(const int M,
                 }
             }
             ++iloop;
-            diff = std::sqrt(delta.dot(delta) / static_cast<double>(N));
+            diff = 0.0;
+            #pragma omp parallel for reduction(+:diff)
+            for (i = 0; i < N; ++i) {
+                diff += delta(i) * delta(i);
+            }
+            diff = std::sqrt(diff / static_cast<double>(N));
+            //diff = std::sqrt(delta.dot(delta) / static_cast<double>(N));
 
             if (diff < optcontrol.tolerance_iteration) break;
 
