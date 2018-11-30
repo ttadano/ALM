@@ -13,6 +13,8 @@ Welcome to ALM's documentation!
    intro
    compile-with-conda-packages
    compile-with-makefile 
+   input-tags
+   formalism
    modules
 
 
