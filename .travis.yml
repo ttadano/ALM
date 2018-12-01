@@ -37,7 +37,6 @@ install:
 - pip install -e .
 
 script:
-- pwd
 - cd $TRAVIS_BUILD_DIR/test
 - python Si_fitting.py
 - python SiC_fitting.py
