@@ -5,13 +5,13 @@ dist: trusty
 python:
   - '2.7'
   - '3.6'
-  - '3.7'
 
 before_install:
 - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 - bash miniconda.sh -b -p $HOME/miniconda
-- $HOME/miniconda/bin/conda activate
+- source $HOME/miniconda/etc/profile.d/conda.sh
 - echo $TRAVIS_PYTHON_VERSION
+- conda activate
 - conda create --yes -c conda-forge -n travis python="$TRAVIS_PYTHON_VERSION"
 - conda activate travis
 
