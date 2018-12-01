@@ -45,6 +45,7 @@ test:
   imports:
     - alm
   commands:
+    - cd test
     - python Si_fitting.py 
     - python SiC_fitting.py 
 
