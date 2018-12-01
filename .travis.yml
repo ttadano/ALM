@@ -29,7 +29,7 @@ install:
 - echo $CC $CXX
 - export CC=$CXX
 - echo $CC
-- patch < conda/use_external_spglib.patch
+- patch -p1 < conda/use_external_spglib.patch
 - cd python
 - python setup.py build
 - pip install -e .
