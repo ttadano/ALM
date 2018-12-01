@@ -25,6 +25,8 @@ install:
 - cd $TRAVIS_BUILD_DIR
 - pwd
 - export CPLUS_INCLUDE_PATH=$CONDA_PREFIX/include:$CONDA_PREFIX/include/eigen3
+- export LIBRARY_PATH=$CONDA_PREFIX/lib:${LIBRARY_PATH}
+- export LDFLAGS="-fopenmp -lblas"
 - echo $CPLUS_INCLUDE_PATH
 - echo $CC $CXX
 - export CC=$CXX
