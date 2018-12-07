@@ -4,204 +4,247 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
 #include <string>
 #include "input_setter.h"
-#include "alm_core.h"
 #include "memory.h"
 #include "files.h"
-#include "interaction.h"
-#include "system.h"
 #include "symmetry.h"
-#include "fitting.h"
+#include "optimize.h"
 #include "constraint.h"
 #include "patterndisp.h"
+#include "alm.h"
 
 using namespace ALM_NS;
 
 InputSetter::InputSetter()
 {
+    nat = 0;
+    nkd = 0;
+    maxorder = 0;
+    kd = nullptr;
+    kdname = nullptr;
+
+    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; j++) {
+            lavec[i][j] = 0.0;
+        }
+    }
+    xcoord = nullptr;
+    is_periodic[0] = 1;
+    is_periodic[1] = 1;
+    is_periodic[2] = 1;
+
+    lspin = false;
+    magmom = nullptr;
+    noncollinear = 0;
+    trevsym = 1;
+    str_magmom = "";
+
+    nbody_include = nullptr;
+    cutoff_radii = nullptr;
 }
 
 InputSetter::~InputSetter()
 {
-}
-
-void InputSetter::deallocator(ALMCore *alm_core)
-{
-    if (alm_core->system->kdname) {
-        deallocate(alm_core->system->kdname);
+    if (kdname) {
+        deallocate(kdname);
     }
-    alm_core->system->kdname = nullptr;
-    if (alm_core->system->xcoord) {
-        deallocate(alm_core->system->xcoord);
+    if (xcoord) {
+        deallocate(xcoord);
     }
-    alm_core->system->xcoord = nullptr;
-    if (alm_core->system->kd) {
-        deallocate(alm_core->system->kd);
+    if (kd) {
+        deallocate(kd);
     }
-    alm_core->system->kd = nullptr;
-    if (alm_core->system->magmom) {
-        deallocate(alm_core->system->magmom);
+    if (magmom) {
+        deallocate(magmom);
     }
-    alm_core->system->magmom = nullptr;
-    if (alm_core->interaction->nbody_include) {
-        deallocate(alm_core->interaction->nbody_include);
+    if (nbody_include) {
+        deallocate(nbody_include);
     }
-    alm_core->interaction->nbody_include = nullptr;
-    if (alm_core->interaction->rcs) {
-        deallocate(alm_core->interaction->rcs);
-    }
-    alm_core->interaction->rcs = nullptr;
-}
-
-void InputSetter::set_general_vars(ALMCore *alm_core,
-                                   const std::string prefix,
-                                   const std::string mode,
-                                   const std::string str_disp_basis,
-                                   const std::string str_magmom,
-                                   const int nat,
-                                   const int nkd,
-                                   const int nsym,
-                                   const int printsymmetry,
-                                   const int is_periodic[3],
-                                   const bool trim_dispsign_for_evenfunc,
-                                   const bool lspin,
-                                   const bool print_hessian,
-                                   const int noncollinear,
-                                   const int trevsym,
-                                   const std::string *kdname,
-                                   const double * const *magmom,
-                                   const double tolerance,
-                                   const double tolerance_constraint)
-{
-    int i, j;
-
-    alm_core->files->job_title = prefix;
-    alm_core->mode = mode;
-    alm_core->system->nat = nat;
-    alm_core->system->nkd = nkd;
-    alm_core->system->str_magmom = str_magmom;
-    alm_core->symmetry->nsym = nsym;
-    alm_core->symmetry->printsymmetry = printsymmetry;
-    alm_core->symmetry->tolerance = tolerance;
-    allocate(alm_core->system->kdname, nkd);
-    allocate(alm_core->system->magmom, nat, 3);
-
-    for (i = 0; i < nkd; ++i) {
-        alm_core->system->kdname[i] = kdname[i];
-    }
-    for (i = 0; i < 3; ++i) {
-        alm_core->interaction->is_periodic[i] = is_periodic[i];
-    }
-    for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
-            alm_core->system->magmom[i][j] = magmom[i][j];
-        }
-    }
-    alm_core->system->lspin = lspin;
-    alm_core->system->noncollinear = noncollinear;
-    alm_core->symmetry->trev_sym_mag = trevsym;
-    alm_core->files->print_hessian = print_hessian;
-    alm_core->constraint->tolerance_constraint = tolerance_constraint;
-
-    if (mode == "suggest") {
-        alm_core->displace->disp_basis = str_disp_basis;
-        alm_core->displace->trim_dispsign_for_evenfunc = trim_dispsign_for_evenfunc;
+    if (cutoff_radii) {
+        deallocate(cutoff_radii);
     }
 }
 
-void InputSetter::set_cell_parameter(ALMCore *alm_core,
-                                     const double a,
-                                     const double lavec_tmp[3][3])
+void InputSetter::set_cell_parameter(const double a,
+                                     const double lavec_in[3][3])
 {
-    int i, j;
-
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
-            alm_core->system->lavec[i][j] = a * lavec_tmp[i][j];
+    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
+            lavec[i][j] = a * lavec_in[i][j];
         }
     }
 }
 
-void InputSetter::set_interaction_vars(ALMCore *alm_core,
-                                       const int maxorder,
-                                       const int *nbody_include)
+void InputSetter::set_interaction_vars(const int maxorder_in,
+                                       const int *nbody_include_in)
 {
-    int i;
-
-    alm_core->interaction->maxorder = maxorder;
-    allocate(alm_core->interaction->nbody_include, maxorder);
-
-    for (i = 0; i < maxorder; ++i) {
-        alm_core->interaction->nbody_include[i] = nbody_include[i];
+    maxorder = maxorder_in;
+    if (nbody_include) {
+        deallocate(nbody_include);
+    }
+    allocate(nbody_include, maxorder);
+    for (auto i = 0; i < maxorder; i++) {
+        nbody_include[i] = nbody_include_in[i];
     }
 }
 
-void InputSetter::set_cutoff_radii(ALMCore *alm_core,
-                                   const int maxorder,
-                                   const int nkd,
-                                   const double * const * const *rcs)
+void InputSetter::set_cutoff_radii(const int maxorder_in,
+                                   const size_t nkd_in,
+                                   const double * const * const *cutoff_radii_in)
 {
-    int i, j, k;
-
-    allocate(alm_core->interaction->rcs, maxorder, nkd, nkd);
-
-    for (i = 0; i < maxorder; ++i) {
-        for (j = 0; j < nkd; ++j) {
-            for (k = 0; k < nkd; ++k) {
-                alm_core->interaction->rcs[i][j][k] = rcs[i][j][k];
+    if (cutoff_radii) {
+        deallocate(cutoff_radii);
+    }
+    allocate(cutoff_radii, maxorder_in, nkd_in, nkd_in);
+    for (auto i = 0; i < maxorder_in; i++) {
+        for (size_t j = 0; j < nkd_in; j++) {
+            for (size_t k = 0; k < nkd_in; k++) {
+                cutoff_radii[i][j][k] = cutoff_radii_in[i][j][k];
             }
         }
     }
 }
 
-void InputSetter::set_fitting_vars(ALMCore *alm_core,
-                                   const int ndata,
-                                   const int nstart,
-                                   const int nend,
-                                   const std::string dfile,
-                                   const std::string ffile,
-                                   const int constraint_flag,
-                                   const std::string rotation_axis,
-                                   const std::string fc2_file,
-                                   const std::string fc3_file,
-                                   const bool fix_harmonic,
-                                   const bool fix_cubic)
+void InputSetter::set_general_vars(ALM *alm,
+                                   const std::string prefix,
+                                   const std::string mode,
+                                   const int verbosity,
+                                   const std::string str_disp_basis,
+                                   const std::string str_magmom,
+                                   const size_t nat_in,
+                                   const size_t nkd_in,
+                                   const int printsymmetry,
+                                   const int is_periodic_in[3],
+                                   const bool trim_dispsign_for_evenfunc,
+                                   const bool lspin_in,
+                                   const bool print_hessian,
+                                   const int noncollinear_in,
+                                   const int trevsym_in,
+                                   const std::string *kdname_in,
+                                   const double * const *magmom_in,
+                                   const double tolerance,
+                                   const double tolerance_constraint)
 {
-    alm_core->system->ndata = ndata;
-    alm_core->system->nstart = nstart;
-    alm_core->system->nend = nend;
+    size_t i;
 
-    alm_core->files->file_disp = dfile;
-    alm_core->files->file_force = ffile;
-    alm_core->constraint->constraint_mode = constraint_flag;
-    alm_core->constraint->rotation_axis = rotation_axis;
-    alm_core->constraint->fc2_file = fc2_file;
-    alm_core->constraint->fix_harmonic = fix_harmonic;
-    alm_core->constraint->fc3_file = fc3_file;
-    alm_core->constraint->fix_cubic = fix_cubic;
-}
+    alm->files->set_prefix(prefix);
+    alm->set_run_mode(mode);
+    alm->set_verbosity(verbosity);
+    nat = nat_in;
+    nkd = nkd_in;
+    alm->symmetry->set_print_symmetry(printsymmetry);
+    alm->symmetry->set_tolerance(tolerance);
 
-void InputSetter::set_atomic_positions(ALMCore *alm_core,
-                                       const int nat,
-                                       const int *kd,
-                                       const double * const *xeq)
-{
-    int i, j;
+    if (kdname) {
+        deallocate(kdname);
+    }
+    allocate(kdname, nkd);
+    for (i = 0; i < nkd; ++i) {
+        kdname[i] = kdname_in[i];
+    }
 
-    allocate(alm_core->system->xcoord, nat, 3);
-    allocate(alm_core->system->kd, nat);
+    if (magmom) {
+        deallocate(magmom);
+    }
+    allocate(magmom, nat);
 
-    for (i = 0; i < nat; ++i) {
-
-        alm_core->system->kd[i] = kd[i];
-
-        for (j = 0; j < 3; ++j) {
-            alm_core->system->xcoord[i][j] = xeq[i][j];
+    for (i = 0; i < nat; i ++) {
+        for (auto j = 0; j < 3; j++) {
+            magmom[i][j] = magmom_in[i][j];
         }
     }
+    lspin = lspin_in;
+    noncollinear = noncollinear_in;
+    trevsym = trevsym_in;
+
+    for (i = 0; i < 3; i++) {
+        is_periodic[i] = is_periodic_in[i];
+    }
+
+    alm->files->print_hessian = print_hessian;
+    alm->constraint->set_tolerance_constraint(tolerance_constraint);
+
+    if (mode == "suggest") {
+        alm->displace->set_disp_basis(str_disp_basis);
+        alm->displace->set_trim_dispsign_for_evenfunc(trim_dispsign_for_evenfunc);
+    }
+}
+
+void InputSetter::define(ALM *alm) const
+{
+    alm->define(maxorder,
+                nkd,
+                nbody_include,
+                cutoff_radii);
+}
+
+
+void InputSetter::set_optimize_vars(ALM *alm,
+                                    const std::vector<std::vector<double>> &u_train_in,
+                                    const std::vector<std::vector<double>> &f_train_in,
+                                    const std::vector<std::vector<double>> &u_test_in,
+                                    const std::vector<std::vector<double>> &f_test_in,
+                                    const OptimizerControl &optcontrol_in) const
+{
+    alm->optimize->set_training_data(u_train_in, f_train_in);
+    alm->optimize->set_test_data(u_test_in, f_test_in);
+    alm->optimize->set_optimizer_control(optcontrol_in);
+}
+
+void InputSetter::set_file_vars(ALM *alm,
+                                const DispForceFile &datfile_train_in,
+                                const DispForceFile &datfile_test_in) const
+{
+    alm->files->set_datfile_train(datfile_train_in);
+    alm->files->set_datfile_test(datfile_test_in);
+}
+
+void InputSetter::set_constraint_vars(ALM *alm,
+                                      const int constraint_flag,
+                                      const std::string rotation_axis,
+                                      const std::string fc2_file,
+                                      const std::string fc3_file,
+                                      const bool fix_harmonic,
+                                      const bool fix_cubic) const
+{
+    alm->constraint->set_constraint_mode(constraint_flag);
+    alm->constraint->set_rotation_axis(rotation_axis);
+    alm->constraint->set_fc_file(2, fc2_file);
+    alm->constraint->set_fix_harmonic(fix_harmonic);
+    alm->constraint->set_fc_file(3, fc3_file);
+    alm->constraint->set_fix_cubic(fix_cubic);
+}
+
+
+void InputSetter::set_atomic_positions(const size_t nat_in,
+                                       const int *kd_in,
+                                       const double (*xcoord_in)[3])
+{
+    if (kd) {
+        deallocate(kd);
+    }
+    if (xcoord) {
+        deallocate(xcoord);
+    }
+    allocate(xcoord, nat_in);
+    allocate(kd, nat_in);
+
+    for (size_t i = 0; i < nat_in; ++i) {
+        kd[i] = kd_in[i];
+        for (auto j = 0; j < 3; ++j) {
+            xcoord[i][j] = xcoord_in[i][j];
+        }
+    }
+}
+
+void InputSetter::set_geometric_structure(ALM *alm)
+{
+    alm->set_cell(nat, lavec, xcoord, kd, kdname);
+    alm->set_periodicity(is_periodic);
+    alm->set_magnetic_params(nat, magmom, lspin, noncollinear, trevsym, str_magmom);
 }

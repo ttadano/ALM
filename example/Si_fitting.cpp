@@ -177,7 +177,7 @@ int main()
     int ndata_used = nend - nstart + 1;
 
     // Run
-    alm->set_verbose(false); // ALM log is written to alm.log.
+    alm->set_verbosity(0); 
     alm->set_run_mode("fitting");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);
@@ -198,7 +198,7 @@ int main()
     double fc_value[fc_length];
     int elem_indices[fc_length * 2];
 
-    alm->get_fc(fc_value, elem_indices, 1);
+    alm->get_fc_origin(fc_value, elem_indices, 1);
 
     for (int i = 0; i < fc_length; i++) {
         std::cout << i + 1 << ":" << " " << fc_value[i] <<

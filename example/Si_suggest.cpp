@@ -89,13 +89,13 @@ int main()
     std::string kdname[] = {"Si"};
 
     const int fc_order = 1;
-    alm->set_verbose(false); // ALM log is written to alm.log.
+    alm->set_verbosity(0);
     alm->set_run_mode("suggest");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);
     alm->set_norder(fc_order);
-    int nbody_include[fc_order] = {2};
-    alm->set_interaction_range(nbody_include);
+    //int nbody_include[fc_order] = {2};
+    //alm->set_interaction_range(nbody_include);
     alm->run();
 
     std::cout << "************ ALM API ************" << std::endl;
@@ -115,7 +115,7 @@ int main()
     std::cout << "Displacement patterns:" << std::endl;
     const int num_patterns = alm->get_number_of_displacement_patterns(fc_order);
     int numbers[num_patterns];
-    alm->get_numbers_of_displacements(numbers, fc_order);
+    alm->get_number_of_displaced_atoms(numbers, fc_order);
     int total_num_disps = 0;
     for (int i = 0; i < num_patterns; i++) {
         total_num_disps += numbers[i];

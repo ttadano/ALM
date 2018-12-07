@@ -1,4 +1,5 @@
 #include "../src/alm.h"
+#include "../src/memory.h"
 #include "alm_wrapper.h"
 #include <cstdlib>
 #include <string>
@@ -80,105 +81,156 @@ extern "C" {
     // void set_displacement_basis(const std::string str_disp_basis);
     // void set_periodicity(const int is_periodic[3]);
 
+    // kind_in contains integer numbers to distinguish chemical
+    // elements. This is transformed to kind in ALM format, which
+    // contains incrementing integer number starting from 1.
+    // Here the mapping from the numbers in kind_in to those in kind
+    // is made by finding unique numbers (i.e., kind_uniqe) in kind_in
+    // and keeping the order, e.g., [8, 8, 4, 4] --> [1, 1, 2, 2].
     void alm_set_cell(const int id,
-                      const int nat,
+                      const size_t nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
-                      const int kd[])
+                      const int atomic_numbers[],
+                      int kind[])
     {
-        int i, j, nkd;
-        int nkd_vals[nat], kd_new[nat];
-        bool kd_exist;
+        size_t i, j, nkd;
+        int kind_unique[nat];
+        bool in_kind_unique;
 
-        nkd_vals[0] = kd[0];
-        kd_new[0] = 1;
+        kind_unique[0] = atomic_numbers[0];
+        kind[0] = 1;
         nkd = 1;
+
         for (i = 1; i < nat; ++i) {
-            kd_exist = false;
+            in_kind_unique = false;
             for (j = 0; j < nkd; ++j) {
-                if (nkd_vals[j] == kd[i]) {
-                    kd_exist = true;
-                    kd_new[i] = j + 1;
+                if (kind_unique[j] == atomic_numbers[i]) {
+                    in_kind_unique = true;
+                    kind[i] = j + 1;
                     break;
                 }
             }
-            if (!kd_exist) {
-                nkd_vals[nkd] = kd[i];
-                kd_new[i] = nkd + 1;
+            if (!in_kind_unique) {
+                kind_unique[nkd] = atomic_numbers[i];
+                kind[i] = nkd + 1;
                 ++nkd;
             }
         }
         std::string *kdname = new std::string[nkd];
         //std::string kdname[nkd];
         for (int i = 0; i < nkd; i++) {
-            kdname[i] = atom_name[abs(nkd_vals[i]) % 118];
+            kdname[i] = atom_name[abs(kind_unique[i]) % 118];
         }
 
-
-        alm[id]->set_cell(nat, lavec, xcoord, kd_new, kdname);
+        alm[id]->set_cell(nat, lavec, xcoord, kind, kdname);
         delete [] kdname;
     }
 
-    // void set_magnetic_params(const double* magmom,
-    //   		       const bool lspin,
-    //   		       const int noncollinear,
-    //   		       const int trev_sym_mag,
-    //   		       const std::string str_magmom);
+    void alm_set_verbosity(const int id, const int verbosity)
+    {
+        alm[id]->set_verbosity(verbosity);
+    }
+
+    // void set_magnetic_params(const unsigned int nat,
+    //                          const double* const * magmom,
+    //                          const bool lspin,
+    //                          const int noncollinear,
+    //                          const int trev_sym_mag,
+    //                          const std::string str_magmom);
 
     void alm_set_displacement_and_force(const int id,
                                         const double* u_in,
                                         const double* f_in,
-                                        const int nat,
-                                        const int ndata_used)
+                                        const size_t nat,
+                                        const size_t ndata_used)
     {
         alm[id]->set_displacement_and_force(u_in, f_in, nat, ndata_used);
     }
 
-    void alm_set_fitting_constraint_type(const int id,
-                                         const int constraint_flag) // ICONST
+    size_t alm_get_nrows_sensing_matrix(const int id)
     {
-        alm[id]->set_fitting_constraint_type(constraint_flag);
+        return alm[id]->get_nrows_sensing_matrix();
+    }
+
+    void alm_set_constraint_type(const int id,
+                                 const int constraint_flag) // ICONST
+    {
+        alm[id]->set_constraint_type(constraint_flag);
     }
 
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
-    // void set_multiplier_option(const int multiply_data);
-    // void set_fitting_filenames(const std::string dfile,
-    //   			 const std::string ffile);
-    void alm_set_norder(const int id,
-                        const int maxorder)
+
+    void alm_define(const int id,
+                    const int maxorder,
+                    const size_t nkd,
+                    const int *nbody_include,
+                    const double *cutoff_radii_in)
     {
-        alm[id]->set_norder(maxorder);
+        double ***cutoff_radii;
+        int count;
+
+        if (nkd > 0) {
+            ALM_NS::allocate(cutoff_radii, maxorder, nkd, nkd);
+            count = 0;
+            for (size_t i = 0; i < maxorder; i++) {
+                for (size_t j = 0; j < nkd; j++) {
+                    for (size_t k = 0; k < nkd; k++) {
+                        cutoff_radii[i][j][k] = cutoff_radii_in[count];
+                        count++;
+                    }
+                }
+            }
+        } else {
+            cutoff_radii = nullptr;
+        }
+
+        alm[id]->define(maxorder,
+                        nkd,
+                        nbody_include,
+                        cutoff_radii);
+
+        if (nkd > 0) {
+            ALM_NS::deallocate(cutoff_radii);
+        }
     }
 
-    void alm_set_nbody_include(const int id,
-                               const int *nbody_include)
+    void alm_generate_force_constant(const int id)
     {
-        alm[id]->set_nbody_include(nbody_include);
-    }
-
-    void alm_set_cutoff_radii(const int id,
-                              const double * rcs)
-    {
-        alm[id]->set_cutoff_radii(rcs);
+        alm[id]->generate_force_constant();
     }
 
     int alm_get_atom_mapping_by_pure_translations(const int id,
                                                   int *map_p2s)
     {
-        return alm[id]->get_atom_mapping_by_pure_translations(map_p2s);
+        const auto map_p2s_vv = alm[id]->get_atom_mapping_by_pure_translations();
+
+        auto nat_prim = map_p2s_vv.size();
+        auto ntran = map_p2s_vv[0].size();
+
+        size_t count = 0;
+
+        for (size_t i = 0; i < ntran; i++) {
+            for (size_t j = 0; j < nat_prim; j++) {
+                map_p2s[count] = map_p2s_vv[j][i];
+                count++;
+            }
+        }
+
+        return ntran;
     }
 
-    int alm_get_number_of_displacement_patterns(const int id,
-                                                const int fc_order) // harmonic=1,
+    size_t alm_get_number_of_displacement_patterns(const int id,
+                                                   const int fc_order) // harmonic=1,
     {
         return alm[id]->get_number_of_displacement_patterns(fc_order);
     }
 
-    void alm_get_numbers_of_displacements(const int id,
-                                          int *numbers,
-                                          const int fc_order) // harmonic=1,
+    void alm_get_number_of_displaced_atoms(const int id,
+                                           int *numbers,
+                                           const int fc_order) // harmonic=1,
     {
-        alm[id]->get_numbers_of_displacements(numbers, fc_order);        
+        alm[id]->get_number_of_displaced_atoms(numbers, fc_order);
     }
 
     int alm_get_displacement_patterns(const int id,
@@ -187,33 +239,85 @@ extern "C" {
                                       const int fc_order) // harmonic=1,
     {
         return alm[id]->get_displacement_patterns(atom_indices,
-                                              disp_patterns,
-                                              fc_order);
+                                                  disp_patterns,
+                                                  fc_order);
     }
 
-    int alm_get_number_of_fc_elements(const int id,
-                                      const int fc_order)  // harmonic=1, ...
+    size_t alm_get_number_of_fc_elements(const int id,
+                                         const int fc_order)  // harmonic=1, ...
     {
         return alm[id]->get_number_of_fc_elements(fc_order);
     }
 
-    void alm_get_fc(const int id,
-                    double *fc_values,
-                    int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
-                    const int fc_order)
+    size_t alm_get_number_of_irred_fc_elements(const int id,
+                                               const int fc_order)
     {
-        alm[id]->get_fc(fc_values, elem_indices, fc_order);
+        return alm[id]->get_number_of_irred_fc_elements(fc_order);
+    }
+
+    void alm_get_fc_origin(const int id,
+                           double *fc_values,
+                           int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
+                           const int fc_order)
+    {
+        alm[id]->get_fc_origin(fc_values, elem_indices, fc_order);
+    }
+
+    void alm_get_fc_irreducible(const int id,
+                                double *fc_values,
+                                int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
+                                const int fc_order)
+    {
+        alm[id]->get_fc_irreducible(fc_values, elem_indices, fc_order);
+    }
+
+    void alm_get_fc_all(const int id,
+                        double *fc_values,
+                        int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
+                        const int fc_order)
+    {
+        alm[id]->get_fc_all(fc_values, elem_indices, fc_order);
+    }
+
+    void alm_set_fc(const int id, double *fc_in)
+    {
+        alm[id]->set_fc(fc_in);
+    }
+
+    void alm_get_matrix_elements(const int id,
+                                 double *amat,
+                                 double *bvec)
+    {
+        alm[id]->get_matrix_elements(amat, bvec);
     }
 
     void alm_run_suggest(const int id)
     {
         alm[id]->set_run_mode("suggest");
-        alm[id]->run();
+        alm[id]->run_suggest();
     }
 
-    void alm_run_fitting(const int id)
+    int alm_optimize(const int id, const char *solver)
     {
         alm[id]->set_run_mode("fitting");
-        alm[id]->run();
+        std::string str_solver = std::string(solver);
+
+        int info;
+
+        if (str_solver == "dense") {
+
+            alm[id]->set_sparse_mode(0);
+            info = alm[id]->run_optimize();
+
+        } else if (str_solver == "SimplicialLDLT") {
+
+            alm[id]->set_sparse_mode(1);
+            info = alm[id]->run_optimize();
+
+        } else {
+            std::cerr << " Unsupported solver type : " << str_solver << std::endl;
+            return EXIT_FAILURE;
+        }
+        return info;
     }
 }

@@ -28,17 +28,17 @@ namespace ALM_NS
         Timer();
         ~Timer();
 
-        void print_elapsed();
-        void start_clock(const std::string);
-        void stop_clock(const std::string);
-        double get_walltime(const std::string);
-        double get_cputime(const std::string);
+        void print_elapsed() const;
+        void start_clock(std::string);
+        void stop_clock(std::string);
+        double get_walltime(std::string);
+        double get_cputime(std::string);
         static std::string DateAndTime();
 
     private:
         void reset();
-        double elapsed_walltime();
-        double elapsed_cputime();
+        double elapsed_walltime() const;
+        double elapsed_cputime() const;
         std::map<std::string, double> walltime;
         std::map<std::string, double> cputime;
         double wtime_tmp, ctime_tmp;
@@ -47,7 +47,7 @@ namespace ALM_NS
 #if defined(WIN32) || defined(_WIN32)
         LARGE_INTEGER walltime_ref;
         LARGE_INTEGER frequency;
-        double get_cputime();
+        double get_cputime() const;
         double cputime_ref;
 #else
         timeval walltime_ref;

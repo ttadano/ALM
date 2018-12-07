@@ -4,14 +4,13 @@
  Copyright (c) 2014, 2015, 2016 Terumasa Tadano
 
  This file is distributed under the terms of the MIT license.
- Please see the file 'LICENCE.txt' in the root directory 
+ Please see the file 'LICENCE.txt' in the root directory
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
 #pragma once
 
 #include <string>
-#include <fstream>
 #include <vector>
 #include "alm.h"
 
@@ -22,17 +21,11 @@ namespace ALM_NS
     public:
         double x, y, z;
         int kind;
-        int atom, tran;
+        size_t atom, tran;
 
-        AtomProperty()
-        {
-        };
+        AtomProperty() = default;;
 
-        AtomProperty(const AtomProperty &other)
-            : x(other.x), y(other.y), z(other.z),
-              kind(other.kind), atom(other.atom), tran(other.tran)
-        {
-        };
+        AtomProperty(const AtomProperty &other) = default;
 
         AtomProperty(const double *pos,
                      const int kind_in,
@@ -53,12 +46,10 @@ namespace ALM_NS
     public:
         double lattice_vector[3][3];
         std::vector<AtomProperty> atoms;
-        int nat, natmin, ntran;
-        int nspecies;
+        size_t nat, natmin, ntran;
+        size_t nspecies;
 
-        SystemInfo()
-        {
-        };
+        SystemInfo() = default;;
     };
 
     class Writer
@@ -68,15 +59,18 @@ namespace ALM_NS
         ~Writer();
 
         void writeall(ALM *);
-        void write_input_vars(ALM *);
-        void write_displacement_pattern(ALM *);
+        void write_input_vars(const ALM *) const;
+        void write_displacement_pattern(ALM *) const;
 
     private:
-        void write_force_constants(ALM *);
+        void write_force_constants(ALM *) const;
         void write_misc_xml(ALM *);
-        void write_hessian(ALM *);
-        void write_in_QEformat(ALMCore *);
+        void write_hessian(ALM *) const;
+        void write_in_QEformat(ALM *) const;
+        void write_fc3_thirdorderpy_format(ALM *) const;
+        std::string easyvizint(int) const;
 
-        std::string double2string(const double, const int nprec = 15);
+        std::string double2string(double,
+                                  int nprec = 15) const;
     };
 }

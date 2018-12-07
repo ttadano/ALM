@@ -8,14 +8,15 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-#include <stdlib.h>
 #include "alm_cui.h"
+#include <cstdlib>
 
 using namespace ALM_NS;
 
-int main(int argc, char **argv)
+int main(const int argc,
+         char **argv)
 {
-    ALMCUI *alm_cui = new ALMCUI();
+    const auto alm_cui = new ALMCUI();
 
     alm_cui->run(argc, argv);
 

@@ -8,12 +8,8 @@
  or http://opensource.org/licenses/mit-license.php for information.
 */
 
-/* Declaration of pointers used in the whole program. */
 
 #pragma once
-
-#include "alm_core.h"
-#include "timer.h"
 
 namespace ALM_NS
 {
@@ -22,6 +18,7 @@ namespace ALM_NS
     public:
         ALMCUI();
         ~ALMCUI();
-        void run(int narg, char **arg);
+        void run(const int narg,
+                 char **arg) const;
     };
 }

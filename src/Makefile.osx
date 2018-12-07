@@ -7,14 +7,14 @@
 
 # Use gcc >= 4.8 to use OpenMP 
 # OpenMP-enabled gcc can be installed via homebrew
-CXX = g++-7
-CXXFLAGS = -O2 -fopenmp 
-INCLUDE = -I../include -I$(HOME)/src/spglib/include
+CXX = g++-8
+CXXFLAGS = -O2 -fopenmp -DWITH_SPARSE_SOLVER 
+INCLUDE = -I../include -I$(HOME)/src/spglib/include -I/usr/local/include/eigen3/
 
 CXXL = ${CXX}
-LDFLAGS = -lgomp -L$(HOME)/src/spglib/lib -lsymspg
+LDFLAGS = -lgomp $(HOME)/src/spglib/lib/libsymspg.a
 
-LAPACK = -llapack
+LAPACK = -llapack -lblas
 LIBS = ${LAPACK}
 
 #-----------------------------------------------
@@ -26,8 +26,8 @@ LIBS = ${LAPACK}
 
 PROG = alm
 
-CXXSRC= alm.cpp alm_core.cpp alm_cui.cpp input_parser.cpp input_setter.cpp constraint.cpp error.cpp fcs.cpp files.cpp \
-	fitting.cpp interaction.cpp main.cpp \
+CXXSRC= alm.cpp alm_cui.cpp input_parser.cpp input_setter.cpp constraint.cpp fcs.cpp files.cpp \
+	optimize.cpp cluster.cpp main.cpp rref.cpp \
 	patterndisp.cpp symmetry.cpp system.cpp timer.cpp writer.cpp 
 
 OBJS= ${CXXSRC:.cpp=.o}

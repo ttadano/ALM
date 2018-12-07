@@ -1,0 +1,43 @@
+language: python
+sudo: false
+dist: trusty
+
+python:
+  - '2.7'
+  - '3.6'
+
+before_install:
+- wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+- bash miniconda.sh -b -p $HOME/miniconda
+- source $HOME/miniconda/etc/profile.d/conda.sh
+- echo $TRAVIS_PYTHON_VERSION
+- conda activate
+- conda create --yes -c conda-forge -n travis python="$TRAVIS_PYTHON_VERSION"
+- conda activate travis
+
+install:
+- conda install --yes -c conda-forge gcc_linux-64 gxx_linux-64 cmake boost eigen numpy
+- conda install --yes -c conda-forge openblas h5py spglib
+- cd $HOME
+- pwd
+- mkdir ALM
+- cd ALM
+- cd $TRAVIS_BUILD_DIR
+- pwd
+- export CPLUS_INCLUDE_PATH=$CONDA_PREFIX/include:$CONDA_PREFIX/include/eigen3
+- export LIBRARY_PATH=$CONDA_PREFIX/lib:${LIBRARY_PATH}
+- export LDFLAGS="-fopenmp -lblas"
+- echo $CPLUS_INCLUDE_PATH
+- echo $CC $CXX
+- export CC=$CXX
+- echo $CC
+- patch -p1 < conda/use_external_spglib.patch
+- cd python
+- python setup.py build
+- pip install -e .
+
+script:
+- cd $TRAVIS_BUILD_DIR/test
+- python Si_fitting.py
+- python SiC_fitting.py
+
