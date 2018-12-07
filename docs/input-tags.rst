@@ -121,18 +121,6 @@ List of input variables
 
 ````
 
-* HESSIAN-tag = 0 | 1
-
- ===== =====================================================================
-   0    Do not save the Hessian matrix
-   1    Save the entire Hessian matrix of the supercell as PREFIX.hessian.
- ===== =====================================================================
-
- :Default: 0
- :type: Integer
-
-````
-
 "&interaction"-field
 ++++++++++++++++++++
 
@@ -267,23 +255,38 @@ fractional coordinate of an atom. There should be ``NAT`` such lines in the &pos
 
 This field is necessary when ``MODE = optimize``.
 
-* **DFFILE**-tag : File name containing atomic displacements in Cartesian coordinate
+* OPTIMIZER-tag : Choise of the linear model used for estimating force constants
+
+ =================================== ==========================
+   "least-squares", "LS", "OLS",  0    Ordinary least square
+   "elastic-net", "enet", 1            Elastic net
+ =================================== ==========================
+
+ :Default: least-squares
+ :Type: String
+ :Description: When ``OPTIMIZER = ols``, the force constants are estimated from the displacement-force datasets via the ordinary least-squares (OLS), which is usually sufficient to calculate harmonic and third-order force constants. 
+
+               The elestic net (``OPTIMIZER = enet``) should be useful to calculate the fourth-order (and higher-order) force constants. When the elastic net is selected, the authors have to set the following related tags: ``CV``, ``L1_RATIO``, ``L1_ALPHA``, ``CV_MAXALPHA``, ``CV_MINALPHA``, ``CV_NALPHA``, ``STANDARDIZE``, ``ENET_DNORM``, ``MAXITER``, ``CONV_TOL``, ``NWRITE``, ``SOLUTION_PATH``, ``DEBIAS_OLS``
+
+````
+
+* **DFFILE**-tag : File name containing displacement-force datasets for training
 
  :Default: None
  :Type: String
- :Description: The format of ``DFILE`` can be found :ref:`here <label_format_DFILE>`
+ :Description: The format of ``DFFILE`` can be found :ref:`here <label_format_DFILE>`
 
 ````
 
-* NDATA-tag : Number of displacement-force data sets
+* NDATA-tag : Number of displacement-force training datasets 
 
- :Default: None
+ :Default: None 
  :Type: Integer
- :Description: ``DFILE`` and ``FFILE`` should contain at least ``NDATA``:math:`\times` ``NAT`` lines.
+ :Description: If ``NDATA`` is not given, the code reads all lines of ``DFFILE`` (excluding comment lines) and estimates ``NDATA`` by dividing the line number by ``NAT``. If the number of lines is not divisible by ``NAT``, an error will be raised. ``DFFILE`` should contain at least ``NDATA``:math:`\times` ``NAT`` lines.
 
 ````
 
-* NSTART, NEND-tags : Specifies the range of data to be used for fitting
+* NSTART, NEND-tags : Specifies the range of data to be used for training
 
  :Default: ``NSTART = 1``, ``NEND = NDATA``
  :Type: Integer
@@ -291,15 +294,174 @@ This field is necessary when ``MODE = optimize``.
 
 ````
 
+* SKIP-tag : Specifies the range of data to be skipped for training
+
+ :Default: None
+ :Type: Two integers connected by a hyphen
+ :Description: ``SKIP`` =\ :math:`i`-:math:`j` skips the data in the range of [:math:`i`:\ :math:`j`]. The :math:`i` and :math:`j` must satisfy :math:`1\leq i \leq j \leq` ``NDATA``.  This option may be useful for splitting the data in ``DFFILE`` into training data and 
+
+````
+
+* DFFILE_TEST-tag : File name containing displacement-force datasets for testing (validation)
+
+ :Default: None
+ :Type: String
+ :Description: This tag is used only when ``OPTIMIZER = enet`` and ``CV = -1``.
+
+````
+
+* NDATA_TEST-tag : Number of displacement-force validation datasets 
+
+ :Default: None 
+ :Type: Integer
+ :Description: This tag is used only when ``OPTIMIZER = enet`` and ``CV = -1``.
+
+````
+
+* NSTART_TEST, NEND_TEST-tags : Specifies the range of data to be used for validation
+
+ :Default: ``NSTART_TEST = 1``, ``NEND_TEST = NDATA_TEST``
+ :Type: Integer
+ :Example: This tag is used only when ``OPTIMIZER = enet`` and ``CV = -1``.
+
+````
+
+* CV-tag : Cross-validation mode for elastic net 
+
+ ===== ===================================================================================================================
+   0   | Cross-validation mode is off. 
+       | The elastic net optimization is solved with the given ``L1_ALPHA`` value. 
+       | The force constants are written to ``PREFIX``.fcs and ``PREFIX``.xml.
+
+  > 0  | ``CV``-fold cross-validation is performed *automatically*. 
+       | ``NDATA`` training datasets are divided into ``CV`` subsets, and ``CV`` different combinations of 
+       | training-validation datasets are created internally. For each combination, the elastic net 
+       | optimization is solved with the various ``L1_ALPHA`` values defined by the ``CV_MINALPHA``, 
+       | ``CV_MAXALPHA``, and ``CV_NALPHA`` tags. The result of each cross-validation is stored in 
+       | ``PREFIX``.enet_cvset[1, ..., ``CV``], and their average and deviation are stored in ``PREFIX``.cvscore. 
+
+  -1   | The cross-validation is performed *manually*.
+       | The Taylor expansion potential is trained by using the training datasets in ``DFFILE``, and 
+       | the validation score is calculated by using the data in ``DFFILE_TEST`` for various ``L1_ALPHA`` values
+       | defined the ``CV_MINALPHA``, ``CV_MAXALPHA``, and ``CV_NALPHA`` tags.
+       | After the calculation, the fitting and validation errors are stored in ``PREFIX``.enet_cv.
+       | This option may be convenient for a large-scale problem since multiple optimization tasks with
+       | different training-validation datasets can be done in parallel.
+ ===== ===================================================================================================================
+
+ :Default: 0
+ :Type: Integer
+
+````
+
+* L1_ALPHA-tag : The coefficient of the L1 regularization term
+
+ :Default: 0.0 
+ :Type: Double
+ :Description: This tag is used only when ``OPTIMIZER = enet`` and ``CV = 0``.
+
+````
+
+* CV_MINALPHA, CV_MAXALPHA, CV_NALPHA-tags : Options to specify the ``L1_ALPHA`` values used in cross-validation 
+
+ :Default: ``CV_MINALPHA = 1.0e-4``, ``CV_MAXALPHA = 1.0``, ``CV_NALPHA = 1`` 
+ :Type: Double, Double, Integer
+ :Description: ``CV_NALPHA`` values of ``L1_ALPHA`` are generated from ``CV_MINALPHA`` to ``CV_MAXALPHA`` in logarithmic scale. A recommended value of ``CV_MAXALPHA`` is printed out to the log file. This tag is used only when ``OPTIMIZER = enet`` and the cross-validation mode is on (``CV > 0`` or ``CV = -1``).
+
+````
+
+* L1_RATIO-tag : The ratio of the L1 regularization term
+
+ :Default: 1.0 (LASSO)
+ :Type: Double
+ :Description: The ``L1_RATIO`` changes the regularization term as ``L1_ALPHA`` :math:`\times` [``L1_RATIO`` :math:`|\boldsymbol{\Phi}|_{1}` + :math:`\frac{1}{2}` (1-``L1_RATIO``) :math:`|\boldsymbol{\Phi}|_{2}^{2}`]. Therefore, ``L1_RATIO = 1`` corresponds to LASSO. ``L1_RATIO`` must be ``0 < L1_ratio <= 1``.
+
+````
+
+* STANDARDIZE-tag = 0 | 1
+
+ ===== =============================================================================================
+   0    Do not standardize the sensing matrix
+   1   | Each column of the sensing matrix is standardized in such a way that its mean value
+       | becomes 0 and standard deviation becomes 1. 
+ ===== =============================================================================================
+
+ :Default: 1
+ :Type: Integer
+ :Description: This option influences the optimal ``L1_ALPHA`` value. So, if you change the ``STANDARDIZE`` option, you will have to rerun the cross-validation.
+
+
+````
+
+* ENET_DNORM-tag : Normalization factor of atomic displacements
+
+ :Default: 1.0
+ :Type: Double
+ :Description: The normalization factor of atomic displacement :math:`u_{0}` in units of Bohr. When :math:`u_{0} (\neq 1)` is given, the displacement data are scaled as :math:`u_{i} \rightarrow u_{i}/u_{0}` before constructing the sensing matrix. This option influences the optimal ``L1_ALPHA`` value. So, if you change the ``ENET_DNORM`` value, you will have to rerun the cross-validation. Also, this tag has no effect when ``STANDARDIZE = 1``. 
+
+````
+
+* MAXITER-tag : Number of maximum iterations of the coordinate descent algorithm
+
+ :Default: 10000
+ :Type: Integer
+ :Description: Effective when ``OPTIMIZER = enet``.
+
+````
+
+* CONV_TOL-tag : Convergence criterion of the coordinate descent iteration
+
+ :Default: 1.0e-8
+ :Type: Double
+ :Description: The coordinate descent iteration finishes at :math:`i`\ th iteration if :math:`\sqrt{\frac{1}{N}|\boldsymbol{\Phi}_{i} - \boldsymbol{\Phi}_{i-1}|_{2}^{2}} <` ``CONV_TOL`` is satisfied, where :math:`N` is the length of the vector :math:`\boldsymbol{\Phi}`.
+
+````
+
+* SOLUTION_PATH-tag = 0 | 1
+
+ ===== =============================================================================================
+   0    Do not save the solution path.
+   1    Save the solution path of each cross-validation combination in ``PREFIX``.solution_path.
+ ===== =============================================================================================
+
+ :Default: 0
+ :Type: Integer
+ :Description: Effective when ``OPTIMIZER = enet`` and the cross-validation mode is on.
+
+````
+
+
+* DEBIAS_OLS-tag = 0 | 1
+
+ ===== =============================================================================================
+   0    Save the solution of the elastic net problem to ``PREFIX``.fcs and ``PREFIX``.xml.
+   1    | After the solution of the elastic net optimization problem is obtained, 
+        | only non-zero coefficients are collected, and the ordinary least-squares fitting is 
+        | solved again with the non-zero coefficients before saving the results to ``PREFIX``.fcs and
+        | ``PREFIX``.xml. This might be useful to reduce the bias of the elastic net solution.
+ ===== =============================================================================================
+
+ :Default: 0
+ :Type: Integer
+ :Description: Effective when ``OPTIMIZER = enet`` and ``CV = 0``.
+
+
+````
+
+
 * ICONST-tag = 0 | 1 | 2 | 3
 
  ===== =============================================================================================
    0    No constraints
-   1    Constraints for translational invariance will be imposed between IFCs.
-   2    In addition to ``ICONST = 1``, constraints for rotational invariance will be imposed up to (``NORDER`` + 1)th order.
+   1   | Constraints for translational invariance will be imposed between IFCs.
+       | Available only when ``OPTIMIZER = ols``.
+  11   | Same as ``ICONST = 1`` but the constraint is imposed *algebraically* rather than numerically.
+       | Select this option when ``OPTIMIZER = enet``.
+   2   | In addition to ``ICONST = 1``, constraints for rotational invariance will be 
+       | imposed up to (``NORDER`` + 1)th order. Available only when ``OPTIMIZER = ols``.
    3   | In addition to ``ICONST = 2``, constraints for rotational invariance between (``NORDER`` + 1)th order 
        | and (``NORDER`` + 2)th order, which are zero, will be considered. 
-  11    Same as ``ICONST = 1`` but the constraint is imposed algebraically rather than numerically.
+       | Available only when ``OPTIMIZER = ols``.
  ===== =============================================================================================
 
  :Default: 1
