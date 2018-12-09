@@ -155,7 +155,7 @@ void rref_sparse(const size_t ncols,
     size_t nrank = 0;
     size_t icol = 0;
 
-   // std::set<unsigned int>::iterator it_found;
+    // std::set<unsigned int>::iterator it_found;
     std::map<size_t, double>::iterator it_elem;
 
     for (size_t irow = 0; irow < nrows; ++irow) {

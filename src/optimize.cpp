@@ -102,14 +102,15 @@ int Optimize::optimize_main(const Symmetry *symmetry,
         std::cout << "  NSTART = " << filedata_train.nstart << "; NEND = " << filedata_train.nend;
         if (filedata_train.skip_s < filedata_train.skip_e)
             std::cout << ": SKIP = " << filedata_train.skip_s << "-" <<
-            filedata_train.skip_e - 1 << '\n';
+                filedata_train.skip_e - 1 << '\n';
         std::cout << "  " << ndata_used
             << " entries will be used for training.\n\n";
 
         if (optcontrol.cross_validation == -1) {
             std::cout << "  CV = -1 : Manual cross-validation mode is selected\n";
             std::cout << "  Validation data file (DFSET_CV) : " << filedata_validation.filename << "\n\n";
-            std::cout << "  NSTART_CV = " << filedata_validation.nstart << "; NEND_CV = " << filedata_validation.nend << std::endl;
+            std::cout << "  NSTART_CV = " << filedata_validation.nstart << "; NEND_CV = " << filedata_validation.nend <<
+                std::endl;
             std::cout << "  " << ndata_used_validation
                 << " entries will be used for validation." << std::endl << std::endl;
         }
@@ -527,7 +528,8 @@ void Optimize::run_enetcv_manual(const std::string job_prefix,
 
     Eigen::MatrixXd A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], amat_1D.size() / N_new, N_new);
     Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(&bvec[0], bvec.size());
-    Eigen::MatrixXd A_validation = Eigen::Map<Eigen::MatrixXd>(&amat_1D_validation[0], amat_1D_validation.size() / N_new, N_new);
+    Eigen::MatrixXd A_validation = Eigen::Map<Eigen::MatrixXd>(&amat_1D_validation[0],
+                                                               amat_1D_validation.size() / N_new, N_new);
     Eigen::VectorXd b_validation = Eigen::Map<Eigen::VectorXd>(&bvec_validation[0], bvec_validation.size());
 
     if (verbosity > 0) {
@@ -668,7 +670,8 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
         Eigen::MatrixXd A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], amat_1D.size() / N_new, N_new);
         Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(&bvec[0], bvec.size());
 
-        Eigen::MatrixXd A_validation = Eigen::Map<Eigen::MatrixXd>(&amat_1D_validation[0], amat_1D_validation.size() / N_new, N_new);
+        Eigen::MatrixXd A_validation = Eigen::Map<Eigen::MatrixXd>(&amat_1D_validation[0],
+                                                                   amat_1D_validation.size() / N_new, N_new);
         Eigen::VectorXd b_validation = Eigen::Map<Eigen::VectorXd>(&bvec_validation[0], bvec_validation.size());
 
 
@@ -1372,7 +1375,7 @@ void Optimize::set_training_data(const std::vector<std::vector<double>> &u_train
 }
 
 void Optimize::set_validation_data(const std::vector<std::vector<double>> &u_validation_in,
-                             const std::vector<std::vector<double>> &f_validation_in)
+                                   const std::vector<std::vector<double>> &f_validation_in)
 {
     u_validation.clear();
     f_validation.clear();
@@ -2608,7 +2611,7 @@ void Optimize::coordinate_descent(const int M,
             }
             ++iloop;
             diff = 0.0;
-            #pragma omp parallel for reduction(+:diff)
+#pragma omp parallel for reduction(+:diff)
             for (i = 0; i < N; ++i) {
                 diff += delta(i) * delta(i);
             }
