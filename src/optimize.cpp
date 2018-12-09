@@ -95,11 +95,11 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
     if (verbosity > 0) {
         std::vector<std::string> str_linearmodel{"least-squares", "elastic-net"};
-        std::cout << " OPTIMIZATIO\n";
+        std::cout << " OPTIMIZATION\n";
         std::cout << " ============\n\n";
         std::cout << "  LMODEL = " << str_linearmodel[optcontrol.linear_model - 1] << "\n\n";
         std::cout << "  Training data file (DFSET) : " << filedata_train.filename << "\n\n";
-        std::cout << "  NSTART = " << filedata_train.nstart << "; NEND = " << filedata_train.nend;
+        std::cout << "  NSTART = " << filedata_train.nstart << "; NEND = " << filedata_train.nend << '\n';
         if (filedata_train.skip_s < filedata_train.skip_e)
             std::cout << ": SKIP = " << filedata_train.skip_s << "-" <<
                 filedata_train.skip_e - 1 << '\n';

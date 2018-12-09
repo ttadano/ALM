@@ -82,9 +82,15 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  DFSET = " << alm->files->get_datfile_train().filename << '\n';
         std::cout << "  NDATA = " << alm->files->get_datfile_train().ndata
             << "; NSTART = " << alm->files->get_datfile_train().nstart
-            << "; NEND = " << alm->files->get_datfile_train().nend
-            << "; SKIP = " << alm->files->get_datfile_train().skip_s
-            << "-" << alm->files->get_datfile_train().skip_e - 1 << "\n\n";
+            << "; NEND = " << alm->files->get_datfile_train().nend;
+        if (alm->files->get_datfile_train().skip_s
+            < alm->files->get_datfile_train().skip_e) {
+            std::cout << "   SKIP = " << alm->files->get_datfile_train().skip_s
+                << "-" << alm->files->get_datfile_train().skip_e - 1 << "\n\n";
+        } else {
+            std::cout << "   SKIP = \n\n";
+        }
+
         std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << '\n';
         std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << '\n';
         std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << '\n';
