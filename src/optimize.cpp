@@ -864,6 +864,7 @@ void Optimize::run_enet_solution_path(const int maxorder,
     Eigen::VectorXd scale_beta, scale_beta_enet;
     Eigen::VectorXd factor_std;
     Eigen::VectorXd fdiff, fdiff_test;
+    Eigen::VectorXd mean, dev;
 
     size_t N_new = A.cols();
     size_t M = A.rows();
@@ -892,13 +893,10 @@ void Optimize::run_enet_solution_path(const int maxorder,
     }
 
     if (optcontrol.standardize) {
-        Eigen::VectorXd mean, dev;
         get_standardizer(A, mean, dev, factor_std, scale_beta);
         apply_standardizer(A, mean, dev);
         apply_standardizer(A_test, mean, dev);
-
     } else {
-        Eigen::VectorXd mean, dev;
         get_standardizer(A, mean, dev, factor_std, scale_beta);
     }
 
@@ -934,8 +932,12 @@ void Optimize::run_enet_solution_path(const int maxorder,
                            scale_beta_enet,
                            verbosity);
 
-        fdiff = A * x - b;
-        fdiff_test = A_test * x - b_test;
+        double correction_intercept = 0.0;
+        for (size_t i = 0; i < N_new; ++i) {
+            correction_intercept += x(i) * mean(i) * factor_std(i);
+        }
+        fdiff = A * x - b + correction_intercept * Eigen::VectorXd::Ones(M);
+        fdiff_test = A_test * x - b_test + correction_intercept * Eigen::VectorXd::Ones(M_test);
         const auto res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
         const auto res2 = fdiff_test.dot(fdiff_test) / (fnorm_test * fnorm_test);
 
@@ -1017,7 +1019,7 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
     Eigen::VectorXd b, grad0, grad, x;
     Eigen::VectorXd scale_beta, factor_std;
     Eigen::VectorXd fdiff;
-
+    Eigen::VectorXd mean, dev;
 
     std::vector<double> amat_1D;
     std::vector<double> bvec;
@@ -1071,11 +1073,9 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
     // Standardize if necessary
 
     if (optcontrol.standardize) {
-        Eigen::VectorXd mean, dev;
         get_standardizer(A, mean, dev, factor_std, scale_beta);
         apply_standardizer(A, mean, dev);
     } else {
-        Eigen::VectorXd mean, dev;
         get_standardizer(A, mean, dev, factor_std, scale_beta);
     }
 
@@ -1099,7 +1099,11 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
     }
 
     if (verbosity > 0) {
-        fdiff = A * x - b;
+        double correction_intercept = 0.0;
+        for (size_t i = 0; i < N_new; ++i) {
+            correction_intercept += x(i) * mean(i) * factor_std(i);
+        }
+        fdiff = A * x - b + correction_intercept * Eigen::VectorXd::Ones(M);
         const auto res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
         std::cout << "  RESIDUAL (%): " << std::sqrt(res1) * 100.0 << std::endl;
     }

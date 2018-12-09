@@ -1790,13 +1790,13 @@ void Constraint::fix_forceconstants_to_file(const int order,
     try {
         read_xml(file_to_fix, pt);
     }
-    catch (std::exception) {
+    catch (std::exception &e) {
         if (order == 0) {
             auto str_error = "Cannot open file FC2XML ( " + file_to_fix + " )";
         } else if (order == 1) {
             auto str_error = "Cannot open file FC3XML ( " + file_to_fix + " )";
         }
-        exit("fix_forceconstants_to_file", file_to_fix.c_str());
+        exit("fix_forceconstants_to_file", "Failed to open ", file_to_fix.c_str());
     }
 
     const auto nat_ref = boost::lexical_cast<size_t>(
