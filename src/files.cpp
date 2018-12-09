@@ -40,9 +40,9 @@ void Files::set_datfile_train(const DispForceFile &dat_in)
     datfile_train = dat_in;
 }
 
-void Files::set_datfile_test(const DispForceFile &dat_in)
+void Files::set_datfile_validation(const DispForceFile &dat_in)
 {
-    datfile_test = dat_in;
+    datfile_validation = dat_in;
 }
 
 DispForceFile Files::get_datfile_train() const
@@ -50,7 +50,7 @@ DispForceFile Files::get_datfile_train() const
     return datfile_train;
 }
 
-DispForceFile Files::get_datfile_test() const
+DispForceFile Files::get_datfile_validation() const
 {
-    return datfile_test;
+    return datfile_validation;
 }

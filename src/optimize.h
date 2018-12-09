@@ -30,7 +30,7 @@ namespace ALM_NS
     {
     public:
         // General optimization options
-        int optimizer; // 1 : least-squares, 2 : elastic net
+        int linear_model; // 1 : least-squares, 2 : elastic net
         int use_sparse_solver; // 0: No, 1: Yes
         int maxnum_iteration;
         double tolerance_iteration;
@@ -52,7 +52,7 @@ namespace ALM_NS
 
         OptimizerControl()
         {
-            optimizer = 1;
+            linear_model = 1;
             use_sparse_solver = 0;
             maxnum_iteration = 10000;
             tolerance_iteration = 1.0e-8;
@@ -88,14 +88,14 @@ namespace ALM_NS
                           const std::vector<std::string> &str_order,
                           const int verbosity,
                           const DispForceFile &filedata_train,
-                          const DispForceFile &filedata_test,
+                          const DispForceFile &filedata_validation,
                           Timer *timer);
 
         void set_training_data(const std::vector<std::vector<double>> &u_train_in,
                                const std::vector<std::vector<double>> &f_train_in);
 
-        void set_test_data(const std::vector<std::vector<double>> &u_test_in,
-                           const std::vector<std::vector<double>> &f_test_in);
+        void set_validation_data(const std::vector<std::vector<double>> &u_validation_in,
+                           const std::vector<std::vector<double>> &f_validation_in);
 
         std::vector<std::vector<double>> get_u_train() const;
         std::vector<std::vector<double>> get_f_train() const;
@@ -128,7 +128,7 @@ namespace ALM_NS
         double *params;
 
         std::vector<std::vector<double>> u_train, f_train;
-        std::vector<std::vector<double>> u_test, f_test;
+        std::vector<std::vector<double>> u_validation, f_validation;
 
         OptimizerControl optcontrol;
 
@@ -345,10 +345,10 @@ namespace ALM_NS
         void run_enet_solution_path(const int maxorder,
                                     Eigen::MatrixXd &A,
                                     Eigen::VectorXd &b,
-                                    Eigen::MatrixXd &A_test,
-                                    Eigen::VectorXd &b_test,
+                                    Eigen::MatrixXd &A_validation,
+                                    Eigen::VectorXd &b_validation,
                                     const double fnorm,
-                                    const double fnorm_test,
+                                    const double fnorm_validation,
                                     const std::string file_coef,
                                     const int verbosity,
                                     const Constraint *constraint,

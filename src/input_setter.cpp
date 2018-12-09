@@ -187,21 +187,21 @@ void InputSetter::define(ALM *alm) const
 void InputSetter::set_optimize_vars(ALM *alm,
                                     const std::vector<std::vector<double>> &u_train_in,
                                     const std::vector<std::vector<double>> &f_train_in,
-                                    const std::vector<std::vector<double>> &u_test_in,
-                                    const std::vector<std::vector<double>> &f_test_in,
+                                    const std::vector<std::vector<double>> &u_validation_in,
+                                    const std::vector<std::vector<double>> &f_validation_in,
                                     const OptimizerControl &optcontrol_in) const
 {
     alm->optimize->set_training_data(u_train_in, f_train_in);
-    alm->optimize->set_test_data(u_test_in, f_test_in);
+    alm->optimize->set_validation_data(u_validation_in, f_validation_in);
     alm->optimize->set_optimizer_control(optcontrol_in);
 }
 
 void InputSetter::set_file_vars(ALM *alm,
                                 const DispForceFile &datfile_train_in,
-                                const DispForceFile &datfile_test_in) const
+                                const DispForceFile &datfile_validation_in) const
 {
     alm->files->set_datfile_train(datfile_train_in);
-    alm->files->set_datfile_test(datfile_test_in);
+    alm->files->set_datfile_validation(datfile_validation_in);
 }
 
 void InputSetter::set_constraint_vars(ALM *alm,

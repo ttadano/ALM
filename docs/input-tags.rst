@@ -255,26 +255,26 @@ fractional coordinate of an atom. There should be ``NAT`` such lines in the &pos
 
 This field is necessary when ``MODE = optimize``.
 
-* OPTIMIZER-tag : Choise of the linear model used for estimating force constants
+* LMODEL-tag : Choise of the linear model used for estimating force constants
 
  =================================== ==========================
-   "least-squares", "LS", "OLS",  0    Ordinary least square
-   "elastic-net", "enet", 1            Elastic net
+   "least-squares", "LS", "OLS",  1    Ordinary least square
+   "elastic-net", "enet", 2            Elastic net
  =================================== ==========================
 
  :Default: least-squares
  :Type: String
- :Description: When ``OPTIMIZER = ols``, the force constants are estimated from the displacement-force datasets via the ordinary least-squares (OLS), which is usually sufficient to calculate harmonic and third-order force constants. 
+ :Description: When ``LMODEL = ols``, the force constants are estimated from the displacement-force datasets via the ordinary least-squares (OLS), which is usually sufficient to calculate harmonic and third-order force constants. 
 
-               The elestic net (``OPTIMIZER = enet``) should be useful to calculate the fourth-order (and higher-order) force constants. When the elastic net is selected, the authors have to set the following related tags: ``CV``, ``L1_RATIO``, ``L1_ALPHA``, ``CV_MAXALPHA``, ``CV_MINALPHA``, ``CV_NALPHA``, ``STANDARDIZE``, ``ENET_DNORM``, ``MAXITER``, ``CONV_TOL``, ``NWRITE``, ``SOLUTION_PATH``, ``DEBIAS_OLS``
+               The elestic net (``LMODEL = enet``) should be useful to calculate the fourth-order (and higher-order) force constants. When the elastic net is selected, the users have to set the following related tags: ``CV``, ``L1_RATIO``, ``L1_ALPHA``, ``CV_MAXALPHA``, ``CV_MINALPHA``, ``CV_NALPHA``, ``STANDARDIZE``, ``ENET_DNORM``, ``MAXITER``, ``CONV_TOL``, ``NWRITE``, ``SOLUTION_PATH``, ``DEBIAS_OLS``
 
 ````
 
-* **DFFILE**-tag : File name containing displacement-force datasets for training
+* **DFSET**-tag : File name containing displacement-force datasets for training
 
  :Default: None
  :Type: String
- :Description: The format of ``DFFILE`` can be found :ref:`here <label_format_DFILE>`
+ :Description: The format of ``DFSET`` can be found :ref:`here <label_format_DFILE>`
 
 ````
 
@@ -282,7 +282,7 @@ This field is necessary when ``MODE = optimize``.
 
  :Default: None 
  :Type: Integer
- :Description: If ``NDATA`` is not given, the code reads all lines of ``DFFILE`` (excluding comment lines) and estimates ``NDATA`` by dividing the line number by ``NAT``. If the number of lines is not divisible by ``NAT``, an error will be raised. ``DFFILE`` should contain at least ``NDATA``:math:`\times` ``NAT`` lines.
+ :Description: If ``NDATA`` is not given, the code reads all lines of ``DFSET`` (excluding comment lines) and estimates ``NDATA`` by dividing the line number by ``NAT``. If the number of lines is not divisible by ``NAT``, an error will be raised. ``DFSET`` should contain at least ``NDATA``:math:`\times` ``NAT`` lines.
 
 ````
 
@@ -298,31 +298,31 @@ This field is necessary when ``MODE = optimize``.
 
  :Default: None
  :Type: Two integers connected by a hyphen
- :Description: ``SKIP`` =\ :math:`i`-:math:`j` skips the data in the range of [:math:`i`:\ :math:`j`]. The :math:`i` and :math:`j` must satisfy :math:`1\leq i \leq j \leq` ``NDATA``.  This option may be useful for splitting the data in ``DFFILE`` into training data and 
+ :Description: ``SKIP`` =\ :math:`i`-:math:`j` skips the data in the range of [:math:`i`:\ :math:`j`]. The :math:`i` and :math:`j` must satisfy :math:`1\leq i \leq j \leq` ``NDATA``.  This option may be useful for splitting the data in ``DFSET`` into training data and 
 
 ````
 
-* DFFILE_TEST-tag : File name containing displacement-force datasets for testing (validation)
+* DFSET_CV-tag : File name containing displacement-force datasets used for manual cross-validation
 
- :Default: None
+ :Default: ``DFSET_CV = DFSET``
  :Type: String
- :Description: This tag is used only when ``OPTIMIZER = enet`` and ``CV = -1``.
+ :Description: This tag is used only when ``LMODEL = enet`` and ``CV = -1``.
 
 ````
 
-* NDATA_TEST-tag : Number of displacement-force validation datasets 
+* NDATA_CV-tag : Number of displacement-force validation datasets 
 
  :Default: None 
  :Type: Integer
- :Description: This tag is used only when ``OPTIMIZER = enet`` and ``CV = -1``.
+ :Description: This tag is used only when ``LMODEL = enet`` and ``CV = -1``.
 
 ````
 
-* NSTART_TEST, NEND_TEST-tags : Specifies the range of data to be used for validation
+* NSTART_CV, NEND_CV-tags : Specifies the range of data to be used for validation
 
- :Default: ``NSTART_TEST = 1``, ``NEND_TEST = NDATA_TEST``
+ :Default: ``NSTART_CV = 1``, ``NEND_CV = NDATA_CV``
  :Type: Integer
- :Example: This tag is used only when ``OPTIMIZER = enet`` and ``CV = -1``.
+ :Example: This tag is used only when ``LMODEL = enet`` and ``CV = -1``.
 
 ````
 
@@ -341,8 +341,8 @@ This field is necessary when ``MODE = optimize``.
        | ``PREFIX``.enet_cvset[1, ..., ``CV``], and their average and deviation are stored in ``PREFIX``.cvscore. 
 
   -1   | The cross-validation is performed *manually*.
-       | The Taylor expansion potential is trained by using the training datasets in ``DFFILE``, and 
-       | the validation score is calculated by using the data in ``DFFILE_TEST`` for various ``L1_ALPHA`` values
+       | The Taylor expansion potential is trained by using the training datasets in ``DFSET``, and 
+       | the validation score is calculated by using the data in ``DFSET_CV`` for various ``L1_ALPHA`` values
        | defined the ``CV_MINALPHA``, ``CV_MAXALPHA``, and ``CV_NALPHA`` tags.
        | After the calculation, the fitting and validation errors are stored in ``PREFIX``.enet_cv.
        | This option may be convenient for a large-scale problem since multiple optimization tasks with
@@ -358,7 +358,7 @@ This field is necessary when ``MODE = optimize``.
 
  :Default: 0.0 
  :Type: Double
- :Description: This tag is used only when ``OPTIMIZER = enet`` and ``CV = 0``.
+ :Description: This tag is used only when ``LMODEL = enet`` and ``CV = 0``.
 
 ````
 
@@ -366,7 +366,7 @@ This field is necessary when ``MODE = optimize``.
 
  :Default: ``CV_MINALPHA = 1.0e-4``, ``CV_MAXALPHA = 1.0``, ``CV_NALPHA = 1`` 
  :Type: Double, Double, Integer
- :Description: ``CV_NALPHA`` values of ``L1_ALPHA`` are generated from ``CV_MINALPHA`` to ``CV_MAXALPHA`` in logarithmic scale. A recommended value of ``CV_MAXALPHA`` is printed out to the log file. This tag is used only when ``OPTIMIZER = enet`` and the cross-validation mode is on (``CV > 0`` or ``CV = -1``).
+ :Description: ``CV_NALPHA`` values of ``L1_ALPHA`` are generated from ``CV_MINALPHA`` to ``CV_MAXALPHA`` in logarithmic scale. A recommended value of ``CV_MAXALPHA`` is printed out to the log file. This tag is used only when ``LMODEL = enet`` and the cross-validation mode is on (``CV > 0`` or ``CV = -1``).
 
 ````
 
@@ -405,7 +405,7 @@ This field is necessary when ``MODE = optimize``.
 
  :Default: 10000
  :Type: Integer
- :Description: Effective when ``OPTIMIZER = enet``.
+ :Description: Effective when ``LMODEL = enet``.
 
 ````
 
@@ -426,7 +426,7 @@ This field is necessary when ``MODE = optimize``.
 
  :Default: 0
  :Type: Integer
- :Description: Effective when ``OPTIMIZER = enet`` and the cross-validation mode is on.
+ :Description: Effective when ``LMODEL = enet`` and the cross-validation mode is on.
 
 ````
 
@@ -443,7 +443,7 @@ This field is necessary when ``MODE = optimize``.
 
  :Default: 0
  :Type: Integer
- :Description: Effective when ``OPTIMIZER = enet`` and ``CV = 0``.
+ :Description: Effective when ``LMODEL = enet`` and ``CV = 0``.
 
 
 ````
@@ -454,14 +454,14 @@ This field is necessary when ``MODE = optimize``.
  ===== =============================================================================================
    0    No constraints
    1   | Constraints for translational invariance will be imposed between IFCs.
-       | Available only when ``OPTIMIZER = ols``.
+       | Available only when ``LMODEL = ols``.
   11   | Same as ``ICONST = 1`` but the constraint is imposed *algebraically* rather than numerically.
-       | Select this option when ``OPTIMIZER = enet``.
+       | Select this option when ``LMODEL = enet``.
    2   | In addition to ``ICONST = 1``, constraints for rotational invariance will be 
-       | imposed up to (``NORDER`` + 1)th order. Available only when ``OPTIMIZER = ols``.
+       | imposed up to (``NORDER`` + 1)th order. Available only when ``LMODEL = ols``.
    3   | In addition to ``ICONST = 2``, constraints for rotational invariance between (``NORDER`` + 1)th order 
        | and (``NORDER`` + 2)th order, which are zero, will be considered. 
-       | Available only when ``OPTIMIZER = ols``.
+       | Available only when ``LMODEL = ols``.
  ===== =============================================================================================
 
  :Default: 1
@@ -493,8 +493,6 @@ This field is necessary when ``MODE = optimize``.
  :Description: Same as the ``FC2XML``-tag, but ``FC3XML`` is to fix cubic force constants. 
 
 ````
-
-
 
 
 .. _label_format_DFILE:

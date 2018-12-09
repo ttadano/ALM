@@ -58,13 +58,13 @@ namespace ALM_NS
         void set_optimize_vars(ALM *alm,
                                const std::vector<std::vector<double>> &u_train_in,
                                const std::vector<std::vector<double>> &f_train_in,
-                               const std::vector<std::vector<double>> &u_test_in,
-                               const std::vector<std::vector<double>> &f_test_in,
+                               const std::vector<std::vector<double>> &u_validation_in,
+                               const std::vector<std::vector<double>> &f_validation_in,
                                const OptimizerControl &optcontrol_in) const;
 
         void set_file_vars(ALM *alm,
                            const DispForceFile &datfile_train_in,
-                           const DispForceFile &datfile_test_in) const;
+                           const DispForceFile &datfile_validation_in) const;
 
         void set_constraint_vars(ALM *alm,
                                  int constraint_flag,

@@ -43,78 +43,76 @@ void Writer::write_input_vars(const ALM *alm) const
 
     alm->timer->start_clock("writer");
 
-    std::cout << std::endl;
-    std::cout << " Input variables:" << std::endl;
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << " General:" << std::endl;
-    std::cout << "  PREFIX = " << alm->files->get_prefix() << std::endl;
-    std::cout << "  MODE = " << alm->get_run_mode() << std::endl;
-    std::cout << "  NAT = " << nat << "; NKD = " << nkd << std::endl;
+    std::cout << '\n';
+    std::cout << " Input variables:\n";
+    std::cout << " -------------------------------------------------------------------" << '\n';
+    std::cout << " General:\n";
+    std::cout << "  PREFIX = " << alm->files->get_prefix() << '\n';
+    std::cout << "  MODE = " << alm->get_run_mode() << '\n';
+    std::cout << "  NAT = " << nat << "; NKD = " << nkd << '\n';
     std::cout << "  PRINTSYM = " << alm->symmetry->get_print_symmetry()
-        << "; TOLERANCE = " << alm->symmetry->get_tolerance() << std::endl;
+        << "; TOLERANCE = " << alm->symmetry->get_tolerance() << '\n';
     std::cout << "  KD = ";
     for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->get_kdname()[i];
-    std::cout << std::endl;
+    std::cout << '\n';
     std::cout << "  PERIODIC = ";
     for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->get_periodicity()[i];
-    std::cout << std::endl;
-    std::cout << "  MAGMOM = " << alm->get_str_magmom() << std::endl;
-    std::cout << "  HESSIAN = " << alm->files->print_hessian << std::endl;
-    std::cout << std::endl;
+    std::cout << '\n';
+    std::cout << "  MAGMOM = " << alm->get_str_magmom() << '\n';
+    //std::cout << "  HESSIAN = " << alm->files->print_hessian << '\n';
+    std::cout << '\n';
 
-    std::cout << " Interaction:" << std::endl;
-    std::cout << "  NORDER = " << alm->cluster->get_maxorder() << std::endl;
+    std::cout << " Interaction:\n";
+    std::cout << "  NORDER = " << alm->cluster->get_maxorder() << '\n';
     std::cout << "  NBODY = ";
     for (auto m = 0; m < alm->cluster->get_maxorder(); ++m) {
         std::cout << std::setw(3) << alm->get_nbody_include()[m];
     }
-    std::cout << std::endl << std::endl;
-
+    std::cout << "\n\n";
 
     if (alm->get_run_mode() == "suggest") {
-        std::cout << "  DBASIS = " << alm->displace->get_disp_basis() << std::endl;
-        std::cout << std::endl;
+        std::cout << "  DBASIS = " << alm->displace->get_disp_basis() << "\n\n";
 
-    } else if (alm->get_run_mode() == "fitting") {
-        std::cout << " Fitting:" << std::endl;
-        //std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
-        //std::cout << "  FFILE = " << alm->files->file_force << std::endl;
-        //std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
-        //    << "; NEND = " << alm->optimize->get_nend() << std::endl;
-        std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
-        std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
-        std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
-        std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << std::endl;
-        //std::cout << "  SPARSE = " << alm->fitting->get_use_sparseQR() << std::endl;
-        std::cout << std::endl;
-    } else if (alm->get_run_mode() == "lasso") {
-        std::cout << " Fitting:" << std::endl;
-        //std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
-        //std::cout << "  FFILE = " << alm->files->file_force << std::endl;
-        //std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
-        //    << "; NEND = " << alm->optimize->get_nend() << std::endl;
-        //std::cout << "  SKIP = " << alm->optimize->get_skip_s() + 1 << "-" << alm->optimize->get_skip_e() << std::endl;
-        std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
-        std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
-        std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
-        std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << std::endl;
-        std::cout << std::endl;
+    } else if (alm->get_run_mode() == "optimize") {
         const auto optctrl = alm->optimize->get_optimizer_control();
-        std::cout << " Lasso:" << std::endl;
-        std::cout << "  L1_ALPHA = " << optctrl.l1_alpha << std::endl;
-        std::cout << "  CV_MINALPHA = " << optctrl.l1_alpha_min;
-        std::cout << "; CV_MAXALPHA = " << optctrl.l1_alpha_max << std::endl;
-        std::cout << "  CV_NALPHA = " << optctrl.num_l1_alpha << std::endl;
-        std::cout << "  STANDARDIZE = " << optctrl.standardize << std::endl;
-        std::cout << "  ENET_DNORM = " << optctrl.displacement_normalization_factor << std::endl;
-        std::cout << "  CONV_TOL = " << optctrl.tolerance_iteration << std::endl;
-        std::cout << "  MAXITER = " << optctrl.maxnum_iteration << std::endl;
-        std::cout << "  CV = " << std::setw(5) << optctrl.cross_validation << std::endl;
-        std::cout << "  NWRITE = " << std::setw(5) << optctrl.output_frequency << std::endl;
-        std::cout << std::endl;
+        std::vector<std::string> str_linearmodel{"least-squares", "elastic-net"};
+        std::cout << " Optimize:\n";
+        std::cout << "  LMODEL = "
+            << str_linearmodel[optctrl.linear_model - 1] << '\n';
+        std::cout << "  DFSET = " << alm->files->get_datfile_train().filename << '\n';
+        std::cout << "  NDATA = " << alm->files->get_datfile_train().ndata
+            << "; NSTART = " << alm->files->get_datfile_train().nstart
+            << "; NEND = " << alm->files->get_datfile_train().nend
+            << "; SKIP = " << alm->files->get_datfile_train().skip_s
+            << "-" << alm->files->get_datfile_train().skip_e - 1 << "\n\n";
+        std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << '\n';
+        std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << '\n';
+        std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << '\n';
+        std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << "\n\n";
+        std::cout << "  SPARSE = " << optctrl.use_sparse_solver << "\n\n";
+        if (optctrl.linear_model == 2) {
+            std::cout << " Elastic-net related variables:\n";
+            std::cout << "  CV = " << std::setw(5) << optctrl.cross_validation << '\n';
+            std::cout << "  DFSET_CV = " << alm->files->get_datfile_validation().filename << '\n';
+            std::cout << "  NDATA_CV = " << alm->files->get_datfile_validation().ndata
+                << "; NSTART_CV = " << alm->files->get_datfile_validation().nstart
+                << "; NEND_CV = " << alm->files->get_datfile_validation().nend << "\n\n";
+            std::cout << "  L1_RATIO = " << optctrl.l1_ratio << '\n';
+            std::cout << "  L1_ALPHA = " << optctrl.l1_alpha << '\n';
+            std::cout << "  CV_MINALPHA = " << optctrl.l1_alpha_min
+                << "; CV_MAXALPHA = " << optctrl.l1_alpha_max
+                << ";  CV_NALPHA = " << optctrl.num_l1_alpha << '\n';
+            std::cout << "  STANDARDIZE = " << optctrl.standardize << '\n';
+            std::cout << "  ENET_DNORM = " << optctrl.displacement_normalization_factor << '\n';
+            std::cout << "  CONV_TOL = " << optctrl.tolerance_iteration << '\n';
+            std::cout << "  MAXITER = " << optctrl.maxnum_iteration << '\n';
+            std::cout << "  NWRITE = " << std::setw(5) << optctrl.output_frequency << '\n';
+            std::cout << "  DEBIAS_OLS = " << optctrl.debiase_after_l1opt << '\n';
+            std::cout << '\n';
+        }
     }
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << std::endl;
+    std::cout << " -------------------------------------------------------------------\n\n";
+    std::cout << std::flush;
     alm->timer->stop_clock("writer");
 }
 

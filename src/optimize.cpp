@@ -67,7 +67,7 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                             const std::vector<std::string> &str_order,
                             const int verbosity,
                             const DispForceFile &filedata_train,
-                            const DispForceFile &filedata_test,
+                            const DispForceFile &filedata_validation,
                             Timer *timer)
 {
     timer->start_clock("optimize");
@@ -76,11 +76,11 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
     const auto ndata_used = filedata_train.nend - filedata_train.nstart + 1
         - filedata_train.skip_e + filedata_train.skip_s;
-    const auto ndata_used_test = filedata_test.nend - filedata_test.nstart + 1;
+    const auto ndata_used_validation = filedata_validation.nend - filedata_validation.nstart + 1;
     const auto ntran = symmetry->get_ntran();
     auto info_fitting = 0;
     const auto M = get_number_of_rows_sensing_matrix();
-    const auto M_test = 3 * natmin * ndata_used_test * ntran;
+    const auto M_validation = 3 * natmin * ndata_used_validation * ntran;
     size_t N = 0;
     size_t N_new = 0;
     for (auto i = 0; i < maxorder; ++i) {
@@ -94,28 +94,23 @@ int Optimize::optimize_main(const Symmetry *symmetry,
     }
 
     if (verbosity > 0) {
-        std::cout << " OPTIMIZATION" << std::endl;
-        std::cout << " ============" << std::endl << std::endl;
-        std::cout << "  Optimizer = " << optcontrol.optimizer << std::endl << std::endl;
-        std::cout << "  Reference files" << std::endl;
-        std::cout << "   Displacement: " << filedata_train.filename << std::endl;
-        std::cout << std::endl;
-
+        std::vector<std::string> str_linearmodel{"least-squares", "elastic-net"};
+        std::cout << " OPTIMIZATIO\n";
+        std::cout << " ============\n\n";
+        std::cout << "  LMODEL = " << str_linearmodel[optcontrol.linear_model - 1] << "\n\n";
+        std::cout << "  Training data file (DFSET) : " << filedata_train.filename << "\n\n";
         std::cout << "  NSTART = " << filedata_train.nstart << "; NEND = " << filedata_train.nend;
         if (filedata_train.skip_s < filedata_train.skip_e)
             std::cout << ": SKIP = " << filedata_train.skip_s << "-" <<
-                filedata_train.skip_e - 1;
-        std::cout << std::endl;
+            filedata_train.skip_e - 1 << '\n';
         std::cout << "  " << ndata_used
-            << " entries will be used for optimization." << std::endl << std::endl;
+            << " entries will be used for training.\n\n";
 
         if (optcontrol.cross_validation == -1) {
-            std::cout << "  Validation test files" << std::endl;
-            std::cout << "   Displacement: " << filedata_test.filename << std::endl;
-            std::cout << std::endl;
-
-            std::cout << "  NSTART = " << filedata_test.nstart << "; NEND = " << filedata_test.nend << std::endl;
-            std::cout << "  " << ndata_used_test
+            std::cout << "  CV = -1 : Manual cross-validation mode is selected\n";
+            std::cout << "  Validation data file (DFSET_CV) : " << filedata_validation.filename << "\n\n";
+            std::cout << "  NSTART_CV = " << filedata_validation.nstart << "; NEND_CV = " << filedata_validation.nend << std::endl;
+            std::cout << "  " << ndata_used_validation
                 << " entries will be used for validation." << std::endl << std::endl;
         }
 
@@ -130,7 +125,7 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
     std::vector<double> fcs_tmp(N, 0.0);
 
-    if (optcontrol.optimizer == 1) {
+    if (optcontrol.linear_model == 1) {
 
         // Use ordinary least-squares
 
@@ -144,7 +139,7 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                                      constraint,
                                      fcs_tmp);
 
-    } else if (optcontrol.optimizer == 2) {
+    } else if (optcontrol.linear_model == 2) {
 
         // Use elastic net 
 
@@ -430,14 +425,15 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
 
 
     if (verbosity > 0) {
-        std::cout << "  Lasso validation with the following parameters:" << std::endl;
+        std::cout << "  Elastic-net cross-validation with the following parameters:" << std::endl;
+        std::cout << "   L1_RATIO = " << optcontrol.l1_ratio << std::endl;
         std::cout << "   CV = " << std::setw(15) << optcontrol.cross_validation << std::endl;
         std::cout << "   CV_MINALPHA = " << std::setw(15) << optcontrol.l1_alpha_min;
         std::cout << " CV_MAXALPHA = " << std::setw(15) << optcontrol.l1_alpha_max << std::endl;
         std::cout << "   CV_NALPHA = " << std::setw(5) << optcontrol.num_l1_alpha << std::endl;
         std::cout << "   CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
         std::cout << "   MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
-        std::cout << "   DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
+        std::cout << "   ENET_DNORM = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
         std::cout << std::endl;
 
         if (optcontrol.standardize) {
@@ -453,7 +449,7 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
 
         if (optcontrol.cross_validation == -1) {
             std::cout << "  CV = -1: Manual CV mode." << std::endl;
-            std::cout << "           Validation data is read from DFFILE_TEST" << std::endl;
+            std::cout << "           Validation data is read from DFSET_CV" << std::endl;
         } else if (optcontrol.cross_validation > 0) {
             std::cout << "  CV > 0: Automatic CV mode." << std::endl;
         } else {
@@ -494,13 +490,13 @@ void Optimize::run_enetcv_manual(const std::string job_prefix,
                                  const int verbosity)
 {
     // Manual CV mode where the test data is read from the user-defined file.
-    // Indeed, the test data is already read in the input_parser and stored in u_test and f_test.
+    // Indeed, the test data is already read in the input_parser and stored in u_validation and f_validation.
 
-    std::vector<double> amat_1D, amat_1D_test;
-    std::vector<double> bvec, bvec_test;
+    std::vector<double> amat_1D, amat_1D_validation;
+    std::vector<double> bvec, bvec_validation;
     std::vector<double> alphas, training_error, validation_error;
     std::vector<std::vector<int>> nonzeros;
-    double fnorm, fnorm_test;
+    double fnorm, fnorm_validation;
 
     size_t N_new = 0;
     if (constraint->get_constraint_algebraic()) {
@@ -520,19 +516,19 @@ void Optimize::run_enetcv_manual(const std::string job_prefix,
                                              constraint);
 
     get_matrix_elements_algebraic_constraint(maxorder,
-                                             amat_1D_test,
-                                             bvec_test,
-                                             u_test,
-                                             f_test,
-                                             fnorm_test,
+                                             amat_1D_validation,
+                                             bvec_validation,
+                                             u_validation,
+                                             f_validation,
+                                             fnorm_validation,
                                              symmetry,
                                              fcs,
                                              constraint);
 
     Eigen::MatrixXd A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], amat_1D.size() / N_new, N_new);
     Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(&bvec[0], bvec.size());
-    Eigen::MatrixXd A_test = Eigen::Map<Eigen::MatrixXd>(&amat_1D_test[0], amat_1D_test.size() / N_new, N_new);
-    Eigen::VectorXd b_test = Eigen::Map<Eigen::VectorXd>(&bvec_test[0], bvec_test.size());
+    Eigen::MatrixXd A_validation = Eigen::Map<Eigen::MatrixXd>(&amat_1D_validation[0], amat_1D_validation.size() / N_new, N_new);
+    Eigen::VectorXd b_validation = Eigen::Map<Eigen::VectorXd>(&bvec_validation[0], bvec_validation.size());
 
     if (verbosity > 0) {
         Eigen::VectorXd mean = Eigen::VectorXd::Zero(A.cols());
@@ -554,8 +550,8 @@ void Optimize::run_enetcv_manual(const std::string job_prefix,
 
     compute_alphas(alphas);
 
-    run_enet_solution_path(maxorder, A, b, A_test, b_test,
-                           fnorm, fnorm_test,
+    run_enet_solution_path(maxorder, A, b, A_validation, b_validation,
+                           fnorm, fnorm_validation,
                            file_coef, verbosity,
                            constraint,
                            alphas,
@@ -596,7 +592,7 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
 
     if (nsets > nstructures) {
         exit("run_elastic_net_crossvalidation",
-             "CV is larger than the total number of training data.");
+             "The input CV is larger than the total number of training data.");
     }
 
     std::vector<int> ndata_block(nsets, nstructures / nsets);
@@ -606,15 +602,15 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
         }
     }
 
-    std::vector<std::vector<double>> u_train_tmp, u_test_tmp;
-    std::vector<std::vector<double>> f_train_tmp, f_test_tmp;
+    std::vector<std::vector<double>> u_train_tmp, u_validation_tmp;
+    std::vector<std::vector<double>> f_train_tmp, f_validation_tmp;
 
-    std::vector<double> amat_1D, amat_1D_test;
-    std::vector<double> bvec, bvec_test;
+    std::vector<double> amat_1D, amat_1D_validation;
+    std::vector<double> bvec, bvec_validation;
     std::vector<double> alphas, training_error, validation_error;
     std::vector<std::vector<int>> nonzeros;
     std::vector<std::vector<double>> training_error_accum, validation_error_accum;
-    double fnorm, fnorm_test;
+    double fnorm, fnorm_validation;
 
     auto ishift = 0;
 
@@ -630,18 +626,18 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
             std::cout << std::endl;
             std::cout << "  SET : " << std::setw(3) << iset + 1 << std::endl;
         }
-        const auto istart_test = ishift;
-        const auto iend_test = istart_test + ndata_block[iset];
+        const auto istart_validation = ishift;
+        const auto iend_validation = istart_validation + ndata_block[iset];
 
         u_train_tmp.clear();
         f_train_tmp.clear();
-        u_test_tmp.clear();
-        f_test_tmp.clear();
+        u_validation_tmp.clear();
+        f_validation_tmp.clear();
 
         for (auto idata = 0; idata < nstructures; ++idata) {
-            if (idata >= istart_test && idata < iend_test) {
-                u_test_tmp.emplace_back(u_train[idata]);
-                f_test_tmp.emplace_back(f_train[idata]);
+            if (idata >= istart_validation && idata < iend_validation) {
+                u_validation_tmp.emplace_back(u_train[idata]);
+                f_validation_tmp.emplace_back(f_train[idata]);
             } else {
                 u_train_tmp.emplace_back(u_train[idata]);
                 f_train_tmp.emplace_back(f_train[idata]);
@@ -660,11 +656,11 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
                                                  constraint);
 
         get_matrix_elements_algebraic_constraint(maxorder,
-                                                 amat_1D_test,
-                                                 bvec_test,
-                                                 u_test_tmp,
-                                                 f_test_tmp,
-                                                 fnorm_test,
+                                                 amat_1D_validation,
+                                                 bvec_validation,
+                                                 u_validation_tmp,
+                                                 f_validation_tmp,
+                                                 fnorm_validation,
                                                  symmetry,
                                                  fcs,
                                                  constraint);
@@ -672,8 +668,8 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
         Eigen::MatrixXd A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], amat_1D.size() / N_new, N_new);
         Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(&bvec[0], bvec.size());
 
-        Eigen::MatrixXd A_test = Eigen::Map<Eigen::MatrixXd>(&amat_1D_test[0], amat_1D_test.size() / N_new, N_new);
-        Eigen::VectorXd b_test = Eigen::Map<Eigen::VectorXd>(&bvec_test[0], bvec_test.size());
+        Eigen::MatrixXd A_validation = Eigen::Map<Eigen::MatrixXd>(&amat_1D_validation[0], amat_1D_validation.size() / N_new, N_new);
+        Eigen::VectorXd b_validation = Eigen::Map<Eigen::VectorXd>(&bvec_validation[0], bvec_validation.size());
 
 
         if (verbosity > 0) {
@@ -695,8 +691,8 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
         const auto file_cv = job_prefix + ".enet_cvset" + std::to_string(iset + 1);
 
 
-        run_enet_solution_path(maxorder, A, b, A_test, b_test,
-                               fnorm, fnorm_test,
+        run_enet_solution_path(maxorder, A, b, A_validation, b_validation,
+                               fnorm, fnorm_validation,
                                file_coef, verbosity,
                                constraint,
                                alphas,
@@ -743,7 +739,9 @@ void Optimize::write_cvresult_to_file(const std::string file_out,
     std::ofstream ofs_cv;
     ofs_cv.open(file_out.c_str(), std::ios::out);
     ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
-    ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
+    ofs_cv << "# L1_RATIO = " << optcontrol.l1_ratio << std::endl;
+    ofs_cv << "# ENET_DNORM = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
+    ofs_cv << "# STANDARDIZE = " << optcontrol.standardize << std::endl;
     ofs_cv << "# CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
     ofs_cv << "# L1 ALPHA, Fitting error, Validation error, Num. zero IFCs (2nd, 3rd, ...) " << std::endl;
 
@@ -806,7 +804,9 @@ int Optimize::write_cvscore_to_file(const std::string file_out,
     std::ofstream ofs_cv;
     ofs_cv.open(file_out.c_str(), std::ios::out);
     ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
-    ofs_cv << "# LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
+    ofs_cv << "# L1_RATIO = " << optcontrol.l1_ratio << std::endl;
+    ofs_cv << "# ENET_DNORM = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
+    ofs_cv << "# STANDARDIZE = " << optcontrol.standardize << std::endl;
     ofs_cv << "# CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
     ofs_cv << "# " << nsets << "-fold cross-validation scores" << std::endl;
     ofs_cv << "# L1 ALPHA, Fitting error (mean, std), Validation error (mean, std) " << std::endl;
@@ -838,10 +838,10 @@ int Optimize::get_ialpha_at_minimum_validation_error(const std::vector<double> &
 void Optimize::run_enet_solution_path(const int maxorder,
                                       Eigen::MatrixXd &A,
                                       Eigen::VectorXd &b,
-                                      Eigen::MatrixXd &A_test,
-                                      Eigen::VectorXd &b_test,
+                                      Eigen::MatrixXd &A_validation,
+                                      Eigen::VectorXd &b_validation,
                                       const double fnorm,
-                                      const double fnorm_test,
+                                      const double fnorm_validation,
                                       const std::string file_coef,
                                       const int verbosity,
                                       const Constraint *constraint,
@@ -863,12 +863,12 @@ void Optimize::run_enet_solution_path(const int maxorder,
     Eigen::VectorXd grad0, grad, x;
     Eigen::VectorXd scale_beta, scale_beta_enet;
     Eigen::VectorXd factor_std;
-    Eigen::VectorXd fdiff, fdiff_test;
+    Eigen::VectorXd fdiff, fdiff_validation;
     Eigen::VectorXd mean, dev;
 
     size_t N_new = A.cols();
     size_t M = A.rows();
-    size_t M_test = A_test.rows();
+    size_t M_validation = A_validation.rows();
 
     Prod.setZero(N_new, N_new);
     grad0.resize(N_new);
@@ -878,7 +878,7 @@ void Optimize::run_enet_solution_path(const int maxorder,
     scale_beta_enet.resize(N_new);
     factor_std.resize(N_new);
     fdiff.resize(M);
-    fdiff_test.resize(M_test);
+    fdiff_validation.resize(M_validation);
 
     allocate(has_prod, N_new);
 
@@ -895,7 +895,7 @@ void Optimize::run_enet_solution_path(const int maxorder,
     if (optcontrol.standardize) {
         get_standardizer(A, mean, dev, factor_std, scale_beta);
         apply_standardizer(A, mean, dev);
-        apply_standardizer(A_test, mean, dev);
+        apply_standardizer(A_validation, mean, dev);
     } else {
         get_standardizer(A, mean, dev, factor_std, scale_beta);
     }
@@ -937,9 +937,9 @@ void Optimize::run_enet_solution_path(const int maxorder,
             correction_intercept += x(i) * mean(i) * factor_std(i);
         }
         fdiff = A * x - b + correction_intercept * Eigen::VectorXd::Ones(M);
-        fdiff_test = A_test * x - b_test + correction_intercept * Eigen::VectorXd::Ones(M_test);
+        fdiff_validation = A_validation * x - b_validation + correction_intercept * Eigen::VectorXd::Ones(M_validation);
         const auto res1 = fdiff.dot(fdiff) / (fnorm * fnorm);
-        const auto res2 = fdiff_test.dot(fdiff_test) / (fnorm_test * fnorm_test);
+        const auto res2 = fdiff_validation.dot(fdiff_validation) / (fnorm_validation * fnorm_validation);
 
         get_number_of_zero_coefs(maxorder,
                                  constraint,
@@ -1054,11 +1054,12 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
     }
 
     if (verbosity > 0) {
-        std::cout << "  Lasso minimization with the following parameters:" << std::endl;
-        std::cout << "   L1_ALPHA  (L1) = " << std::setw(15) << optcontrol.l1_alpha << std::endl;
+        std::cout << "  Elastic-net minimization with the following parameters:" << std::endl;
+        std::cout << "   L1_RATIO = " << optcontrol.l1_ratio << std::endl;
+        std::cout << "   L1_ALPHA = " << std::setw(15) << optcontrol.l1_alpha << std::endl;
         std::cout << "   CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
         std::cout << "   MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
-        std::cout << "   LASSO_DBASIS = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
+        std::cout << "   ENET_DNORM = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
 
         std::cout << std::endl;
         if (optcontrol.standardize) {
@@ -1335,7 +1336,7 @@ void Optimize::apply_scalers(const int maxorder,
                             constraint);
 
     if (optcontrol.cross_validation == -1) {
-        apply_scaler_displacement(u_test,
+        apply_scaler_displacement(u_validation,
                                   optcontrol.displacement_normalization_factor);
 
     }
@@ -1352,7 +1353,7 @@ void ALM_NS::Optimize::finalize_scalers(const int maxorder,
                             constraint,
                             true);
     if (optcontrol.cross_validation == -1) {
-        apply_scaler_displacement(u_test,
+        apply_scaler_displacement(u_validation,
                                   optcontrol.displacement_normalization_factor,
                                   true);
     }
@@ -1370,15 +1371,15 @@ void Optimize::set_training_data(const std::vector<std::vector<double>> &u_train
     f_train.shrink_to_fit();
 }
 
-void Optimize::set_test_data(const std::vector<std::vector<double>> &u_test_in,
-                             const std::vector<std::vector<double>> &f_test_in)
+void Optimize::set_validation_data(const std::vector<std::vector<double>> &u_validation_in,
+                             const std::vector<std::vector<double>> &f_validation_in)
 {
-    u_test.clear();
-    f_test.clear();
-    u_test = u_test_in;
-    f_test = f_test_in;
-    u_test.shrink_to_fit();
-    f_test.shrink_to_fit();
+    u_validation.clear();
+    f_validation.clear();
+    u_validation = u_validation_in;
+    f_validation = f_validation_in;
+    u_validation.shrink_to_fit();
+    f_validation.shrink_to_fit();
 }
 
 std::vector<std::vector<double>> Optimize::get_u_train() const
@@ -2524,7 +2525,7 @@ void Optimize::set_optimizer_control(const OptimizerControl &optcontrol_in)
     if (optcontrol_in.cross_validation < -1) {
         exit("set_optimizer_control", "cross_validation must be -1, 0, or larger");
     }
-    if (optcontrol_in.optimizer == 2) {
+    if (optcontrol_in.linear_model == 2) {
         if (optcontrol_in.l1_ratio <= eps || optcontrol_in.l1_ratio > 1.0) {
             exit("set_optimizer_control", "L1_RATIO must be 0 < L1_RATIO <= 1.");
         }

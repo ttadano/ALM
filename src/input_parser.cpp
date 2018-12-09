@@ -83,7 +83,7 @@ void InputParser::parse_displacement_and_force_files(std::vector<std::vector<dou
     // Open the target file and copy the data to 1D temporary vector
     std::ifstream ifs_data;
     ifs_data.open(datfile_in.filename.c_str(), std::ios::in);
-    if (!ifs_data) exit("openfiles", "cannot open DFFILE file");
+    if (!ifs_data) exit("openfiles", "cannot open DFSET file");
     auto reach_end = false;
     while (std::getline(ifs_data >> std::ws, line)) {
         if (line[0] != '#') {
@@ -114,12 +114,12 @@ void InputParser::parse_displacement_and_force_files(std::vector<std::vector<dou
             datfile_in.ndata = n_entries / (6 * nat);
         } else {
             exit("parse_displacement_and_force_files",
-                 "The number of lines in DFFILE is indivisible by NAT");
+                 "The number of lines in DFSET is indivisible by NAT");
         }
     } else {
         if (n_entries < nrequired) {
             exit("parse_displacement_and_force_files",
-                 "The number of lines in DFFILE is too small for the given NDATA = ",
+                 "The number of lines in DFSET is too small for the given NDATA = ",
                  datfile_in.ndata);
         }
     }
@@ -256,7 +256,7 @@ void InputParser::parse_general_vars(ALM *alm)
     mode = general_var_dict["MODE"];
 
     std::transform(mode.begin(), mode.end(), mode.begin(), tolower);
-    if (mode != "fitting" && mode != "suggest" && mode != "lasso" && mode != "optimize") {
+    if (mode != "fitting" && mode != "suggest" && mode != "lasso" && mode != "optimize" && mode != "opt") {
         exit("parse_general_vars", "Invalid MODE variable");
     }
     if (mode == "fitting") {
@@ -266,8 +266,9 @@ void InputParser::parse_general_vars(ALM *alm)
     if (mode == "lasso") {
         mode = "optimize";
         warn("parse_general_vars",
-             "MODE = lasso is deprecated. Please use MODE = optimize instead with OPTIMIZER = enet option in the &optimize field.");
+             "MODE = lasso is deprecated. Please use MODE = optimize instead with LMODEL = enet option in the &optimize field.");
     }
+    if (mode == "opt") mode = "optimize";
 
     assign_val(nat, "NAT", general_var_dict);
     assign_val(nkd, "NKD", general_var_dict);
@@ -650,10 +651,10 @@ void InputParser::parse_optimize_vars(ALM *alm)
     std::vector<std::vector<double>> u_tmp2, f_tmp2;
 
     const std::vector<std::string> input_list{
-        "OPTIMIZER", "SPARSE",
+        "LMODEL", "SPARSE",
         "ICONST", "ROTAXIS", "FC2XML", "FC3XML",
-        "NDATA", "NSTART", "NEND", "SKIP", "DFILE", "FFILE", "DFFILE",
-        "NDATA_TEST", "NSTART_TEST", "NEND_TEST", "DFILE_TEST", "FFILE_TEST", "DFFILE_TEST",
+        "NDATA", "NSTART", "NEND", "SKIP", "DFILE", "FFILE", "DFSET",
+        "NDATA_CV", "NSTART_CV", "NEND_CV", "DFSET_CV",
         "L1_RATIO", "STANDARDIZE", "ENET_DNORM",
         "L1_ALPHA", "CV_MAXALPHA", "CV_MINALPHA", "CV_NALPHA",
         "CV", "MAXITER", "CONV_TOL", "NWRITE", "SOLUTION_PATH", "DEBIAS_OLS"
@@ -669,16 +670,16 @@ void InputParser::parse_optimize_vars(ALM *alm)
 
     get_var_dict(input_list, fitting_var_dict);
 
-    if (!fitting_var_dict["OPTIMIZER"].empty()) {
-        auto str_optimizer = fitting_var_dict["OPTIMIZER"];
-        boost::to_lower(str_optimizer);
+    if (!fitting_var_dict["LMODEL"].empty()) {
+        auto str_LMODEL = fitting_var_dict["LMODEL"];
+        boost::to_lower(str_LMODEL);
 
-        if (str_optimizer == "ols" || str_optimizer == "ls"
-            || str_optimizer == "least-squares" || str_optimizer == "1") {
-            optcontrol.optimizer = 1;
-        } else if (str_optimizer == "enet" || str_optimizer == "elastic-net"
-            || str_optimizer == "2") {
-            optcontrol.optimizer = 2;
+        if (str_LMODEL == "ols" || str_LMODEL == "ls"
+            || str_LMODEL == "least-squares" || str_LMODEL == "1") {
+            optcontrol.linear_model = 1;
+        } else if (str_LMODEL == "enet" || str_LMODEL == "elastic-net"
+            || str_LMODEL == "2") {
+            optcontrol.linear_model = 2;
         } else {
             exit("parse_optimize_vars", "Invalid OPTIMIZER-tag");
         }
@@ -733,18 +734,18 @@ void InputParser::parse_optimize_vars(ALM *alm)
 
     DispForceFile datfile_train;
 
-    if (fitting_var_dict["DFFILE"].empty()) {
+    if (fitting_var_dict["DFSET"].empty()) {
         if (!fitting_var_dict["DFILE"].empty() || !fitting_var_dict["FFILE"].empty()) {
             std::cout << " Sorry. DFILE and FFILE tags are obsolate.\n";
-            std::cout << " Please use DFFILE instead.\n";
-            std::cout << " DFFILE can be created easily by the unix paste command as:\n\n";
-            std::cout << " $ paste DFILE FFILE > DFFILE\n\n";
+            std::cout << " Please use DFSET instead.\n";
+            std::cout << " DFSET can be created easily by the unix paste command as:\n\n";
+            std::cout << " $ paste DFILE FFILE > DFSET\n\n";
             exit("parse_optimize_vars", "Obsolate tag: DFILE, FFILE");
         } else {
-            exit("parse_optimize_vars", "DFFILE tag must be given.");
+            exit("parse_optimize_vars", "DFSET tag must be given.");
         }
     }
-    datfile_train.filename = fitting_var_dict["DFFILE"];
+    datfile_train.filename = fitting_var_dict["DFSET"];
 
     if (!fitting_var_dict["NDATA"].empty()) {
         assign_val(datfile_train.ndata, "NDATA", fitting_var_dict);
@@ -777,7 +778,7 @@ void InputParser::parse_optimize_vars(ALM *alm)
              "NDATA, NSTART, NEND and SKIP tags are inconsistent.");
     }
 
-    // Parse u_tmp1 and f_tmp1 from DFFILE and set ndata if it's not.
+    // Parse u_tmp1 and f_tmp1 from DFSET and set ndata if it's not.
     parse_displacement_and_force_files(u_tmp1,
                                        f_tmp1,
                                        datfile_train);
@@ -788,38 +789,38 @@ void InputParser::parse_optimize_vars(ALM *alm)
              "NDATA, NSTART, NEND and SKIP tags are inconsistent.");
     }
 
-    auto datfile_test = datfile_train;
-    datfile_test.skip_s = 0;
-    datfile_test.skip_e = 0;
+    auto datfile_validation = datfile_train;
+    datfile_validation.skip_s = 0;
+    datfile_validation.skip_e = 0;
 
-    if (!fitting_var_dict["NDATA_TEST"].empty()) {
-        datfile_test.ndata = boost::lexical_cast<int>(fitting_var_dict["NDATA_TEST"]);
+    if (!fitting_var_dict["NDATA_CV"].empty()) {
+        datfile_validation.ndata = boost::lexical_cast<int>(fitting_var_dict["NDATA_CV"]);
     }
 
-    if (!fitting_var_dict["NSTART_TEST"].empty()) {
-        datfile_test.nstart = boost::lexical_cast<int>(fitting_var_dict["NSTART_TEST"]);
+    if (!fitting_var_dict["NSTART_CV"].empty()) {
+        datfile_validation.nstart = boost::lexical_cast<int>(fitting_var_dict["NSTART_CV"]);
     }
-    if (!fitting_var_dict["NEND_TEST"].empty()) {
-        datfile_test.nend = boost::lexical_cast<int>(fitting_var_dict["NEND_TEST"]);
-    }
-
-    if (!fitting_var_dict["DFFILE_TEST"].empty()) {
-        datfile_test.filename = fitting_var_dict["DFFILE_TEST"];
+    if (!fitting_var_dict["NEND_CV"].empty()) {
+        datfile_validation.nend = boost::lexical_cast<int>(fitting_var_dict["NEND_CV"]);
     }
 
-    if (!is_data_range_consistent(datfile_test)) {
+    if (!fitting_var_dict["DFSET_CV"].empty()) {
+        datfile_validation.filename = fitting_var_dict["DFSET_CV"];
+    }
+
+    if (!is_data_range_consistent(datfile_validation)) {
         exit("parse_optimize_vars",
-             "NDATA_TEST, NSTART_TEST and NEND_TEST tags are inconsistent.");
+             "NDATA_CV, NSTART_CV and NEND_CV tags are inconsistent.");
     }
 
     if (optcontrol.cross_validation == -1) {
         parse_displacement_and_force_files(u_tmp2,
                                            f_tmp2,
-                                           datfile_test);
+                                           datfile_validation);
 
-        if (!is_data_range_consistent(datfile_test)) {
+        if (!is_data_range_consistent(datfile_validation)) {
             exit("parse_optimize_vars",
-                 "NDATA_TEST, NSTART_TEST and NEND_TEST tags are inconsistent.");
+                 "NDATA_CV, NSTART_CV and NEND_CV tags are inconsistent.");
         }
     }
 
@@ -831,7 +832,7 @@ void InputParser::parse_optimize_vars(ALM *alm)
 
     input_setter->set_file_vars(alm,
                                 datfile_train,
-                                datfile_test);
+                                datfile_validation);
 
 
     if (fitting_var_dict["ICONST"].empty()) {

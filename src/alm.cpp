@@ -570,7 +570,7 @@ int ALM::run_optimize()
                                               str_order,
                                               verbosity,
                                               files->get_datfile_train(),
-                                              files->get_datfile_test(),
+                                              files->get_datfile_validation(),
                                               timer);
     return info;
 }

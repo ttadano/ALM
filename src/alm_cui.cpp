@@ -62,8 +62,8 @@ void ALMCUI::run(const int narg,
     alm->run();
 
     if (alm->get_run_mode() == "optimize") {
-        if (alm->optimize->get_optimizer_control().optimizer == 1 ||
-            (alm->optimize->get_optimizer_control().optimizer == 2
+        if (alm->optimize->get_optimizer_control().linear_model == 1 ||
+            (alm->optimize->get_optimizer_control().linear_model == 2
                 && alm->optimize->get_optimizer_control().cross_validation == 0)) {
             writer->writeall(alm);
         }

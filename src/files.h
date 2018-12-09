@@ -50,14 +50,14 @@ namespace ALM_NS
         void set_prefix(const std::string);
         std::string get_prefix() const;
         void set_datfile_train(const DispForceFile &dat_in);
-        void set_datfile_test(const DispForceFile &dat_in);
+        void set_datfile_validation(const DispForceFile &dat_in);
         DispForceFile get_datfile_train() const;
-        DispForceFile get_datfile_test() const;
+        DispForceFile get_datfile_validation() const;
 
 
     private:
 
         std::string job_title;
-        DispForceFile datfile_train, datfile_test;
+        DispForceFile datfile_train, datfile_validation;
     };
 }
