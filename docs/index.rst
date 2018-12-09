@@ -14,6 +14,7 @@ Welcome to ALM's documentation!
    compile-with-conda-packages
    compile-with-makefile 
    input-tags
+   format-dfset
    formalism
    modules
 

@@ -493,27 +493,3 @@ This field is necessary when ``MODE = optimize``.
  :Description: Same as the ``FC2XML``-tag, but ``FC3XML`` is to fix cubic force constants. 
 
 ````
-
-
-.. _label_format_DFILE:
-
-Format of DFILE and FFILE
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The displacement-force data sets obtained by first-principles (or classical force-field) calculations
-have to be saved to ``DFILE`` and ``FFILE`` to estimate IFCs with ``MODE = fitting``.
-In ``DFILE``, please explicitly specify the atomic displacements :math:`u_{\alpha}(\ell\kappa)` **in units of Bohr** as follows:
- 
-.. math::
-    :nowrap:
-  
-    \begin{eqnarray*}
-     u_{x}(1) & u_{y}(1) & u_{z}(1) \\
-     u_{x}(2) & u_{y}(2) & u_{z}(2) \\
-     & \vdots & \\
-     u_{x}(\mathrm{NAT}) & u_{y}(\mathrm{NAT}) & u_{z}(\mathrm{NAT})
-    \end{eqnarray*}
-
-When there are ``NAT`` atoms in the supercell and ``NDATA`` data sets, 
-there should be  ``NAT`` :math:`\times` ``NDATA`` lines in the ``DFILE`` without blank lines.
-In ``FFILE``, please specify the corresponding atomic forces **in units of Ryd/Bohr**.
