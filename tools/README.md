@@ -2,7 +2,7 @@ This directory contains small python scripts which may be used as subsidiary too
 
 Each Python scripts does the followings:
 
-* displace.py : script to generate input files of displaced configurations for VASP, Quantum-ESPRESSO, and xTAPP.
+* displace.py : script to generate input files of displaced configurations for VASP, Quantum-ESPRESSO, OpenMX, xTAPP, and LAMMPS.
 * extract.py : script to extract atomic displacements, forces, and total energies from output files.
 
 To use the scripts, Python environment (+ Numpy) is necessary.
