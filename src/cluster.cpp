@@ -510,9 +510,9 @@ int* Cluster::get_nbody_include() const
 std::string Cluster::get_ordername(const unsigned int order) const
 {
     if (order == 0) {
-        return std::string("HARMONIC");
+        return "HARMONIC";
     } else {
-        return std::string("ANHARM") + std::to_string(order + 2);
+        return "ANHARM" + std::to_string(order + 2);
     }
 }
 
