@@ -118,15 +118,8 @@ namespace ALM_NS
         bool store_zeros;
         void set_default_variables();
         void deallocate_variables();
-        bool is_ascending(int,
-                          const int *) const;
-        bool is_inprim(const int n,
-                       const int *arr,
-                       const size_t natmin,
-                       const std::vector<std::vector<int>> &map_p2s) const;
-        bool is_inprim(const int n,
-                       const size_t natmin,
-                       const std::vector<std::vector<int>> &map_p2s) const;
+        bool is_ascending(const std::vector<int> &arr) const;
+
         bool is_allzero(const std::vector<double> &,
                         double,
                         int &) const;
