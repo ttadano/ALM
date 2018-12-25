@@ -53,8 +53,6 @@ void Cluster::init(const System *system,
         std::cout << " ===========" << std::endl << std::endl;
     }
 
-    set_ordername();
-
     if (distall) {
         deallocate(distall);
     }
@@ -122,7 +120,7 @@ void Cluster::init(const System *system,
         std::cout << "  +++ Cutoff Radii Matrix in Bohr Unit (NKD x NKD matrix) +++" << std::endl;
 
         for (i = 0; i < maxorder; ++i) {
-            std::cout << "  " << std::setw(9) << str_order[i] << std::endl;
+            std::cout << "  " << std::setw(9) << get_ordername(i) << std::endl;
             for (j = 0; j < nkd; ++j) {
                 for (k = 0; k < nkd; ++k) {
                     if (cutoff_radii[i][j][k] < 0.0) {
@@ -154,7 +152,7 @@ void Cluster::init(const System *system,
     if (verbosity > 0) {
         for (i = 0; i < maxorder; ++i) {
             if (i + 2 > nbody_include[i]) {
-                std::cout << "  For " << std::setw(8) << str_order[i] << ", ";
+                std::cout << "  For " << std::setw(8) << get_ordername(i) << ", ";
                 std::cout << "interactions related to more than" << std::setw(2) << nbody_include[i];
                 std::cout << " atoms will be neglected." << std::endl;
             }
@@ -511,7 +509,11 @@ int* Cluster::get_nbody_include() const
 
 std::string Cluster::get_ordername(const unsigned int order) const
 {
-    return str_order[order];
+    if (order == 0) {
+        return "HARMONIC";
+    } else {
+        return "ANHARM" + std::to_string(order + 2);
+    }
 }
 
 const std::set<IntList>& Cluster::get_cluster_list(const unsigned int order) const
@@ -544,7 +546,7 @@ void Cluster::print_interaction_information(const size_t natmin,
 
     for (auto order = 0; order < maxorder; ++order) {
 
-        std::cout << std::endl << "   ***" << str_order[order] << "***" << std::endl;
+        std::cout << std::endl << "   ***" << get_ordername(order) << "***" << std::endl;
 
         for (size_t i = 0; i < natmin; ++i) {
 
@@ -612,17 +614,6 @@ bool Cluster::is_incutoff(const int n,
         }
     }
     return true;
-}
-
-
-void Cluster::set_ordername()
-{
-    str_order.resize(maxorder);
-    str_order[0] = "HARMONIC";
-
-    for (auto i = 1; i < maxorder; ++i) {
-        str_order[i] = "ANHARM" + std::to_string(i + 2);
-    }
 }
 
 int Cluster::nbody(const int n,

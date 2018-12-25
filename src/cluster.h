@@ -212,7 +212,6 @@ namespace ALM_NS
         int maxorder;
         int *nbody_include;
         double ***cutoff_radii;
-        std::vector<std::string> str_order;
         std::set<IntList> *cluster_list;
         std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **interaction_cluster;
@@ -254,7 +253,6 @@ namespace ALM_NS
                                            const std::string *kdname,
                                            const std::vector<int> * const *interaction_list);
 
-        void set_ordername();
         double distance(const double *,
                         const double *) const;
         int nbody(const int,
