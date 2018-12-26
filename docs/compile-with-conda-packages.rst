@@ -42,27 +42,21 @@ For linux
 
 ::
 
-   % conda install gcc_linux-64 gxx_linux-64 cmake boost eigen numpy ipython
-   % conda install -c conda-forge openblas h5py
+   % conda install -c conda-forge openblas
+   % conda install gcc_linux-64 gxx_linux-64 cmake boost eigen numpy h5py
 
 For macOS
 ~~~~~~~~~~
 
 ::
 
-   % conda install clang_osx-64 clangxx_osx-64 llvm-openmp cmake boost eigen numpy ipython
-   % conda install -c conda-forge openblas h5py
+   % conda install -c conda-forge openblas
+   % conda install clang_osx-64 clangxx_osx-64 llvm-openmp cmake boost eigen numpy h5py
 
-Along with this installation of compilers, conda activation scripts of
-environment variables are installed under
-``$CONDA_PREFIX/etc/conda/activate.d``. On macOS Mojave, unfortunately
-this script doesn't work well at this moment (15/Oct/2018). So the
-comment out the line below in the script
-``$CONDA_PREFIX/etc/conda/activate.d/activate_clang_osx-64.sh`` is
-required::
-
-   # "CONDA_BUILD_SYSROOT,${CONDA_BUILD_SYSROOT:-$(xcrun --show-sdk-path)}"
-
+Along with this installation of compilers, conda activation and
+deactivation scripts of environment variables are installed under
+``$CONDA_PREFIX/etc/conda/activate.d`` and
+``$CONDA_PREFIX/etc/conda/deactivate.d``, respectively.
 
 .. _build_ALMlib:
 
@@ -87,13 +81,9 @@ Now the directory structure supposed in this document is shown as below::
    |       |-- _build/
    |       |-- CMakeLists.txt
    |       `-- ...
-   |-- miniconda/envs/alm/include
-   |-- miniconda/envs/alm/include/eigen3
+   |-- $CONDA_PREFIX/include
+   |-- $CONDA_PREFIX/include/eigen3
    `-- ...
-
-In this directory structure, ``$CONDA_PREFIX`` is equivalent to
-``$HOME/miniconda/envs/alm``. The location of ``miniconda`` directory
-is chosen at the installation time of miniconda.
 
 ALM and spglib are downloaded from github. ``ALM`` and ``spglib``
 directories are created running the following commands::
@@ -202,7 +192,7 @@ at
 - ``$HOME/ALM/ALM/lib/libalmcxx.a``
 - ``$HOME/ALM/ALM/include/alm.h``
 
-These libraries are linked to spglib and openblas dynamically. 
+These libraries are linked to spglib and openblas dynamically.
 Therefore to use the ALM library for C++,
 ``LD_LIBRARY_PATH`` has to be set properly, e.g.,
 
