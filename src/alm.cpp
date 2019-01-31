@@ -192,7 +192,7 @@ void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
 void ALM::define(const int maxorder,
                  const size_t nkd,
                  const int *nbody_include,
-                 const double * const * const *cutoff_radii) const
+                 const double *cutoff_radii) const
 {
     // nkd = 0 means cutoff_radii undefined (hopefully nullptr).
     cluster->define(maxorder,

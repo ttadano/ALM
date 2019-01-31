@@ -472,7 +472,7 @@ int Cluster::get_maxorder() const
 void Cluster::define(const int maxorder_in,
                      const size_t nkd,
                      const int *nbody_include_in,
-                     const double * const * const *cutoff_radii_in)
+                     const double *cutoff_radii_in)
 {
     maxorder = maxorder_in;
     if (nbody_include) {
@@ -493,13 +493,18 @@ void Cluster::define(const int maxorder_in,
         allocate(cutoff_radii, maxorder, nkd, nkd);
     }
 
-    for (auto i = 0; i < maxorder; ++i) {
-        for (size_t j = 0; j < nkd; ++j) {
-            for (size_t k = 0; k < nkd; ++k) {
-                cutoff_radii[i][j][k] = cutoff_radii_in[i][j][k];
+    // if cutoff_radii_in = nullptr, use current value
+    if (cutoff_radii_in) {
+        auto counter = 0;
+        for (auto i = 0; i < maxorder; ++i) {
+            for (size_t j = 0; j < nkd; ++j) {
+                for (size_t k = 0; k < nkd; ++k) {
+                    cutoff_radii[i][j][k] = cutoff_radii_in[counter++];
+                }
             }
         }
     }
+
 }
 
 int* Cluster::get_nbody_include() const

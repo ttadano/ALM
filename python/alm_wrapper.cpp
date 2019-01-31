@@ -167,7 +167,7 @@ extern "C" {
                     const int *nbody_include,
                     const double *cutoff_radii_in)
     {
-        double ***cutoff_radii;
+    /*    double ***cutoff_radii;
         int count;
 
         if (nkd > 0) {
@@ -183,16 +183,16 @@ extern "C" {
             }
         } else {
             cutoff_radii = nullptr;
-        }
+        }*/
 
         alm[id]->define(maxorder,
                         nkd,
                         nbody_include,
-                        cutoff_radii);
+                        cutoff_radii_in);
 
-        if (nkd > 0) {
+ /*       if (nkd > 0) {
             ALM_NS::deallocate(cutoff_radii);
-        }
+        }*/
     }
 
     void alm_generate_force_constant(const int id)

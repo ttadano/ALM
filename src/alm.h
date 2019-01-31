@@ -72,7 +72,7 @@ namespace ALM_NS
         void define(const int maxorder,
                     const size_t nkd,
                     const int *nbody_include,
-                    const double * const * const *cutoff_radii) const;
+                    const double *cutoff_radii) const;
         //int get_ndata_used() const;
         size_t get_nrows_sensing_matrix() const;
         Cell get_supercell() const;

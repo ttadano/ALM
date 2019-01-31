@@ -1134,11 +1134,22 @@ void InputParser::parse_cutoff_radii()
     }
     deallocate(undefined_cutoff);
 
+    std::vector<double> cutoff_information_flatten;
+    cutoff_information_flatten.resize(maxorder * nkd * nkd);
+
+    i = 0;
+    for (order = 0; order < maxorder; ++order) {
+        for (j = 0; j < nkd; ++j) {
+            for (k = 0; k < nkd; ++k) {
+                cutoff_information_flatten[i++] = cutoff_radii_tmp[order][j][k];
+            }
+        }
+    }
+    deallocate(cutoff_radii_tmp);
+
     input_setter->set_cutoff_radii(maxorder,
                                    nkd,
-                                   cutoff_radii_tmp);
-
-    deallocate(cutoff_radii_tmp);
+                                   cutoff_information_flatten);
 }
 
 void InputParser::get_var_dict(const std::vector<std::string> &input_list,

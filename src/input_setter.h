@@ -32,7 +32,7 @@ namespace ALM_NS
                                   const int *nbody_include_in);
         void set_cutoff_radii(const int maxorder_in,
                               const size_t nkd_in,
-                              const double * const * const *cutoff_radii_in);
+                              const std::vector<double> &cutoff_radii_in);
         void define(ALM *alm) const;
 
         void set_general_vars(ALM *alm,
@@ -92,6 +92,6 @@ namespace ALM_NS
 
         int maxorder;
         int *nbody_include;
-        double ***cutoff_radii;
+        double *cutoff_radii;
     };
 }

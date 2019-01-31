@@ -196,7 +196,7 @@ namespace ALM_NS
         void define(const int maxorder_in,
                     const size_t nkd,
                     const int *nbody_include_in,
-                    const double * const * const *cutoff_radii_in);
+                    const double *cutoff_radii_in);
 
         int get_maxorder() const;
         int* get_nbody_include() const;

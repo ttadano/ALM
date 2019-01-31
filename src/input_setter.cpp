@@ -17,6 +17,7 @@
 #include "constraint.h"
 #include "patterndisp.h"
 #include "alm.h"
+#include "error.h"
 
 using namespace ALM_NS;
 
@@ -95,16 +96,22 @@ void InputSetter::set_interaction_vars(const int maxorder_in,
 
 void InputSetter::set_cutoff_radii(const int maxorder_in,
                                    const size_t nkd_in,
-                                   const double * const * const *cutoff_radii_in)
+                                   const std::vector<double> &cutoff_radii_in)
 {
+    if (cutoff_radii_in.size() != (nkd_in * nkd_in * maxorder_in)) {
+        exit("set_cutoff_radii", 
+            "Incorrect size of the input array cutoff_radii_in");
+    }
     if (cutoff_radii) {
         deallocate(cutoff_radii);
     }
-    allocate(cutoff_radii, maxorder_in, nkd_in, nkd_in);
+    allocate(cutoff_radii, maxorder_in * nkd_in * nkd_in);
+    auto counter = 0;
     for (auto i = 0; i < maxorder_in; i++) {
         for (size_t j = 0; j < nkd_in; j++) {
             for (size_t k = 0; k < nkd_in; k++) {
-                cutoff_radii[i][j][k] = cutoff_radii_in[i][j][k];
+                cutoff_radii[counter] = cutoff_radii_in[counter];
+                ++counter;
             }
         }
     }
