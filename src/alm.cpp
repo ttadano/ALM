@@ -61,9 +61,13 @@ void ALM::create()
 }
 
 void ALM::set_run_mode(const std::string run_mode_in)
-{
+{    
+    if (run_mode_in != "optimize" && run_mode_in != "suggest") {
+        std::cout << "Invalid run mode: " << run_mode_in << std::endl;
+        exit(EXIT_FAILURE);
+    }
     run_mode = run_mode_in;
-}
+} 
 
 std::string ALM::get_run_mode() const
 {
@@ -180,14 +184,6 @@ void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
     optctrl.use_sparse_solver = sparse_mode;
     optimize->set_optimizer_control(optctrl);
 }
-
-//void ALM::set_fitting_filenames(const std::string dfile,
-//                                // DFILE
-//                                const std::string ffile) const // FFILE
-//{
-//    files->file_disp = dfile;
-//    files->file_force = ffile;
-//}
 
 void ALM::define(const int maxorder,
                  const size_t nkd,
@@ -353,7 +349,6 @@ void ALM::get_fc_origin(double *fc_values,
 
     size_t ishift = 0;
     size_t ip;
-
     for (auto order = 0; order < fc_order; ++order) {
 
         if (fcs->get_nequiv()[order].empty()) { continue; }
@@ -538,7 +533,7 @@ void ALM::run()
         run_optimize();
     } else if (run_mode == "suggest") {
         run_suggest();
-    }
+    } 
 }
 
 int ALM::run_optimize()

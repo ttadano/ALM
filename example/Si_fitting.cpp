@@ -1,7 +1,6 @@
 /*
  suggest_Si.cpp
-
- This is an example to run ALM in the suggest mode.
+This is an example to run ALM in the suggest mode.
 
 */
 
@@ -167,27 +166,32 @@ int main()
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+                  
     std::string kdname[1] = {"Si"};
 
-
+    int maxorder = 1;
     int nat = 64;
     int ndata = 1;
     int nstart = 1;
     int nend = 1;
     int ndata_used = nend - nstart + 1;
-
     // Run
     alm->set_verbosity(0); 
-    alm->set_run_mode("fitting");
+    alm->set_run_mode("optimize");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);
-    alm->set_norder(1);
-
+     
+    int nbody_include[1] = {2};
+    double cutoff_radii[1] = {-1.0};
+    
+    alm->define(1, nkd, nbody_include, cutoff_radii);
+    
     double u[ndata_used * nat * 3];
     double f[ndata_used * nat * 3];
-    parse_displacement_and_force_files
-	(u, f, nat, ndata, nstart, nend,
-	 "disp.dat", "force.dat");
+    
+    parse_displacement_and_force_files(u, f, nat, 
+                                       ndata, nstart, nend,
+                                       "disp.dat", "force.dat");
     alm->set_displacement_and_force(u, f, nat, ndata_used);
 
     alm->run();
@@ -199,13 +203,13 @@ int main()
     int elem_indices[fc_length * 2];
 
     alm->get_fc_origin(fc_value, elem_indices, 1);
-
     for (int i = 0; i < fc_length; i++) {
         std::cout << i + 1 << ":" << " " << fc_value[i] <<
             " " << 
             elem_indices[i * 2] / 3 + 1 << "-" << elem_indices[i * 2] % 3 + 1 <<
             " " <<
             elem_indices[i * 2 + 1] / 3 + 1 << "-" << elem_indices[i * 2 + 1] % 3 + 1 <<
+ 
                   std::endl;
     }
 

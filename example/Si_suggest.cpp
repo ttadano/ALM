@@ -5,7 +5,7 @@
 
 */
 
-#include "alm.h"
+#include "alm.h" 
 #include <iostream>
 #include <string>
 
@@ -82,31 +82,37 @@ int main()
          { 0.8750000000000000, 0.8750000000000000, 0.1250000000000000},
          { 0.8750000000000000, 0.8750000000000000, 0.6250000000000000}};
     const int nat = 64;
+    const int nkd = 1;
     int kd[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::string kdname[] = {"Si"};
 
+    int nbody_include[1] = {2};
+    double cutoff_radii[1] = {-1.0};
+
     const int fc_order = 1;
     alm->set_verbosity(0);
     alm->set_run_mode("suggest");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);
-    alm->set_norder(fc_order);
+    //alm->set_norder(fc_order);
+    alm->define(fc_order, nkd, nbody_include, cutoff_radii);
     //int nbody_include[fc_order] = {2};
     //alm->set_interaction_range(nbody_include);
     alm->run();
 
     std::cout << "************ ALM API ************" << std::endl;
     std::cout << "Atom mapping from primitive to supercell:" << std::endl;
-    int map_p2s[nat];
-    const int num_trans = alm->get_atom_mapping_by_pure_translations(map_p2s);
+    //int map_p2s[nat];
+    auto map_p2s = alm->get_atom_mapping_by_pure_translations();
+    auto num_trans = map_p2s[0].size();
     std::cout << "Number of translations: " << num_trans << std::endl;
     for (int i = 0; i < num_trans; ++i) {
         std::cout << i + 1 << " [ ";
         for (int j = 0; j < nat / num_trans; ++j) {
-            std::cout << map_p2s[i * (nat / num_trans) + j] + 1 << " ";
+            std::cout << map_p2s[j][i] + 1 << " ";
         }
         std::cout << "]" << std::endl;
     }

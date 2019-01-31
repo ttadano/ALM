@@ -2,8 +2,7 @@
 #  Si_suggest.py
 #
 #  This is an example to run ALM in the suggest mode.
-#
-
+# 
 from alm import ALM
 import numpy as np
 

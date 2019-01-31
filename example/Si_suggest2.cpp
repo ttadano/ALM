@@ -125,20 +125,21 @@ int main()
     alm->set_run_mode("suggest");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(nat, lavec, xcoord, kd, kdname);
-    alm->set_norder(fc_order);
-    double rcs[fc_order] = {-1, 7.3};
-    alm->set_cutoff_radii(rcs);
+    //alm->set_norder(fc_order);
+    double cutoff_radii[fc_order] = {-1, 7.3};
+    int nbody_include[fc_order] = {2, 3};
+    alm->define(fc_order, 1, nbody_include, cutoff_radii);
     alm->run();
 
     std::cout << "************ ALM API ************" << std::endl;
     std::cout << "Atom mapping from primitive to supercell:" << std::endl;
-    int map_p2s[nat];
-    const int num_trans = alm->get_atom_mapping_by_pure_translations(map_p2s);
+    auto map_p2s = alm->get_atom_mapping_by_pure_translations();
+    auto num_trans = map_p2s[0].size();
     std::cout << "Number of translations: " << num_trans << std::endl;
     for (int i = 0; i < num_trans; ++i) {
         std::cout << i + 1 << " [ ";
         for (int j = 0; j < nat / num_trans; ++j) {
-            std::cout << map_p2s[i * (nat / num_trans) + j] + 1 << " ";
+            std::cout << map_p2s[j][i] + 1 << " ";
         }
         std::cout << "]" << std::endl;
     }
