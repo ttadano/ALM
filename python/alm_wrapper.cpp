@@ -299,7 +299,7 @@ extern "C" {
 
     int alm_optimize(const int id, const char *solver)
     {
-        alm[id]->set_run_mode("fitting");
+        alm[id]->set_run_mode("optimize");
         std::string str_solver = std::string(solver);
 
         int info;
