@@ -218,11 +218,10 @@ class ALM:
             if nkd ** 2 - nelem // maxorder != 0:
                 print("The array shape of cutoff_radii is wrong.")
                 raise RuntimeError
-            #_cutoff_radii = np.reshape(_cutoff_radii, (maxorder, nkd, nkd),
-            #                           order='C')
+            _cutoff_radii = np.reshape(_cutoff_radii, (maxorder, nkd, nkd),
+                                       order='C')
 
         self._maxorder = maxorder
-
         alm.define(self._id,
                    maxorder,
                    np.array(nbody, dtype='intc'),

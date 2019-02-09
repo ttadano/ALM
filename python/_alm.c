@@ -297,10 +297,9 @@ static PyObject * py_define(PyObject *self, PyObject *args)
     cutoff_radii = NULL;
     nkd = 0;
   } else {
-    nkd = (size_t)PyArray_DIMS(py_cutoff_radii)[1];
+    nkd = (size_t)PyArray_DIM(py_cutoff_radii, 1);
     cutoff_radii = (double*)PyArray_DATA(py_cutoff_radii);
   }
-
   const int *nbody_include = (int*)PyArray_DATA(py_nbody_include);
 
   alm_define(id, maxorder, nkd, nbody_include, cutoff_radii);
