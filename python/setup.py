@@ -35,9 +35,10 @@ compile_with_sources = True
 
 library_dirs = []
 extra_link_args = []
-include_dirs = []
+include_dirs = ['/usr/local/include/eigen3/', '/usr/local/include/', '/Users/tadano/src/spglib/include/']
 
-spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
+#spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
+spglib_dir = os.path.join(home, "src", "spglib", "lib")
 include_dirs_numpy = [numpy.get_include()]
 include_dirs += include_dirs_numpy
 

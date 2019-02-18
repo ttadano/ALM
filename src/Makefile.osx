@@ -9,7 +9,7 @@
 # OpenMP-enabled gcc can be installed via homebrew
 CXX = g++-8
 CXXFLAGS = -O2 -fopenmp -DWITH_SPARSE_SOLVER 
-INCLUDE = -I../include -I$(HOME)/src/spglib/include -I/usr/local/include/eigen3/
+INCLUDE = -I../include -I$(HOME)/src/spglib/include -I/usr/local/include/eigen3/ -I/usr/local/include/
 
 CXXL = ${CXX}
 LDFLAGS = -lgomp $(HOME)/src/spglib/lib/libsymspg.a
