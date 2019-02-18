@@ -5,14 +5,13 @@
 # We recommend to use Intel c++ compiler.
 #-----------------------------------------------
 
-# Use gcc >= 4.8 to use OpenMP 
-# OpenMP-enabled gcc can be installed via homebrew
-CXX = g++-8
-CXXFLAGS = -O2 -fopenmp -std=c++11 -DWITH_SPARSE_SOLVER -D_FCS_HDF5 
+# Use clang++ to use hdf5 installed via homebrew
+CXX = clang++
+CXXFLAGS = -O2 -std=c++11 -DWITH_SPARSE_SOLVER -D_FCS_HDF5 
 INCLUDE = -I../include -I$(HOME)/src/spglib/include -I/usr/local/include/eigen3/ -I/usr/local/include
 
 CXXL = ${CXX}
-LDFLAGS = -lgomp $(HOME)/src/spglib/lib/libsymspg.a -L/usr/local/lib -lhdf5_cpp -lhdf5
+LDFLAGS = $(HOME)/src/spglib/lib/libsymspg.a -L/usr/local/lib -lhdf5_cpp -lhdf5
 
 LAPACK = -llapack -lblas
 LIBS = ${LAPACK}

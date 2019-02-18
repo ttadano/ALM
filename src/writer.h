@@ -14,7 +14,7 @@
 #include <vector>
 #include "alm.h"
 #ifdef _FCS_HDF5
-#include "H5cpp.h"
+#include "H5Cpp.h"
 #endif
 namespace ALM_NS
 {
