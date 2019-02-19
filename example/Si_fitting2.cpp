@@ -4,7 +4,6 @@
  This is an example to run ALM in the suggest mode.
 
 */
-
 #include "alm.h"
 #include <cstdlib>
 #include <iostream>
@@ -21,6 +20,31 @@ void show_fc(ALM_NS::ALM *alm, const int fc_order)
     int elem_indices[fc_length * n];
 
     alm->get_fc_origin(fc_value, elem_indices, fc_order);
+
+    for (int i = 0; i < fc_length; i++) {
+        std::cout << i + 1 << ":" << " " << fc_value[i] << " ";
+
+        for (int j = 0; j < n; j++) {
+            std::cout << elem_indices[i * n + j] / 3 + 1 << "-" <<
+                elem_indices[i * n + j] % 3 + 1 << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void show_fc_all(ALM_NS::ALM *alm, const int fc_order)
+{
+    int fc_length = alm->get_number_of_fc_elements(fc_order);
+    int ntran = alm->get_atom_mapping_by_pure_translations()[0].size();
+    fc_length *= ntran;
+    std::cout << "fc_length: " << fc_length << std::endl;
+
+    int n = fc_order + 1;
+
+    double fc_value[fc_length];
+    int elem_indices[fc_length * n];
+
+    alm->get_fc_all(fc_value, elem_indices, fc_order);
 
     for (int i = 0; i < fc_length; i++) {
         std::cout << i + 1 << ":" << " " << fc_value[i] << " ";
@@ -192,23 +216,19 @@ int main()
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::string kdname[1] = {"Si"};
 
-
     int nat = 64;
     int ndata = 21;
     int nstart = 1;
     int nend = 21;
     int ndata_used = nend - nstart + 1;
-
+    int nbody_include[2] = {2, 3};
+    double cutoff_radii[2] = {-1.0, 7.3};
     // Run
     alm->set_verbosity(0); 
-    alm->set_run_mode("fitting");
+    alm->set_run_mode("optimize");
     alm->set_output_filename_prefix("si222API");
     alm->set_cell(64, lavec, xcoord, kd, kdname);
-    alm->set_norder(2);
-
-    // rcs[maxorder, nkd, nkd] to be flattened.
-    double rcs[2] = {-1.0, 7.3};
-    alm->set_cutoff_radii(rcs);
+    alm->define(2, nkd, nbody_include, cutoff_radii);
 
     double u[ndata_used * nat * 3];
     double f[ndata_used * nat * 3];
@@ -220,7 +240,8 @@ int main()
     alm->run();
 
     for (int fc_order = 1; fc_order < 3; fc_order++) {
-        show_fc(alm, fc_order);
+//        show_fc(alm, fc_order);
+         show_fc_all(alm, fc_order);
     }
     delete alm;
 

@@ -15,11 +15,11 @@
 #include <set>
 #include <map>
 #include <algorithm>
-#include "interaction.h"
+#include "cluster.h"
 #include "symmetry.h"
 #include "timer.h"
 
-typedef std::vector<std::map<unsigned int, double>> ConstraintSparseForm;
+using ConstraintSparseForm = std::vector<std::map<size_t, double>>;
 
 namespace ALM_NS
 {
@@ -27,22 +27,21 @@ namespace ALM_NS
     {
     public:
         std::vector<int> elems; // flattened index of (iatom, icoordinate) in the supercell
-        double sign;            // factor (+1 or -1) to convert the mother FC to the child
-        int mother;             // index of the reducible force constants
+        double sign; // factor (+1 or -1) to convert the mother FC to the child
+        size_t mother; // index of the reducible force constants
 
         FcProperty();
 
-        FcProperty(const FcProperty &obj) :
-            elems(obj.elems), sign(obj.sign), mother(obj.mother) { }
+        FcProperty(const FcProperty &obj) = default;
 
         FcProperty(const int n,
                    const double c,
                    const int *arr,
-                   const int m)
+                   const size_t m)
         {
             sign = c;
             mother = m;
-            for (int i = 0; i < n; ++i) {
+            for (auto i = 0; i < n; ++i) {
                 elems.push_back(arr[i]);
             }
         }
@@ -55,10 +54,10 @@ namespace ALM_NS
 
         bool operator==(const FcProperty &a) const
         {
-            int n = elems.size();
-            int n_ = a.elems.size();
+            auto n = elems.size();
+            auto n_ = a.elems.size();
             if (n != n_) return false;
-            for (int i = 0; i < n; ++i) {
+            for (size_t i = 0; i < n; ++i) {
                 if (elems[i] != a.elems[i]) return false;
             }
             return true;
@@ -80,39 +79,39 @@ namespace ALM_NS
         Fcs();
         ~Fcs();
 
-        void init(const Interaction *interaction,
+        void init(const Cluster *cluster,
                   const Symmetry *symmetry,
-                  const unsigned int number_of_atoms,
+                  const size_t number_of_atoms,
                   const int verbosity,
                   Timer *timer);
 
         void get_xyzcomponent(int,
                               int **) const;
         void generate_force_constant_table(const int,
-                                           const unsigned int nat,
+                                           const size_t nat,
                                            const std::set<IntList> &,
                                            const Symmetry *,
                                            const std::string,
                                            std::vector<FcProperty> &,
-                                           std::vector<int> &,
+                                           std::vector<size_t> &,
                                            std::vector<FcProperty> &,
                                            const bool) const;
 
-        void get_constraint_symmetry(const int,
-                                     const Symmetry *,
-                                     const int,
-                                     const std::string,
-                                     const std::vector<FcProperty> &,
-                                     const int,
-                                     const double,
-                                     ConstraintSparseForm &,
+        void get_constraint_symmetry(const size_t nat,
+                                     const Symmetry *symmetry,
+                                     const int order,
+                                     const std::string basis,
+                                     const std::vector<FcProperty> &fc_table_in,
+                                     const size_t nparams,
+                                     const double tolerance,
+                                     ConstraintSparseForm &const_out,
                                      const bool do_rref = false) const;
 
-        std::vector<int>* get_nequiv() const;
+        std::vector<size_t>* get_nequiv() const;
         std::vector<FcProperty>* get_fc_table() const;
 
     private:
-        std::vector<int> *nequiv;          // stores duplicate number of irreducible force constants
+        std::vector<size_t> *nequiv; // stores duplicate number of irreducible force constants
         std::vector<FcProperty> *fc_table; // all force constants
         std::vector<FcProperty> *fc_zeros; // zero force constants (due to space group symm.)
 
@@ -121,27 +120,27 @@ namespace ALM_NS
         void deallocate_variables();
         bool is_ascending(int,
                           const int *) const;
-        bool is_inprim(const int,
-                       const int *,
-                       const int,
-                       const std::vector<std::vector<int>> &) const;
-        bool is_inprim(const int,
-                       const int,
-                       const std::vector<std::vector<int>> &) const;
+        bool is_inprim(const int n,
+                       const int *arr,
+                       const size_t natmin,
+                       const std::vector<std::vector<int>> &map_p2s) const;
+        bool is_inprim(const int n,
+                       const size_t natmin,
+                       const std::vector<std::vector<int>> &map_p2s) const;
         bool is_allzero(const std::vector<double> &,
                         double,
                         int &) const;
-        void get_available_symmop(const unsigned int,
-                                  const Symmetry *,
-                                  const std::string,
-                                  int &,
-                                  int **,
-                                  double ***,
-                                  const bool) const;
-        int get_minimum_index_in_primitive(const int,
-                                           const int *,
-                                           const int,
-                                           const int,
+        void get_available_symmop(const size_t nat,
+                                  const Symmetry *symmetry,
+                                  const std::string basis,
+                                  int &nsym_avail,
+                                  int **mapping_symm,
+                                  double ***rotation,
+                                  const bool use_compatible) const;
+        int get_minimum_index_in_primitive(const int n,
+                                           const int *arr,
+                                           const size_t nat,
+                                           const size_t natmin,
                                            const std::vector<std::vector<int>> &map_p2s) const;
         double coef_sym(const int,
                         const double * const *,

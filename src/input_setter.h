@@ -10,7 +10,6 @@
 
 #pragma once
 
-//#include "alm.h"
 #include "alm.h"
 #include <string>
 
@@ -24,17 +23,19 @@ namespace ALM_NS
 
         void set_cell_parameter(const double a,
                                 const double lavec_in[3][3]);
-        void set_atomic_positions(const int nat_in,
+        void set_atomic_positions(const size_t nat_in,
                                   const int *kd_in,
                                   const double (*xcoord_in)[3]);
+        void set_supercell_information(const double transformation_matrix_in[3][3],
+                                       const double primitive_axes_in[3][3]);
         void set_geometric_structure(ALM *alm);
 
         void set_interaction_vars(const int maxorder_in,
                                   const int *nbody_include_in);
         void set_cutoff_radii(const int maxorder_in,
-                              const unsigned int nkd_in,
-                              const double * const * const *cutoff_radii_in);
-        void define(ALM *alm);
+                              const size_t nkd_in,
+                              const std::vector<double> &cutoff_radii_in);
+        void define(ALM *alm) const;
 
         void set_general_vars(ALM *alm,
                               std::string prefix,
@@ -42,8 +43,8 @@ namespace ALM_NS
                               int verbosity,
                               std::string str_disp_basis,
                               std::string str_magmom,
-                              int nat_in,
-                              int nkd_in,
+                              size_t nat_in,
+                              size_t nkd_in,
                               int printsymmetry,
                               const int is_periodic_in[3],
                               bool trim_dispsign_for_evenfunc,
@@ -57,19 +58,15 @@ namespace ALM_NS
                               double tolerance_constraint);
 
         void set_optimize_vars(ALM *alm,
-                               int ndata,
-                               int nstart,
-                               int nend,
-                               int skip_s,
-                               int skip_e,
-                               std::string dfile,
-                               std::string ffile,
-                               const int ndata_test,
-                               const int nstart_test,
-                               const int nend_test,
-                               const std::string dfile_test,
-                               const std::string ffile_test,
+                               const std::vector<std::vector<double>> &u_train_in,
+                               const std::vector<std::vector<double>> &f_train_in,
+                               const std::vector<std::vector<double>> &u_validation_in,
+                               const std::vector<std::vector<double>> &f_validation_in,
                                const OptimizerControl &optcontrol_in) const;
+
+        void set_file_vars(ALM *alm,
+                           const DispForceFile &datfile_train_in,
+                           const DispForceFile &datfile_validation_in) const;
 
         void set_constraint_vars(ALM *alm,
                                  int constraint_flag,
@@ -82,12 +79,14 @@ namespace ALM_NS
         void set_geometric_structure(ALM *alm) const;
 
     private:
-        int nat, nkd;
+        size_t nat, nkd;
         int *kd;
-        double lavec[3][3];
+        double lavec[3][3]; // lattice vector of the &cell field
         double (*xcoord)[3]; // fractional coordinate
         std::string *kdname;
         int is_periodic[3];
+        double transformation_matrix[3][3];
+        double primitive_axes[3][3];
 
         bool lspin;
         double (*magmom)[3];
@@ -97,6 +96,6 @@ namespace ALM_NS
 
         int maxorder;
         int *nbody_include;
-        double ***cutoff_radii;
+        double *cutoff_radii;
     };
 }

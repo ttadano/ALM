@@ -88,13 +88,15 @@ extern "C" {
     // is made by finding unique numbers (i.e., kind_uniqe) in kind_in
     // and keeping the order, e.g., [8, 8, 4, 4] --> [1, 1, 2, 2].
     void alm_set_cell(const int id,
-                      const int nat,
+                      const size_t nat,
                       const double lavec[3][3],
                       const double xcoord[][3],
                       const int atomic_numbers[],
-                      int kind[])
+                      int kind[],
+                      const double transformation_matrix[3][3],
+                      const double primitive_axes[3][3])
     {
-        int i, j, nkd;
+        size_t i, j, nkd;
         int kind_unique[nat];
         bool in_kind_unique;
 
@@ -117,13 +119,15 @@ extern "C" {
                 ++nkd;
             }
         }
-
         std::string *kdname = new std::string[nkd];
+        //std::string kdname[nkd];
         for (int i = 0; i < nkd; i++) {
             kdname[i] = atom_name[abs(kind_unique[i]) % 118];
         }
 
-        alm[id]->set_cell(nat, lavec, xcoord, kind, kdname);
+        alm[id]->set_cell(nat, lavec, xcoord, kind, kdname,
+                          transformation_matrix, 
+                          primitive_axes);
         delete [] kdname;
     }
 
@@ -142,15 +146,15 @@ extern "C" {
     void alm_set_displacement_and_force(const int id,
                                         const double* u_in,
                                         const double* f_in,
-                                        const int nat,
-                                        const int ndata_used)
+                                        const size_t nat,
+                                        const size_t ndata_used)
     {
         alm[id]->set_displacement_and_force(u_in, f_in, nat, ndata_used);
     }
 
-    int alm_get_ndata_used(const int id)
+    size_t alm_get_nrows_sensing_matrix(const int id)
     {
-        return alm[id]->get_ndata_used();
+        return alm[id]->get_nrows_sensing_matrix();
     }
 
     void alm_set_constraint_type(const int id,
@@ -160,24 +164,22 @@ extern "C" {
     }
 
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
-    // void set_fitting_filenames(const std::string dfile,
-    //                            const std::string ffile);
 
     void alm_define(const int id,
                     const int maxorder,
-                    const unsigned int nkd,
+                    const size_t nkd,
                     const int *nbody_include,
                     const double *cutoff_radii_in)
     {
-        double ***cutoff_radii;
+    /*    double ***cutoff_radii;
         int count;
 
         if (nkd > 0) {
             ALM_NS::allocate(cutoff_radii, maxorder, nkd, nkd);
             count = 0;
-            for (int i = 0; i < maxorder; i++) {
-                for (unsigned int j = 0; j < nkd; j++) {
-                    for (unsigned int k = 0; k < nkd; k++) {
+            for (size_t i = 0; i < maxorder; i++) {
+                for (size_t j = 0; j < nkd; j++) {
+                    for (size_t k = 0; k < nkd; k++) {
                         cutoff_radii[i][j][k] = cutoff_radii_in[count];
                         count++;
                     }
@@ -185,16 +187,16 @@ extern "C" {
             }
         } else {
             cutoff_radii = nullptr;
-        }
+        }*/
 
         alm[id]->define(maxorder,
                         nkd,
                         nbody_include,
-                        cutoff_radii);
+                        cutoff_radii_in);
 
-        if (nkd > 0) {
+ /*       if (nkd > 0) {
             ALM_NS::deallocate(cutoff_radii);
-        }
+        }*/
     }
 
     void alm_generate_force_constant(const int id)
@@ -205,16 +207,15 @@ extern "C" {
     int alm_get_atom_mapping_by_pure_translations(const int id,
                                                   int *map_p2s)
     {
-        unsigned int count = 0;
-        unsigned int ntran, nat_prim;
+        const auto map_p2s_vv = alm[id]->get_atom_mapping_by_pure_translations();
 
-        const std::vector<std::vector<int>> map_p2s_vv = alm[id]->get_atom_mapping_by_pure_translations();
+        auto nat_prim = map_p2s_vv.size();
+        auto ntran = map_p2s_vv[0].size();
 
-        nat_prim = map_p2s_vv.size();
-        ntran = map_p2s_vv[0].size();
+        size_t count = 0;
 
-        for (unsigned int i = 0; i < ntran; i++) {
-            for (unsigned int j = 0; j < nat_prim; j++) {
+        for (size_t i = 0; i < ntran; i++) {
+            for (size_t j = 0; j < nat_prim; j++) {
                 map_p2s[count] = map_p2s_vv[j][i];
                 count++;
             }
@@ -223,8 +224,8 @@ extern "C" {
         return ntran;
     }
 
-    int alm_get_number_of_displacement_patterns(const int id,
-                                                const int fc_order) // harmonic=1,
+    size_t alm_get_number_of_displacement_patterns(const int id,
+                                                   const int fc_order) // harmonic=1,
     {
         return alm[id]->get_number_of_displacement_patterns(fc_order);
     }
@@ -246,14 +247,14 @@ extern "C" {
                                                   fc_order);
     }
 
-    int alm_get_number_of_fc_elements(const int id,
-                                      const int fc_order)  // harmonic=1, ...
+    size_t alm_get_number_of_fc_elements(const int id,
+                                         const int fc_order)  // harmonic=1, ...
     {
         return alm[id]->get_number_of_fc_elements(fc_order);
     }
 
-    int alm_get_number_of_irred_fc_elements(const int id,
-                                            const int fc_order)
+    size_t alm_get_number_of_irred_fc_elements(const int id,
+                                               const int fc_order)
     {
         return alm[id]->get_number_of_irred_fc_elements(fc_order);
     }
@@ -288,11 +289,10 @@ extern "C" {
     }
 
     void alm_get_matrix_elements(const int id,
-                                 const int ndata_used,
                                  double *amat,
                                  double *bvec)
     {
-        alm[id]->get_matrix_elements(ndata_used, amat, bvec);
+        alm[id]->get_matrix_elements(amat, bvec);
     }
 
     void alm_run_suggest(const int id)
@@ -303,7 +303,7 @@ extern "C" {
 
     int alm_optimize(const int id, const char *solver)
     {
-        alm[id]->set_run_mode("fitting");
+        alm[id]->set_run_mode("optimize");
         std::string str_solver = std::string(solver);
 
         int info;

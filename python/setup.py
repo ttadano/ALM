@@ -29,22 +29,29 @@ compile_with_sources = True
 # |       |-- _build/
 # |       |-- CMakeLists.txt
 # |       `-- ...
-# |-- miniconda/envs/alm/include
-# |-- miniconda/envs/alm/include/eigen3
+# |-- $CONDA_PREFIX/include
+# |-- $CONDA_PREFIX/include/eigen3
 # `-- ...
 
 library_dirs = []
 extra_link_args = []
-include_dirs = []
+include_dirs = ['/usr/local/include/eigen3/', '/usr/local/include/', '/Users/tadano/src/spglib/include/']
 
-spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
+#spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
+spglib_dir = os.path.join(home, "src", "spglib", "lib")
 include_dirs_numpy = [numpy.get_include()]
 include_dirs += include_dirs_numpy
 
-# The following setting can work in place of "export CPLUS_INCLUDE_PATH=$CONDA_PREFIX/include:$CONDA_PREFIX/include/eigen3:$HOME/ALM/spglib/include".
+if 'CONDA_PREFIX' in os.environ:
+    conda_prefix = os.environ['CONDA_PREFIX']
+else:
+    conda_prefix = os.path.join(home, "miniconda", "envs", "alm")
+
+# When "export CPLUS_INCLUDE_PATH=..." in documentation doesn't work,
+# the following setting can work in place of the environment variable setting.
 # include_dir_spglib = os.path.join(home, "ALM", "spglib", "include")
 # include_dirs.append(include_dir_spglib)
-# include_dir_boost = os.path.join(home, "miniconda", "envs", "alm", "include")
+# include_dir_boost = os.path.join(conda_prefix, "include")
 # include_dirs.append(include_dir_boost)
 # include_dir_eigen = os.path.join(include_dir_boost, "eigen3")
 # include_dirs.append(include_dir_eigen)
@@ -52,12 +59,12 @@ include_dirs += include_dirs_numpy
 if compile_with_sources:
     cpp_files = ['alm.cpp',
                  'alm_cui.cpp',
+                 'cluster.cpp',
                  'constraint.cpp',
                  'fcs.cpp',
                  'files.cpp',
                  'input_parser.cpp',
                  'input_setter.cpp',
-                 'interaction.cpp',
                  'main.cpp',
                  'optimize.cpp',
                  'patterndisp.cpp',
@@ -78,11 +85,12 @@ if compile_with_sources:
 else:  # compile with library
     sources = ['_alm.c', 'alm_wrapper.cpp']
     # static link library
-    extra_link_args.append(os.path.join("..", "lib", "libalmcxx.a"))
     extra_link_args.append(os.path.join(spglib_dir, "libsymspg.a"))
-    # dynamic link library
-    # extra_link_args += ['-lalmcxx']
+    extra_link_args.append(os.path.join("..", "lib", "libalmcxx.a"))
+    # dynamic link library (LD_LIBRARY_PATH has to be set properly.)
+    # extra_link_args += ['-lalmcxx', '-lsymspg']
     # library_dirs.append(os.path.join("..", "lib"))
+    # library_dirs.append(spglib_dir)
 
 extension = Extension('alm._alm',
                       include_dirs=include_dirs,

@@ -16,7 +16,9 @@ class ALM:
 
     """
 
-    def __init__(self, lavec, xcoord, atomic_numbers):
+    def __init__(self, lavec, xcoord, atomic_numbers, 
+                 transformation_matrix=np.eye(3),
+                 primitive_axes=np.eye(3)):
         """
 
         Parameters
@@ -33,11 +35,26 @@ class ALM:
             Atomic numbers.
             shape=(num_atoms,)
             dtype='intc'
+        transformation_matrix : array_like
+            Transformation matrix (Ts) that transforms the input 
+            lattice vector (lavec) to supercell as
+            (a_s, b_s, c_s) = (a_in, b_in, c_in) * Ts
+            shape=(3, 3)
+            dtype='double'
+        primitive_axes : array_like
+            Scaling matrix (Mp) that transforms the input 
+            lattice vector (lavec) to a primitive cell as
+            (a_p, b_p, c_p) = (a_in, b_in, c_in) * Mp
+            shape=(3, 3)
+            dtype='double'
 
         """
 
         self._id = None
         self._lavec = np.array(lavec, dtype='double', order='C')
+        self._transformation_matrix = np.array(transformation_matrix,
+                                               dtype='double', order='C')
+        self._primitive_axes = np.array(primitive_axes, dtype='double', order='C')
         self._xcoord = np.array(xcoord, dtype='double', order='C')
         self._atomic_numbers = np.array(atomic_numbers,
                                         dtype='intc', order='C')
@@ -222,7 +239,6 @@ class ALM:
                                        order='C')
 
         self._maxorder = maxorder
-
         alm.define(self._id,
                    maxorder,
                    np.array(nbody, dtype='intc'),
@@ -498,17 +514,18 @@ class ALM:
 
         maxorder = self._maxorder
         nat = len(self._xcoord)
-        ndata_used = self._get_ndata_used()
+        nrows = self._get_nrows_amat()
+      #  ndata_used = self._get_ndata_used()
 
         fc_length = 0
         for i in range(maxorder):
             fc_length += self._get_number_of_irred_fc_elements(i + 1)
 
-        amat = np.zeros(3 * nat * ndata_used * fc_length, dtype='double')
-        bvec = np.zeros(3 * nat * ndata_used)
-        alm.get_matrix_elements(self._id, ndata_used, amat, bvec)
+        amat = np.zeros(nrows * fc_length, dtype='double')
+        bvec = np.zeros(nrows)
+        alm.get_matrix_elements(self._id, amat, bvec)
 
-        return (np.reshape(amat, (3 * nat * ndata_used, fc_length), order='F'),
+        return (np.reshape(amat, (nrows, fc_length), order='F'),
                 bvec)
 
     def _set_cell(self):
@@ -518,15 +535,16 @@ class ALM:
 
         self._kind_indices = np.zeros_like(self._atomic_numbers)
         alm.set_cell(self._id, self._lavec, self._xcoord, self._atomic_numbers,
-                     self._kind_indices)
+                     self._kind_indices,
+                     self._transformation_matrix,
+                     self._primitive_axes)
 
-    def _get_ndata_used(self):
+    def _get_nrows_amat(self):
         """Private method to return the number of training data sets"""
         if self._id is None:
             self._show_error_message()
-
-        ndata_used = alm.get_ndata_used(self._id)
-        return ndata_used
+        nrows_amat = alm.get_nrows_amat(self._id)
+        return nrows_amat
 
     def _get_id(self):
         """Private method to return the instance ID"""

@@ -15,7 +15,6 @@
 #include "optimize.h"
 #include "input_setter.h"
 #include "memory.h"
-#include "system.h"
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -59,101 +58,97 @@ void InputParser::run(ALM *alm,
     parse_input(alm);
 }
 
-void InputParser::parse_displacement_and_force(ALM *alm) const
+
+void InputParser::parse_displacement_and_force_files(std::vector<std::vector<double>> &u,
+                                                     std::vector<std::vector<double>> &f,
+                                                     DispForceFile &datfile_in) const
+
 {
-    const int nat = alm->get_supercell().number_of_atoms;
-    const auto ndata = alm->optimize->get_ndata();
-    const auto nstart = alm->optimize->get_nstart();
-    const auto nend = alm->optimize->get_nend();
-    const auto skip_s = alm->optimize->get_skip_s();
-    const auto skip_e = alm->optimize->get_skip_e();
-    const auto ndata_used = nend - nstart + 1 - skip_e + skip_s;
-    double **u;
-    double **f;
+    int nrequired;
 
-    // Read displacement-force training data set from files
-    const auto file_disp = alm->files->file_disp;
-    const auto file_force = alm->files->file_force;
+    if (datfile_in.ndata == 0) {
+        nrequired = -1;
+    } else {
+        // Total number of data entries (displacement + force)
+        nrequired = 6 * nat * datfile_in.ndata;
+    }
 
-    allocate(u, ndata_used, 3 * nat);
-    allocate(f, ndata_used, 3 * nat);
-    parse_displacement_and_force_files(u, f, nat,
-                                       ndata, nstart, nend,
-                                       skip_s, skip_e,
-                                       file_disp, file_force);
-    alm->optimize->set_displacement_and_force(u, f, nat, ndata_used);
-    deallocate(u);
-    deallocate(f);
-}
-
-//
-// This works independently from InputParser.
-//
-void InputParser::parse_displacement_and_force_files(double **u,
-                                                     double **f,
-                                                     const int nat_in,
-                                                     const int ndata,
-                                                     const int nstart,
-                                                     const int nend,
-                                                     const int skip_s,
-                                                     const int skip_e,
-                                                     const std::string file_disp,
-                                                     const std::string file_force) const
-{
-    double u_in, f_in;
-    std::ifstream ifs_disp, ifs_force;
-
-    ifs_disp.open(file_disp.c_str(), std::ios::in);
-    if (!ifs_disp) exit("openfiles", "cannot open disp file");
-    ifs_force.open(file_force.c_str(), std::ios::in);
-    if (!ifs_force) exit("openfiles", "cannot open force file");
-
-    const unsigned int nreq = 3 * nat_in * ndata;
-
-    std::vector<double> u_tmp(nreq), f_tmp(nreq);
+    std::vector<double> value_arr;
 
     // Read displacements from DFILE
+    std::string line;
+    double val;
+    auto nline_u = 0;
 
-    unsigned int nline_u = 0;
-    while (ifs_disp >> u_in) {
-        u_tmp[nline_u++] = u_in;
-        if (nline_u == nreq) break;
+    // Open the target file and copy the data to 1D temporary vector
+    std::ifstream ifs_data;
+    ifs_data.open(datfile_in.filename.c_str(), std::ios::in);
+    if (!ifs_data) exit("openfiles", "cannot open DFSET file");
+    auto reach_end = false;
+    while (std::getline(ifs_data >> std::ws, line)) {
+        if (line[0] != '#') {
+
+            std::istringstream iss(line);
+
+            while (iss >> val) {
+                value_arr.push_back(val);
+                ++nline_u;
+
+                if (nline_u == nrequired) {
+                    reach_end = true;
+                    break;
+                }
+            }
+        }
+
+        if (reach_end) break;
     }
-    if (nline_u < nreq)
-        exit("data_multiplier",
-             "The number of lines in DFILE is too small for the given NDATA = ",
-             ndata);
+    ifs_data.close();
 
-    // Read forces from FFILE
+    // Check if the length of the vector is correct.
+    // Also, estimate ndata if it is not set. 
+    const auto n_entries = value_arr.size();
 
-    unsigned int nline_f = 0;
-    while (ifs_force >> f_in) {
-        f_tmp[nline_f++] = f_in;
-        if (nline_f == nreq) break;
+    if (nrequired == -1) {
+        if (n_entries % (6 * nat) == 0) {
+            datfile_in.ndata = n_entries / (6 * nat);
+        } else {
+            exit("parse_displacement_and_force_files",
+                 "The number of lines in DFSET is indivisible by NAT");
+        }
+    } else {
+        if (n_entries < nrequired) {
+            exit("parse_displacement_and_force_files",
+                 "The number of lines in DFSET is too small for the given NDATA = ",
+                 datfile_in.ndata);
+        }
     }
-    if (nline_f < nreq)
-        exit("data_multiplier",
-             "The number of lines in FFILE is too small for the given NDATA = ",
-             ndata);
+
+    if (datfile_in.nstart == 0) datfile_in.nstart = 1;
+    if (datfile_in.nend == 0) datfile_in.nend = datfile_in.ndata;
+
+    // Copy the data into 2D array
+    const auto ndata_used = datfile_in.nend - datfile_in.nstart
+        + 1 - datfile_in.skip_e + datfile_in.skip_s;
+
+    u.resize(ndata_used, std::vector<double>(3 * nat));
+    f.resize(ndata_used, std::vector<double>(3 * nat));
 
     auto idata = 0;
-    for (auto i = 0; i < ndata; ++i) {
-        if (i < nstart - 1) continue;
-        if (i >= skip_s && i < skip_e) continue;
-        if (i > nend - 1) break;
+    for (size_t i = 0; i < datfile_in.ndata; ++i) {
+        if (i < datfile_in.nstart - 1) continue;
+        if (i >= datfile_in.skip_s - 1 && i < datfile_in.skip_e - 1) continue; // When skip_s == skip_e, skip nothing.
+        if (i > datfile_in.nend - 1) break;
 
-        for (auto j = 0; j < nat_in; ++j) {
+        for (auto j = 0; j < nat; ++j) {
             for (auto k = 0; k < 3; ++k) {
-                u[idata][3 * j + k] = u_tmp[3 * nat_in * i + 3 * j + k];
-                f[idata][3 * j + k] = f_tmp[3 * nat_in * i + 3 * j + k];
+                u[idata][3 * j + k] = value_arr[6 * nat * i + 6 * j + k];
+                f[idata][3 * j + k] = value_arr[6 * nat * i + 6 * j + k + 3];
             }
         }
         ++idata;
     }
-    u_tmp.clear();
-    f_tmp.clear();
-    ifs_disp.close();
-    ifs_force.close();
+    value_arr.clear();
 }
 
 void InputParser::parse_input(ALM *alm)
@@ -186,7 +181,7 @@ void InputParser::parse_input(ALM *alm)
         exit("parse_input",
              "&position entry not found in the input file");
     }
-    parse_atomic_positions(alm);
+    parse_atomic_positions();
     input_setter->set_geometric_structure(alm);
 
     if (!locate_tag("&interaction")) {
@@ -208,10 +203,11 @@ void InputParser::parse_input(ALM *alm)
                 exit("parse_input",
                      "&optimize entry not found in the input file");
             } else {
-                warn("parse_input", "&fitting field is deprecated. Please use &optimize instead.");
+                warn("parse_input",
+                     "&fitting field is deprecated. Please use &optimize instead.");
             }
         }
-        parse_fitting_vars(alm);
+        parse_optimize_vars(alm);
     }
 
     deallocate(kdname);
@@ -219,24 +215,28 @@ void InputParser::parse_input(ALM *alm)
 
 void InputParser::parse_general_vars(ALM *alm)
 {
-    int i, j;
+    size_t i;
     std::string str_tmp, str_disp_basis;
     int printsymmetry, is_periodic[3];
-    int icount, ncount;
+    size_t icount, ncount;
     auto trim_dispsign_for_evenfunc = true;
     bool print_hessian;
     int noncollinear, trevsym;
-    double **magmom, magmag;
+    double **magmom, magmag{0.0};
     double tolerance;
     double tolerance_constraint;
+    double transformation_matrix[3][3];
+    double primitive_axes[3][3];
     int verbosity;
 
     std::vector<std::string> kdname_v, periodic_v, magmom_v, str_split;
-    std::string str_allowed_list =
-        "PREFIX MODE NAT NKD KD PERIODIC PRINTSYM TOLERANCE DBASIS TRIMEVEN\
-                                   MAGMOM NONCOLLINEAR TREVSYM HESSIAN TOL_CONST VERBOSITY";
-    std::string str_no_defaults = "PREFIX MODE NAT NKD KD";
-    std::vector<std::string> no_defaults;
+    const std::vector<std::string> input_list{
+        "PREFIX", "MODE", "NAT", "NKD", "KD", "PERIODIC", "PRINTSYM", "TOLERANCE",
+        "DBASIS", "TRIMEVEN", "VERBOSITY",
+        "MAGMOM", "NONCOLLINEAR", "TREVSYM", "HESSIAN", "TOL_CONST",
+        "SUPERCELL", "PRIMITIVE_AXES"
+    };
+    std::vector<std::string> no_defaults{"PREFIX", "MODE", "NAT", "NKD", "KD"};
     std::map<std::string, std::string> general_var_dict;
 
     if (from_stdin) {
@@ -245,9 +245,7 @@ void InputParser::parse_general_vars(ALM *alm)
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, general_var_dict);
-
-    boost::split(no_defaults, str_no_defaults, boost::is_space());
+    get_var_dict(input_list, general_var_dict);
 
     for (const auto &it : no_defaults) {
         if (general_var_dict.find(it) == general_var_dict.end()) {
@@ -261,7 +259,7 @@ void InputParser::parse_general_vars(ALM *alm)
     mode = general_var_dict["MODE"];
 
     std::transform(mode.begin(), mode.end(), mode.begin(), tolower);
-    if (mode != "fitting" && mode != "suggest" && mode != "lasso" && mode != "optimize") {
+    if (mode != "fitting" && mode != "suggest" && mode != "lasso" && mode != "optimize" && mode != "opt") {
         exit("parse_general_vars", "Invalid MODE variable");
     }
     if (mode == "fitting") {
@@ -271,8 +269,9 @@ void InputParser::parse_general_vars(ALM *alm)
     if (mode == "lasso") {
         mode = "optimize";
         warn("parse_general_vars",
-             "MODE = lasso is deprecated. Please use MODE = optimize instead with OPTIMIZER = enet option in the &optimize field.");
+             "MODE = lasso is deprecated. Please use MODE = optimize instead with LMODEL = enet option in the &optimize field.");
     }
+    if (mode == "opt") mode = "optimize";
 
     assign_val(nat, "NAT", general_var_dict);
     assign_val(nkd, "NKD", general_var_dict);
@@ -339,7 +338,7 @@ void InputParser::parse_general_vars(ALM *alm)
     auto lspin = false;
 
     for (i = 0; i < nat; ++i) {
-        for (j = 0; j < 3; ++j) {
+        for (size_t j = 0; j < 3; ++j) {
             magmom[i][j] = 0.0;
         }
     }
@@ -405,11 +404,12 @@ void InputParser::parse_general_vars(ALM *alm)
                             exit("parse_general_vars",
                                  "Please place '*' without space for the MAGMOM-tag.");
                         }
+                        ncount = 0;
                         try {
                             magmag = boost::lexical_cast<double>(str_split[1]);
-                            ncount = static_cast<int>(boost::lexical_cast<double>(str_split[0]));
+                            ncount = static_cast<size_t>(boost::lexical_cast<double>(str_split[0]));
                         }
-                        catch (std::exception &e) {
+                        catch (std::exception) {
                             exit("parse_general_vars", "Bad format for MAGMOM.");
                         }
 
@@ -435,6 +435,110 @@ void InputParser::parse_general_vars(ALM *alm)
         }
     }
 
+    // Set transformation matrix & primitive_axis
+    std::vector<std::string> supercell_v, primitiveaxis_v;
+    split_str_by_space(general_var_dict["SUPERCELL"], supercell_v);
+    split_str_by_space(general_var_dict["PRIMITIVE_AXES"], primitiveaxis_v);
+
+    for (i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
+            if (i == j) {
+                transformation_matrix[i][j] =  1.0;
+                primitive_axes[i][j] = 1.0;
+            } else {
+                transformation_matrix[i][j] =  0.0;
+                primitive_axes[i][j] = 0.0;
+            }
+        }
+    }
+    // Parse SUPERCELL
+    if (!supercell_v.empty()) {
+        if (supercell_v.size() == 3) {
+            for (i = 0; i < 3; ++i) {
+                try {
+                    transformation_matrix[i][i] 
+                    = boost::lexical_cast<double>(supercell_v[i]);
+                } catch (std::exception &e) {
+                    std::cout << e.what() << '\n';
+                    exit("parse_general_vars",
+                         "The SUPERCELL tags must be a set of doubles.");
+                }
+            }
+        } else if (supercell_v.size() == 9) {
+            auto counter = 0;
+            for (i = 0; i < 3; ++i) {
+                for (auto j = 0; j < 3; ++j) {
+                    try {
+                        transformation_matrix[i][j] 
+                        = boost::lexical_cast<double>(supercell_v[counter++]);
+                    } catch (std::exception &e) {
+                        std::cout << e.what() << '\n';
+                        exit("parse_general_vars",
+                         "The SUPERCELL tags must be a set of doubles.");
+                    }
+                }
+            }
+        } else {
+            exit("parse_general_vars", 
+                 "Invalid number of entries for SUPERCELL");
+        }
+    }
+
+    // Parse PRIMITIVE_AXES
+    if (!primitiveaxis_v.empty()) {
+
+        std::vector<std::string> list_string;
+        double val_tmp;
+
+        if (primitiveaxis_v.size() == 3) {
+            for (i = 0; i < 3; ++i) {
+                try {
+                    boost::split(list_string, primitiveaxis_v[i], boost::is_any_of("/"));
+                    if (list_string.size() == 1) {
+                        val_tmp = boost::lexical_cast<double>(list_string[0]);
+                    } else if (list_string.size() == 2) {
+                        val_tmp = boost::lexical_cast<double>(list_string[0]) 
+                        / boost::lexical_cast<double>(list_string[1]);
+                    } else {
+                        exit("parse_general_vars",
+                         "The PRIMITIVE_AXES tag entries must be double or fractions.");
+                    }
+                    primitive_axes[i][i] = val_tmp;
+                } catch (std::exception &e) {
+                    std::cout << e.what() << '\n';
+                    exit("parse_general_vars",
+                         "The PRIMITIVE_AXES tags must be a set of doubles.");
+                }
+            }
+        } else if (primitiveaxis_v.size() == 9) {
+            auto counter = 0;
+            for (i = 0; i < 3; ++i) {
+                for (auto j = 0; j < 3; ++j) {
+                    try {
+                        boost::split(list_string, primitiveaxis_v[counter++], boost::is_any_of("/"));
+                        if (list_string.size() == 1) {
+                            val_tmp = boost::lexical_cast<double>(list_string[0]);
+                        } else if (list_string.size() == 2) {
+                            val_tmp = boost::lexical_cast<double>(list_string[0]) 
+                            / boost::lexical_cast<double>(list_string[1]);
+                        } else {
+                            exit("parse_general_vars",
+                            "The PRIMITIVE_AXES tag entries must be double or fractions.");
+                        }
+                        primitive_axes[i][j] = val_tmp;
+                        } catch (std::exception &e) {
+                            std::cout << e.what() << '\n';
+                            exit("parse_general_vars",
+                            "The PRIMITIVE_AXES tags must be a set of doubles.");
+                        }
+                }
+            }
+        } else {
+            exit("parse_general_vars", 
+                 "Invalid number of entries for PRIMITIVE_AXES");
+        }
+    }
+
     if (mode == "suggest") {
         if (general_var_dict["DBASIS"].empty()) {
             str_disp_basis = "Cart";
@@ -446,14 +550,31 @@ void InputParser::parse_general_vars(ALM *alm)
         if ((str_disp_basis[0] != 'C') && (str_disp_basis[0] != 'F')) {
             exit("parse_general_vars", "Invalid DBASIS");
         }
-
         if (!general_var_dict["TRIMEVEN"].empty()) {
             assign_val(trim_dispsign_for_evenfunc,
                        "TRIMEVEN", general_var_dict);
         }
-
     }
 
+/*
+    std::cout << "SUPERCELL:\n";
+    for (i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
+            std::cout << std::setw(10) << transformation_matrix[i][j];
+        }
+        std::cout << '\n';
+    }
+    std::cout << '\n';
+
+    std::cout << "PRIMITIVE_AXES:\n";
+    for (i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
+            std::cout << std::setw(10) << primitive_axis[i][j];
+        }
+        std::cout << '\n';
+    }
+    std::cout << '\n';
+*/
     input_setter->set_general_vars(alm,
                                    prefix,
                                    mode,
@@ -473,6 +594,9 @@ void InputParser::parse_general_vars(ALM *alm)
                                    magmom,
                                    tolerance,
                                    tolerance_constraint);
+
+    input_setter->set_supercell_information(transformation_matrix,
+                                            primitive_axes);
     allocate(magmom, nat, 3);
 
     kdname_v.clear();
@@ -577,9 +701,8 @@ void InputParser::parse_interaction_vars()
     int *nbody_include;
 
     std::vector<std::string> nbody_v;
-    std::string str_allowed_list = "NORDER NBODY";
-    std::string str_no_defaults = "NORDER";
-    std::vector<std::string> no_defaults;
+    const std::vector<std::string> input_list{"NORDER", "NBODY"};
+    std::vector<std::string> no_defaults{"NORDER"};
     std::map<std::string, std::string> interaction_var_dict;
 
 
@@ -589,9 +712,7 @@ void InputParser::parse_interaction_vars()
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, interaction_var_dict);
-
-    boost::split(no_defaults, str_no_defaults, boost::is_space());
+    get_var_dict(input_list, interaction_var_dict);
 
     for (const auto &it : no_defaults) {
         if (interaction_var_dict.find(it) == interaction_var_dict.end()) {
@@ -614,7 +735,7 @@ void InputParser::parse_interaction_vars()
         for (i = 0; i < maxorder; ++i) {
             nbody_include[i] = i + 2;
         }
-    } else if (nbody_v.size() == maxorder) {
+    } else if (nbody_v.size() == static_cast<size_t>(maxorder)) {
         for (i = 0; i < maxorder; ++i) {
             try {
                 nbody_include[i] = boost::lexical_cast<int>(nbody_v[i]);
@@ -635,7 +756,6 @@ void InputParser::parse_interaction_vars()
              "Harmonic interaction is always 2 body (except on-site 1 body)");
     }
 
-
     input_setter->set_interaction_vars(maxorder, nbody_include);
 
     deallocate(nbody_include);
@@ -645,27 +765,29 @@ void InputParser::parse_interaction_vars()
 }
 
 
-void InputParser::parse_fitting_vars(ALM *alm)
+void InputParser::parse_optimize_vars(ALM *alm)
 {
-    int ndata, nstart, nend;
+    // This method must not be called before setting NAT by parse_general_vars.
+
     int constraint_flag;
     auto flag_sparse = 0;
     std::string rotation_axis;
-    std::string str_allowed_list =
-        "NDATA NSTART NEND DFILE FFILE ICONST ROTAXIS FC2XML FC3XML SPARSE \
-                                   LASSO_DNORM LASSO_ALPHA LASSO_MAXITER LASSO_TOL LASSO_CV LASSO_CVSET \
-                                   LASSO_FREQ LASSO_MAXALPHA LASSO_MINALPHA LASSO_NALPHA \
-                                   NDATA_TEST DFILE_TEST FFILE_TEST NSTART_TEST NEND_TEST SKIP STANDARDIZE \
-                                   SOLUTION_PATH DEBIAS_OLS L1_RATIO OPTIMIZER";
-    std::string str_no_defaults = "NDATA DFILE FFILE";
-    std::vector<std::string> no_defaults;
-    std::map<std::string, std::string> fitting_var_dict;
 
-    int ndata_test, nstart_test, nend_test;
-    int skip_s = 0;
-    int skip_e = 0;
-    std::string str_skip, dfile_test, ffile_test;
     OptimizerControl optcontrol;
+    std::vector<std::vector<double>> u_tmp1, f_tmp1;
+    std::vector<std::vector<double>> u_tmp2, f_tmp2;
+
+    const std::vector<std::string> input_list{
+        "LMODEL", "SPARSE",
+        "ICONST", "ROTAXIS", "FC2XML", "FC3XML",
+        "NDATA", "NSTART", "NEND", "SKIP", "DFILE", "FFILE", "DFSET",
+        "NDATA_CV", "NSTART_CV", "NEND_CV", "DFSET_CV",
+        "L1_RATIO", "STANDARDIZE", "ENET_DNORM",
+        "L1_ALPHA", "CV_MAXALPHA", "CV_MINALPHA", "CV_NALPHA",
+        "CV", "MAXITER", "CONV_TOL", "NWRITE", "SOLUTION_PATH", "DEBIAS_OLS"
+    };
+
+    std::map<std::string, std::string> fitting_var_dict;
 
     if (from_stdin) {
         std::cin.ignore();
@@ -673,85 +795,20 @@ void InputParser::parse_fitting_vars(ALM *alm)
         ifs_input.ignore();
     }
 
-    get_var_dict(str_allowed_list, fitting_var_dict);
+    get_var_dict(input_list, fitting_var_dict);
 
-    boost::split(no_defaults, str_no_defaults, boost::is_space());
+    if (!fitting_var_dict["LMODEL"].empty()) {
+        auto str_LMODEL = fitting_var_dict["LMODEL"];
+        boost::to_lower(str_LMODEL);
 
-    for (const auto &it : no_defaults) {
-        if (fitting_var_dict.find(it) == fitting_var_dict.end()) {
-            exit("parse_fitting_vars",
-                 "The following variable is not found in &fitting input region: ",
-                 it.c_str());
-        }
-    }
-
-    if (!fitting_var_dict["OPTIMIZER"].empty()) {
-        auto str_optimizer = fitting_var_dict["OPTIMIZER"];
-        boost::to_lower(str_optimizer);
-
-        if (str_optimizer == "ols" || str_optimizer == "ls" || str_optimizer == "least-squares") {
-            optcontrol.optimizer = 1;
-        } else if (str_optimizer == "enet" || str_optimizer == "elastic-net") {
-            optcontrol.optimizer = 2;
+        if (str_LMODEL == "ols" || str_LMODEL == "ls"
+            || str_LMODEL == "least-squares" || str_LMODEL == "1") {
+            optcontrol.linear_model = 1;
+        } else if (str_LMODEL == "enet" || str_LMODEL == "elastic-net"
+            || str_LMODEL == "2") {
+            optcontrol.linear_model = 2;
         } else {
-            exit("parse_fitting_vars", "Invalid OPTIMIZER-tag");
-        }
-    }
-
-    assign_val(ndata, "NDATA", fitting_var_dict);
-
-    if (fitting_var_dict["NSTART"].empty()) {
-        nstart = 1;
-    } else {
-        assign_val(nstart, "NSTART", fitting_var_dict);
-    }
-    if (fitting_var_dict["NEND"].empty()) {
-        nend = ndata;
-    } else {
-        assign_val(nend, "NEND", fitting_var_dict);
-    }
-
-    if (!fitting_var_dict["SKIP"].empty()) {
-        std::vector<std::string> str_entry;
-        assign_val(str_skip, "SKIP", fitting_var_dict);
-        boost::split(str_entry, str_skip, boost::is_any_of("-"));
-        if (str_entry.size() == 1) {
-            skip_s = boost::lexical_cast<int>(str_entry[0]) - 1;
-            skip_e = skip_s + 1;
-        } else if (str_entry.size() == 2) {
-            skip_s = boost::lexical_cast<int>(str_entry[0]) - 1;
-            skip_e = boost::lexical_cast<int>(str_entry[1]);
-        } else {
-            exit("parse_fitting_vars", "Invalid format for the SKIP-tag.");
-        }
-    }
-
-
-    if (ndata <= 0 || nstart <= 0 || nend <= 0
-        || nstart > ndata || nend > ndata || nstart > nend) {
-        exit("parce_fitting_vars",
-             "ndata, nstart, nend are not consistent with each other");
-    }
-
-    auto dfile = fitting_var_dict["DFILE"];
-    auto ffile = fitting_var_dict["FFILE"];
-
-    if (fitting_var_dict["ICONST"].empty()) {
-        constraint_flag = 1;
-    } else {
-        assign_val(constraint_flag, "ICONST", fitting_var_dict);
-    }
-
-    auto fc2_file = fitting_var_dict["FC2XML"];
-    auto fc3_file = fitting_var_dict["FC3XML"];
-    bool fix_harmonic = !fc2_file.empty();
-    bool fix_cubic = !fc3_file.empty();
-
-    if (constraint_flag % 10 >= 2) {
-        rotation_axis = fitting_var_dict["ROTAXIS"];
-        if (rotation_axis.empty()) {
-            exit("parse_fitting_vars",
-                 "ROTAXIS has to be given when ICONST=2 or 3");
+            exit("parse_optimize_vars", "Invalid OPTIMIZER-tag");
         }
     }
 
@@ -760,36 +817,33 @@ void InputParser::parse_fitting_vars(ALM *alm)
         optcontrol.use_sparse_solver = flag_sparse;
     }
 
-    if (!fitting_var_dict["LASSO_DNORM"].empty()) {
-        optcontrol.displacement_scaling_factor
-            = boost::lexical_cast<double>(fitting_var_dict["LASSO_DNORM"]);
+    if (!fitting_var_dict["ENET_DNORM"].empty()) {
+        optcontrol.displacement_normalization_factor
+            = boost::lexical_cast<double>(fitting_var_dict["ENET_DNORM"]);
     }
-    if (!fitting_var_dict["LASSO_ALPHA"].empty()) {
-        optcontrol.l1_alpha = boost::lexical_cast<double>(fitting_var_dict["LASSO_ALPHA"]);
+    if (!fitting_var_dict["L1_ALPHA"].empty()) {
+        optcontrol.l1_alpha = boost::lexical_cast<double>(fitting_var_dict["L1_ALPHA"]);
     }
-    if (!fitting_var_dict["LASSO_MINALPHA"].empty()) {
-        optcontrol.l1_alpha_min = boost::lexical_cast<double>(fitting_var_dict["LASSO_MINALPHA"]);
+    if (!fitting_var_dict["CV_MINALPHA"].empty()) {
+        optcontrol.l1_alpha_min = boost::lexical_cast<double>(fitting_var_dict["CV_MINALPHA"]);
     }
-    if (!fitting_var_dict["LASSO_MAXALPHA"].empty()) {
-        optcontrol.l1_alpha_max = boost::lexical_cast<double>(fitting_var_dict["LASSO_MAXALPHA"]);
+    if (!fitting_var_dict["CV_MAXALPHA"].empty()) {
+        optcontrol.l1_alpha_max = boost::lexical_cast<double>(fitting_var_dict["CV_MAXALPHA"]);
     }
-    if (!fitting_var_dict["LASSO_NALPHA"].empty()) {
-        optcontrol.num_l1_alpha = boost::lexical_cast<int>(fitting_var_dict["LASSO_NALPHA"]);
+    if (!fitting_var_dict["CV_NALPHA"].empty()) {
+        optcontrol.num_l1_alpha = boost::lexical_cast<int>(fitting_var_dict["CV_NALPHA"]);
     }
-    if (!fitting_var_dict["LASSO_TOL"].empty()) {
-        optcontrol.tolerance_iteration = boost::lexical_cast<double>(fitting_var_dict["LASSO_TOL"]);
+    if (!fitting_var_dict["CONV_TOL"].empty()) {
+        optcontrol.tolerance_iteration = boost::lexical_cast<double>(fitting_var_dict["CONV_TOL"]);
     }
-    if (!fitting_var_dict["LASSO_MAXITER"].empty()) {
-        optcontrol.maxnum_iteration = boost::lexical_cast<int>(fitting_var_dict["LASSO_MAXITER"]);
+    if (!fitting_var_dict["MAXITER"].empty()) {
+        optcontrol.maxnum_iteration = boost::lexical_cast<int>(fitting_var_dict["MAXITER"]);
     }
-    if (!fitting_var_dict["LASSO_CV"].empty()) {
-        optcontrol.cross_validation_mode = boost::lexical_cast<int>(fitting_var_dict["LASSO_CV"]);
+    if (!fitting_var_dict["CV"].empty()) {
+        optcontrol.cross_validation = boost::lexical_cast<int>(fitting_var_dict["CV"]);
     }
-    if (!fitting_var_dict["LASSO_CVSET"].empty()) {
-        optcontrol.nset_cross_validation = boost::lexical_cast<int>(fitting_var_dict["LASSO_CVSET"]);
-    }
-    if (!fitting_var_dict["LASSO_FREQ"].empty()) {
-        optcontrol.output_frequency = boost::lexical_cast<int>(fitting_var_dict["LASSO_FREQ"]);
+    if (!fitting_var_dict["NWRITE"].empty()) {
+        optcontrol.output_frequency = boost::lexical_cast<int>(fitting_var_dict["NWRITE"]);
     }
     if (!fitting_var_dict["STANDARDIZE"].empty()) {
         optcontrol.standardize = boost::lexical_cast<int>(fitting_var_dict["STANDARDIZE"]);
@@ -804,55 +858,128 @@ void InputParser::parse_fitting_vars(ALM *alm)
         optcontrol.l1_ratio = boost::lexical_cast<double>(fitting_var_dict["L1_RATIO"]);
     }
 
-    ndata_test = ndata;
 
-    if (!fitting_var_dict["NDATA_TEST"].empty()) {
-        ndata_test = boost::lexical_cast<int>(fitting_var_dict["NDATA_TEST"]);
-    }
+    DispForceFile datfile_train;
 
-    if (fitting_var_dict["NSTART_TEST"].empty()) {
-        nstart_test = 1;
-    } else {
-        nstart_test = boost::lexical_cast<int>(fitting_var_dict["NSTART_TEST"]);
+    if (fitting_var_dict["DFSET"].empty()) {
+        if (!fitting_var_dict["DFILE"].empty() || !fitting_var_dict["FFILE"].empty()) {
+            std::cout << " Sorry. DFILE and FFILE tags are obsolate.\n";
+            std::cout << " Please use DFSET instead.\n";
+            std::cout << " DFSET can be created easily by the unix paste command as:\n\n";
+            std::cout << " $ paste DFILE FFILE > DFSET\n\n";
+            exit("parse_optimize_vars", "Obsolate tag: DFILE, FFILE");
+        } else {
+            exit("parse_optimize_vars", "DFSET tag must be given.");
+        }
     }
-    if (fitting_var_dict["NEND_TEST"].empty()) {
-        nend_test = 1;
-    } else {
-        nend_test = boost::lexical_cast<int>(fitting_var_dict["NEND_TEST"]);
-    }
+    datfile_train.filename = fitting_var_dict["DFSET"];
 
-    if (fitting_var_dict["DFILE_TEST"].empty()) {
-        dfile_test = dfile;
-    } else {
-        dfile_test = fitting_var_dict["DFILE_TEST"];
+    if (!fitting_var_dict["NDATA"].empty()) {
+        assign_val(datfile_train.ndata, "NDATA", fitting_var_dict);
     }
-
-    if (fitting_var_dict["FFILE_TEST"].empty()) {
-        ffile_test = ffile;
-    } else {
-        ffile_test = fitting_var_dict["FFILE_TEST"];
+    if (!fitting_var_dict["NSTART"].empty()) {
+        assign_val(datfile_train.nstart, "NSTART", fitting_var_dict);
+    }
+    if (!fitting_var_dict["NEND"].empty()) {
+        assign_val(datfile_train.nend, "NEND", fitting_var_dict);
     }
 
-    if (ndata_test <= 0 || nstart_test <= 0 || nend_test <= 0
-        || nstart_test > ndata_test || nend_test > ndata_test || nstart_test > nend_test) {
-        exit("parse_fitting_vars",
-             "ndata_test, nstart_test, nend_test are not consistent with each other");
+    if (!fitting_var_dict["SKIP"].empty()) {
+        std::vector<std::string> str_entry;
+        std::string str_skip;
+        assign_val(str_skip, "SKIP", fitting_var_dict);
+        boost::split(str_entry, str_skip, boost::is_any_of("-"));
+        if (str_entry.size() == 1) {
+            datfile_train.skip_s = boost::lexical_cast<int>(str_entry[0]);
+            datfile_train.skip_e = datfile_train.skip_s + 1;
+        } else if (str_entry.size() == 2) {
+            datfile_train.skip_s = boost::lexical_cast<int>(str_entry[0]);
+            datfile_train.skip_e = boost::lexical_cast<int>(str_entry[1]) + 1;
+        } else {
+            exit("parse_optimize_vars", "Invalid format for the SKIP-tag.");
+        }
     }
+
+    if (!is_data_range_consistent(datfile_train)) {
+        exit("parse_optimize_vars",
+             "NDATA, NSTART, NEND and SKIP tags are inconsistent.");
+    }
+
+    // Parse u_tmp1 and f_tmp1 from DFSET and set ndata if it's not.
+    parse_displacement_and_force_files(u_tmp1,
+                                       f_tmp1,
+                                       datfile_train);
+
+    // Check consistency again
+    if (!is_data_range_consistent(datfile_train)) {
+        exit("parse_optimize_vars",
+             "NDATA, NSTART, NEND and SKIP tags are inconsistent.");
+    }
+
+    auto datfile_validation = datfile_train;
+    datfile_validation.skip_s = 0;
+    datfile_validation.skip_e = 0;
+
+    if (!fitting_var_dict["NDATA_CV"].empty()) {
+        datfile_validation.ndata = boost::lexical_cast<int>(fitting_var_dict["NDATA_CV"]);
+    }
+
+    if (!fitting_var_dict["NSTART_CV"].empty()) {
+        datfile_validation.nstart = boost::lexical_cast<int>(fitting_var_dict["NSTART_CV"]);
+    }
+    if (!fitting_var_dict["NEND_CV"].empty()) {
+        datfile_validation.nend = boost::lexical_cast<int>(fitting_var_dict["NEND_CV"]);
+    }
+
+    if (!fitting_var_dict["DFSET_CV"].empty()) {
+        datfile_validation.filename = fitting_var_dict["DFSET_CV"];
+    }
+
+    if (!is_data_range_consistent(datfile_validation)) {
+        exit("parse_optimize_vars",
+             "NDATA_CV, NSTART_CV and NEND_CV tags are inconsistent.");
+    }
+
+    if (optcontrol.cross_validation == -1) {
+        parse_displacement_and_force_files(u_tmp2,
+                                           f_tmp2,
+                                           datfile_validation);
+
+        if (!is_data_range_consistent(datfile_validation)) {
+            exit("parse_optimize_vars",
+                 "NDATA_CV, NSTART_CV and NEND_CV tags are inconsistent.");
+        }
+    }
+
 
     input_setter->set_optimize_vars(alm,
-                                    ndata,
-                                    nstart,
-                                    nend,
-                                    skip_s,
-                                    skip_e,
-                                    dfile,
-                                    ffile,
-                                    ndata_test,
-                                    nstart_test,
-                                    nend_test,
-                                    dfile_test,
-                                    ffile_test,
+                                    u_tmp1, f_tmp1,
+                                    u_tmp2, f_tmp2,
                                     optcontrol);
+
+    input_setter->set_file_vars(alm,
+                                datfile_train,
+                                datfile_validation);
+
+
+    if (fitting_var_dict["ICONST"].empty()) {
+        constraint_flag = 1;
+    } else {
+        assign_val(constraint_flag, "ICONST", fitting_var_dict);
+    }
+
+    auto fc2_file = fitting_var_dict["FC2XML"];
+    auto fc3_file = fitting_var_dict["FC3XML"];
+    const auto fix_harmonic = !fc2_file.empty();
+    const auto fix_cubic = !fc3_file.empty();
+
+    if (constraint_flag % 10 >= 2) {
+        rotation_axis = fitting_var_dict["ROTAXIS"];
+        if (rotation_axis.empty()) {
+            exit("parse_optimize_vars",
+                 "ROTAXIS has to be given when ICONST=2 or 3");
+        }
+    }
 
     input_setter->set_constraint_vars(alm,
                                       constraint_flag,
@@ -865,9 +992,8 @@ void InputParser::parse_fitting_vars(ALM *alm)
     fitting_var_dict.clear();
 }
 
-void InputParser::parse_atomic_positions(ALM *alm)
+void InputParser::parse_atomic_positions()
 {
-    int i, j;
     std::string line, line_wo_comment;
     std::string str_tmp;
     std::string::size_type pos_first_comment_tag;
@@ -880,7 +1006,6 @@ void InputParser::parse_atomic_positions(ALM *alm)
     } else {
         ifs_input.ignore();
     }
-
 
     str_v.clear();
 
@@ -933,7 +1058,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
     allocate(kd, nat);
 
 
-    for (i = 0; i < nat; ++i) {
+    for (size_t i = 0; i < nat; ++i) {
 
         split_str_by_space(str_v[i], pos_line);
 
@@ -948,7 +1073,7 @@ void InputParser::parse_atomic_positions(ALM *alm)
                      i + 1);
             }
 
-            for (j = 0; j < 3; ++j) {
+            for (auto j = 0; j < 3; ++j) {
                 xeq[i][j] = boost::lexical_cast<double>(pos_line[j + 1]);
             }
 
@@ -1020,7 +1145,7 @@ void InputParser::parse_cutoff_radii()
 
     }
 
-    int i, j, k;
+    size_t i, j, k;
     int order;
     std::vector<std::string> cutoff_line;
     std::set<std::string> element_allowed;
@@ -1053,10 +1178,9 @@ void InputParser::parse_cutoff_radii()
     element_allowed.insert("*");
     kd_map.insert(std::map<std::string, int>::value_type("*", -1));
 
-    for (std::vector<std::string>::const_iterator it = str_cutoff.begin();
-         it != str_cutoff.end(); ++it) {
+    for (const auto &it : str_cutoff) {
 
-        split_str_by_space(*it, cutoff_line);
+        split_str_by_space(it, cutoff_line);
 
         if (cutoff_line.size() < maxorder + 1) {
             exit("parse_cutoff_radii",
@@ -1137,14 +1261,25 @@ void InputParser::parse_cutoff_radii()
     }
     deallocate(undefined_cutoff);
 
+    std::vector<double> cutoff_information_flatten;
+    cutoff_information_flatten.resize(maxorder * nkd * nkd);
+
+    i = 0;
+    for (order = 0; order < maxorder; ++order) {
+        for (j = 0; j < nkd; ++j) {
+            for (k = 0; k < nkd; ++k) {
+                cutoff_information_flatten[i++] = cutoff_radii_tmp[order][j][k];
+            }
+        }
+    }
+    deallocate(cutoff_radii_tmp);
+
     input_setter->set_cutoff_radii(maxorder,
                                    nkd,
-                                   cutoff_radii_tmp);
-
-    deallocate(cutoff_radii_tmp);
+                                   cutoff_information_flatten);
 }
 
-void InputParser::get_var_dict(const std::string keywords,
+void InputParser::get_var_dict(const std::vector<std::string> &input_list,
                                std::map<std::string, std::string> &var_dict)
 {
     std::string line, key, val;
@@ -1154,7 +1289,9 @@ void InputParser::get_var_dict(const std::string keywords,
 
     std::set<std::string> keyword_set;
 
-    boost::split(keyword_set, keywords, boost::is_space());
+    for (const auto &it : input_list) {
+        keyword_set.insert(it);
+    }
 
     var_dict.clear();
 
@@ -1238,7 +1375,7 @@ void InputParser::get_var_dict(const std::string keywords,
 
                 // Split the input entry by '='
 
-                std::string str_tmp = boost::trim_copy(it);
+                auto str_tmp = boost::trim_copy(it);
 
                 if (!str_tmp.empty()) {
 
@@ -1275,6 +1412,34 @@ void InputParser::get_var_dict(const std::string keywords,
     keyword_set.clear();
 }
 
+bool InputParser::is_data_range_consistent(const DispForceFile &datfile_in) const
+{
+    const auto ndata = datfile_in.ndata;
+    const auto nstart = datfile_in.nstart;
+    const auto nend = datfile_in.nend;
+    const auto skip_s = datfile_in.skip_s;
+    const auto skip_e = datfile_in.skip_e;
+
+    // std::cout << "ndata = " << ndata << '\n';
+    // std::cout << "nstart= " << nstart << '\n';
+    // std::cout << "nend  = " << nend << '\n';
+    // std::cout << "skip_s= " << skip_s << '\n';
+    // std::cout << "skip_e= " << skip_e << '\n';
+    if (nstart > 0 && skip_s > 0 && skip_s < nstart) return false;
+    if (nend > 0 && skip_e > 0 && (skip_e - 1) > nend) return false;
+    if (nstart > 0 && nend > 0 && nstart > nend) return false;
+    if (skip_s > 0 && skip_e > 0 && skip_s >= skip_e) return false;
+
+    if (ndata > 0) {
+        if (nstart > 0 && nstart > ndata) return false;
+        if (nend > 0 && nend > ndata) return false;
+        if (skip_s > 0 && skip_s > ndata) return false;
+        if (skip_e > 0 && (skip_e - 1) > ndata) return false;
+    }
+
+    return true;
+}
+
 
 int InputParser::locate_tag(const std::string key)
 {
@@ -1295,20 +1460,19 @@ int InputParser::locate_tag(const std::string key)
         }
         return ret;
 
-    } else {
-
-        ifs_input.clear();
-        ifs_input.seekg(0, std::ios_base::beg);
-
-        while (ifs_input >> line) {
-            boost::to_lower(line);
-            if (line == key) {
-                ret = 1;
-                break;
-            }
-        }
-        return ret;
     }
+
+    ifs_input.clear();
+    ifs_input.seekg(0, std::ios_base::beg);
+
+    while (ifs_input >> line) {
+        boost::to_lower(line);
+        if (line == key) {
+            ret = 1;
+            break;
+        }
+    }
+    return ret;
 }
 
 bool InputParser::is_endof_entry(const std::string str) const
@@ -1324,7 +1488,7 @@ void InputParser::split_str_by_space(const std::string str,
 
     str_vec.clear();
 
-    while (1) {
+    while (true) {
         str_tmp.clear();
         is >> str_tmp;
         if (str_tmp.empty()) {
@@ -1348,7 +1512,7 @@ void InputParser::assign_val(T &val,
         }
         catch (std::exception &e) {
             std::cout << e.what() << std::endl;
-            std::string str_tmp = "Invalid entry for the " + key + " tag.\n";
+            auto str_tmp = "Invalid entry for the " + key + " tag.\n";
             str_tmp += " Please check the input value.";
             exit("assign_val", str_tmp.c_str());
         }

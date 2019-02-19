@@ -10,7 +10,7 @@
 
 #include "symmetry.h"
 #include "error.h"
-#include "interaction.h"
+#include "cluster.h"
 #include "memory.h"
 #include "mathfunctions.h"
 #include "system.h"
@@ -68,7 +68,6 @@ const std::vector<std::vector<int>>& Symmetry::get_map_p2s() const
     return map_p2s;
 }
 
-
 const std::vector<SymmetryOperation>& Symmetry::get_SymmData() const
 {
     return SymmData;
@@ -84,17 +83,17 @@ const std::vector<int>& Symmetry::get_symnum_tran() const
     return symnum_tran;
 }
 
-unsigned int Symmetry::get_nsym() const
+size_t Symmetry::get_nsym() const
 {
     return nsym;
 }
 
-unsigned int Symmetry::get_ntran() const
+size_t Symmetry::get_ntran() const
 {
     return ntran;
 }
 
-unsigned int Symmetry::get_nat_prim() const
+size_t Symmetry::get_nat_prim() const
 {
     return nat_prim;
 }
@@ -156,7 +155,7 @@ void Symmetry::set_default_variables()
     printsymmetry = false;
     ntran = 0;
     nat_prim = 0;
-    tolerance = 1e-6;
+    tolerance = 1e-3;
     use_internal_symm_finder = false;
 }
 
@@ -168,7 +167,7 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
                                         const Spin &spin,
                                         const int verbosity)
 {
-    int i, j;
+    size_t i, j;
 
     SymmData.clear();
 
@@ -183,7 +182,6 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
         if (verbosity > 0) {
             std::cout << "  Space group: " << spgsymbol << " (" << std::setw(3) << spgnum << ")" << std::endl;
         }
-
     }
 
     // The order in SymmData changes for each run because it was generated
@@ -400,7 +398,8 @@ void Symmetry::find_crystal_symmetry(const Cell &cell,
 
     int rot_int[3][3];
 
-    int ii, jj, kk;
+    int ii;
+    size_t jj, kk;
     unsigned int itype;
 
     bool is_found;
@@ -568,7 +567,7 @@ int Symmetry::findsym_spglib(const Cell &cell,
                              const Spin &spin,
                              std::string &spgsymbol)
 {
-    int i, j;
+    size_t i, j;
     double (*position)[3];
     double (*translation)[3];
     int (*rotation)[3][3];
@@ -576,7 +575,7 @@ int Symmetry::findsym_spglib(const Cell &cell,
     double aa_tmp[3][3];
     int *types_tmp;
 
-    auto nat = cell.number_of_atoms;
+    const auto nat = cell.number_of_atoms;
 
     if (spin.lspin && spin.noncollinear) {
         exit("findsym_spglib", "NONCOLLINEAR spin is not supported in spglib.");
@@ -610,7 +609,7 @@ int Symmetry::findsym_spglib(const Cell &cell,
     }
 
     // First find the number of symmetry operations
-    auto nsym = spg_get_multiplicity(aa_tmp, position, types_tmp, nat, tolerance);
+    nsym = spg_get_multiplicity(aa_tmp, position, types_tmp, nat, tolerance);
 
     if (nsym == 0) exit("findsym_spglib", "Error occured in spg_get_multiplicity");
 
@@ -696,9 +695,9 @@ void Symmetry::print_symminfo_stdout() const
     std::cout << "  **Cell-Atom Correspondens Below**" << std::endl;
     std::cout << std::setw(6) << " CELL" << " | " << std::setw(5) << "ATOM" << std::endl;
 
-    for (auto i = 0; i < ntran; ++i) {
+    for (size_t i = 0; i < ntran; ++i) {
         std::cout << std::setw(6) << i + 1 << " | ";
-        for (auto j = 0; j < nat_prim; ++j) {
+        for (size_t j = 0; j < nat_prim; ++j) {
             std::cout << std::setw(5) << map_p2s[j][i] + 1;
             if ((j + 1) % 5 == 0) {
                 std::cout << std::endl << "       | ";
@@ -712,10 +711,11 @@ void Symmetry::print_symminfo_stdout() const
 void Symmetry::gen_mapping_information(const Cell &cell,
                                        const std::vector<std::vector<unsigned int>> &atomtype_group)
 {
-    int isym, iat, jat;
-    int i, j;
-    int itype;
-    int ii, jj;
+    int isym;
+    size_t iat, jat;
+    size_t i, j;
+    size_t itype;
+    size_t ii, jj;
     double xnew[3], x_tmp[3];
     double tmp[3], diff;
     double rot_double[3][3];
@@ -855,16 +855,16 @@ bool Symmetry::is_proper(const double rot[3][3]) const
 }
 
 void Symmetry::set_primitive_lattice(const double aa[3][3],
-                                     const int nat,
+                                     const size_t nat,
                                      const int *kd,
                                      double **x,
                                      double aa_prim[3][3],
-                                     unsigned int &nat_prim,
+                                     size_t &nat_prim_out,
                                      int *kd_prim,
                                      double **x_prim,
                                      const double symprec) const
 {
-    int i, j;
+    size_t i, j;
     int *types_tmp;
     double (*position)[3];
 
@@ -885,13 +885,13 @@ void Symmetry::set_primitive_lattice(const double aa[3][3],
     }
 
     //    nat_prim = spg_find_primitive(aa_prim, position, types_tmp, nat, symprec);
-    nat_prim = spg_standardize_cell(aa_prim,
-                                    position,
-                                    types_tmp,
-                                    nat, 1, 0,
-                                    symprec);
+    nat_prim_out = spg_standardize_cell(aa_prim,
+                                        position,
+                                        types_tmp,
+                                        nat, 1, 0,
+                                        symprec);
 
-    for (i = 0; i < nat_prim; ++i) {
+    for (i = 0; i < nat_prim_out; ++i) {
         for (j = 0; j < 3; ++j) {
             x_prim[i][j] = position[i][j];
         }

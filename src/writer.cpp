@@ -15,7 +15,7 @@
 #include "fcs.h"
 #include "files.h"
 #include "optimize.h"
-#include "interaction.h"
+#include "cluster.h"
 #include "memory.h"
 #include "patterndisp.h"
 #include "symmetry.h"
@@ -32,90 +32,95 @@
 #endif
 using namespace ALM_NS;
 
-Writer::Writer() {}
+Writer::Writer() = default;
 
-Writer::~Writer() {}
+Writer::~Writer() = default;
 
 void Writer::write_input_vars(const ALM *alm) const
 {
-    unsigned int i;
+    size_t i;
 
-    const int nat = alm->get_supercell().number_of_atoms;
-    const int nkd = alm->get_supercell().number_of_elems;
+    const auto nat = alm->get_supercell().number_of_atoms;
+    const auto nkd = alm->get_supercell().number_of_elems;
 
     alm->timer->start_clock("writer");
 
-    std::cout << std::endl;
-    std::cout << " Input variables:" << std::endl;
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << " General:" << std::endl;
-    std::cout << "  PREFIX = " << alm->files->get_prefix() << std::endl;
-    std::cout << "  MODE = " << alm->get_run_mode() << std::endl;
-    std::cout << "  NAT = " << nat << "; NKD = " << nkd << std::endl;
+    std::cout << '\n';
+    std::cout << " Input variables:\n";
+    std::cout << " -------------------------------------------------------------------" << '\n';
+    std::cout << " General:\n";
+    std::cout << "  PREFIX = " << alm->files->get_prefix() << '\n';
+    std::cout << "  MODE = " << alm->get_run_mode() << '\n';
+    std::cout << "  NAT = " << nat << "; NKD = " << nkd << '\n';
     std::cout << "  PRINTSYM = " << alm->symmetry->get_print_symmetry()
-        << "; TOLERANCE = " << alm->symmetry->get_tolerance() << std::endl;
+        << "; TOLERANCE = " << alm->symmetry->get_tolerance() << '\n';
     std::cout << "  KD = ";
     for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->get_kdname()[i];
-    std::cout << std::endl;
+    std::cout << '\n';
     std::cout << "  PERIODIC = ";
     for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->get_periodicity()[i];
-    std::cout << std::endl;
-    std::cout << "  MAGMOM = " << alm->get_str_magmom() << std::endl;
-    std::cout << "  HESSIAN = " << alm->files->print_hessian << std::endl;
-    std::cout << std::endl;
+    std::cout << '\n';
+    std::cout << "  MAGMOM = " << alm->get_str_magmom() << '\n';
+    //std::cout << "  HESSIAN = " << alm->files->print_hessian << '\n';
+    std::cout << '\n';
 
-    std::cout << " Interaction:" << std::endl;
-    std::cout << "  NORDER = " << alm->interaction->get_maxorder() << std::endl;
+    std::cout << " Interaction:\n";
+    std::cout << "  NORDER = " << alm->cluster->get_maxorder() << '\n';
     std::cout << "  NBODY = ";
-    for (i = 0; i < alm->interaction->get_maxorder(); ++i) {
-        std::cout << std::setw(3) << alm->get_nbody_include()[i];
+    for (auto m = 0; m < alm->cluster->get_maxorder(); ++m) {
+        std::cout << std::setw(3) << alm->get_nbody_include()[m];
     }
-    std::cout << std::endl << std::endl;
+    std::cout << "\n\n";
 
     if (alm->get_run_mode() == "suggest") {
-        std::cout << "  DBASIS = " << alm->displace->get_disp_basis() << std::endl;
-        std::cout << std::endl;
+        std::cout << "  DBASIS = " << alm->displace->get_disp_basis() << "\n\n";
 
-    } else if (alm->get_run_mode() == "fitting") {
-        std::cout << " Fitting:" << std::endl;
-        std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
-        std::cout << "  FFILE = " << alm->files->file_force << std::endl;
-        std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
-            << "; NEND = " << alm->optimize->get_nend() << std::endl;
-        std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
-        std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
-        std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
-        std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << std::endl;
-        //std::cout << "  SPARSE = " << alm->fitting->get_use_sparseQR() << std::endl;
-        std::cout << std::endl;
-    } else if (alm->get_run_mode() == "lasso") {
-        std::cout << " Fitting:" << std::endl;
-        std::cout << "  DFILE = " << alm->files->file_disp << std::endl;
-        std::cout << "  FFILE = " << alm->files->file_force << std::endl;
-        std::cout << "  NDATA = " << alm->optimize->get_ndata() << "; NSTART = " << alm->optimize->get_nstart()
-            << "; NEND = " << alm->optimize->get_nend() << std::endl;
-        std::cout << "  SKIP = " << alm->optimize->get_skip_s() + 1 << "-" << alm->optimize->get_skip_e() << std::endl;
-        std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << std::endl;
-        std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << std::endl;
-        std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << std::endl;
-        std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << std::endl;
-        std::cout << std::endl;
+    } else if (alm->get_run_mode() == "optimize") {
         const auto optctrl = alm->optimize->get_optimizer_control();
-        std::cout << " Lasso:" << std::endl;
-        std::cout << "  LASSO_ALPHA = " << optctrl.l1_alpha << std::endl;
-        std::cout << "  LASSO_MINALPHA = " << optctrl.l1_alpha_min;
-        std::cout << "; LASSO_MAXALPHA = " << optctrl.l1_alpha_max << std::endl;
-        std::cout << "  LASSO_NALPHA = " << optctrl.num_l1_alpha << std::endl;
-        std::cout << "  STANDARDIZE = " << optctrl.standardize << std::endl;
-        std::cout << "  LASSO_DNORM = " << optctrl.displacement_scaling_factor << std::endl;
-        std::cout << "  LASSO_TOL = " << optctrl.tolerance_iteration << std::endl;
-        std::cout << "  LASSO_MAXITER = " << optctrl.maxnum_iteration << std::endl;
-        std::cout << "  LASSO_CV = " << std::setw(5) << optctrl.cross_validation_mode << std::endl;
-        std::cout << "  LASSO_FREQ = " << std::setw(5) << optctrl.output_frequency << std::endl;
-        std::cout << std::endl;
+        std::vector<std::string> str_linearmodel{"least-squares", "elastic-net"};
+        std::cout << " Optimize:\n";
+        std::cout << "  LMODEL = "
+            << str_linearmodel[optctrl.linear_model - 1] << '\n';
+        std::cout << "  DFSET = " << alm->files->get_datfile_train().filename << '\n';
+        std::cout << "  NDATA = " << alm->files->get_datfile_train().ndata
+            << "; NSTART = " << alm->files->get_datfile_train().nstart
+            << "; NEND = " << alm->files->get_datfile_train().nend;
+        if (alm->files->get_datfile_train().skip_s
+            < alm->files->get_datfile_train().skip_e) {
+            std::cout << "   SKIP = " << alm->files->get_datfile_train().skip_s
+                << "-" << alm->files->get_datfile_train().skip_e - 1 << "\n\n";
+        } else {
+            std::cout << "   SKIP = \n\n";
+        }
+
+        std::cout << "  ICONST = " << alm->constraint->get_constraint_mode() << '\n';
+        std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << '\n';
+        std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << '\n';
+        std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << "\n\n";
+        std::cout << "  SPARSE = " << optctrl.use_sparse_solver << "\n\n";
+        if (optctrl.linear_model == 2) {
+            std::cout << " Elastic-net related variables:\n";
+            std::cout << "  CV = " << std::setw(5) << optctrl.cross_validation << '\n';
+            std::cout << "  DFSET_CV = " << alm->files->get_datfile_validation().filename << '\n';
+            std::cout << "  NDATA_CV = " << alm->files->get_datfile_validation().ndata
+                << "; NSTART_CV = " << alm->files->get_datfile_validation().nstart
+                << "; NEND_CV = " << alm->files->get_datfile_validation().nend << "\n\n";
+            std::cout << "  L1_RATIO = " << optctrl.l1_ratio << '\n';
+            std::cout << "  L1_ALPHA = " << optctrl.l1_alpha << '\n';
+            std::cout << "  CV_MINALPHA = " << optctrl.l1_alpha_min
+                << "; CV_MAXALPHA = " << optctrl.l1_alpha_max
+                << ";  CV_NALPHA = " << optctrl.num_l1_alpha << '\n';
+            std::cout << "  STANDARDIZE = " << optctrl.standardize << '\n';
+            std::cout << "  ENET_DNORM = " << optctrl.displacement_normalization_factor << '\n';
+            std::cout << "  CONV_TOL = " << optctrl.tolerance_iteration << '\n';
+            std::cout << "  MAXITER = " << optctrl.maxnum_iteration << '\n';
+            std::cout << "  NWRITE = " << std::setw(5) << optctrl.output_frequency << '\n';
+            std::cout << "  DEBIAS_OLS = " << optctrl.debiase_after_l1opt << '\n';
+            std::cout << '\n';
+        }
     }
-    std::cout << " -------------------------------------------------------------------" << std::endl;
-    std::cout << std::endl;
+    std::cout << " -------------------------------------------------------------------\n\n";
+    std::cout << std::flush;
     alm->timer->stop_clock("writer");
 }
 
@@ -133,7 +138,7 @@ void Writer::writeall(ALM *alm)
     //   write_in_QEformat(alm);
 
     const auto print_thirdorderpy_fc3 = false;
-    if (alm->interaction->get_maxorder() > 1 && print_thirdorderpy_fc3) {
+    if (alm->cluster->get_maxorder() > 1 && print_thirdorderpy_fc3) {
         write_fc3_thirdorderpy_format(alm);
     }
 #ifdef _FCS_HDF5
@@ -155,7 +160,7 @@ void Writer::write_force_constants(ALM *alm) const
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
 
-    const auto maxorder = alm->interaction->get_maxorder();
+    const auto maxorder = alm->cluster->get_maxorder();
 
     ofs_fcs.open(alm->files->file_fcs.c_str(), std::ios::out);
     if (!ofs_fcs) exit("write_force_constants", "cannot open fcs file");
@@ -180,11 +185,11 @@ void Writer::write_force_constants(ALM *alm) const
         str_fcs[order] = "*FC" + std::to_string(order + 2);
     }
 
-    auto k = 0;
+    size_t k = 0;
 
     for (order = 0; order < maxorder; ++order) {
 
-        auto m = 0;
+        size_t m = 0;
 
         if (!alm->fcs->get_nequiv()[order].empty()) {
 
@@ -204,10 +209,10 @@ void Writer::write_force_constants(ALM *alm) const
                 std::sort(atom_tmp.begin(), atom_tmp.end());
 
                 auto iter_cluster
-                    = alm->interaction->get_interaction_cluster(order, j).
+                    = alm->cluster->get_interaction_cluster(order, j).
                            find(InteractionCluster(atom_tmp, cell_dummy));
 
-                if (iter_cluster == alm->interaction->get_interaction_cluster(order, j).end()) {
+                if (iter_cluster == alm->cluster->get_interaction_cluster(order, j).end()) {
                     std::cout << std::setw(5) << j;
                     for (l = 0; l < order + 1; ++l) {
                         std::cout << std::setw(5) << atom_tmp[l];
@@ -217,7 +222,7 @@ void Writer::write_force_constants(ALM *alm) const
                          "This cannot happen.");
                 }
 
-                const int multiplicity = (*iter_cluster).cell.size();
+                const auto multiplicity = (*iter_cluster).cell.size();
                 const auto distmax = (*iter_cluster).distmax;
                 ofs_fcs << std::setw(4) << multiplicity;
 
@@ -289,7 +294,7 @@ void Writer::write_force_constants(ALM *alm) const
 
 void Writer::write_displacement_pattern(ALM *alm) const
 {
-    const auto maxorder = alm->interaction->get_maxorder();
+    const auto maxorder = alm->cluster->get_maxorder();
 
     std::ofstream ofs_pattern;
     std::string file_disp_pattern;
@@ -322,7 +327,7 @@ void Writer::write_displacement_pattern(ALM *alm) const
 
             ofs_pattern << std::setw(5) << counter << ":"
                 << std::setw(5) << entry.atoms.size() << std::endl;
-            for (auto i = 0; i < entry.atoms.size(); ++i) {
+            for (size_t i = 0; i < entry.atoms.size(); ++i) {
                 ofs_pattern << std::setw(7) << entry.atoms[i] + 1;
                 for (auto j = 0; j < 3; ++j) {
                     ofs_pattern << std::setw(15) << entry.directions[3 * i + j];
@@ -334,7 +339,7 @@ void Writer::write_displacement_pattern(ALM *alm) const
         ofs_pattern.close();
 
         if (alm->get_verbosity() > 0) {
-            std::cout << "  " << alm->interaction->get_ordername(order)
+            std::cout << "  " << alm->cluster->get_ordername(order)
                 << " : " << file_disp_pattern << std::endl;
         }
 
@@ -347,7 +352,7 @@ void Writer::write_misc_xml(ALM *alm)
 {
     SystemInfo system_structure;
 
-    int i, j;
+    size_t i, j;
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
@@ -380,8 +385,8 @@ void Writer::write_misc_xml(ALM *alm)
     std::string str_pos[3];
 
     pt.put("Data.ALM_version", ALAMODE_VERSION);
-    pt.put("Data.Fitting.DisplaceFile", alm->files->file_disp);
-    pt.put("Data.Fitting.ForceFile", alm->files->file_force);
+    //pt.put("Data.Fitting.DisplaceFile", alm->files->file_disp);
+    //pt.put("Data.Fitting.ForceFile", alm->files->file_force);
     pt.put("Data.Fitting.Constraint", alm->constraint->get_constraint_mode());
 
     pt.put("Data.Structure.NumberOfAtoms", system_structure.nat);
@@ -448,14 +453,14 @@ void Writer::write_misc_xml(ALM *alm)
 
     pt.put("Data.ForceConstants.HarmonicUnique.NFC2", alm->fcs->get_nequiv()[0].size());
 
-    auto ihead = 0;
-    auto k = 0;
-    const auto nelem = alm->interaction->get_maxorder() + 1;
+    size_t ihead = 0;
+    size_t k = 0;
+    const auto nelem = alm->cluster->get_maxorder() + 1;
     int *pair_tmp;
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
     std::set<InteractionCluster>::iterator iter_cluster;
-    int multiplicity;
+    size_t multiplicity;
 
 
     allocate(pair_tmp, nelem);
@@ -470,9 +475,9 @@ void Writer::write_misc_xml(ALM *alm)
         atom_tmp.clear();
         atom_tmp.push_back(pair_tmp[1]);
 
-        iter_cluster = alm->interaction->get_interaction_cluster(0, j).find(
+        iter_cluster = alm->cluster->get_interaction_cluster(0, j).find(
             InteractionCluster(atom_tmp, cell_dummy));
-        if (iter_cluster == alm->interaction->get_interaction_cluster(0, j).end()) {
+        if (iter_cluster == alm->cluster->get_interaction_cluster(0, j).end()) {
             exit("load_reference_system_xml",
                  "Cubic force constant is not found.");
         }
@@ -491,7 +496,7 @@ void Writer::write_misc_xml(ALM *alm)
     ihead = 0;
 
 
-    if (alm->interaction->get_maxorder() > 1) {
+    if (alm->cluster->get_maxorder() > 1) {
 
         pt.put("Data.ForceConstants.CubicUnique.NFC3", alm->fcs->get_nequiv()[1].size());
 
@@ -507,9 +512,9 @@ void Writer::write_misc_xml(ALM *alm)
             }
             std::sort(atom_tmp.begin(), atom_tmp.end());
 
-            iter_cluster = alm->interaction->get_interaction_cluster(1, j).find(
+            iter_cluster = alm->cluster->get_interaction_cluster(1, j).find(
                 InteractionCluster(atom_tmp, cell_dummy));
-            if (iter_cluster == alm->interaction->get_interaction_cluster(1, j).end()) {
+            if (iter_cluster == alm->cluster->get_interaction_cluster(1, j).end()) {
                 exit("load_reference_system_xml",
                      "Cubic force constant is not found.");
             }
@@ -528,7 +533,7 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    int ip;
+    size_t ip;
     int imult;
     std::string elementname = "Data.ForceConstants.HARMONIC.FC2";
 
@@ -547,10 +552,10 @@ void Writer::write_misc_xml(ALM *alm)
         atom_tmp.clear();
         atom_tmp.push_back(pair_tmp[1]);
 
-        iter_cluster = alm->interaction->get_interaction_cluster(0, j).find(
+        iter_cluster = alm->cluster->get_interaction_cluster(0, j).find(
             InteractionCluster(atom_tmp, cell_dummy));
 
-        if (iter_cluster != alm->interaction->get_interaction_cluster(0, j).end()) {
+        if (iter_cluster != alm->cluster->get_interaction_cluster(0, j).end()) {
             multiplicity = (*iter_cluster).cell.size();
 
             for (imult = 0; imult < multiplicity; ++imult) {
@@ -575,11 +580,11 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    int ishift = alm->fcs->get_nequiv()[0].size();
+    auto ishift = alm->fcs->get_nequiv()[0].size();
 
     // Print anharmonic force constants to the xml file.
 
-    for (auto order = 1; order < alm->interaction->get_maxorder(); ++order) {
+    for (auto order = 1; order < alm->cluster->get_maxorder(); ++order) {
 
         std::sort(alm->fcs->get_fc_table()[order].begin(), alm->fcs->get_fc_table()[order].end());
 
@@ -604,10 +609,10 @@ void Writer::write_misc_xml(ALM *alm)
                 + std::to_string(order + 2)
                 + ".FC" + std::to_string(order + 2);
 
-            iter_cluster = alm->interaction->get_interaction_cluster(order, j).find(
+            iter_cluster = alm->cluster->get_interaction_cluster(order, j).find(
                 InteractionCluster(atom_tmp, cell_dummy));
 
-            if (iter_cluster != alm->interaction->get_interaction_cluster(order, j).end()) {
+            if (iter_cluster != alm->cluster->get_interaction_cluster(order, j).end()) {
                 multiplicity = (*iter_cluster).cell.size();
 
                 for (imult = 0; imult < multiplicity; ++imult) {
@@ -657,14 +662,14 @@ void Writer::write_misc_xml(ALM *alm)
 
 void Writer::write_hessian(ALM *alm) const
 {
-    int i, j;
+    size_t i, j;
     int pair_tmp[2];
     int pair_tran[2];
     std::ofstream ofs_hes;
     double **hessian;
 
     //ALMCore *alm = alm->get_alm();
-    const int nat3 = 3 * alm->get_supercell().number_of_atoms;
+    const auto nat3 = 3 * alm->get_supercell().number_of_atoms;
 
     allocate(hessian, nat3, nat3);
 
@@ -680,7 +685,7 @@ void Writer::write_hessian(ALM *alm) const
         const auto ip = fctmp.mother;
 
         for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
-        for (auto itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
+        for (size_t itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
             for (i = 0; i < 2; ++i) {
                 pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }
@@ -725,12 +730,12 @@ std::string Writer::double2string(const double d,
 
 void Writer::write_in_QEformat(ALM *alm) const
 {
-    int i, j;
+    size_t i, j;
     int pair_tmp[2];
     int pair_tran[2];
     std::ofstream ofs_hes;
     double **hessian;
-    const int nat3 = 3 * alm->get_supercell().number_of_atoms;
+    const auto nat3 = 3 * alm->get_supercell().number_of_atoms;
 
     allocate(hessian, nat3, nat3);
 
@@ -745,7 +750,7 @@ void Writer::write_in_QEformat(ALM *alm) const
         const auto ip = fctmp.mother;
 
         for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
-        for (auto itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
+        for (size_t itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
             for (i = 0; i < 2; ++i) {
                 pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }
@@ -782,16 +787,16 @@ void Writer::write_in_QEformat(ALM *alm) const
 
 void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
 {
-    int i, j, k;
+    size_t i, j, k;
     int pair_tmp[3], coord_tmp[3];
     std::ofstream ofs_fc3;
     double ***fc3;
     int ***has_element;
-    auto nelems = 0;
-    const int nat3 = 3 * alm->get_supercell().number_of_atoms;
-    const int natmin = alm->symmetry->get_nat_prim();
-    const int nat = alm->get_supercell().number_of_atoms;
-    const int ntran = alm->symmetry->get_ntran();
+    size_t nelems = 0;
+    const auto nat3 = 3 * alm->get_supercell().number_of_atoms;
+    const auto natmin = alm->symmetry->get_nat_prim();
+    const auto nat = alm->get_supercell().number_of_atoms;
+    const auto ntran = alm->symmetry->get_ntran();
 
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
@@ -820,7 +825,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
         }
     }
 
-    const int ishift = alm->fcs->get_nequiv()[0].size();
+    const auto ishift = alm->fcs->get_nequiv()[0].size();
 
     for (auto it = alm->fcs->get_fc_table()[1].begin(); it != alm->fcs->get_fc_table()[1].end(); ++it) {
         auto fctmp = *it;
@@ -840,7 +845,7 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
             atom_tmp[0] = pair_tmp[1];
             atom_tmp[1] = pair_tmp[2];
         }
-        iter_cluster = alm->interaction->get_interaction_cluster(1, j).find(InteractionCluster(atom_tmp, cell_dummy));
+        iter_cluster = alm->cluster->get_interaction_cluster(1, j).find(InteractionCluster(atom_tmp, cell_dummy));
 
         if (!has_element[j][pair_tmp[1]][pair_tmp[2]]) {
             nelems += (*iter_cluster).cell.size();
@@ -891,20 +896,20 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
                             swapped = false;
                         }
 
-                        iter_cluster = alm->interaction->get_interaction_cluster(1, i).find(
+                        iter_cluster = alm->cluster->get_interaction_cluster(1, i).find(
                             InteractionCluster(atom_tmp, cell_dummy));
-                        if (iter_cluster == alm->interaction->get_interaction_cluster(1, i).end()) {
+                        if (iter_cluster == alm->cluster->get_interaction_cluster(1, i).end()) {
                             exit("write_misc_xml", "This cannot happen.");
                         }
 
-                        const int multiplicity = (*iter_cluster).cell.size();
+                        const auto multiplicity = (*iter_cluster).cell.size();
 
                         const auto jat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[0]].
                             atom_num][0];
                         const auto kat0 = alm->symmetry->get_map_p2s()[alm->symmetry->get_map_s2p()[atom_tmp[1]].
                             atom_num][0];
 
-                        for (auto imult = 0; imult < multiplicity; ++imult) {
+                        for (size_t imult = 0; imult < multiplicity; ++imult) {
                             auto cell_now = (*iter_cluster).cell[imult];
 
                             for (auto m = 0; m < 3; ++m) {

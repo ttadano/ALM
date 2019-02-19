@@ -120,12 +120,12 @@ namespace ALM_NS
         const std::vector<SymmetryOperation>& get_SymmData() const;
         const std::vector<std::vector<int>>& get_map_sym() const;
         const std::vector<int>& get_symnum_tran() const;
-        unsigned int get_nsym() const;
-        unsigned int get_ntran() const;
-        unsigned int get_nat_prim() const;
+        size_t get_nsym() const;
+        size_t get_ntran() const;
+        size_t get_nat_prim() const;
 
     private:
-        unsigned int nsym, ntran, nat_prim;
+        size_t nsym, ntran, nat_prim;
         std::vector<std::vector<int>> map_sym;   // [nat, nsym]
         std::vector<std::vector<int>> map_p2s;   // [nat_prim, ntran]
         std::vector<Maps> map_s2p;               // [nat]
@@ -180,15 +180,15 @@ namespace ALM_NS
                                    const Spin &,
                                    const std::vector<RotationMatrix> &);
 
-        void set_primitive_lattice(const double [3][3],
-                                   int,
-                                   const int *,
-                                   double **,
-                                   double [3][3],
-                                   unsigned int &,
-                                   int *,
-                                   double **,
-                                   double) const;
+        void set_primitive_lattice(const double aa[3][3],
+                                   const size_t nat,
+                                   const int *kd,
+                                   double **x,
+                                   double aa_prim[3][3],
+                                   size_t &nat_prim,
+                                   int *kd_prim,
+                                   double **x_prim,
+                                   const double symprec) const;
 
         std::string file_sym;
     };

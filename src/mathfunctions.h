@@ -43,7 +43,7 @@ inline void transpose3(double ret[3][3], const double mat[3][3])
     }
 }
 
-inline void rotvec(double vec_out[3], double vec_in[3], const double mat[3][3], char mode = 'N')
+inline void rotvec(double vec_out[3], const double vec_in[3], const double mat[3][3], char mode = 'N')
 {
     // Perform matrix x vector multiplication.
     //
@@ -72,7 +72,7 @@ inline void rotvec(double vec_out[3], double vec_in[3], const double mat[3][3], 
     }
 }
 
-inline void rotvec(double vec_out[3], double vec_in[3], const double **mat, char mode = 'N')
+inline void rotvec(double vec_out[3], const double vec_in[3], const double **mat, char mode = 'N')
 {
     // Perform matrix x vector multiplication.
     //
@@ -168,6 +168,19 @@ inline void invmat3_i(int invmat[3][3], int mat[3][3])
     invmat[2][1] = (mat[0][1] * mat[2][0] - mat[0][0] * mat[2][1]) / det;
     invmat[2][2] = (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]) / det;
 
+}
+
+template <typename T>
+inline T determinant3(const T mat[3][3])
+{
+   auto det = mat[0][0] * mat[1][1] * mat[2][2]
+    + mat[1][0] * mat[2][1] * mat[0][2]
+    + mat[2][0] * mat[0][1] * mat[1][2]
+    - mat[0][0] * mat[2][1] * mat[1][2]
+    - mat[2][0] * mat[1][1] * mat[0][2]
+    - mat[1][0] * mat[0][1] * mat[2][2];
+   
+  return det; 
 }
 
 inline int nint(double x)

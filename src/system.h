@@ -40,8 +40,8 @@ namespace ALM_NS
         double lattice_vector[3][3];
         double reciprocal_lattice_vector[3][3];
         double volume;
-        unsigned int number_of_atoms;
-        unsigned int number_of_elems;
+        size_t number_of_atoms;
+        size_t number_of_elems;
         std::vector<int> kind;
         std::vector<std::vector<double>> x_fractional;
         std::vector<std::vector<double>> x_cartesian;
@@ -50,9 +50,9 @@ namespace ALM_NS
     class Spin
     {
     public:
-        bool lspin;
-        int time_reversal_symm;
-        int noncollinear;
+        bool lspin = false;
+        int time_reversal_symm = 1;
+        int noncollinear = 0;
         std::vector<std::vector<double>> magmom;
     };
 
@@ -66,12 +66,14 @@ namespace ALM_NS
         void frac2cart(double **) const;
 
         void set_supercell(const double [3][3],
-                           const unsigned int,
+                           const size_t,
                            const int *,
-                           const double [][3]);
+                           const double [][3],
+                           const double transformation_matrix[3][3],
+                           const double primitive_axes[3][3]);
         void set_kdname(const std::string *);
         void set_periodicity(const int [3]);
-        void set_spin_variables(const unsigned int nat,
+        void set_spin_variables(const size_t nat,
                                 const bool,
                                 const int,
                                 const int,
@@ -89,14 +91,15 @@ namespace ALM_NS
 
     private:
         // Variables for geometric structure
-        Cell supercell;
+        Cell inputcell;
+        Cell supercell, primcell;
         std::string *kdname;
         int *is_periodic; // is_periodic[3];
         double ***x_image;
         int *exist_image;
 
         // Variables for spins
-        Spin spin;
+        Spin inputspin, spin;
         std::string str_magmom;
 
         // concatenate atomic kind and magmom (only for collinear case)
@@ -108,6 +111,13 @@ namespace ALM_NS
                                  double [3][3]) const;
         void set_default_variables();
         void deallocate_variables();
+
+        void set_inputcell(const double [3][3],
+                           const size_t,
+                           const int *,
+                           const double [][3]);
+
+        void build_supercell(const double transformation_matrix[3][3]);
 
         double volume(const double [3][3],
                       LatticeType) const;

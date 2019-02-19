@@ -17,6 +17,7 @@
 #include "constraint.h"
 #include "patterndisp.h"
 #include "alm.h"
+#include "error.h"
 
 using namespace ALM_NS;
 
@@ -24,12 +25,15 @@ InputSetter::InputSetter()
 {
     nat = 0;
     nkd = 0;
+    maxorder = 0;
     kd = nullptr;
     kdname = nullptr;
 
     for (auto i = 0; i < 3; ++i) {
         for (auto j = 0; j < 3; j++) {
             lavec[i][j] = 0.0;
+            transformation_matrix[i][j] = 0.0;
+            primitive_axes[i][j] = 0.0;
         }
     }
     xcoord = nullptr;
@@ -79,6 +83,17 @@ void InputSetter::set_cell_parameter(const double a,
     }
 }
 
+void InputSetter::set_supercell_information(const double transformation_matrix_in[3][3],
+                                            const double primitive_axes_in[3][3])
+{
+    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
+            transformation_matrix[i][j] = transformation_matrix_in[i][j];
+            primitive_axes[i][j] = primitive_axes_in[i][j];
+        }
+    }
+}
+
 void InputSetter::set_interaction_vars(const int maxorder_in,
                                        const int *nbody_include_in)
 {
@@ -87,23 +102,29 @@ void InputSetter::set_interaction_vars(const int maxorder_in,
         deallocate(nbody_include);
     }
     allocate(nbody_include, maxorder);
-    for (unsigned int i = 0; i < maxorder; i++) {
+    for (auto i = 0; i < maxorder; i++) {
         nbody_include[i] = nbody_include_in[i];
     }
 }
 
 void InputSetter::set_cutoff_radii(const int maxorder_in,
-                                   const unsigned int nkd_in,
-                                   const double * const * const *cutoff_radii_in)
+                                   const size_t nkd_in,
+                                   const std::vector<double> &cutoff_radii_in)
 {
+    if (cutoff_radii_in.size() != (nkd_in * nkd_in * maxorder_in)) {
+        exit("set_cutoff_radii", 
+            "Incorrect size of the input array cutoff_radii_in");
+    }
     if (cutoff_radii) {
         deallocate(cutoff_radii);
     }
-    allocate(cutoff_radii, maxorder_in, nkd_in, nkd_in);
-    for (unsigned int i = 0; i < maxorder_in; i++) {
-        for (unsigned int j = 0; j < nkd_in; j++) {
-            for (unsigned int k = 0; k < nkd_in; k++) {
-                cutoff_radii[i][j][k] = cutoff_radii_in[i][j][k];
+    allocate(cutoff_radii, maxorder_in * nkd_in * nkd_in);
+    auto counter = 0;
+    for (auto i = 0; i < maxorder_in; i++) {
+        for (size_t j = 0; j < nkd_in; j++) {
+            for (size_t k = 0; k < nkd_in; k++) {
+                cutoff_radii[counter] = cutoff_radii_in[counter];
+                ++counter;
             }
         }
     }
@@ -115,8 +136,8 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const int verbosity,
                                    const std::string str_disp_basis,
                                    const std::string str_magmom,
-                                   const int nat_in,
-                                   const int nkd_in,
+                                   const size_t nat_in,
+                                   const size_t nkd_in,
                                    const int printsymmetry,
                                    const int is_periodic_in[3],
                                    const bool trim_dispsign_for_evenfunc,
@@ -129,7 +150,7 @@ void InputSetter::set_general_vars(ALM *alm,
                                    const double tolerance,
                                    const double tolerance_constraint)
 {
-    int i, j;
+    size_t i;
 
     alm->files->set_prefix(prefix);
     alm->set_run_mode(mode);
@@ -153,7 +174,7 @@ void InputSetter::set_general_vars(ALM *alm,
     allocate(magmom, nat);
 
     for (i = 0; i < nat; i ++) {
-        for (j = 0; j < 3; j++) {
+        for (auto j = 0; j < 3; j++) {
             magmom[i][j] = magmom_in[i][j];
         }
     }
@@ -174,7 +195,7 @@ void InputSetter::set_general_vars(ALM *alm,
     }
 }
 
-void InputSetter::define(ALM *alm)
+void InputSetter::define(ALM *alm) const
 {
     alm->define(maxorder,
                 nkd,
@@ -184,35 +205,23 @@ void InputSetter::define(ALM *alm)
 
 
 void InputSetter::set_optimize_vars(ALM *alm,
-                                    const int ndata,
-                                    const int nstart,
-                                    const int nend,
-                                    const int skip_s,
-                                    const int skip_e,
-                                    const std::string dfile,
-                                    const std::string ffile,
-                                    const int ndata_test,
-                                    const int nstart_test,
-                                    const int nend_test,
-                                    const std::string dfile_test,
-                                    const std::string ffile_test,
+                                    const std::vector<std::vector<double>> &u_train_in,
+                                    const std::vector<std::vector<double>> &f_train_in,
+                                    const std::vector<std::vector<double>> &u_validation_in,
+                                    const std::vector<std::vector<double>> &f_validation_in,
                                     const OptimizerControl &optcontrol_in) const
 {
-    alm->optimize->set_ndata(ndata);
-    alm->optimize->set_nstart(nstart);
-    alm->optimize->set_nend(nend);
-    alm->optimize->set_skip_s(skip_s);
-    alm->optimize->set_skip_e(skip_e);
-
-    alm->files->file_disp = dfile;
-    alm->files->file_force = ffile;
-    alm->optimize->ndata_test = ndata_test;
-    alm->optimize->nstart_test = nstart_test;
-    alm->optimize->nend_test = nend_test;
-    alm->optimize->dfile_test = dfile_test;
-    alm->optimize->ffile_test = ffile_test;
-
+    alm->optimize->set_training_data(u_train_in, f_train_in);
+    alm->optimize->set_validation_data(u_validation_in, f_validation_in);
     alm->optimize->set_optimizer_control(optcontrol_in);
+}
+
+void InputSetter::set_file_vars(ALM *alm,
+                                const DispForceFile &datfile_train_in,
+                                const DispForceFile &datfile_validation_in) const
+{
+    alm->files->set_datfile_train(datfile_train_in);
+    alm->files->set_datfile_validation(datfile_validation_in);
 }
 
 void InputSetter::set_constraint_vars(ALM *alm,
@@ -232,7 +241,7 @@ void InputSetter::set_constraint_vars(ALM *alm,
 }
 
 
-void InputSetter::set_atomic_positions(const int nat_in,
+void InputSetter::set_atomic_positions(const size_t nat_in,
                                        const int *kd_in,
                                        const double (*xcoord_in)[3])
 {
@@ -245,7 +254,7 @@ void InputSetter::set_atomic_positions(const int nat_in,
     allocate(xcoord, nat_in);
     allocate(kd, nat_in);
 
-    for (auto i = 0; i < nat_in; ++i) {
+    for (size_t i = 0; i < nat_in; ++i) {
         kd[i] = kd_in[i];
         for (auto j = 0; j < 3; ++j) {
             xcoord[i][j] = xcoord_in[i][j];
@@ -255,7 +264,8 @@ void InputSetter::set_atomic_positions(const int nat_in,
 
 void InputSetter::set_geometric_structure(ALM *alm)
 {
-    alm->set_cell(nat, lavec, xcoord, kd, kdname);
+    alm->set_cell(nat, lavec, xcoord, kd, kdname, 
+                  transformation_matrix, primitive_axes);
     alm->set_periodicity(is_periodic);
     alm->set_magnetic_params(nat, magmom, lspin, noncollinear, trevsym, str_magmom);
 }

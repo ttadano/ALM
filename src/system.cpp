@@ -33,7 +33,7 @@ System::~System()
 void System::init(const int verbosity,
                   Timer *timer)
 {
-    const unsigned int nat = supercell.number_of_atoms;
+    const auto nat = supercell.number_of_atoms;
 
     timer->start_clock("system");
 
@@ -65,22 +65,31 @@ void System::init(const int verbosity,
 }
 
 void System::set_supercell(const double lavec_in[3][3],
-                           const unsigned int nat_in,
+                           const size_t nat_in,
+                           const int *kind_in,
+                           const double xf_in[][3],
+                           const double transformation_matrix[3][3],
+                           const double primitive_axes[3][3])
+{
+    set_inputcell(lavec_in, nat_in, kind_in, xf_in);
+    build_supercell(transformation_matrix);
+}
+
+void System::set_inputcell(const double lavec_in[3][3],
+                           const size_t nat_in,
                            const int *kind_in,
                            const double xf_in[][3])
 {
-    unsigned int i, j, nkd;
-    int kd_count[nat_in];
-    int unique_nums[nat_in];
-    bool wrong_number = false;
+    size_t i, j;
+    std::vector<int> unique_nums(nat_in);
+    auto wrong_number = false;
     bool in_unique_nums;
 
     for (i = 0; i < nat_in; i++) {
-        kd_count[i] = 0;
         unique_nums[i] = 0;
     }
 
-    nkd = 0;
+    size_t nkd = 0;
     for (i = 0; i < nat_in; i++) {
         in_unique_nums = false;
         for (j = 0; j < nkd; j++) {
@@ -96,9 +105,9 @@ void System::set_supercell(const double lavec_in[3][3],
     }
 
     for (i = 0; i < nkd; i++) {
-        if (unique_nums[i] > nkd) {
+        if (static_cast<size_t>(unique_nums[i]) > nkd) {
             std::cout << " WARNING : integers assigned to atoms are wrong. "
-                      << " The numbers will be resorted." << std::endl;
+                << " The numbers will be resorted." << std::endl;
             wrong_number = true;
             break;
         }
@@ -106,33 +115,33 @@ void System::set_supercell(const double lavec_in[3][3],
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
-            supercell.lattice_vector[i][j] = lavec_in[i][j];
+            inputcell.lattice_vector[i][j] = lavec_in[i][j];
         }
     }
-    set_reciprocal_latt(supercell.lattice_vector,
-                        supercell.reciprocal_lattice_vector);
+    set_reciprocal_latt(inputcell.lattice_vector,
+                        inputcell.reciprocal_lattice_vector);
 
-    supercell.volume = volume(supercell.lattice_vector, Direct);
-    supercell.number_of_atoms = nat_in;
-    supercell.number_of_elems = nkd;
-    supercell.kind.clear();
-    supercell.kind.shrink_to_fit();
-    supercell.x_fractional.clear();
-    supercell.x_fractional.shrink_to_fit();
-    supercell.x_cartesian.clear();
-    supercell.x_cartesian.shrink_to_fit();
+    inputcell.volume = volume(inputcell.lattice_vector, Direct);
+    inputcell.number_of_atoms = nat_in;
+    inputcell.number_of_elems = nkd;
+    inputcell.kind.clear();
+    inputcell.kind.shrink_to_fit();
+    inputcell.x_fractional.clear();
+    inputcell.x_fractional.shrink_to_fit();
+    inputcell.x_cartesian.clear();
+    inputcell.x_cartesian.shrink_to_fit();
 
     std::vector<double> xtmp;
 
     if (!wrong_number) {
         for (i = 0; i < nat_in; ++i) {
-            supercell.kind.push_back(kind_in[i]);
+            inputcell.kind.push_back(kind_in[i]);
         }
     } else {
         for (i = 0; i < nat_in; ++i) {
             for (j = 0; j < nkd; j++) {
                 if (kind_in[i] == unique_nums[j]) {
-                    supercell.kind.push_back(j + 1);
+                    inputcell.kind.push_back(static_cast<int>(j + 1));
                 }
             }
         }
@@ -143,31 +152,156 @@ void System::set_supercell(const double lavec_in[3][3],
         for (j = 0; j < 3; ++j) {
             xtmp[j] = xf_in[i][j];
         }
-        supercell.x_fractional.push_back(xtmp);
+        inputcell.x_fractional.push_back(xtmp);
     }
 
-    double xf_tmp[3], xc_tmp[3];
-
-    for (const auto &xf : supercell.x_fractional) {
-        for (i = 0; i < 3; ++i) {
-            xf_tmp[i] = xf[i];
-        }
-        rotvec(xc_tmp, xf_tmp, supercell.lattice_vector);
-        for (i = 0; i < 3; ++i) {
-            xtmp[i] = xc_tmp[i];
-        }
-        supercell.x_cartesian.push_back(xtmp);
+    for (const auto &xf : inputcell.x_fractional) {
+        rotvec(&xtmp[0], &xf[0], inputcell.lattice_vector);
+        inputcell.x_cartesian.push_back(xtmp);
     }
 
     // This is needed to avoid segmentation fault.
-    spin.magmom.clear();
+    inputspin.magmom.clear();
     std::vector<double> vec(3);
     for (i = 0; i < nat_in; ++i) {
         for (j = 0; j < 3; ++j) {
             vec[j] = 0;
         }
-        spin.magmom.push_back(vec);
+        inputspin.magmom.push_back(vec);
     }
+}
+
+void System::build_supercell(const double transformation_matrix[3][3])
+{
+    // Build supercell from inputcell and transformation matrix.
+    // Also, spin related variables of supercell is generated from inputspin.
+
+    // Convention of the transformation matrix (Transmat)
+    // (a_s, b_s, c_s) = (a_in, b_in, c_in) * Transmat
+
+    matmul3(supercell.lattice_vector, 
+            inputcell.lattice_vector, 
+            transformation_matrix);
+
+    set_reciprocal_latt(supercell.lattice_vector,
+                        supercell.reciprocal_lattice_vector);
+
+    supercell.volume = volume(supercell.lattice_vector, Direct);
+
+    double tmat_determinant = determinant3(transformation_matrix);
+    auto ncells = nint(std::abs(tmat_determinant));
+
+    supercell.number_of_atoms = inputcell.number_of_atoms * ncells;
+    supercell.number_of_elems = inputcell.number_of_elems;
+    supercell.kind.clear();
+    supercell.kind.shrink_to_fit();
+    supercell.x_fractional.clear();
+    supercell.x_fractional.shrink_to_fit();
+    supercell.x_cartesian.clear();
+    supercell.x_cartesian.shrink_to_fit();
+
+    double convmat[3][3];
+
+    matmul3(convmat, 
+            supercell.reciprocal_lattice_vector, 
+            inputcell.lattice_vector);
+
+    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
+            convmat[i][j] /= 2.0 * pi;
+        }
+    }
+
+    int nsize[3];
+
+    for (auto i = 0; i < 3; ++i) {
+        nsize[i] = 0;
+        auto nmin = 0;
+        auto nmax = 0;
+        for (auto j = 0; j < 3; ++j) {
+            nmin = std::min<int>(nmin, nint(transformation_matrix[i][j]));
+            nmax = std::max<int>(nmax, nint(transformation_matrix[i][j]));
+        }
+        nsize[i] = nmax - nmin;
+    }
+
+    double xfrac[3], xshift[3];
+    std::vector<double> xfrac_s(3);
+    std::vector<std::vector<double>> x_shifted;
+
+    bool new_entry, found_all;
+
+    for (auto iat = 0; iat < inputcell.number_of_atoms; ++iat) {
+        for (auto i = 0; i < 3; ++i) {
+            xfrac[i] = inputcell.x_fractional[iat][i];
+        }
+
+        x_shifted.clear();
+        x_shifted.shrink_to_fit();
+        found_all = false;
+
+        for (auto isize = 0; isize < nsize[0]; ++isize) {
+            xshift[0] = xfrac[0] + static_cast<double>(isize);
+            for (auto jsize = 0; jsize < nsize[1]; ++jsize) {
+                xshift[1] = xfrac[1] + static_cast<double>(jsize);
+                for (auto ksize = 0; ksize < nsize[2]; ++ksize) {
+                    xshift[2] = xfrac[2] + static_cast<double>(ksize);
+                    rotvec(&xfrac_s[0], xshift, convmat);
+
+                    for (auto i = 0; i < 3; ++i) {
+                        xfrac_s[i] -= static_cast<double>(nint(xfrac_s[i]));
+                       while (xfrac_s[i] >= 1.0 - eps6) {
+                           xfrac_s[i] -= 1.0;
+                       }
+                        while (xfrac_s[i] < -eps6) {
+                            xfrac_s[i] += 1.0;
+                        }
+                    }
+                    // std::cout << std::scientific;
+                    // std::cout << std::setw(5) << iat + 1;
+                    // std::cout << std::setw(15) << xfrac_s[0];
+                    // std::cout << std::setw(15) << xfrac_s[1];
+                    // std::cout << std::setw(15) << xfrac_s[2] << '\n';
+                    
+                    new_entry = true;
+                    for (const auto &it: x_shifted) {
+                        auto diff = std::pow(xfrac_s[0] - it[0], 2) 
+                                  + std::pow(xfrac_s[1] - it[1], 2) 
+                                  + std::pow(xfrac_s[2] - it[2], 2);
+
+                        if (std::sqrt(diff) < eps8) {
+                            new_entry = false;
+                            break;
+                        }
+                    }
+
+                    if (new_entry) x_shifted.push_back(xfrac_s);
+
+                    if (x_shifted.size() == ncells) {
+                        found_all = true;
+
+                        for (const auto &it : x_shifted) {
+                            supercell.x_fractional.push_back(it);
+                            supercell.kind.push_back(inputcell.kind[iat]);
+                            spin.magmom.push_back(inputspin.magmom[iat]);
+                        }
+                        break;
+                    }
+                }
+                if (found_all) break;
+            }
+            if (found_all) break;
+        }
+    }
+
+    std::vector<double> xtmp(3), xf(3);
+    for (const auto &xf : supercell.x_fractional) {
+        rotvec(&xtmp[0], &xf[0], supercell.lattice_vector);
+        supercell.x_cartesian.push_back(xtmp);
+    }
+    spin.lspin = inputspin.lspin;
+    spin.time_reversal_symm = inputspin.time_reversal_symm;
+    spin.noncollinear = inputspin.noncollinear;
 }
 
 const Cell& System::get_supercell() const
@@ -203,13 +337,13 @@ int* System::get_periodicity() const
 
 void System::set_kdname(const std::string *kdname_in)
 {
-    const int nkd = supercell.number_of_elems;
+    const auto nkd = inputcell.number_of_elems;
 
     if (kdname) {
         deallocate(kdname);
     }
     allocate(kdname, nkd);
-    for (unsigned int i = 0; i < nkd; ++i) {
+    for (size_t i = 0; i < nkd; ++i) {
         kdname[i] = kdname_in[i];
     }
 }
@@ -271,7 +405,7 @@ void System::frac2cart(double **xf) const
     double *x_tmp;
     allocate(x_tmp, 3);
 
-    for (auto i = 0; i < supercell.number_of_atoms; ++i) {
+    for (size_t i = 0; i < supercell.number_of_atoms; ++i) {
 
         rotvec(x_tmp, xf[i], supercell.lattice_vector);
 
@@ -315,8 +449,12 @@ void System::set_default_variables()
 {
     kdname = nullptr;
 
+    inputcell.number_of_atoms = 0;
+    inputcell.number_of_elems = 0;
     supercell.number_of_atoms = 0;
     supercell.number_of_elems = 0;
+    primcell.number_of_atoms = 0;
+    primcell.number_of_elems = 0;
 
     allocate(is_periodic, 3);
     is_periodic[0] = 1;
@@ -327,9 +465,9 @@ void System::set_default_variables()
     exist_image = nullptr;
     str_magmom = "";
 
-    spin.lspin = false;
-    spin.noncollinear = 0;
-    spin.time_reversal_symm = 1;
+    inputspin.lspin = false;
+    inputspin.noncollinear = 0;
+    inputspin.time_reversal_symm = 1;
 }
 
 void System::deallocate_variables()
@@ -348,31 +486,30 @@ void System::deallocate_variables()
     }
 }
 
-void System::set_spin_variables(const unsigned int nat_in,
+void System::set_spin_variables(const size_t nat_in,
                                 const bool lspin_in,
                                 const int noncol_in,
                                 const int trev_sym_in,
                                 const double (*magmom_in)[3])
 {
-    spin.lspin = lspin_in;
-    spin.noncollinear = noncol_in;
-    spin.time_reversal_symm = trev_sym_in;
-    spin.magmom.clear();
+    inputspin.lspin = lspin_in;
+    inputspin.noncollinear = noncol_in;
+    inputspin.time_reversal_symm = trev_sym_in;
+    inputspin.magmom.clear();
 
     std::vector<double> vec(3);
-    for (auto i = 0; i < nat_in; ++i) {
+    for (size_t i = 0; i < nat_in; ++i) {
         for (auto j = 0; j < 3; ++j) {
             vec[j] = magmom_in[i][j];
         }
-        spin.magmom.push_back(vec);
+        inputspin.magmom.push_back(vec);
     }
 }
 
 const Spin& System::get_spin() const
 {
-    return spin;
+    return inputspin;
 }
-
 
 void System::set_str_magmom(std::string str_magmom_in)
 {
@@ -389,14 +526,13 @@ const std::vector<std::vector<unsigned int>>& System::get_atomtype_group() const
     return atomtype_group;
 }
 
-
 void System::set_atomtype_group()
 {
-    // In the case of collinear calculation, spin moments are considered as scalar
+    // In the case of collinear calculation, inputspin moments are considered as scalar
     // variables. Therefore, the same elements with different magnetic moments are
     // considered as different types. In noncollinear calculations,
     // magnetic moments are not considered in this stage. They will be treated
-    // separately in symmetry.cpp where spin moments will be rotated and flipped
+    // separately in symmetry.cpp where inputspin moments will be rotated and flipped
     // using time-reversal symmetry.
 
     unsigned int i;
@@ -415,7 +551,7 @@ void System::set_atomtype_group()
         set_type.insert(type_tmp);
     }
 
-    const int natomtypes = set_type.size();
+    const auto natomtypes = set_type.size();
     atomtype_group.resize(natomtypes);
 
     for (i = 0; i < supercell.number_of_atoms; ++i) {
@@ -436,7 +572,6 @@ void System::set_atomtype_group()
     }
     set_type.clear();
 }
-
 
 void System::generate_coordinate_of_periodic_images()
 {
@@ -509,7 +644,7 @@ void System::generate_coordinate_of_periodic_images()
 void System::print_structure_stdout(const Cell &cell)
 {
     using namespace std;
-    int i;
+    size_t i;
 
     cout << " SYSTEM" << endl;
     cout << " ======" << endl << endl;
@@ -537,19 +672,19 @@ void System::print_structure_stdout(const Cell &cell)
         << endl << endl;
 
     cout << "  Reciprocal Lattice Vector" << std::endl;
-    cout << setw(16) << supercell.reciprocal_lattice_vector[0][0];
-    cout << setw(15) << supercell.reciprocal_lattice_vector[0][1];
-    cout << setw(15) << supercell.reciprocal_lattice_vector[0][2];
+    cout << setw(16) << cell.reciprocal_lattice_vector[0][0];
+    cout << setw(15) << cell.reciprocal_lattice_vector[0][1];
+    cout << setw(15) << cell.reciprocal_lattice_vector[0][2];
     cout << " : b1" << endl;
 
-    cout << setw(16) << supercell.reciprocal_lattice_vector[1][0];
-    cout << setw(15) << supercell.reciprocal_lattice_vector[1][1];
-    cout << setw(15) << supercell.reciprocal_lattice_vector[1][2];
+    cout << setw(16) << cell.reciprocal_lattice_vector[1][0];
+    cout << setw(15) << cell.reciprocal_lattice_vector[1][1];
+    cout << setw(15) << cell.reciprocal_lattice_vector[1][2];
     cout << " : b2" << endl;
 
-    cout << setw(16) << supercell.reciprocal_lattice_vector[2][0];
-    cout << setw(15) << supercell.reciprocal_lattice_vector[2][1];
-    cout << setw(15) << supercell.reciprocal_lattice_vector[2][2];
+    cout << setw(16) << cell.reciprocal_lattice_vector[2][0];
+    cout << setw(15) << cell.reciprocal_lattice_vector[2][1];
+    cout << setw(15) << cell.reciprocal_lattice_vector[2][2];
     cout << " : b3" << endl;
     cout << endl;
 
@@ -577,19 +712,19 @@ void System::print_magmom_stdout() const
     using namespace std;
 
     cout << "  MAGMOM is given. The magnetic moments of each atom are as follows:" << endl;
-    for (auto i = 0; i < supercell.number_of_atoms; ++i) {
+    for (size_t i = 0; i < inputcell.number_of_atoms; ++i) {
         cout << setw(6) << i + 1;
-        cout << setw(5) << spin.magmom[i][0];
-        cout << setw(5) << spin.magmom[i][1];
-        cout << setw(5) << spin.magmom[i][2];
+        cout << setw(5) << inputspin.magmom[i][0];
+        cout << setw(5) << inputspin.magmom[i][1];
+        cout << setw(5) << inputspin.magmom[i][2];
         cout << endl;
     }
     cout << endl;
-    if (spin.noncollinear == 0) {
+    if (inputspin.noncollinear == 0) {
         cout << "  NONCOLLINEAR = 0: magnetic moments are considered as scalar variables." << endl;
-    } else if (spin.noncollinear == 1) {
+    } else if (inputspin.noncollinear == 1) {
         cout << "  NONCOLLINEAR = 1: magnetic moments are considered as vector variables." << endl;
-        if (spin.time_reversal_symm) {
+        if (inputspin.time_reversal_symm) {
             cout << "  TREVSYM = 1: Time-reversal symmetry will be considered for generating magnetic space group"
                 << endl;
         } else {

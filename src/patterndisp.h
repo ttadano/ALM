@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 #include <set>
-#include "interaction.h"
+#include "cluster.h"
 #include "symmetry.h"
 #include "fcs.h"
 #include "constraint.h"
@@ -124,7 +124,7 @@ namespace ALM_NS
         Displace();
         ~Displace();
 
-        void gen_displacement_pattern(const Interaction *interaction,
+        void gen_displacement_pattern(const Cluster *cluster,
                                       const Symmetry *symmetry,
                                       const Fcs *fcs,
                                       const Constraint *constraint,
@@ -144,23 +144,23 @@ namespace ALM_NS
         std::vector<DispDirectionHarmonic> disp_harm, disp_harm_best;
         void set_default_variables();
         void deallocate_variables();
-        void generate_pattern_all(const int,
-                                  const int,
-                                  const double [3][3],
+        void generate_pattern_all(const int maxorder,
+                                  const size_t nat,
+                                  const double lavec[3][3],
                                   const Symmetry *symmetry,
-                                  const std::set<DispAtomSet> *,
-                                  const std::string) const;
+                                  const std::set<DispAtomSet> *dispset_in,
+                                  const std::string preferred_basis) const;
 
         void generate_signvecs(const int,
                                std::vector<std::vector<int>> &,
                                std::vector<int>) const;
 
-        void find_unique_sign_pairs(const int,
-                                    const int,
-                                    const Symmetry *,
-                                    const std::vector<std::vector<int>>,
-                                    const std::vector<int> &,
-                                    std::vector<std::vector<int>> &,
-                                    const std::string) const;
+        void find_unique_sign_pairs(const int natom_disp_in,
+                                    const size_t nat,
+                                    const Symmetry *symmetry,
+                                    const std::vector<std::vector<int>> sign_in,
+                                    const std::vector<int> &pair_in,
+                                    std::vector<std::vector<int>> &sign_out,
+                                    const std::string preferred_basis) const;
     };
 }

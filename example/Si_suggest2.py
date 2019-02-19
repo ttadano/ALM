@@ -2,8 +2,7 @@
 #  Si_suggest.py
 #
 #  This is an example to run ALM in the suggest mode.
-#
-
+# 
 from alm import ALM
 import numpy as np
 
@@ -77,8 +76,10 @@ xcoord = [[ 0.0000000000000000, 0.0000000000000000, 0.0000000000000000],
 
 kd = [14] * 64
 
+transformation_matrix = [[1, 1, 0], [-1, 1, 0], [0, 0, 2]]
+primitive_axes = [[0.5, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 0.5]]
 # alm.alm_new() and alm.alm_delete() are done by 'with' statement
-with ALM(lavec, xcoord, kd) as alm:
+with ALM(lavec, xcoord, kd, transformation_matrix, primitive_axes=primitive_axes) as alm:
     alm.define(2, [-1, 7.3])
     #alm.define(2)
     alm.suggest()
