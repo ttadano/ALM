@@ -13,10 +13,15 @@
 #include "error.h"
 #include "mathfunctions.h"
 #include "memory.h"
+#include "symmetry.h"
 #include "timer.h"
 #include <iostream>
 #include <iomanip>
 #include <set>
+
+extern "C" {
+  #include "spglib.h"
+}
 
 using namespace ALM_NS;
 
@@ -55,6 +60,7 @@ void System::init(const int verbosity,
 
     if (verbosity > 0) {
         print_structure_stdout(supercell);
+        print_structure_stdout(primcell);
         if (spin.lspin) print_magmom_stdout();
         timer->print_elapsed();
         std::cout << " -------------------------------------------------------------------" << std::endl;
@@ -69,10 +75,41 @@ void System::set_supercell(const double lavec_in[3][3],
                            const int *kind_in,
                            const double xf_in[][3],
                            const double transformation_matrix[3][3],
-                           const double primitive_axes[3][3])
+                           double primitive_axes[3][3])
 {
+    double symprec = 1.0e-3;
+    auto refine_lattice_spglib = true;
+
     set_inputcell(lavec_in, nat_in, kind_in, xf_in);
-    build_supercell(transformation_matrix);
+    build_primitivecell(primitive_axes, 
+                        refine_lattice_spglib,
+                        symprec);
+
+    if (refine_lattice_spglib) {
+        double inv_primitive_axes[3][3];
+        invmat3(inv_primitive_axes, primitive_axes);
+        inputcell = generate_supercell(primcell,
+                                       inv_primitive_axes);
+    }
+    supercell = generate_supercell(inputcell, 
+                                   transformation_matrix);
+
+    // Setup spin-related variables
+    // This is needed to avoid segmentation fault.
+    // Needs improvement
+    inputspin.magmom.clear();
+    spin.magmom.clear();
+    std::vector<double> vec{0.0, 0.0, 0.0};
+    for (auto i = 0; i < inputcell.number_of_atoms; ++i) {
+        inputspin.magmom.push_back(vec);
+    }
+    for (auto i = 0; i < supercell.number_of_atoms; ++i) {
+        spin.magmom.push_back(vec);
+    }
+
+    spin.lspin = inputspin.lspin;
+    spin.time_reversal_symm = inputspin.time_reversal_symm;
+    spin.noncollinear = inputspin.noncollinear;
 }
 
 void System::set_inputcell(const double lavec_in[3][3],
@@ -160,51 +197,44 @@ void System::set_inputcell(const double lavec_in[3][3],
         inputcell.x_cartesian.push_back(xtmp);
     }
 
-    // This is needed to avoid segmentation fault.
-    inputspin.magmom.clear();
-    std::vector<double> vec(3);
-    for (i = 0; i < nat_in; ++i) {
-        for (j = 0; j < 3; ++j) {
-            vec[j] = 0;
-        }
-        inputspin.magmom.push_back(vec);
-    }
 }
 
-void System::build_supercell(const double transformation_matrix[3][3])
+Cell System::generate_supercell(const Cell &cell_in, 
+                                const double transformation_matrix[3][3])
 {
-    // Build supercell from inputcell and transformation matrix.
+    // Build cell_out from cell_in and transformation matrix.
     // Also, spin related variables of supercell is generated from inputspin.
 
     // Convention of the transformation matrix (Transmat)
-    // (a_s, b_s, c_s) = (a_in, b_in, c_in) * Transmat
+    // (a_out, b_out, c_out) = (a_in, b_in, c_in) * Transmat
 
-    matmul3(supercell.lattice_vector, 
-            inputcell.lattice_vector, 
+    Cell cell_out;
+    matmul3(cell_out.lattice_vector, 
+            cell_in.lattice_vector, 
             transformation_matrix);
 
-    set_reciprocal_latt(supercell.lattice_vector,
-                        supercell.reciprocal_lattice_vector);
+    set_reciprocal_latt(cell_out.lattice_vector,
+                        cell_out.reciprocal_lattice_vector);
 
-    supercell.volume = volume(supercell.lattice_vector, Direct);
+    cell_out.volume = volume(cell_out.lattice_vector, Direct);
 
     double tmat_determinant = determinant3(transformation_matrix);
     auto ncells = nint(std::abs(tmat_determinant));
 
-    supercell.number_of_atoms = inputcell.number_of_atoms * ncells;
-    supercell.number_of_elems = inputcell.number_of_elems;
-    supercell.kind.clear();
-    supercell.kind.shrink_to_fit();
-    supercell.x_fractional.clear();
-    supercell.x_fractional.shrink_to_fit();
-    supercell.x_cartesian.clear();
-    supercell.x_cartesian.shrink_to_fit();
+    cell_out.number_of_atoms = cell_in.number_of_atoms * ncells;
+    cell_out.number_of_elems = cell_in.number_of_elems;
+    cell_out.kind.clear();
+    cell_out.kind.shrink_to_fit();
+    cell_out.x_fractional.clear();
+    cell_out.x_fractional.shrink_to_fit();
+    cell_out.x_cartesian.clear();
+    cell_out.x_cartesian.shrink_to_fit();
 
     double convmat[3][3];
 
     matmul3(convmat, 
-            supercell.reciprocal_lattice_vector, 
-            inputcell.lattice_vector);
+            cell_out.reciprocal_lattice_vector, 
+            cell_in.lattice_vector);
 
     for (auto i = 0; i < 3; ++i) {
         for (auto j = 0; j < 3; ++j) {
@@ -231,9 +261,9 @@ void System::build_supercell(const double transformation_matrix[3][3])
 
     bool new_entry, found_all;
 
-    for (auto iat = 0; iat < inputcell.number_of_atoms; ++iat) {
+    for (auto iat = 0; iat < cell_in.number_of_atoms; ++iat) {
         for (auto i = 0; i < 3; ++i) {
-            xfrac[i] = inputcell.x_fractional[iat][i];
+            xfrac[i] = cell_in.x_fractional[iat][i];
         }
 
         x_shifted.clear();
@@ -257,11 +287,6 @@ void System::build_supercell(const double transformation_matrix[3][3])
                             xfrac_s[i] += 1.0;
                         }
                     }
-                    // std::cout << std::scientific;
-                    // std::cout << std::setw(5) << iat + 1;
-                    // std::cout << std::setw(15) << xfrac_s[0];
-                    // std::cout << std::setw(15) << xfrac_s[1];
-                    // std::cout << std::setw(15) << xfrac_s[2] << '\n';
                     
                     new_entry = true;
                     for (const auto &it: x_shifted) {
@@ -281,9 +306,9 @@ void System::build_supercell(const double transformation_matrix[3][3])
                         found_all = true;
 
                         for (const auto &it : x_shifted) {
-                            supercell.x_fractional.push_back(it);
-                            supercell.kind.push_back(inputcell.kind[iat]);
-                            spin.magmom.push_back(inputspin.magmom[iat]);
+                            cell_out.x_fractional.push_back(it);
+                            cell_out.kind.push_back(cell_in.kind[iat]);
+//                            spin.magmom.push_back(inputspin.magmom[iat]);
                         }
                         break;
                     }
@@ -295,13 +320,305 @@ void System::build_supercell(const double transformation_matrix[3][3])
     }
 
     std::vector<double> xtmp(3), xf(3);
-    for (const auto &xf : supercell.x_fractional) {
-        rotvec(&xtmp[0], &xf[0], supercell.lattice_vector);
-        supercell.x_cartesian.push_back(xtmp);
+    for (const auto &xf : cell_out.x_fractional) {
+        rotvec(&xtmp[0], &xf[0], cell_out.lattice_vector);
+        cell_out.x_cartesian.push_back(xtmp);
     }
-    spin.lspin = inputspin.lspin;
-    spin.time_reversal_symm = inputspin.time_reversal_symm;
-    spin.noncollinear = inputspin.noncollinear;
+
+
+
+    return cell_out;
+}
+
+void System::build_primitivecell(double primitive_axes[3][3],
+                                 const bool refine_lattice_spglib,
+                                 const double symprec_spglib)
+{
+    // All elements of the inverse of the primitive_axes matrix should be integer.
+
+    double inv_primaxes[3][3];
+    auto automatic_detection = true;
+    unsigned int i, j; 
+
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            if (std::abs(primitive_axes[i][j]) > eps) {
+                automatic_detection = false;
+                break;
+            }
+        }
+    }
+
+    if (automatic_detection) {
+        find_primitive_spglib(inputcell, 
+                              primcell, 
+                              refine_lattice_spglib,
+                              primitive_axes,
+                              symprec_spglib);
+    } else {
+        invmat3(inv_primaxes, primitive_axes);
+        for (auto i = 0; i < 3; ++i) {
+            for (auto j = 0; j < 3; ++j) {
+                auto tmp = static_cast<double>(nint(inv_primaxes[i][j]));
+                if (std::abs(inv_primaxes[i][j] - tmp) > eps8) {
+                    exit("find_primitivecell", 
+                         "Invalid PRIMITIVE_AXES entry");
+                }
+            }
+        }
+
+        matmul3(primcell.lattice_vector, 
+                inputcell.lattice_vector,
+                primitive_axes);
+
+        set_reciprocal_latt(primcell.lattice_vector, 
+                            primcell.reciprocal_lattice_vector);
+        primcell.volume = volume(primcell.lattice_vector, Direct);
+        primcell.number_of_elems = inputcell.number_of_elems;
+
+        std::vector<double> xtmp(3);
+        std::vector<std::vector<double>> xuniq;
+
+        for (auto iat = 0; iat < inputcell.number_of_atoms; ++iat) {
+        
+        rotvec(&xtmp[0], &inputcell.x_fractional[iat][0], inv_primaxes);
+        for (i = 0; i < 3; ++i) {
+            xtmp[i] = xtmp[i] - static_cast<double>(nint(xtmp[i]));
+        }
+        bool is_new = true;
+        for (const auto &it : xuniq) {
+            double xdiff[3];
+
+            for (i = 0; i < 3; ++i) {
+                xdiff[i] = it[i] - xtmp[i];
+                xdiff[i] = xdiff[i] - static_cast<double>(nint(xdiff[i]));
+            }
+            double diff = std::pow(xdiff[0], 2.0)
+                        + std::pow(xdiff[1], 2.0)
+                        + std::pow(xdiff[2], 2.0);
+            if (std::sqrt(diff) < symprec_spglib) {
+                is_new = false;
+                break;
+            }
+        }
+        if (is_new) {
+            // xtmp is in the range of -0.5 <= xtmp < 0.5.
+            // Change the range to 0.0 <= xtmp < 1.0
+            for (i = 0; i < 3; ++i) {
+                if (xtmp[i] < 0.0) xtmp[i] += 1.0; 
+            }
+            xuniq.push_back(xtmp);
+            primcell.x_fractional.push_back(xtmp);
+            primcell.kind.push_back(inputcell.kind[iat]);
+        }
+    }
+        primcell.number_of_atoms = primcell.x_fractional.size();
+        for (const auto &xf : primcell.x_fractional) {
+        rotvec(&xtmp[0], &xf[0], primcell.lattice_vector);
+        primcell.x_cartesian.push_back(xtmp);
+    }
+
+    }
+}
+
+void System::find_primitive_spglib(const Cell &cell_in, 
+                                   Cell &primcell,
+                                   const bool refine_lattice,
+                                   double primitive_axes[3][3],
+                                   const double symprec)
+{
+    size_t i, j;
+    int *types_tmp;
+    double (*position)[3];
+    double aa[3][3];
+    auto nat_in = cell_in.number_of_atoms;
+    auto is_input_primitive = false;
+
+    allocate(position, nat_in);
+    allocate(types_tmp, nat_in);
+
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            aa[i][j] = cell_in.lattice_vector[i][j];
+        }
+    }
+    for (i = 0; i < nat_in; ++i) {
+        for (j = 0; j < 3; ++j) {
+            position[i][j] = cell_in.x_fractional[i][j];
+        }
+        types_tmp[i] = cell_in.kind[i];
+    }
+
+    auto SpglibDataset = spg_get_dataset(aa,
+                                         position,
+                                         types_tmp,
+                                         nat_in,
+                                         symprec);
+
+    deallocate(position);
+    deallocate(types_tmp);                                         
+
+    double transmat_to_prim[3][3];
+    double invtransmat_prim[3][3];
+    double invtransmat[3][3];
+
+    double aa_prim[3][3];
+    std::vector<double> xtmp(3);
+
+    // transmat_to_prim (P_prim) is the matrix that transforms the standardized lattice
+    // to primitive lattice as (a_s, b_s, c_s) * P_prim = (a_p, b_p, c_p).
+    get_transform_matrix_to_primitive(SpglibDataset->international_symbol, 
+                                      transmat_to_prim);
+    invmat3(invtransmat_prim, transmat_to_prim);
+
+    // transformation_matrix (P) transforms the standardized lattice w/o rigid rotation
+    // to the input lattice as (a_s, b_s, c_s) P = (a_i, b_i, c_i).
+    invmat3(invtransmat, SpglibDataset->transformation_matrix);
+
+    // The primitive_axes = P^{-1} * P_prim transform the input lattice to primitive lattice
+    // as (a_p, b_p, c_p) = (a_i, b_i, c_i) * primitive_axes
+    matmul3(primitive_axes, invtransmat, transmat_to_prim);
+
+    if (std::abs(determinant3(primitive_axes) - 1.0) < eps6) {
+        is_input_primitive = true;
+    }
+
+    if (is_input_primitive && !refine_lattice) {
+        primcell = cell_in;
+    } else {
+        if (refine_lattice) {
+       // std_lattice (R a_s, R b_s, R c_s) is the standardized lattice with rigid rotation (R).
+       // This operation involves the ridig rotation of the input lattice.
+
+       matmul3(aa_prim, SpglibDataset->std_lattice, transmat_to_prim);
+
+      // Need to apply R^{-1} to recover the lattice before rigid rotation
+      // (a_p, b_p, c_p) = (a_s, b_s, c_s) * P_prim = R^{-1} * std_lattice * P_prim.
+      // double inv_std_rotation_matrix[3][3];
+      // invmat3(inv_std_rotation_matrix, SpglibDataset->std_rotation_matrix);
+      // matmul3(aa_prim, inv_std_rotation_matrix, aa_prim);
+
+       // Refine primitive_axes
+       double inv_primitive_axes[3][3];
+       invmat3(inv_primitive_axes, primitive_axes);
+       for (i = 0; i < 3; ++i) {
+           for (j = 0; j < 3; ++j) {
+               inv_primitive_axes[i][j] 
+                  = static_cast<double>(nint(inv_primitive_axes[i][j]));
+           }
+       }
+       invmat3(primitive_axes, inv_primitive_axes);
+    } else {
+        // Generate primitive lattice by using input lattice and primitive_axes
+        matmul3(aa_prim, cell_in.lattice_vector, primitive_axes);
+    }
+
+    std::vector<std::vector<double>> xuniq;
+    for (auto iat = 0; iat < SpglibDataset->n_std_atoms; ++iat) {
+        if (refine_lattice) {
+            for (i = 0; i < 3; ++i) {
+             xtmp[i] = SpglibDataset->std_positions[iat][i];
+            }
+        } else {
+            for (i = 0; i < 3; ++i) {
+             xtmp[i] = SpglibDataset->std_positions[iat][i]
+                        - SpglibDataset->origin_shift[i];
+            }
+        }
+        
+        rotvec(&xtmp[0], &xtmp[0], invtransmat_prim);
+        for (i = 0; i < 3; ++i) {
+            xtmp[i] = xtmp[i] - static_cast<double>(nint(xtmp[i]));
+        }
+        bool is_new = true;
+        for (const auto &it : xuniq) {
+            double xdiff[3];
+
+            for (i = 0; i < 3; ++i) {
+                xdiff[i] = it[i] - xtmp[i];
+                xdiff[i] = xdiff[i] - static_cast<double>(nint(xdiff[i]));
+            }
+            double diff = std::pow(xdiff[0], 2.0)
+                        + std::pow(xdiff[1], 2.0)
+                        + std::pow(xdiff[2], 2.0);
+            if (std::sqrt(diff) < symprec) {
+                is_new = false;
+                break;
+            }
+        }
+        if (is_new) {
+            // xtmp is in the range of -0.5 <= xtmp < 0.5.
+            // Change the range to 0.0 <= xtmp < 1.0
+            for (i = 0; i < 3; ++i) {
+                if (xtmp[i] < 0.0) xtmp[i] += 1.0; 
+            }
+            xuniq.push_back(xtmp);
+            primcell.x_fractional.push_back(xtmp);
+            primcell.kind.push_back(SpglibDataset->std_types[iat]);
+        }
+    }
+
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            primcell.lattice_vector[i][j] = aa_prim[i][j];
+        }
+    }
+
+    set_reciprocal_latt(primcell.lattice_vector, 
+                        primcell.reciprocal_lattice_vector);
+    primcell.volume = volume(primcell.lattice_vector, Direct);
+    primcell.number_of_atoms = primcell.x_fractional.size();
+    primcell.number_of_elems = cell_in.number_of_elems;
+
+    for (const auto &xf : primcell.x_fractional) {
+        rotvec(&xtmp[0], &xf[0], primcell.lattice_vector);
+        primcell.x_cartesian.push_back(xtmp);
+    }
+
+    }
+}
+
+void System::get_transform_matrix_to_primitive(const std::string &symbol_in, 
+                                               double mat_out[3][3])
+{
+    std::vector<double> mat_1d;
+    // The matrix form is obtained from the spglib documentation page
+    switch (symbol_in[0]) {
+    case 'P':
+        mat_1d = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+        break;
+    case 'A':
+        mat_1d = {1.0, 0.0, 0.0, 0.0, 0.5, -0.5, 0.0, 0.5, 0.5};
+        break;
+    case 'C':
+        mat_1d = {0.5, 0.5, 0.0, -0.5, 0.5, 0.0, 0.0, 0.0, 1.0};
+        break;
+    case 'R':
+        {
+        double f3 = 1.0/3.0;
+        mat_1d = {2.0, -1.0, -1.0, 1.0, 1.0, -2.0, 1.0, 1.0, 1.0};
+        for (auto &it : mat_1d) {
+            it *= f3;
+        }
+        }
+        break;
+    case 'I':
+        mat_1d = {-0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, -0.5};
+        break;
+    case 'F':
+        mat_1d = {0.0, 0.5, 0.5, 0.5, 0.0, 0.5, 0.5, 0.5, 0.0};
+        break;
+    default:
+        exit("get_transform_matrix_to_primitive",
+             "Invalid international symbol");
+    }
+
+    auto counter = 0;
+    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
+            mat_out[i][j] = mat_1d[counter++];
+        }
+    }
 }
 
 const Cell& System::get_supercell() const
@@ -543,7 +860,7 @@ void System::set_atomtype_group()
     for (i = 0; i < supercell.number_of_atoms; ++i) {
         type_tmp.element = supercell.kind[i];
 
-        if (spin.noncollinear == 0) {
+        if (spin.noncollinear == 0 && spin.lspin) {
             type_tmp.magmom = spin.magmom[i][2];
         } else {
             type_tmp.magmom = 0.0;
@@ -646,8 +963,8 @@ void System::print_structure_stdout(const Cell &cell)
     using namespace std;
     size_t i;
 
-    cout << " SYSTEM" << endl;
-    cout << " ======" << endl << endl;
+    cout << " STRUCTURES" << endl;
+    cout << " ==========" << endl << endl;
 
     cout.setf(ios::scientific);
 

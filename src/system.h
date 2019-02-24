@@ -70,7 +70,7 @@ namespace ALM_NS
                            const int *,
                            const double [][3],
                            const double transformation_matrix[3][3],
-                           const double primitive_axes[3][3]);
+                           double primitive_axes[3][3]);
         void set_kdname(const std::string *);
         void set_periodicity(const int [3]);
         void set_spin_variables(const size_t nat,
@@ -117,7 +117,18 @@ namespace ALM_NS
                            const int *,
                            const double [][3]);
 
-        void build_supercell(const double transformation_matrix[3][3]);
+        Cell generate_supercell(const Cell &cell_in,
+                                const double transformation_matrix[3][3]);
+                              
+        void build_primitivecell(double primitive_axes[3][3],
+                                 const bool refine_lattice_spglib,
+                                 const double symprec_spglib);
+        void find_primitive_spglib(const Cell &cell_in, Cell &primcell, 
+                                   const bool refine_lattice,
+                                   double primitive_axes[3][3],
+                                   const double symprec);
+        void get_transform_matrix_to_primitive(const std::string &symbol_in,
+                                               double mat_out[3][3]);
 
         double volume(const double [3][3],
                       LatticeType) const;

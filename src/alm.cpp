@@ -125,7 +125,7 @@ void ALM::set_cell(const size_t nat,
                    const int kind[],
                    const std::string kdname[],
                    const double transformation_matrix[3][3],
-                   const double primitive_axes[3][3]) const
+                   double primitive_axes[3][3]) const
 {
     system->set_supercell(lavec, nat, kind, xcoord, 
                           transformation_matrix, 

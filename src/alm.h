@@ -55,7 +55,7 @@ namespace ALM_NS
                       const int kind[],
                       const std::string kdname[],
                       const double transformation_matrix[3][3],
-                      const double primitive_axes[3][3]) const;
+                      double primitive_axes[3][3]) const;
         void set_magnetic_params(const size_t nat,
                                  const double (*magmom)[3],
                                  const bool lspin,

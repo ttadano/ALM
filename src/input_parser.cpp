@@ -444,13 +444,13 @@ void InputParser::parse_general_vars(ALM *alm)
         for (auto j = 0; j < 3; ++j) {
             if (i == j) {
                 transformation_matrix[i][j] =  1.0;
-                primitive_axes[i][j] = 1.0;
             } else {
                 transformation_matrix[i][j] =  0.0;
-                primitive_axes[i][j] = 0.0;
             }
+            primitive_axes[i][j] = 0.0;
         }
     }
+
     // Parse SUPERCELL
     if (!supercell_v.empty()) {
         if (supercell_v.size() == 3) {

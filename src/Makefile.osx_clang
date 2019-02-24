@@ -8,10 +8,11 @@
 # Use clang++ to use hdf5 installed via homebrew
 CXX = clang++
 CXXFLAGS = -O2 -std=c++11 -DWITH_SPARSE_SOLVER -D_FCS_HDF5 
-INCLUDE = -I../include -I$(HOME)/src/spglib/include -I/usr/local/include/eigen3/ -I/usr/local/include
+#INCLUDE = -I../include -I$(HOME)/src/spglib/include -I/usr/local/include/eigen3/ -I/usr/local/include
+INCLUDE = -I../include -I/usr/local/include/eigen3/ -I/usr/local/include
 
 CXXL = ${CXX}
-LDFLAGS = $(HOME)/src/spglib/lib/libsymspg.a -L/usr/local/lib -lhdf5_cpp -lhdf5
+LDFLAGS = -L/usr/local/lib -lhdf5_cpp -lhdf5 -lsymspg
 
 LAPACK = -llapack -lblas
 LIBS = ${LAPACK}

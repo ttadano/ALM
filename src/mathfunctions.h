@@ -101,7 +101,7 @@ inline void rotvec(double vec_out[3], const double vec_in[3], const double **mat
     }
 }
 
-inline void invmat3(double invmat[3][3], double mat[3][3])
+inline void invmat3(double invmat[3][3], const double mat[3][3])
 {
     unsigned int i, j;
     double det;
@@ -140,7 +140,7 @@ inline void invmat3(double invmat[3][3], double mat[3][3])
     invmat[2][2] = (mat_tmp[0][0] * mat_tmp[1][1] - mat_tmp[0][1] * mat_tmp[1][0]) * factor;
 }
 
-inline void invmat3_i(int invmat[3][3], int mat[3][3])
+inline void invmat3_i(int invmat[3][3], const int mat[3][3])
 {
     int det;
 
