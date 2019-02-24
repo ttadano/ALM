@@ -443,9 +443,9 @@ void InputParser::parse_general_vars(ALM *alm)
     for (i = 0; i < 3; ++i) {
         for (auto j = 0; j < 3; ++j) {
             if (i == j) {
-                transformation_matrix[i][j] =  1.0;
+                transformation_matrix[i][j] = 1.0;
             } else {
-                transformation_matrix[i][j] =  0.0;
+                transformation_matrix[i][j] = 0.0;
             }
             primitive_axes[i][j] = 0.0;
         }
@@ -456,9 +456,10 @@ void InputParser::parse_general_vars(ALM *alm)
         if (supercell_v.size() == 3) {
             for (i = 0; i < 3; ++i) {
                 try {
-                    transformation_matrix[i][i] 
-                    = boost::lexical_cast<double>(supercell_v[i]);
-                } catch (std::exception &e) {
+                    transformation_matrix[i][i]
+                        = boost::lexical_cast<double>(supercell_v[i]);
+                }
+                catch (std::exception &e) {
                     std::cout << e.what() << '\n';
                     exit("parse_general_vars",
                          "The SUPERCELL tags must be a set of doubles.");
@@ -469,17 +470,18 @@ void InputParser::parse_general_vars(ALM *alm)
             for (i = 0; i < 3; ++i) {
                 for (auto j = 0; j < 3; ++j) {
                     try {
-                        transformation_matrix[i][j] 
-                        = boost::lexical_cast<double>(supercell_v[counter++]);
-                    } catch (std::exception &e) {
+                        transformation_matrix[i][j]
+                            = boost::lexical_cast<double>(supercell_v[counter++]);
+                    }
+                    catch (std::exception &e) {
                         std::cout << e.what() << '\n';
                         exit("parse_general_vars",
-                         "The SUPERCELL tags must be a set of doubles.");
+                             "The SUPERCELL tags must be a set of doubles.");
                     }
                 }
             }
         } else {
-            exit("parse_general_vars", 
+            exit("parse_general_vars",
                  "Invalid number of entries for SUPERCELL");
         }
     }
@@ -497,14 +499,15 @@ void InputParser::parse_general_vars(ALM *alm)
                     if (list_string.size() == 1) {
                         val_tmp = boost::lexical_cast<double>(list_string[0]);
                     } else if (list_string.size() == 2) {
-                        val_tmp = boost::lexical_cast<double>(list_string[0]) 
-                        / boost::lexical_cast<double>(list_string[1]);
+                        val_tmp = boost::lexical_cast<double>(list_string[0])
+                            / boost::lexical_cast<double>(list_string[1]);
                     } else {
                         exit("parse_general_vars",
-                         "The PRIMITIVE_AXES tag entries must be double or fractions.");
+                             "The PRIMITIVE_AXES tag entries must be double or fractions.");
                     }
                     primitive_axes[i][i] = val_tmp;
-                } catch (std::exception &e) {
+                }
+                catch (std::exception &e) {
                     std::cout << e.what() << '\n';
                     exit("parse_general_vars",
                          "The PRIMITIVE_AXES tags must be a set of doubles.");
@@ -519,22 +522,23 @@ void InputParser::parse_general_vars(ALM *alm)
                         if (list_string.size() == 1) {
                             val_tmp = boost::lexical_cast<double>(list_string[0]);
                         } else if (list_string.size() == 2) {
-                            val_tmp = boost::lexical_cast<double>(list_string[0]) 
-                            / boost::lexical_cast<double>(list_string[1]);
+                            val_tmp = boost::lexical_cast<double>(list_string[0])
+                                / boost::lexical_cast<double>(list_string[1]);
                         } else {
                             exit("parse_general_vars",
-                            "The PRIMITIVE_AXES tag entries must be double or fractions.");
+                                 "The PRIMITIVE_AXES tag entries must be double or fractions.");
                         }
                         primitive_axes[i][j] = val_tmp;
-                        } catch (std::exception &e) {
-                            std::cout << e.what() << '\n';
-                            exit("parse_general_vars",
-                            "The PRIMITIVE_AXES tags must be a set of doubles.");
-                        }
+                    }
+                    catch (std::exception &e) {
+                        std::cout << e.what() << '\n';
+                        exit("parse_general_vars",
+                             "The PRIMITIVE_AXES tags must be a set of doubles.");
+                    }
                 }
             }
         } else {
-            exit("parse_general_vars", 
+            exit("parse_general_vars",
                  "Invalid number of entries for PRIMITIVE_AXES");
         }
     }
@@ -556,25 +560,25 @@ void InputParser::parse_general_vars(ALM *alm)
         }
     }
 
-/*
-    std::cout << "SUPERCELL:\n";
-    for (i = 0; i < 3; ++i) {
-        for (auto j = 0; j < 3; ++j) {
-            std::cout << std::setw(10) << transformation_matrix[i][j];
+    /*
+        std::cout << "SUPERCELL:\n";
+        for (i = 0; i < 3; ++i) {
+            for (auto j = 0; j < 3; ++j) {
+                std::cout << std::setw(10) << transformation_matrix[i][j];
+            }
+            std::cout << '\n';
         }
         std::cout << '\n';
-    }
-    std::cout << '\n';
-
-    std::cout << "PRIMITIVE_AXES:\n";
-    for (i = 0; i < 3; ++i) {
-        for (auto j = 0; j < 3; ++j) {
-            std::cout << std::setw(10) << primitive_axis[i][j];
+    
+        std::cout << "PRIMITIVE_AXES:\n";
+        for (i = 0; i < 3; ++i) {
+            for (auto j = 0; j < 3; ++j) {
+                std::cout << std::setw(10) << primitive_axis[i][j];
+            }
+            std::cout << '\n';
         }
         std::cout << '\n';
-    }
-    std::cout << '\n';
-*/
+    */
     input_setter->set_general_vars(alm,
                                    prefix,
                                    mode,

@@ -112,8 +112,8 @@ void InputSetter::set_cutoff_radii(const int maxorder_in,
                                    const std::vector<double> &cutoff_radii_in)
 {
     if (cutoff_radii_in.size() != (nkd_in * nkd_in * maxorder_in)) {
-        exit("set_cutoff_radii", 
-            "Incorrect size of the input array cutoff_radii_in");
+        exit("set_cutoff_radii",
+             "Incorrect size of the input array cutoff_radii_in");
     }
     if (cutoff_radii) {
         deallocate(cutoff_radii);
@@ -264,7 +264,7 @@ void InputSetter::set_atomic_positions(const size_t nat_in,
 
 void InputSetter::set_geometric_structure(ALM *alm)
 {
-    alm->set_cell(nat, lavec, xcoord, kd, kdname, 
+    alm->set_cell(nat, lavec, xcoord, kd, kdname,
                   transformation_matrix, primitive_axes);
     alm->set_periodicity(is_periodic);
     alm->set_magnetic_params(nat, magmom, lspin, noncollinear, trevsym, str_magmom);

@@ -81,7 +81,7 @@ namespace ALM_NS
     private:
         size_t nat, nkd;
         int *kd;
-        double lavec[3][3]; // lattice vector of the &cell field
+        double lavec[3][3];  // lattice vector of the &cell field
         double (*xcoord)[3]; // fractional coordinate
         std::string *kdname;
         int is_periodic[3];

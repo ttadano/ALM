@@ -61,13 +61,13 @@ void ALM::create()
 }
 
 void ALM::set_run_mode(const std::string run_mode_in)
-{    
+{
     if (run_mode_in != "optimize" && run_mode_in != "suggest") {
         std::cout << "Invalid run mode: " << run_mode_in << std::endl;
         exit(EXIT_FAILURE);
     }
     run_mode = run_mode_in;
-} 
+}
 
 std::string ALM::get_run_mode() const
 {
@@ -127,8 +127,8 @@ void ALM::set_cell(const size_t nat,
                    const double transformation_matrix[3][3],
                    double primitive_axes[3][3]) const
 {
-    system->set_supercell(lavec, nat, kind, xcoord, 
-                          transformation_matrix, 
+    system->set_supercell(lavec, nat, kind, xcoord,
+                          transformation_matrix,
                           primitive_axes);
     system->set_kdname(kdname);
 }
@@ -537,7 +537,7 @@ void ALM::run()
         run_optimize();
     } else if (run_mode == "suggest") {
         run_suggest();
-    } 
+    }
 }
 
 int ALM::run_optimize()

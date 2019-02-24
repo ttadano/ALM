@@ -118,24 +118,25 @@ namespace ALM_NS
                            const double [][3]);
 
         Cell generate_supercell(const Cell &cell_in,
-                                const double transformation_matrix[3][3]);
-                              
+                                const double transformation_matrix[3][3]) const;
+
         void build_primitivecell(double primitive_axes[3][3],
                                  const bool refine_lattice_spglib,
                                  const double symprec_spglib);
-        void find_primitive_spglib(const Cell &cell_in, Cell &primcell, 
+        void find_primitive_spglib(const Cell &cell_in,
+                                   Cell &primcell,
                                    const bool refine_lattice,
                                    double primitive_axes[3][3],
                                    const double symprec);
         void get_transform_matrix_to_primitive(const std::string &symbol_in,
-                                               double mat_out[3][3]);
+                                               double mat_out[3][3]) const;
 
         double volume(const double [3][3],
                       LatticeType) const;
         void set_atomtype_group();
 
-        void generate_coordinate_of_periodic_images();
-        void print_structure_stdout(const Cell &);
+        void generate_coordinate_of_periodic_images() const;
+        void print_structure_stdout(const Cell &) const;
         void print_magmom_stdout() const;
     };
 }
