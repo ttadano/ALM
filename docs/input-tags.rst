@@ -298,7 +298,7 @@ This field is necessary when ``MODE = optimize``.
 
  :Default: None
  :Type: Two integers connected by a hyphen
- :Description: ``SKIP`` =\ :math:`i`-:math:`j` skips the data in the range of [:math:`i`:\ :math:`j`]. The :math:`i` and :math:`j` must satisfy :math:`1\leq i \leq j \leq` ``NDATA``.  This option may be useful for splitting the data in ``DFSET`` into training data and 
+ :Description: ``SKIP`` =\ :math:`i`-:math:`j` skips the data in the range of [:math:`i`:\ :math:`j`]. The :math:`i` and :math:`j` must satisfy :math:`1\leq i \leq j \leq` ``NDATA``.  This option may be useful when doing cross-validation manually (``CV=-1``).
 
 ````
 
@@ -448,8 +448,7 @@ This field is necessary when ``MODE = optimize``.
 
 ````
 
-
-* ICONST-tag = 0 | 1 | 2 | 3
+* ICONST-tag = 0 | 1 | 2 | 3 | 11
 
  ===== =============================================================================================
    0    No constraints

@@ -76,7 +76,7 @@ The constraints for translational invariance are given by
 
     \sum_{\ell_{1}\kappa_{1}}\Phi_{\mu_{1}\mu_{2}\dots\mu_{n}}(\ell_{1}\kappa_{1};\ell_{2}\kappa_{2};\dots;\ell_{n}\kappa_{n}) = 0,
   
-which should be satisfied for arbitrary pairs of :math:`\ell_{2}\kappa_{2},\dots,\ell_{n}\kappa_{n}` and :math:`\mu_{1},\dots,\mu_{n}`. The code *alm* imposes equation :eq:`consttran` by default (``ICONST = 1``). 
+which should be satisfied for arbitrary pairs of :math:`\ell_{2}\kappa_{2},\dots,\ell_{n}\kappa_{n}` and :math:`\mu_{1},\dots,\mu_{n}`. The code **alm** imposes equation :eq:`consttran` by default (``ICONST = 1``). 
 
 The constraints for rotational invariance are
 
@@ -152,7 +152,7 @@ where :math:`\boldsymbol{\mathscr{F}}^{T} = [\boldsymbol{F}^{T}(\boldsymbol{u}_{
 Ordinary least-squares
 ======================
 
-In the ordinary least-squares (``LMODEL = least-squares``), **alm** estimates IFCs by solving the following problem
+In the ordinary least-squares (``LMODEL = least-squares``), IFCs are estimated by solving the following problem:
 
 .. math::
    :label: lsq
@@ -160,13 +160,12 @@ In the ordinary least-squares (``LMODEL = least-squares``), **alm** estimates IF
    \boldsymbol{\Phi}_{\mathrm{OLS}} = \mathop{\rm argmin}\limits_{\boldsymbol{\Phi}} \frac{1}{2N_{d}} \|\boldsymbol{\mathscr{F}}_{\mathrm{DFT}} - \boldsymbol{\mathscr{F}}_{\mathrm{TEP}} \|^{2}_{2} = \mathop{\rm argmin}\limits_{\boldsymbol{\Phi}} \frac{1}{2N_{d}}   \|\boldsymbol{\mathscr{F}}_{\mathrm{DFT}} - \mathbb{A} \boldsymbol{\Phi} \|^{2}_{2}.
 
 Therefore, the IFCs are determined so that the residual sum of squares (RSS) is minimized. 
-To determine all elements of  :math:`\boldsymbol{\Phi}_{\mathrm{OLS}}` uniquely, :math:`\mathbb{A}^{T}\mathbb{A}` must be full rank.
-To evaluate goodness of fit, **alm** reports the relative error :math:`\sigma` defined by
+To determine all elements of  :math:`\boldsymbol{\Phi}_{\mathrm{OLS}}` uniquely, :math:`\mathbb{A}^{T}\mathbb{A}` must be full rank. When the fitting is successful, **alm** reports the relative fitting error :math:`\sigma` defined by
 
 .. math::
    :label: fitting_error
 
-   \sigma = \sqrt{\mathrm{RSS}/\boldsymbol{\mathscr{F}}^{T}_{\mathrm{DFT}}\boldsymbol{\mathscr{F}}_{\mathrm{DFT}}},
+   \sigma = \sqrt{\frac{\|\boldsymbol{\mathscr{F}}_{\mathrm{DFT}} - \mathbb{A} \boldsymbol{\Phi} \|^{2}_{2}}{\|\boldsymbol{\mathscr{F}}_{\mathrm{DFT}}\|_{2}^{2}}},
 
 where the denominator is the square sum of the DFT forces.
 
@@ -174,8 +173,13 @@ where the denominator is the square sum of the DFT forces.
 Elastic-net regression
 ======================
 
+In the elasitc-net optimization (``LMODEL = elastic-net``), IFCs are estimated by solving the following optimization problem:
 
 .. math::
    :label: enet
 
-   \boldsymbol{\Phi}_{\mathrm{enet}} = \mathop{\rm argmin}\limits_{\boldsymbol{\Phi}} \frac{1}{2N_{d}}   \|\boldsymbol{\mathscr{F}}_{\mathrm{DFT}} - \mathbb{A} \boldsymbol{\Phi} \|^{2}_{2} + \| \boldsymbol{\Phi}  \|_{1}.
+   \boldsymbol{\Phi}_{\mathrm{enet}} = \mathop{\rm argmin}\limits_{\boldsymbol{\Phi}} \frac{1}{2N_{d}}   \|\boldsymbol{\mathscr{F}}_{\mathrm{DFT}} - \mathbb{A} \boldsymbol{\Phi} \|^{2}_{2} + \alpha \beta \| \boldsymbol{\Phi}  \|_{1} + \frac{1}{2} \alpha (1-\beta) \| \boldsymbol{\Phi}  \|_{2}^{2},
+
+where :math:`\alpha` is a hyperparameter that controls the trade-off between the sparsity and accuracy of the model, and :math:`\beta \; (0 < \beta \leq 1)` is a hyperparameter that controls the ratio of the :math:`L_{1}` and :math:`L_{2}` regularization terms. :math:`\alpha` and :math:`\beta` must be given by input tags ``L1_ALPHA`` and ``L1_RATIO``, respectively.
+
+An optimal value of :math:`\alpha` can be estimated, for example, by cross-validation (CV). A :math:`n`\ -fold CV can be performed by setting the ``CV``-tag properly.
