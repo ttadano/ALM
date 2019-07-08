@@ -145,7 +145,22 @@ extern "C" {
                                         const size_t nat,
                                         const size_t ndata_used)
     {
-        alm[id]->set_displacement_and_force(u_in, f_in, nat, ndata_used);
+        std::vector<std::vector<double>> u, f;
+
+        u.resize(ndata_used, std::vector<double>(3 * nat));
+        f.resize(ndata_used, std::vector<double>(3 * nat));
+
+        for (auto i = 0; i < ndata_used; i++) {
+            for (auto j = 0; j < 3 * nat; j++) {
+                u[i][j] = u_in[i * nat * 3 + j];
+                f[i][j] = f_in[i * nat * 3 + j];
+            }
+        }
+
+        alm[id]->set_training_data(u, f);
+
+        u.clear();
+        f.clear();
     }
 
     size_t alm_get_nrows_sensing_matrix(const int id)
@@ -156,7 +171,7 @@ extern "C" {
     void alm_set_constraint_type(const int id,
                                  const int constraint_flag) // ICONST
     {
-        alm[id]->set_constraint_type(constraint_flag);
+        alm[id]->set_constraint_mode(constraint_flag);
     }
 
     // void set_fitting_constraint_rotation_axis(const std::string rotation_axis) // ROTAXIS
