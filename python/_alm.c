@@ -1,4 +1,5 @@
 #include <Python.h>
+#include <assert.h>
 #include <stdio.h>
 #include <numpy/arrayobject.h>
 #include "alm_wrapper.h"
@@ -17,6 +18,7 @@ static PyObject * py_alm_new(PyObject *self, PyObject *args);
 static PyObject * py_alm_delete(PyObject *self, PyObject *args);
 static PyObject * py_run_suggest(PyObject *self, PyObject *args);
 static PyObject * py_optimize(PyObject *self, PyObject *args);
+static PyObject * py_set_optimizer_control(PyObject *self, PyObject *args);
 static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
 static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
@@ -62,6 +64,7 @@ static PyMethodDef _alm_methods[] = {
   {"alm_delete", py_alm_delete, METH_VARARGS, ""},
   {"run_suggest", py_run_suggest, METH_VARARGS, ""},
   {"optimize", py_optimize, METH_VARARGS, ""},
+  {"set_optimizer_control", py_set_optimizer_control, METH_VARARGS, ""},
   {"set_cell", py_set_cell, METH_VARARGS, ""},
   {"set_verbosity", py_set_verbosity, METH_VARARGS, ""},
   {"set_displacement_and_force", py_set_displacement_and_force, METH_VARARGS, ""},
@@ -193,6 +196,95 @@ static PyObject * py_optimize(PyObject *self, PyObject *args)
   info = alm_optimize(id, solver);
 
   return PyLong_FromLong((long) info);
+}
+
+static PyObject * py_set_optimizer_control(PyObject *self, PyObject *args)
+{
+  int id;
+  PyObject* py_optcontrol;
+  PyObject* py_value;
+  struct optimizer_control optcontrol;
+  int i;
+  int updated[15];
+
+  if (!PyArg_ParseTuple(args, "iO",
+                        &id,
+                        &py_optcontrol)) {
+    return NULL;
+  }
+
+  for (i = 0; i < 15; i++) {
+    updated[i] = 0;
+  }
+
+  if ((py_value = PyList_GetItem(py_optcontrol, 0)) != Py_None) {
+    optcontrol.linear_model = (int)PyLong_AsLong(py_value);
+    updated[0] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 1)) != Py_None) {
+    optcontrol.use_sparse_solver = (int)PyLong_AsLong(py_value);
+    updated[1] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 2)) != Py_None) {
+    optcontrol.maxnum_iteration = (int)PyLong_AsLong(py_value);
+    updated[2] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 3)) != Py_None) {
+    optcontrol.tolerance_iteration = PyFloat_AsDouble(py_value);
+    updated[3] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 4)) != Py_None) {
+    optcontrol.output_frequency = (int)PyLong_AsLong(py_value);
+    updated[4] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 5)) != Py_None) {
+    optcontrol.standardize = (int)PyLong_AsLong(py_value);
+    updated[5] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 6)) != Py_None) {
+    optcontrol.displacement_normalization_factor = PyFloat_AsDouble(py_value);
+    updated[6] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 7)) != Py_None) {
+    optcontrol.debiase_after_l1opt = (int)PyLong_AsLong(py_value);
+    updated[7] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 8)) != Py_None) {
+    optcontrol.cross_validation = (int)PyLong_AsLong(py_value);
+    updated[8] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 9)) != Py_None) {
+    optcontrol.l1_alpha = PyFloat_AsDouble(py_value);
+    updated[9] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 10)) != Py_None) {
+    optcontrol.l1_alpha_min = PyFloat_AsDouble(py_value);
+    updated[10] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 11)) != Py_None) {
+    optcontrol.l1_alpha_max = PyFloat_AsDouble(py_value);
+    updated[11] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 12)) != Py_None) {
+    optcontrol.num_l1_alpha = (int)PyLong_AsLong(py_value);
+    updated[12] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 13)) != Py_None) {
+    optcontrol.l1_ratio = PyFloat_AsDouble(py_value);
+    updated[13] = 1;
+  }
+  if ((py_value = PyList_GetItem(py_optcontrol, 14)) != Py_None) {
+    optcontrol.save_solution_path = (int)PyLong_AsLong(py_value);
+    updated[14] = 1;
+  }
+
+  py_value = NULL;
+
+  assert(PyList_Size(py_optcontrol) == 15);
+
+  alm_set_optimizer_control(id, optcontrol, updated);
+
+  Py_RETURN_NONE;
 }
 
 static PyObject * py_set_cell(PyObject *self, PyObject *args)

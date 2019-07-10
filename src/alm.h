@@ -80,6 +80,7 @@ namespace ALM_NS
                     const int *nbody_include,
                     const double *cutoff_radii) const;
         //int get_ndata_used() const;
+        OptimizerControl get_optimizer_control() const;
         size_t get_nrows_sensing_matrix() const;
         Cell get_supercell() const;
         std::string* get_kdname() const;

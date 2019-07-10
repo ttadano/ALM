@@ -1,5 +1,6 @@
 #include "../src/alm.h"
 #include "../src/memory.h"
+#include "../src/optimize.h"
 #include "alm_wrapper.h"
 #include <cstdlib>
 #include <string>
@@ -319,20 +320,72 @@ extern "C" {
 
         int info;
 
+        auto optctrl = alm[id]->get_optimizer_control();
         if (str_solver == "dense") {
-
-            alm[id]->set_sparse_mode(0);
-            info = alm[id]->run_optimize();
-
+            optctrl.use_sparse_solver = 0;
         } else if (str_solver == "SimplicialLDLT") {
-
-            alm[id]->set_sparse_mode(1);
-            info = alm[id]->run_optimize();
-
+            optctrl.use_sparse_solver = 1;
         } else {
             std::cerr << " Unsupported solver type : " << str_solver << std::endl;
             return EXIT_FAILURE;
         }
+        alm[id]->set_optimizer_control(optctrl);
+        info = alm[id]->run_optimize();
+
         return info;
+    }
+
+    void alm_set_optimizer_control(const int id,
+                                   const struct optimizer_control optcontrol,
+                                   const int updated[15])
+    {
+        auto optctrl = alm[id]->get_optimizer_control();
+
+        if (updated[0]) {
+            optctrl.linear_model = optcontrol.linear_model;
+        }
+        if (updated[1]) {
+            optctrl.use_sparse_solver = optcontrol.use_sparse_solver;
+        }
+        if (updated[2]) {
+            optctrl.maxnum_iteration = optcontrol.maxnum_iteration;
+        }
+        if (updated[3]) {
+            optctrl.tolerance_iteration = optcontrol.tolerance_iteration;
+        }
+        if (updated[4]) {
+            optctrl.output_frequency = optcontrol.output_frequency;
+        }
+        if (updated[5]) {
+            optctrl.standardize = optcontrol.standardize;
+        }
+        if (updated[6]) {
+            optctrl.displacement_normalization_factor = optcontrol.displacement_normalization_factor;
+        }
+        if (updated[7]) {
+            optctrl.debiase_after_l1opt = optcontrol.debiase_after_l1opt;
+        }
+        if (updated[8]) {
+            optctrl.cross_validation = optcontrol.cross_validation;
+        }
+        if (updated[9]) {
+            optctrl.l1_alpha = optcontrol.l1_alpha;
+        }
+        if (updated[10]) {
+            optctrl.l1_alpha_min = optcontrol.l1_alpha_min;
+        }
+        if (updated[11]) {
+            optctrl.l1_alpha_max = optcontrol.l1_alpha_max;
+        }
+        if (updated[12]) {
+            optctrl.num_l1_alpha = optcontrol.num_l1_alpha;
+        }
+        if (updated[13]) {
+            optctrl.l1_ratio = optcontrol.l1_ratio;
+        }
+        if (updated[14]) {
+            optctrl.save_solution_path = optcontrol.save_solution_path;
+        }
+        alm[id]->set_optimizer_control(optctrl);
     }
 }

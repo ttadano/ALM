@@ -223,6 +223,11 @@ void ALM::define(const int maxorder,
                     cutoff_radii);
 }
 
+OptimizerControl ALM::get_optimizer_control() const
+{
+    return optimize->get_optimizer_control();
+}
+
 size_t ALM::get_nrows_sensing_matrix() const
 {
     return optimize->get_number_of_rows_sensing_matrix();

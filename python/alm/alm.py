@@ -143,6 +143,34 @@ class ALM:
 
         return info
 
+    def set_optimizer_control(self, optcontrol):
+        keys = ('linear_model',
+                'use_sparse_solver',
+                'maxnum_iteration',
+                'tolerance_iteration',
+                'output_frequency',
+                'standardize',
+                'displacement_normalization_factor',
+                'debiase_after_l1opt',
+                'cross_validation',
+                'l1_alpha',
+                'l1_alpha_min',
+                'l1_alpha_max',
+                'num_l1_alpha',
+                'l1_ratio',
+                'save_solution_path')
+
+        optctrl = []
+        optcontrol_l = {key.lower(): optcontrol[key] for key in optcontrol}
+
+        for i, key in enumerate(keys):
+            if key in optcontrol_l:
+                optctrl.append(optcontrol_l[key])
+            else:
+                optctrl.append(None)
+
+        alm.set_optimizer_control(self._id, optctrl)
+
     def set_displacement_and_force(self, u, f):
         """Set displacements and respective forces in supercell.
 
@@ -437,7 +465,6 @@ class ALM:
         else:
             print("Invalid mode in get_fc.")
             raise ValueError
-
 
     def set_fc(self, fc_in):
         """Copy force constant obtained by an external optimizer to the ALM instance.

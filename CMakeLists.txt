@@ -18,9 +18,9 @@ if(WIN32)
 endif()
 
 if (UNIX)
-  include_directories("/Users/tadano/src/spglib/include")
+  include_directories("/Users/togo/code/spglib/include")
   find_package(LAPACK REQUIRED)
-  set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
+  set(spglib "-L/Users/togo/code/spglib/lib -lsymspg")
 endif()
 
 #
