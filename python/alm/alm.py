@@ -171,7 +171,7 @@ class ALM:
 
         alm.set_optimizer_control(self._id, optctrl)
 
-    def set_displacement_and_force(self, u, f):
+    def set_training_data(self, u, f):
         """Set displacements and respective forces in supercell.
 
         Parameters
@@ -190,10 +190,20 @@ class ALM:
         if self._id is None:
             self._show_error_message()
 
-        alm.set_displacement_and_force(
+        if u.ndim != 3:
+            msg = "Displacement array has to be three dimensions."
+            raise RuntimeError(msg)
+        if f.ndim != 3:
+            msg = "Force array has to be three dimensions."
+            raise RuntimeError(msg)
+
+        alm.set_training_data(
             self._id,
             np.array(u, dtype='double', order='C'),
             np.array(f, dtype='double', order='C'))
+
+    def set_displacement_and_force(self, u, f):
+        self.set_training_data(u, f)
 
     def define(self, maxorder, cutoff_radii=None, nbody=None):
         """Define the Taylor expansion potential.
@@ -231,8 +241,8 @@ class ALM:
 
         else:
             if len(nbody) != maxorder:
-                print("The size of nbody must be equal to maxorder.")
-                raise RuntimeError
+                msg = "The size of nbody must be equal to maxorder."
+                raise RuntimeError(msg)
 
         if cutoff_radii is None:
             _cutoff_radii = None
@@ -240,12 +250,12 @@ class ALM:
             _cutoff_radii = np.array(cutoff_radii, dtype='double', order='C')
             nelem = len(_cutoff_radii.ravel())
             if (nelem // maxorder) * maxorder != nelem:
-                print("The array shape of cutoff_radii is wrong.")
-                raise RuntimeError
+                msg = "The array shape of cutoff_radii is wrong."
+                raise RuntimeError(msg)
             nkd = int(round(np.sqrt(nelem // maxorder)))
             if nkd ** 2 - nelem // maxorder != 0:
-                print("The array shape of cutoff_radii is wrong.")
-                raise RuntimeError
+                msg = "The array shape of cutoff_radii is wrong."
+                raise RuntimeError(msg)
             _cutoff_radii = np.reshape(_cutoff_radii, (maxorder, nkd, nkd),
                                        order='C')
 
@@ -493,8 +503,8 @@ class ALM:
             fc_length_irred += self._get_number_of_irred_fc_elements(i + 1)
 
         if fc_length_irred != len(fc_in):
-            print("The size of the given force constant array is incorrect.")
-            raise RuntimeError
+            msg = "The size of the given force constant array is incorrect."
+            raise RuntimeError(msg)
 
         alm.set_fc(self._id, np.array(fc_in, dtype='double', order='C'))
 
@@ -523,16 +533,14 @@ class ALM:
             self._show_error_message()
 
         maxorder = self._maxorder
-        nat = len(self._xcoord)
         nrows = self._get_nrows_amat()
-      #  ndata_used = self._get_ndata_used()
 
         fc_length = 0
         for i in range(maxorder):
             fc_length += self._get_number_of_irred_fc_elements(i + 1)
 
-        amat = np.zeros(nrows * fc_length, dtype='double')
-        bvec = np.zeros(nrows)
+        amat = np.zeros(nrows * fc_length, dtype='double', order='C')
+        bvec = np.zeros(nrows, dtype='double')
         alm.get_matrix_elements(self._id, amat, bvec)
 
         return (np.reshape(amat, (nrows, fc_length), order='F'),
@@ -615,5 +623,5 @@ class ALM:
 
     def _show_error_message(self):
         """Private method to raise an error"""
-        print("This ALM object has to be initialized by ALM::alm_new()")
-        raise RuntimeError
+        msg = "This ALM object has to be initialized by ALM::alm_new()"
+        raise RuntimeError(msg)

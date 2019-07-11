@@ -51,11 +51,11 @@ extern "C" {
   //                         const int noncollinear,
   //                         const int trev_sym_mag,
   //                         const std::string str_magmom);
-  void alm_set_displacement_and_force(const int id,
-                                      const double* u_in,
-                                      const double* f_in,
-                                      const size_t nat,
-                                      const size_t ndata_used);
+  void alm_set_training_data(const int id,
+                             const double* u_in,
+                             const double* f_in,
+                             const size_t nat,
+                             const size_t ndata_used);
 
   void alm_set_constraint_type(const int id,
                                const int constraint_flag); // ICONST

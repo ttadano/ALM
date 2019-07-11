@@ -21,7 +21,7 @@ static PyObject * py_optimize(PyObject *self, PyObject *args);
 static PyObject * py_set_optimizer_control(PyObject *self, PyObject *args);
 static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
-static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args);
+static PyObject * py_set_training_data(PyObject *self, PyObject *args);
 static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args);
 static PyObject * py_set_constraint_type(PyObject *self, PyObject *args);
 static PyObject * py_define(PyObject *self, PyObject *args);
@@ -67,7 +67,7 @@ static PyMethodDef _alm_methods[] = {
   {"set_optimizer_control", py_set_optimizer_control, METH_VARARGS, ""},
   {"set_cell", py_set_cell, METH_VARARGS, ""},
   {"set_verbosity", py_set_verbosity, METH_VARARGS, ""},
-  {"set_displacement_and_force", py_set_displacement_and_force, METH_VARARGS, ""},
+  {"set_training_data", py_set_training_data, METH_VARARGS, ""},
   {"set_constraint_type", py_set_constraint_type, METH_VARARGS, ""},
   {"define", py_define, METH_VARARGS, ""},
   {"generate_force_constant", py_generate_force_constant, METH_VARARGS, ""},
@@ -329,7 +329,7 @@ static PyObject * py_set_verbosity(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args)
+static PyObject * py_set_training_data(PyObject *self, PyObject *args)
 {
   int id;
   PyArrayObject* py_u;
@@ -346,7 +346,8 @@ static PyObject * py_set_displacement_and_force(PyObject *self, PyObject *args)
 
   const size_t ndata_used = (size_t)PyArray_DIMS(py_f)[0];
   const size_t nat = (size_t)PyArray_DIMS(py_f)[1];
-  alm_set_displacement_and_force(id, u, f, nat, ndata_used);
+
+  alm_set_training_data(id, u, f, nat, ndata_used);
 
   Py_RETURN_NONE;
 }
