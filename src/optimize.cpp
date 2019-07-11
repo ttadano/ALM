@@ -142,7 +142,7 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
     } else if (optcontrol.linear_model == 2) {
 
-        // Use elastic net 
+        // Use elastic net
 
         if (!constraint->get_constraint_algebraic()) {
             exit("optimize_main",
@@ -215,7 +215,7 @@ int Optimize::least_squares(const int maxorder,
 
         if (optcontrol.use_sparse_solver) {
 
-            // Use a solver for sparse matrix 
+            // Use a solver for sparse matrix
             // (Requires less memory for sparse inputs.)
 
 #ifdef WITH_SPARSE_SOLVER
@@ -1266,9 +1266,9 @@ double Optimize::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
     return lambda_max;
 }
 
-void ALM_NS::Optimize::apply_scaler_displacement(std::vector<std::vector<double>> &u_inout,
-                                                 const double normalization_factor,
-                                                 const bool scale_back) const
+void Optimize::apply_scaler_displacement(std::vector<std::vector<double>> &u_inout,
+                                         const double normalization_factor,
+                                         const bool scale_back) const
 {
     const auto nrows = u_inout.size();
     const auto ncols = u_inout[0].size();
@@ -2441,11 +2441,11 @@ int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
         t.start();
         Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
         x = qr.solve(sp_bvec);
-    
+
         t.stop();
-        std::cout << "sqr   : " << qr.info() << " ; " << t.value() 
+        std::cout << "sqr   : " << qr.info() << " ; " << t.value()
         << "s ;  err: " << (AtA * x - AtB).norm() / AtB.norm() << "\n";
-    
+
         t.reset();
         t.start();
     */
@@ -2468,7 +2468,7 @@ int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
        lscg.setTolerance(eps10);
        lscg.setMaxIterations(10000000);
        x.setZero(); x = lscg.solve(sp_bvec);
-  
+
        t.stop();
        std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";*/
 
@@ -2480,7 +2480,7 @@ int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
          x.setZero(); x = bicg.solve(AtB);
          t.stop();
          std::cout << "bicg    : " << bicg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
-    
+
     */
     auto res = sp_bvec - sp_mat * x;
     const auto res2norm = res.squaredNorm();
