@@ -15,46 +15,37 @@ compile_with_sources = True
 #
 # $HOME
 # |-- ALM
-# |   |-- ALM
-# |   |   |-- include/
-# |   |   |-- lib/
-# |   |   |-- python/setup.py
-# |   |   |-- src/
-# |   |   |-- _build/
-# |   |   |-- CMakeLists.txt
-# |   |   `-- ...
-# |   `-- spglib
+# |   `-- ALM
 # |       |-- include/
 # |       |-- lib/
+# |       |-- python/setup.py
+# |       |-- src/
 # |       |-- _build/
 # |       |-- CMakeLists.txt
 # |       `-- ...
+#
 # |-- $CONDA_PREFIX/include
 # |-- $CONDA_PREFIX/include/eigen3
 # `-- ...
-
-library_dirs = []
-extra_link_args = []
-include_dirs = ['/usr/local/include/eigen3/', '/usr/local/include/', '/Users/tadano/src/spglib/include/']
-
-#spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
-spglib_dir = os.path.join(home, "src", "spglib", "lib")
-include_dirs_numpy = [numpy.get_include()]
-include_dirs += include_dirs_numpy
 
 if 'CONDA_PREFIX' in os.environ:
     conda_prefix = os.environ['CONDA_PREFIX']
 else:
     conda_prefix = os.path.join(home, "miniconda", "envs", "alm")
 
-# When "export CPLUS_INCLUDE_PATH=..." in documentation doesn't work,
-# the following setting can work in place of the environment variable setting.
-# include_dir_spglib = os.path.join(home, "ALM", "spglib", "include")
-# include_dirs.append(include_dir_spglib)
-# include_dir_boost = os.path.join(conda_prefix, "include")
-# include_dirs.append(include_dir_boost)
-# include_dir_eigen = os.path.join(include_dir_boost, "eigen3")
-# include_dirs.append(include_dir_eigen)
+library_dirs = []
+
+# For linux
+extra_link_args = ['-lgomp', '-llapack']
+# For macOS
+#extra_link_args = ['-lomp']
+
+spglib_dir = os.path.join(conda_prefix, "lib")
+
+include_dirs = []
+include_dirs.append(numpy.get_include())
+include_dirs.append(os.path.join(conda_prefix, "include"))
+include_dirs.append(os.path.join(conda_prefix, "include", "eigen3"))
 
 if compile_with_sources:
     cpp_files = ['alm.cpp',

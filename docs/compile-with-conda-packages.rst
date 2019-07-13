@@ -42,21 +42,21 @@ For linux
 
 ::
 
-   % conda install -c conda-forge openblas
-   % conda install gcc_linux-64 gxx_linux-64 cmake boost eigen numpy h5py
+   % conda install -c conda-forge gcc_linux-64 gxx_linux-64 h5py scipy numpy boost eigen cmake spglib ipython
 
 For macOS
 ~~~~~~~~~~
 
 ::
 
-   % conda install -c conda-forge openblas
-   % conda install clang_osx-64 clangxx_osx-64 llvm-openmp cmake boost eigen numpy h5py
+   % conda install
+   % conda install -c conda-forge clang_osx-64 clangxx_osx-64 llvm-openmp cmake boost eigen numpy scipy h5py spglib ipython
 
-Along with this installation of compilers, conda activation and
-deactivation scripts of environment variables are installed under
-``$CONDA_PREFIX/etc/conda/activate.d`` and
-``$CONDA_PREFIX/etc/conda/deactivate.d``, respectively.
+..
+   Along with this installation of compilers, conda activation and
+   deactivation scripts of environment variables are installed under
+   ``$CONDA_PREFIX/etc/conda/activate.d`` and
+   ``$CONDA_PREFIX/etc/conda/deactivate.d``, respectively.
 
 .. _build_ALMlib:
 
@@ -67,49 +67,27 @@ Now the directory structure supposed in this document is shown as below::
 
    $HOME
    |-- ALM
-   |   |-- ALM
-   |   |   |-- include/
-   |   |   |-- lib/
-   |   |   |-- python/setup.py
-   |   |   |-- src/
-   |   |   |-- _build/
-   |   |   |-- CMakeLists.txt
-   |   |   `-- ...
-   |   `-- spglib
+   |   `-- ALM
    |       |-- include/
    |       |-- lib/
+   |       |-- python/setup.py
+   |       |-- src/
    |       |-- _build/
    |       |-- CMakeLists.txt
    |       `-- ...
+   |
    |-- $CONDA_PREFIX/include
    |-- $CONDA_PREFIX/include/eigen3
    `-- ...
 
-ALM and spglib are downloaded from github. ``ALM`` and ``spglib``
-directories are created running the following commands::
+ALM is downloaded from github. ``ALM`` directorie is created running
+the following commands::
 
    % git clone https://github.com/ttadano/ALM.git
-   % git clone https://github.com/atztogo/spglib.git
 
 When this is done on ``$HOME/ALM``, the above directory structure is
 made. If git command doesn't exist in your system, it is also obtained
 from conda by ``conda install git``.
-
-Preparing spglib
-~~~~~~~~~~~~~~~~
-
-`spglib <https://github.com/atztogo/spglib>`_ is necessary for to
-build both of the ALM python module and/or ALM library for C++. It is
-assumed that we are in ``$HOME/ALM/spglib``, where spglib is built as
-follows::
-
-   % mkdir _build && cd _build
-   % cmake -DCMAKE_INSTALL_PREFIX="" ..
-   % make
-   % make DESTDIR=.. install
-
-Detailed build configuration is controlled to modify
-``CMakeLists.txt`` if necessary.
 
 Building ALM python module by Modifying ``setup.py``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,23 +95,12 @@ Building ALM python module by Modifying ``setup.py``
 The ALM python module is built on the directory
 ``$HOME/ALM/ALM/python``. So first you have to move to this directory.
 
-To link the spglib static link library (``libsymspg.a``),
-``spglib_dir`` in ``setup.py`` has to be modified appropriately. If we
-assume it exists in the directory ``$HOME/ALM/spglib/lib`` following
-the :ref:`above <build_ALMlib>` directory structure, the modification
-is::
+For linux, the following line in ``setup.py`` has to be set::
 
-   spglib_dir = os.path.join(home, "ALM", "spglib", "lib")
+   extra_link_args = ['-lgomp', '-llapack']
 
-To build ALM, it is necessary to tell compiler where the libraries and
-their header files exist. If the conda environment is used, the
-library path would be set correctly. However the include paths
-probably have to be set for boost and eigen by::
-
-   % export CPLUS_INCLUDE_PATH=$CONDA_PREFIX/include:$CONDA_PREFIX/include/eigen3:$HOME/ALM/spglib/include
-
-The build of the ALM python module is performed by a C++ compiler but
-not a C compiler. To let the python `setuptools
+For macOS, the build of the ALM python module is performed by a C++
+compiler but not a C compiler. To let the python `setuptools
 <https://setuptools.readthedocs.io/en/latest/>`_ choose the C++
 compiler installed using conda, the environment variables ``CC`` is
 overwritten by ``CXX`` by
@@ -141,6 +108,10 @@ overwritten by ``CXX`` by
 ::
 
    % export CC=$CXX
+
+In addition for macOS, the following line in ``setup.py`` has to be set::
+
+   extra_link_args = ['-lomp']
 
 Finally the build and installation in the user directory is done by
 
@@ -152,7 +123,8 @@ Finally the build and installation in the user directory is done by
 Building ALM library for C++ by modifying ``CMakeLists.txt``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you need only ALM python module, this section can be skipped.
+If you need only ALM python module, this section can be skipped. Note
+that the ``CMakeLists.txt.conda`` doesn't work well for macOS.
 
 Let's assume we are in the directory ``$HOME/ALM/ALM`` (see above
 :ref:`directory structure <build_ALMlib>`). The ALM
@@ -164,18 +136,8 @@ has to have the filename ``CMakeLists.txt``. So its example of
 
    % mv CMakeLists.txt.conda CMakeLists.txt
 
-Then this ``CMakeLists.txt`` is to be modified appropriately.  At
-least, the following lines for spglib library setting would be
-modified depending on your location of the spglib library,
-
-::
-
-   include_directories("$ENV{HOME}/ALM/spglib/include")
-   set(spglib "-L$ENV{HOME}/ALM/spglib/lib -lsymspg")
-
-These lines are an example made along with the directory
-structure shown :ref:`above <build_ALMlib>`. Using this
-``CMakeLists.txt``, the ALM library for c++ is built by
+Then this ``CMakeLists.txt`` is to be modified appropriately.
+Using this ``CMakeLists.txt``, the ALM library for c++ is built by
 
 ::
 
@@ -191,11 +153,3 @@ at
 - ``$HOME/ALM/ALM/lib/libalmcxx.dylib`` or ``$HOME/ALM/ALM/lib/libalmcxx.so``
 - ``$HOME/ALM/ALM/lib/libalmcxx.a``
 - ``$HOME/ALM/ALM/include/alm.h``
-
-These libraries are linked to spglib and openblas dynamically.
-Therefore to use the ALM library for C++,
-``LD_LIBRARY_PATH`` has to be set properly, e.g.,
-
-::
-
-   export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$HOME/ALM/spglib/lib:$LD_LIBRARY_PATH
