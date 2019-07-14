@@ -123,9 +123,12 @@ namespace ALM_NS
         void set_optimizer_control(const OptimizerControl &);
         OptimizerControl get_optimizer_control() const;
 
+        double get_cv_l1_alpha() const;
+
     private:
 
         double *params;
+        double cv_l1_alpha;  // stores alpha at minimum CV
 
         std::vector<std::vector<double>> u_train, f_train;
         std::vector<std::vector<double>> u_validation, f_validation;
@@ -164,26 +167,26 @@ namespace ALM_NS
                         std::vector<double> &param_out);
 
 
-        int run_elastic_net_crossvalidation(const std::string job_prefix,
-                                            const int maxorder,
-                                            const Fcs *fcs,
-                                            const Symmetry *symmetry,
-                                            const Constraint *constraint,
-                                            const int verbosity);
+        double run_elastic_net_crossvalidation(const std::string job_prefix,
+                                               const int maxorder,
+                                               const Fcs *fcs,
+                                               const Symmetry *symmetry,
+                                               const Constraint *constraint,
+                                               const int verbosity);
 
-        void run_enetcv_manual(const std::string job_prefix,
+        double run_enetcv_manual(const std::string job_prefix,
+                                 const int maxorder,
+                                 const Fcs *fcs,
+                                 const Symmetry *symmetry,
+                                 const Constraint *constraint,
+                                 const int verbosity);
+
+        double run_enetcv_auto(const std::string job_prefix,
                                const int maxorder,
                                const Fcs *fcs,
                                const Symmetry *symmetry,
                                const Constraint *constraint,
                                const int verbosity);
-
-        void run_enetcv_auto(const std::string job_prefix,
-                             const int maxorder,
-                             const Fcs *fcs,
-                             const Symmetry *symmetry,
-                             const Constraint *constraint,
-                             const int verbosity);
 
         void write_cvresult_to_file(const std::string file_out,
                                     const std::vector<double> &alphas,
@@ -191,28 +194,38 @@ namespace ALM_NS
                                     const std::vector<double> &validation_error,
                                     const std::vector<std::vector<int>> &nonzeros) const;
 
-        int write_cvscore_to_file(const std::string file_out,
-                                  const std::vector<double> &alphas,
-                                  const std::vector<std::vector<double>> &training_error_accum,
-                                  const std::vector<std::vector<double>> &validation_error_accum) const;
+        void write_cvscore_to_file(const std::string file_out,
+                                   const std::vector<double> &alphas,
+                                   const std::vector<double> &terr_mean,
+                                   const std::vector<double> &terr_std,
+                                   const std::vector<double> &verr_mean,
+                                   const std::vector<double> &verr_std,
+                                   const int ialpha_minimum,
+                                   const size_t nsets) const;
+
+        void set_errors_of_cvscore(std::vector<double> &terr_mean,
+                                   std::vector<double> &terr_std,
+                                   std::vector<double> &verr_mean,
+                                   std::vector<double> &verr_std,
+                                   const std::vector<std::vector<double>> &training_error_accum,
+                                   const std::vector<std::vector<double>> &validation_error_accum) const;
 
         int get_ialpha_at_minimum_validation_error(const std::vector<double> &validation_error) const;
 
+        void run_elastic_net_optimization(const int maxorder,
+                                          const size_t M,
+                                          const size_t N_new,
+                                          const Fcs *fcs,
+                                          const Symmetry *symmetry,
+                                          const Constraint *constraint,
+                                          const int verbosity,
+                                          std::vector<double> &param_out) const;
 
-        int run_elastic_net_optimization(const int maxorder,
-                                         const size_t M,
-                                         const size_t N_new,
-                                         const Fcs *fcs,
-                                         const Symmetry *symmetry,
-                                         const Constraint *constraint,
-                                         const int verbosity,
-                                         std::vector<double> &param_out) const;
-
-        int run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
-                                                 const Eigen::VectorXd &b_in,
-                                                 const Eigen::VectorXd &factor_std,
-                                                 std::vector<double> &params_inout,
-                                                 const int verbosity) const;
+        void run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
+                                                  const Eigen::VectorXd &b_in,
+                                                  const Eigen::VectorXd &factor_std,
+                                                  std::vector<double> &params_inout,
+                                                  const int verbosity) const;
 
         void get_number_of_zero_coefs(const int maxorder,
                                       const Constraint *constraint,

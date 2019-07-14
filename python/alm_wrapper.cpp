@@ -73,7 +73,11 @@ extern "C" {
         }
     }
 
-    // void set_output_filename_prefix(const std::string prefix);
+    void alm_set_output_filename_prefix(const int id,
+                                        const char *prefix_in) {
+        std::string prefix(prefix_in);
+        alm[id]->set_output_filename_prefix(prefix);
+    }
     // void set_is_print_symmetry(const int is_printsymmetry);
     // void set_is_print_hessians(const bool print_hessian);
     // void set_symmetry_param(const int nsym);
@@ -167,6 +171,11 @@ extern "C" {
     size_t alm_get_nrows_sensing_matrix(const int id)
     {
         return alm[id]->get_nrows_sensing_matrix();
+    }
+
+    double alm_get_cv_l1_alpha(const int id)
+    {
+        return alm[id]->get_cv_l1_alpha();
     }
 
     void alm_set_constraint_type(const int id,
@@ -307,7 +316,7 @@ extern "C" {
         alm[id]->get_matrix_elements(amat, bvec);
     }
 
-    void alm_run_suggest(const int id)
+    void alm_suggest(const int id)
     {
         alm[id]->set_run_mode("suggest");
         alm[id]->run_suggest();

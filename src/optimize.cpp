@@ -50,6 +50,7 @@ Optimize::~Optimize()
 void Optimize::set_default_variables()
 {
     params = nullptr;
+    cv_l1_alpha = 0.0;
 }
 
 void Optimize::deallocate_variables()
@@ -324,7 +325,6 @@ int Optimize::least_squares(const int maxorder,
         }
     }
 
-
     return info_fitting;
 }
 
@@ -340,7 +340,7 @@ int Optimize::elastic_net(const std::string job_prefix,
                           const int verbosity,
                           std::vector<double> &param_out)
 {
-    auto info_fitting = 0;
+    int info_fitting;
 
     std::vector<double> param_tmp(N_new, 0.0);
 
@@ -354,49 +354,49 @@ int Optimize::elastic_net(const std::string job_prefix,
     }
 
     if (optcontrol.cross_validation == 0) {
-
         // Optimize with a given L1 coefficient (l1_alpha)
-        info_fitting = run_elastic_net_optimization(maxorder,
-                                                    M,
-                                                    N_new,
-                                                    fcs,
-                                                    symmetry,
-                                                    constraint,
-                                                    verbosity,
-                                                    param_tmp);
+        run_elastic_net_optimization(maxorder,
+                                     M,
+                                     N_new,
+                                     fcs,
+                                     symmetry,
+                                     constraint,
+                                     verbosity,
+                                     param_tmp);
+
+        if (verbosity > 0) {
+            size_t iparam = 0;
+            std::vector<int> nzero_lasso(maxorder);
+
+            for (auto i = 0; i < maxorder; ++i) {
+                nzero_lasso[i] = 0;
+                for (const auto &it : constraint->get_index_bimap(i)) {
+                    const auto inew = it.left + iparam;
+                    if (std::abs(param_tmp[inew]) < eps) ++nzero_lasso[i];
+                }
+                iparam += constraint->get_index_bimap(i).size();
+            }
+
+            for (auto order = 0; order < maxorder; ++order) {
+                std::cout << "  Number of non-zero " << std::setw(9) << str_order[order] << " FCs : "
+                          << constraint->get_index_bimap(order).size() - nzero_lasso[order] << std::endl;
+            }
+            std::cout << std::endl;
+        }
+
+        info_fitting = 0;
 
     } else {
-
         // Run cross validation (manually or automatically)
-        info_fitting = run_elastic_net_crossvalidation(job_prefix,
-                                                       maxorder,
-                                                       fcs,
-                                                       symmetry,
-                                                       constraint,
-                                                       verbosity);
+        cv_l1_alpha = run_elastic_net_crossvalidation(job_prefix,
+                                                      maxorder,
+                                                      fcs,
+                                                      symmetry,
+                                                      constraint,
+                                                      verbosity);
+        info_fitting = 1;
+
     }
-
-    if (verbosity > 0 && info_fitting == 0) {
-        size_t iparam = 0;
-        std::vector<int> nzero_lasso(maxorder);
-
-        for (auto i = 0; i < maxorder; ++i) {
-            nzero_lasso[i] = 0;
-            for (const auto &it : constraint->get_index_bimap(i)) {
-                const auto inew = it.left + iparam;
-                if (std::abs(param_tmp[inew]) < eps) ++nzero_lasso[i];
-            }
-            iparam += constraint->get_index_bimap(i).size();
-        }
-
-        for (auto order = 0; order < maxorder; ++order) {
-            std::cout << "  Number of non-zero " << std::setw(9) << str_order[order] << " FCs : "
-                << constraint->get_index_bimap(order).size() - nzero_lasso[order] << std::endl;
-        }
-        std::cout << std::endl;
-    }
-
-    // Scale back force constants
 
     if (scale_displacement) {
         apply_scaler_force_constants(maxorder,
@@ -415,14 +415,15 @@ int Optimize::elastic_net(const std::string job_prefix,
     return info_fitting;
 }
 
-int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
-                                              const int maxorder,
-                                              const Fcs *fcs,
-                                              const Symmetry *symmetry,
-                                              const Constraint *constraint,
-                                              const int verbosity)
+double Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
+                                                 const int maxorder,
+                                                 const Fcs *fcs,
+                                                 const Symmetry *symmetry,
+                                                 const Constraint *constraint,
+                                                 const int verbosity)
 {
-    // Cross-validation mode
+    // Cross-validation mode:
+    // Returns alpha giving minimum CV score
 
 
     if (verbosity > 0) {
@@ -461,34 +462,30 @@ int Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
     }
 
 
+    // Returns alpha at minimum CV
     if (optcontrol.cross_validation == -1) {
-
-        run_enetcv_manual(job_prefix,
-                          maxorder,
-                          fcs,
-                          symmetry,
-                          constraint,
-                          verbosity);
-
+        return run_enetcv_manual(job_prefix,
+                                 maxorder,
+                                 fcs,
+                                 symmetry,
+                                 constraint,
+                                 verbosity);
     } else {
-
-        run_enetcv_auto(job_prefix,
-                        maxorder,
-                        fcs,
-                        symmetry,
-                        constraint,
-                        verbosity);
+        return run_enetcv_auto(job_prefix,
+                               maxorder,
+                               fcs,
+                               symmetry,
+                               constraint,
+                               verbosity);
     }
-
-    return 1;
 }
 
-void Optimize::run_enetcv_manual(const std::string job_prefix,
-                                 const int maxorder,
-                                 const Fcs *fcs,
-                                 const Symmetry *symmetry,
-                                 const Constraint *constraint,
-                                 const int verbosity)
+double Optimize::run_enetcv_manual(const std::string job_prefix,
+                                   const int maxorder,
+                                   const Fcs *fcs,
+                                   const Symmetry *symmetry,
+                                   const Constraint *constraint,
+                                   const int verbosity)
 {
     // Manual CV mode where the test data is read from the user-defined file.
     // Indeed, the test data is already read in the input_parser and stored in u_validation and f_validation.
@@ -565,20 +562,24 @@ void Optimize::run_enetcv_manual(const std::string job_prefix,
                            validation_error,
                            nonzeros);
 
+    const auto ialpha = get_ialpha_at_minimum_validation_error(validation_error);
+
     if (verbosity > 0) {
         std::cout << "  The manual CV has been done." << std::endl;
         std::cout << "  Minimum validation error at alpha = "
-            << alphas[get_ialpha_at_minimum_validation_error(validation_error)] << std::endl;
+                  << alphas[ialpha] << std::endl;
         std::cout << "  The CV result is saved in " << file_cv << std::endl;
     }
+
+    return alphas[ialpha];
 }
 
-void Optimize::run_enetcv_auto(const std::string job_prefix,
-                               const int maxorder,
-                               const Fcs *fcs,
-                               const Symmetry *symmetry,
-                               const Constraint *constraint,
-                               const int verbosity)
+double Optimize::run_enetcv_auto(const std::string job_prefix,
+                                 const int maxorder,
+                                 const Fcs *fcs,
+                                 const Symmetry *symmetry,
+                                 const Constraint *constraint,
+                                 const int verbosity)
 {
     // Automatic CV mode.
 
@@ -701,17 +702,21 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
                                alphas,
                                training_error, validation_error, nonzeros);
 
-        write_cvresult_to_file(file_cv,
-                               alphas,
-                               training_error,
-                               validation_error,
-                               nonzeros);
+        if (job_prefix != "") {
+            write_cvresult_to_file(file_cv,
+                                   alphas,
+                                   training_error,
+                                   validation_error,
+                                   nonzeros);
+        }
 
         if (verbosity > 0) {
             std::cout << "  SET " << std::setw(3) << iset + 1 << " has been finished." << std::endl;
             std::cout << "  Minimum validation error at alpha = "
                 << alphas[get_ialpha_at_minimum_validation_error(validation_error)] << std::endl;
-            std::cout << "  The CV result is saved in " << file_cv << std::endl << std::endl;
+            if (job_prefix != "") {
+                std::cout << "  The CV result is saved in " << file_cv << std::endl << std::endl;
+            }
             std::cout << "  ---------------------------------------------------" << std::endl;
         }
 
@@ -719,18 +724,40 @@ void Optimize::run_enetcv_auto(const std::string job_prefix,
         validation_error_accum.emplace_back(validation_error);
     }
 
-    const auto file_cvscore = job_prefix + ".cvscore";
-    const auto ialpha_minimum = write_cvscore_to_file(file_cvscore,
-                                                      alphas,
-                                                      training_error_accum,
-                                                      validation_error_accum);
+    std::vector<double> terr_mean, terr_std;
+    std::vector<double> verr_mean, verr_std;
 
-    if (verbosity > 0) {
-        std::cout << " Average and standard deviation of the CV error are" << std::endl;
-        std::cout << " saved in " << file_cvscore << std::endl;
-        std::cout << " Minimum CVSCORE at alpha = " << alphas[ialpha_minimum] << std::endl;
-        std::cout << std::endl;
+    const auto nalphas = alphas.size();
+
+    terr_mean.resize(nalphas);
+    terr_std.resize(nalphas);
+    verr_mean.resize(nalphas);
+    verr_std.resize(nalphas);
+
+    set_errors_of_cvscore(terr_mean, terr_std, verr_mean, verr_std,
+                          training_error_accum, validation_error_accum);
+    const auto ialpha_minimum = get_ialpha_at_minimum_validation_error(verr_mean);
+
+    if (job_prefix != "") {
+        const auto file_cvscore = job_prefix + ".cvscore";
+        write_cvscore_to_file(file_cvscore,
+                              alphas,
+                              terr_mean,
+                              terr_std,
+                              verr_mean,
+                              verr_std,
+                              ialpha_minimum,
+                              nsets);
+
+        if (verbosity > 0) {
+            std::cout << " Average and standard deviation of the CV error are" << std::endl;
+            std::cout << " saved in " << file_cvscore << std::endl;
+            std::cout << " Minimum CVSCORE at alpha = " << alphas[ialpha_minimum] << std::endl;
+            std::cout << std::endl;
+        }
     }
+
+    return alphas[ialpha_minimum];
 }
 
 void Optimize::write_cvresult_to_file(const std::string file_out,
@@ -761,21 +788,49 @@ void Optimize::write_cvresult_to_file(const std::string file_out,
     ofs_cv.close();
 }
 
-int Optimize::write_cvscore_to_file(const std::string file_out,
-                                    const std::vector<double> &alphas,
-                                    const std::vector<std::vector<double>> &training_error_accum,
-                                    const std::vector<std::vector<double>> &validation_error_accum) const
+void Optimize::write_cvscore_to_file(const std::string file_out,
+                                     const std::vector<double> &alphas,
+                                     const std::vector<double> &terr_mean,
+                                     const std::vector<double> &terr_std,
+                                     const std::vector<double> &verr_mean,
+                                     const std::vector<double> &verr_std,
+                                     const int ialpha_minimum,
+                                     const size_t nsets) const
 {
-    std::vector<double> terr_mean, terr_std;
-    std::vector<double> verr_mean, verr_std;
-
     const auto nalphas = alphas.size();
-    terr_mean.resize(nalphas);
-    terr_std.resize(nalphas);
-    verr_mean.resize(nalphas);
-    verr_std.resize(nalphas);
 
+    std::ofstream ofs_cv;
+    ofs_cv.open(file_out.c_str(), std::ios::out);
+    ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
+    ofs_cv << "# L1_RATIO = " << optcontrol.l1_ratio << std::endl;
+    ofs_cv << "# ENET_DNORM = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
+    ofs_cv << "# STANDARDIZE = " << optcontrol.standardize << std::endl;
+    ofs_cv << "# CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
+    ofs_cv << "# " << nsets << "-fold cross-validation scores" << std::endl;
+    ofs_cv << "# L1 ALPHA, Fitting error (mean, std), Validation error (mean, std) " << std::endl;
+
+    for (size_t ialpha = 0; ialpha < nalphas; ++ialpha) {
+        ofs_cv << std::setw(15) << alphas[ialpha];
+        ofs_cv << std::setw(15) << terr_mean[ialpha];
+        ofs_cv << std::setw(15) << terr_std[ialpha];
+        ofs_cv << std::setw(15) << verr_mean[ialpha];
+        ofs_cv << std::setw(15) << verr_std[ialpha];
+        ofs_cv << std::endl;
+    }
+
+    ofs_cv << "# Minimum CVSCORE at alpha = " << alphas[ialpha_minimum] << std::endl;
+    ofs_cv.close();
+}
+
+void Optimize::set_errors_of_cvscore(std::vector<double> &terr_mean,
+                                     std::vector<double> &terr_std,
+                                     std::vector<double> &verr_mean,
+                                     std::vector<double> &verr_std,
+                                     const std::vector<std::vector<double>> &training_error_accum,
+                                     const std::vector<std::vector<double>> &validation_error_accum) const
+{
     const auto nsets = training_error_accum.size();
+    const auto nalphas = terr_mean.size();
 
     double sum_t, sum2_t;
     double sum_v, sum2_v;
@@ -803,32 +858,6 @@ int Optimize::write_cvscore_to_file(const std::string file_out,
         verr_mean[ialpha] = sum_v;
         verr_std[ialpha] = std::sqrt(sum2_v - sum_v * sum_v);
     }
-
-    std::ofstream ofs_cv;
-    ofs_cv.open(file_out.c_str(), std::ios::out);
-    ofs_cv << "# Algorithm : Coordinate descent" << std::endl;
-    ofs_cv << "# L1_RATIO = " << optcontrol.l1_ratio << std::endl;
-    ofs_cv << "# ENET_DNORM = " << std::setw(15) << optcontrol.displacement_normalization_factor << std::endl;
-    ofs_cv << "# STANDARDIZE = " << optcontrol.standardize << std::endl;
-    ofs_cv << "# CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
-    ofs_cv << "# " << nsets << "-fold cross-validation scores" << std::endl;
-    ofs_cv << "# L1 ALPHA, Fitting error (mean, std), Validation error (mean, std) " << std::endl;
-
-    for (size_t ialpha = 0; ialpha < nalphas; ++ialpha) {
-        ofs_cv << std::setw(15) << alphas[ialpha];
-        ofs_cv << std::setw(15) << terr_mean[ialpha];
-        ofs_cv << std::setw(15) << terr_std[ialpha];
-        ofs_cv << std::setw(15) << verr_mean[ialpha];
-        ofs_cv << std::setw(15) << verr_std[ialpha];
-        ofs_cv << std::endl;
-    }
-
-    const auto ialpha_minimum = get_ialpha_at_minimum_validation_error(verr_mean);
-
-    ofs_cv << "# Minimum CVSCORE at alpha = " << alphas[ialpha_minimum] << std::endl;
-    ofs_cv.close();
-
-    return ialpha_minimum;
 }
 
 int Optimize::get_ialpha_at_minimum_validation_error(const std::vector<double> &validation_error) const
@@ -1003,15 +1032,14 @@ void Optimize::compute_alphas(std::vector<double> &alphas) const
     }
 }
 
-
-int Optimize::run_elastic_net_optimization(const int maxorder,
-                                           const size_t M,
-                                           const size_t N_new,
-                                           const Fcs *fcs,
-                                           const Symmetry *symmetry,
-                                           const Constraint *constraint,
-                                           const int verbosity,
-                                           std::vector<double> &param_out) const
+void Optimize::run_elastic_net_optimization(const int maxorder,
+                                            const size_t M,
+                                            const size_t N_new,
+                                            const Fcs *fcs,
+                                            const Symmetry *symmetry,
+                                            const Constraint *constraint,
+                                            const int verbosity,
+                                            std::vector<double> &param_out) const
 {
     // Start Lasso optimization
     int i;
@@ -1115,20 +1143,18 @@ int Optimize::run_elastic_net_optimization(const int maxorder,
     deallocate(has_prod);
 
     if (optcontrol.debiase_after_l1opt) {
-        auto info = run_least_squares_with_nonzero_coefs(A, b,
-                                                         factor_std,
-                                                         param_out,
-                                                         verbosity);
+        run_least_squares_with_nonzero_coefs(A, b,
+                                             factor_std,
+                                             param_out,
+                                             verbosity);
     }
-
-    return 0;
 }
 
-int Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
-                                                   const Eigen::VectorXd &b_in,
-                                                   const Eigen::VectorXd &factor_std,
-                                                   std::vector<double> &params_inout,
-                                                   const int verbosity) const
+void Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
+                                                    const Eigen::VectorXd &b_in,
+                                                    const Eigen::VectorXd &factor_std,
+                                                    std::vector<double> &params_inout,
+                                                    const int verbosity) const
 {
     // Perform OLS fitting to the features selected by LASSO for reducing the bias.
 
@@ -1162,8 +1188,6 @@ int Optimize::run_least_squares_with_nonzero_coefs(const Eigen::MatrixXd &A_in,
     for (auto i = 0; i < N_nonzero; ++i) {
         params_inout[nonzero_index[i]] = x_nonzero[i] * factor_std[nonzero_index[i]];
     }
-
-    return 0;
 }
 
 void Optimize::get_number_of_zero_coefs(const int maxorder,
@@ -2548,6 +2572,10 @@ OptimizerControl Optimize::get_optimizer_control() const
     return optcontrol;
 }
 
+double Optimize::get_cv_l1_alpha() const
+{
+    return cv_l1_alpha;
+}
 
 void Optimize::coordinate_descent(const int M,
                                   const int N,

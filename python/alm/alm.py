@@ -76,13 +76,11 @@ class ALM:
         if self._id is None:
             self._id = alm.alm_new()
             if self._id < 0:
-                print("Too many ALM objects")
-                raise RuntimeError
+                raise RuntimeError("Too many ALM objects")
             self._set_cell()
             self._set_verbosity()
         else:
-            print("This ALM object is already initialized.")
-            raise
+            raise("This ALM object is already initialized.")
 
     def alm_delete(self):
         """Delete ALM instance in C++.
@@ -101,13 +99,22 @@ class ALM:
         alm.alm_delete(self._id)
         self._id = None
 
+    def set_output_filename_prefix(self, prefix=None):
+        """Set output prefix of output filename"""
+
+        if self._id is None:
+            self._show_error_message()
+
+        if type(prefix) is str:
+            alm.set_output_filename_prefix(self._id, prefix)
+
     def suggest(self):
         """Compute displacement patterns to obtain force constants."""
 
         if self._id is None:
             self._show_error_message()
 
-        alm.run_suggest(self._id)
+        alm.suggest(self._id)
 
     def optimize(self, solver='dense'):
         """Fit force constants to forces.
@@ -135,9 +142,9 @@ class ALM:
             self._show_error_message()
 
         if solver not in ['dense', 'SimplicialLDLT']:
-            print("The given solver option is not supported.")
-            print("Available options are 'dense' and 'SimplicialLDLT'.")
-            raise ValueError
+            msgs = ["The given solver option is not supported.",
+                    "Available options are 'dense' and 'SimplicialLDLT'."]
+            raise ValueError("\n".join(msgs))
 
         info = alm.optimize(self._id, solver)
 
@@ -162,6 +169,11 @@ class ALM:
 
         optctrl = []
         optcontrol_l = {key.lower(): optcontrol[key] for key in optcontrol}
+
+        for i, key in enumerate(optcontrol):
+            if key.lower() not in keys:
+                msg = "%s is not a valide key for optimizer control." % key
+                raise KeyError(msg)
 
         for i, key in enumerate(keys):
             if key in optcontrol_l:
@@ -283,8 +295,7 @@ class ALM:
         """
 
         if rotation is True:
-            print("Rotational invariance is not supported in API.")
-            raise
+            raise("Rotational invariance is not supported in API.")
 
         if translation is True:
             iconst = 11
@@ -368,8 +379,9 @@ class ALM:
             self._show_error_message()
 
         if fc_order > self._maxorder:
-            print("The fc_order must not be larger than the maximum order (maxorder).")
-            raise ValueError
+            msg = ("The fc_order must not be larger than the maximum order "
+                   "(maxorder).")
+            raise ValueError(msg)
 
         numbers = self._get_number_of_displaced_atoms(fc_order)
         tot_num = np.sum(numbers)
@@ -433,8 +445,9 @@ class ALM:
             self._show_error_message()
 
         if fc_order > self._maxorder:
-            print("The fc_order must not be larger than the maximum order (maxorder).")
-            raise ValueError
+            msg = ("The fc_order must not be larger than the maximum order "
+                   "(maxorder).")
+            raise ValueError(msg)
 
         if mode == "origin":
 
@@ -473,8 +486,7 @@ class ALM:
             return fc_values, elem_indices
 
         else:
-            print("Invalid mode in get_fc.")
-            raise ValueError
+            raise ValueError("Invalid mode in get_fc.")
 
     def set_fc(self, fc_in):
         """Copy force constant obtained by an external optimizer to the ALM instance.
@@ -545,6 +557,14 @@ class ALM:
 
         return (np.reshape(amat, (nrows, fc_length), order='F'),
                 bvec)
+
+    def get_cv_l1_alpha(self):
+        """Returns L1 alpha at minimum CV"""
+
+        if self._id is None:
+            self._show_error_message()
+
+        return alm.get_cv_l1_alpha(self._id)
 
     def _set_cell(self):
         """Private method to setup the crystal lattice information"""

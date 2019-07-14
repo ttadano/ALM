@@ -233,6 +233,11 @@ size_t ALM::get_nrows_sensing_matrix() const
     return optimize->get_number_of_rows_sensing_matrix();
 }
 
+double ALM::get_cv_l1_alpha() const
+{
+    return optimize->get_cv_l1_alpha();
+}
+
 Cell ALM::get_supercell() const
 {
     return system->get_supercell();
@@ -377,6 +382,11 @@ void ALM::get_fc_origin(double *fc_values,
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
         exit(EXIT_FAILURE);
     }
+    if (!optimize->get_params()) {
+        std::cout << "fc has not yet been computed." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
 
     size_t ishift = 0;
     size_t ip;
@@ -414,6 +424,10 @@ void ALM::get_fc_irreducible(double *fc_values,
     const auto maxorder = cluster->get_maxorder();
     if (fc_order > maxorder) {
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    if (!optimize->get_params()) {
+        std::cout << "fc has not yet been computed." << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -466,6 +480,10 @@ void ALM::get_fc_all(double *fc_values,
     const auto maxorder = cluster->get_maxorder();
     if (fc_order > maxorder) {
         std::cout << "fc_order must not be larger than maxorder" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    if (!optimize->get_params()) {
+        std::cout << "fc has not yet been computed." << std::endl;
         exit(EXIT_FAILURE);
     }
 
