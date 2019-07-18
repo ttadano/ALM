@@ -62,10 +62,10 @@ namespace ALM_NS
             debiase_after_l1opt = 0;
             cross_validation = 0;
             l1_alpha = 0.0;
-            l1_alpha_min = 1.0e-4;
-            l1_alpha_max = 1.0;
+            l1_alpha_min = -1.0;  // Recommended l1_alpha_max * 1e-6
+            l1_alpha_max = -1.0;  // Use recommended value
             l1_ratio = 1.0;
-            num_l1_alpha = 1;
+            num_l1_alpha = 100;
             save_solution_path = 0;
         }
 
@@ -242,10 +242,8 @@ namespace ALM_NS
                                 const Eigen::VectorXd &mean,
                                 const Eigen::VectorXd &dev) const;
 
-        double get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
-                                      const Eigen::VectorXd &bvec,
-                                      const Eigen::VectorXd &mean,
-                                      const Eigen::VectorXd &dev) const;
+        double get_estimated_max_alpha(const Eigen::MatrixXd &Amat,
+                                       const Eigen::VectorXd &bvec) const;
 
         void apply_scaler_displacement(std::vector<std::vector<double>> &u_inout,
                                        const double normalization_factor,
@@ -370,7 +368,10 @@ namespace ALM_NS
                                     std::vector<double> &validation_error,
                                     std::vector<std::vector<int>> &nonzeros) const;
 
-        void compute_alphas(std::vector<double> &alphas) const;
+        void compute_alphas(const double l1_alpha_max,
+                            const double l1_alpha_min,
+                            const int num_l1_alpha,
+                            std::vector<double> &alphas) const;
     };
 
     inline double shrink(const double x,

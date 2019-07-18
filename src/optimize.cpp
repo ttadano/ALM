@@ -436,8 +436,16 @@ double Optimize::run_elastic_net_crossvalidation(const std::string job_prefix,
         std::cout << "  Elastic-net cross-validation with the following parameters:" << std::endl;
         std::cout << "   L1_RATIO = " << optcontrol.l1_ratio << std::endl;
         std::cout << "   CV = " << std::setw(15) << optcontrol.cross_validation << std::endl;
-        std::cout << "   CV_MINALPHA = " << std::setw(15) << optcontrol.l1_alpha_min;
-        std::cout << " CV_MAXALPHA = " << std::setw(15) << optcontrol.l1_alpha_max << std::endl;
+        if (optcontrol.l1_alpha_min > 0) {
+            std::cout << "   CV_MINALPHA = " << std::setw(15) << optcontrol.l1_alpha_min;
+        } else {
+            std::cout << "   CV_MINALPHA = CV_MAXALPHA*1e-6 ";
+        }
+        if (optcontrol.l1_alpha_max > 0) {
+            std::cout << "  CV_MAXALPHA = " << std::setw(15) << optcontrol.l1_alpha_max << std::endl;
+        } else {
+            std::cout << " CV_MAXALPHA = (Use recommended value)" << std::endl;
+        }
         std::cout << "   CV_NALPHA = " << std::setw(5) << optcontrol.num_l1_alpha << std::endl;
         std::cout << "   CONV_TOL = " << std::setw(15) << optcontrol.tolerance_iteration << std::endl;
         std::cout << "   MAXITER = " << std::setw(5) << optcontrol.maxnum_iteration << std::endl;
@@ -535,25 +543,21 @@ double Optimize::run_enetcv_manual(const std::string job_prefix,
                                                                amat_1D_validation.size() / N_new, N_new);
     Eigen::VectorXd b_validation = Eigen::Map<Eigen::VectorXd>(&bvec_validation[0], bvec_validation.size());
 
-    if (verbosity > 0) {
-        Eigen::VectorXd mean = Eigen::VectorXd::Zero(A.cols());
-        Eigen::VectorXd dev = Eigen::VectorXd::Ones(A.cols());
+    const auto estimated_max_alpha = get_estimated_max_alpha(A, b);
 
-        if (optcontrol.standardize) {
-            Eigen::VectorXd factor_std, scale_beta;
-            factor_std.resize(A.cols());
-            scale_beta.resize(A.cols());
-            get_standardizer(A, mean, dev, factor_std, scale_beta);
-        }
+    if (verbosity > 0) {
         std::cout << "  Recommended CV_MAXALPHA = "
-            << get_esimated_max_alpha(A, b, mean, dev)
+            << estimated_max_alpha
             << std::endl << std::endl;
     }
 
     const auto file_coef = job_prefix + ".solution_path";
     const auto file_cv = job_prefix + ".enet_cv";
 
-    compute_alphas(alphas);
+    compute_alphas(optcontrol.l1_alpha_max,
+                   optcontrol.l1_alpha_min,
+                   optcontrol.num_l1_alpha,
+                   alphas);
 
     run_enet_solution_path(maxorder, A, b, A_validation, b_validation,
                            fnorm, fnorm_validation,
@@ -619,14 +623,63 @@ double Optimize::run_enetcv_auto(const std::string job_prefix,
     std::vector<double> alphas, training_error, validation_error;
     std::vector<std::vector<int>> nonzeros;
     std::vector<std::vector<double>> training_error_accum, validation_error_accum;
-    double fnorm, fnorm_validation;
+    double fnorm, fnorm_validation, estimated_max_alpha;
 
     auto ishift = 0;
 
-    compute_alphas(alphas);
-
     if (verbosity > 0) {
-        std::cout << "  Start " << nsets << "-fold CV" << std::endl;
+        std::cout << "  Start " << nsets << "-fold CV with "
+                  << u_train.size() << " Datasets" << std::endl;
+        std::cout << std::endl;
+    }
+
+    if (!(optcontrol.l1_alpha_max > 0)) {
+        estimated_max_alpha = 0;
+        for (auto iset = 0; iset < nsets; ++iset) {
+            const auto istart_validation = ishift;
+            const auto iend_validation = istart_validation + ndata_block[iset];
+
+            u_train_tmp.clear();
+            f_train_tmp.clear();
+            u_validation_tmp.clear();
+            f_validation_tmp.clear();
+
+            for (auto idata = 0; idata < nstructures; ++idata) {
+                if (idata >= istart_validation && idata < iend_validation) {
+                    u_validation_tmp.emplace_back(u_train[idata]);
+                    f_validation_tmp.emplace_back(f_train[idata]);
+                } else {
+                    u_train_tmp.emplace_back(u_train[idata]);
+                    f_train_tmp.emplace_back(f_train[idata]);
+                }
+            }
+            ishift += ndata_block[iset];
+
+            get_matrix_elements_algebraic_constraint(maxorder,
+                                                     amat_1D,
+                                                     bvec,
+                                                     u_train_tmp,
+                                                     f_train_tmp,
+                                                     fnorm,
+                                                     symmetry,
+                                                     fcs,
+                                                     constraint);
+
+            Eigen::MatrixXd A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], amat_1D.size() / N_new, N_new);
+            Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(&bvec[0], bvec.size());
+            const auto this_estimated_max_alpha = get_estimated_max_alpha(A, b);
+
+            if (verbosity > 0) {
+                std::cout << "  Recommended CV_MAXALPHA (" << std::setw(3)
+                          << iset + 1 << ") = "
+                          << this_estimated_max_alpha << std::endl;
+            }
+
+            if (this_estimated_max_alpha > estimated_max_alpha) {
+                estimated_max_alpha = this_estimated_max_alpha;
+            }
+        }
+        ishift = 0;
     }
 
     for (auto iset = 0; iset < nsets; ++iset) {
@@ -676,30 +729,37 @@ double Optimize::run_enetcv_auto(const std::string job_prefix,
 
         Eigen::MatrixXd A = Eigen::Map<Eigen::MatrixXd>(&amat_1D[0], amat_1D.size() / N_new, N_new);
         Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(&bvec[0], bvec.size());
-
         Eigen::MatrixXd A_validation = Eigen::Map<Eigen::MatrixXd>(&amat_1D_validation[0],
                                                                    amat_1D_validation.size() / N_new, N_new);
         Eigen::VectorXd b_validation = Eigen::Map<Eigen::VectorXd>(&bvec_validation[0], bvec_validation.size());
 
-
         if (verbosity > 0) {
-            Eigen::VectorXd mean = Eigen::VectorXd::Zero(A.cols());
-            Eigen::VectorXd dev = Eigen::VectorXd::Ones(A.cols());
-
-            if (optcontrol.standardize) {
-                Eigen::VectorXd factor_std, scale_beta;
-                factor_std.resize(A.cols());
-                scale_beta.resize(A.cols());
-                get_standardizer(A, mean, dev, factor_std, scale_beta);
-            }
             std::cout << "  Recommended CV_MAXALPHA = "
-                << get_esimated_max_alpha(A, b, mean, dev)
+                << get_estimated_max_alpha(A, b)
                 << std::endl << std::endl;
         }
 
         const auto file_coef = job_prefix + ".solution_path" + std::to_string(iset + 1);
         const auto file_cv = job_prefix + ".enet_cvset" + std::to_string(iset + 1);
 
+        if (optcontrol.l1_alpha_max > 0) {
+            compute_alphas(optcontrol.l1_alpha_max,
+                           optcontrol.l1_alpha_min,
+                           optcontrol.num_l1_alpha,
+                           alphas);
+        } else {
+            if (optcontrol.l1_alpha_max > 0) {
+                compute_alphas(estimated_max_alpha,
+                               optcontrol.l1_alpha_min,
+                               optcontrol.num_l1_alpha,
+                               alphas);
+            } else {
+                compute_alphas(estimated_max_alpha,
+                               estimated_max_alpha * 1e-6,
+                               optcontrol.num_l1_alpha,
+                               alphas);
+            }
+        }
 
         run_enet_solution_path(maxorder, A, b, A_validation, b_validation,
                                fnorm, fnorm_validation,
@@ -1024,15 +1084,19 @@ void Optimize::run_enet_solution_path(const int maxorder,
     deallocate(has_prod);
 }
 
-void Optimize::compute_alphas(std::vector<double> &alphas) const
+void Optimize::compute_alphas(const double l1_alpha_max,
+                              const double l1_alpha_min,
+                              const int num_l1_alpha,
+                              std::vector<double> &alphas) const
 {
-    alphas.resize(optcontrol.num_l1_alpha);
-    for (auto ialpha = 0; ialpha < optcontrol.num_l1_alpha; ++ialpha) {
+    alphas.resize(num_l1_alpha);
 
-        const auto l1_alpha = optcontrol.l1_alpha_min
-            * std::pow(optcontrol.l1_alpha_max / optcontrol.l1_alpha_min,
-                       static_cast<double>(optcontrol.num_l1_alpha - ialpha - 1) /
-                       static_cast<double>(optcontrol.num_l1_alpha));
+    for (auto ialpha = 0; ialpha < num_l1_alpha; ++ialpha) {
+
+        const auto l1_alpha = l1_alpha_min
+            * std::pow(l1_alpha_max / l1_alpha_min,
+                       static_cast<double>(num_l1_alpha - ialpha - 1) /
+                       static_cast<double>(num_l1_alpha));
 
         alphas[ialpha] = l1_alpha;
     }
@@ -1270,14 +1334,22 @@ void Optimize::apply_standardizer(Eigen::MatrixXd &Amat,
     }
 }
 
-double Optimize::get_esimated_max_alpha(const Eigen::MatrixXd &Amat,
-                                        const Eigen::VectorXd &bvec,
-                                        const Eigen::VectorXd &mean,
-                                        const Eigen::VectorXd &dev) const
+double Optimize::get_estimated_max_alpha(const Eigen::MatrixXd &Amat,
+                                         const Eigen::VectorXd &bvec) const
 {
     const auto ncols = Amat.cols();
     const auto nrows = Amat.rows();
     Eigen::MatrixXd C = Amat;
+
+    Eigen::VectorXd mean = Eigen::VectorXd::Zero(Amat.cols());
+    Eigen::VectorXd dev = Eigen::VectorXd::Ones(Amat.cols());
+
+    if (optcontrol.standardize) {
+        Eigen::VectorXd factor_std, scale_beta;
+        factor_std.resize(Amat.cols());
+        scale_beta.resize(Amat.cols());
+        get_standardizer(Amat, mean, dev, factor_std, scale_beta);
+    }
 
     for (auto i = 0; i < nrows; ++i) {
         for (auto j = 0; j < ncols; ++j) {
@@ -2564,8 +2636,10 @@ void Optimize::set_optimizer_control(const OptimizerControl &optcontrol_in)
         }
 
         if (optcontrol_in.cross_validation >= 1 || optcontrol_in.cross_validation == -1) {
-            if (optcontrol_in.l1_alpha_min >= optcontrol_in.l1_alpha_max) {
-                exit("set_optimizer_control", "L1_ALPHA_MIN must be smaller than L1_ALPHA_MAX.");
+            if (optcontrol_in.l1_alpha_max > 0) {
+                if (optcontrol_in.l1_alpha_min >= optcontrol_in.l1_alpha_max) {
+                    exit("set_optimizer_control", "L1_ALPHA_MIN must be smaller than L1_ALPHA_MAX.");
+                }
             }
         }
     }

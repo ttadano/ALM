@@ -47,6 +47,18 @@ class ALM:
         self._maxorder = 1
 
     @property
+    def cell(self):
+        return self._lavec
+
+    @property
+    def scaled_positions(self):
+        return self._xcoord
+
+    @property
+    def numbers(self):
+        return self._atomic_numbers
+
+    @property
     def kind_indices(self):
         return self._kind_indices
 
