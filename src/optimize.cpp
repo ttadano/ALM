@@ -127,9 +127,7 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
     std::vector<double> fcs_tmp(N, 0.0);
 
-    if (optcontrol.linear_model == 1) {
-
-        // Use ordinary least-squares
+    if (optcontrol.linear_model == 1) {  // Use ordinary least-squares
 
         info_fitting = least_squares(maxorder,
                                      N,
@@ -141,9 +139,7 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                                      constraint,
                                      fcs_tmp);
 
-    } else if (optcontrol.linear_model == 2) {
-
-        // Use elastic net
+    } else if (optcontrol.linear_model == 2) {  // Use elastic net
 
         if (!constraint->get_constraint_algebraic()) {
             exit("optimize_main",
@@ -349,11 +345,13 @@ int Optimize::elastic_net(const std::string job_prefix,
         = std::abs(optcontrol.displacement_normalization_factor - 1.0) > eps
         && optcontrol.standardize == 0;
 
-    if (scale_displacement) {
-        apply_scalers(maxorder, constraint);
-    }
+    if (optcontrol.cross_validation == 0) {  // Calculate force
+                                             // constants at given L1-alpha
 
-    if (optcontrol.cross_validation == 0) {
+        if (scale_displacement) {
+            apply_scalers(maxorder, constraint);
+        }
+
         // Optimize with a given L1 coefficient (l1_alpha)
         run_elastic_net_optimization(maxorder,
                                      M,
@@ -384,34 +382,42 @@ int Optimize::elastic_net(const std::string job_prefix,
             std::cout << std::endl;
         }
 
+
+        if (scale_displacement) {
+            apply_scaler_force_constants(maxorder,
+                                         optcontrol.displacement_normalization_factor,
+                                         constraint,
+                                         param_tmp);
+            finalize_scalers(maxorder, constraint);
+        }
+
+        recover_original_forceconstants(maxorder,
+                                        param_tmp,
+                                        param_out,
+                                        fcs->get_nequiv(),
+                                        constraint);
         info_fitting = 0;
 
-    } else {
-        // Run cross validation (manually or automatically)
+    } else {  // Run cross validation (manually or automatically) to
+              // get L1 alpha to give minimum CV score
+        if (scale_displacement) {
+            apply_scalers(maxorder, constraint);
+        }
+
+        // cv_l1_alpha is a private variable of Optimize class.
         cv_l1_alpha = run_elastic_net_crossvalidation(job_prefix,
                                                       maxorder,
                                                       fcs,
                                                       symmetry,
                                                       constraint,
                                                       verbosity);
+        if (scale_displacement) {
+            finalize_scalers(maxorder, constraint);
+        }
+
         info_fitting = 1;
-
     }
 
-    if (scale_displacement) {
-        apply_scaler_force_constants(maxorder,
-                                     optcontrol.displacement_normalization_factor,
-                                     constraint,
-                                     param_tmp);
-        finalize_scalers(maxorder,
-                         constraint);
-    }
-
-    recover_original_forceconstants(maxorder,
-                                    param_tmp,
-                                    param_out,
-                                    fcs->get_nequiv(),
-                                    constraint);
     return info_fitting;
 }
 
