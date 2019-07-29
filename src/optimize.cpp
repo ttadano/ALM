@@ -24,16 +24,13 @@
 #include <string>
 #include <vector>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
-#ifdef WITH_SPARSE_SOLVER
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
 #include <Eigen/SparseQR>
 #include <Eigen/SparseCholesky>
-//#include <Eigen/IterativeLinearSolvers>
-//#include <unsupported/Eigen/SparseExtra>
-//#include <bench/BenchTimer.h>
-#endif
+#include <Eigen/IterativeLinearSolvers>
 
 using namespace ALM_NS;
 
@@ -62,7 +59,7 @@ void Optimize::deallocate_variables()
 
 int Optimize::optimize_main(const Symmetry *symmetry,
                             Constraint *constraint,
-                            const Fcs *fcs,
+                            Fcs *fcs,
                             const int maxorder,
                             const std::string file_prefix,
                             const std::vector<std::string> &str_order,
@@ -143,7 +140,7 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
         if (!constraint->get_constraint_algebraic()) {
             exit("optimize_main",
-                 "Sorry, ICONST=10 or ICONST = 11 must be used when using elastic net.");
+                 "Sorry, ICONST = 10 or ICONST = 11 must be used when using elastic net.");
         }
 
         info_fitting = elastic_net(file_prefix,
@@ -160,13 +157,15 @@ int Optimize::optimize_main(const Symmetry *symmetry,
 
     if (info_fitting == 0) {
         // I should copy fcs_tmp to parameters in the Fcs class?
-
         // Copy force constants to public variable "params"
         if (params) {
             deallocate(params);
         }
         allocate(params, N);
         for (auto i = 0; i < N; ++i) params[i] = fcs_tmp[i];
+
+        fcs->set_forceconstant_cartesian(maxorder,
+                                         params);
     }
 
     fcs_tmp.clear();
@@ -215,7 +214,6 @@ int Optimize::least_squares(const int maxorder,
             // Use a solver for sparse matrix
             // (Requires less memory for sparse inputs.)
 
-#ifdef WITH_SPARSE_SOLVER
             SpMat sp_amat(nrows, ncols);
             Eigen::VectorXd sp_bvec(nrows);
 
@@ -229,21 +227,18 @@ int Optimize::least_squares(const int maxorder,
                                                fcs,
                                                constraint);
             if (verbosity > 0) {
-                std::cout << " Now, start fitting ..." << std::endl;
+                std::cout << "  Now, start fitting ..." << std::endl;
             }
 
-            info_fitting = run_eigen_sparseQR(sp_amat,
+            info_fitting = run_eigen_sparse_solver(sp_amat,
                                               sp_bvec,
                                               param_out,
                                               fnorm,
                                               maxorder,
                                               fcs,
                                               constraint,
+                                                   optcontrol.sparsesolver,
                                               verbosity);
-#else
-            std::cout << " Please recompile the code with -DWITH_SPARSE_SOLVER" << std::endl;
-            exit("optimize_main", "Sparse solver not supported.");
-#endif
 
         } else {
 
@@ -382,6 +377,7 @@ int Optimize::elastic_net(const std::string job_prefix,
             std::cout << std::endl;
         }
 
+    // Scale back force constants
 
         if (scale_displacement) {
             apply_scaler_force_constants(maxorder,
@@ -1447,7 +1443,7 @@ void Optimize::apply_scalers(const int maxorder,
     }
 }
 
-void ALM_NS::Optimize::finalize_scalers(const int maxorder,
+void Optimize::finalize_scalers(const int maxorder,
                                         Constraint *constraint)
 {
     apply_scaler_displacement(u_train,
@@ -1461,6 +1457,51 @@ void ALM_NS::Optimize::finalize_scalers(const int maxorder,
         apply_scaler_displacement(u_validation,
                                   optcontrol.displacement_normalization_factor,
                                   true);
+    }
+}
+
+void Optimize::apply_basis_converter(std::vector<std::vector<double>> &u_multi,
+                                     Eigen::Matrix3d cmat) const
+{
+    // Convert the basis of displacements from Cartesian to fractional
+    const auto nrows = u_multi.size();
+    const auto ncols = u_multi[0].size();
+    size_t i, j;
+    Eigen::Vector3d vec_tmp;
+
+    const auto nat = ncols / 3;
+    for (i = 0; i < nrows; ++i) {
+        for (j = 0; j < nat; ++j) {
+            for (int k = 0; k < 3; ++k) {
+                vec_tmp(k) = u_multi[i][3 * j + k];
+            }
+            vec_tmp = cmat * vec_tmp;
+            for (int k = 0; k < 3; ++k) {
+                u_multi[i][3 * j + k] = vec_tmp(k);
+            }
+        }
+    }
+}
+
+void Optimize::apply_basis_converter_amat(const int natmin3,
+                                          const int ncols,
+                                          double **amat_orig_tmp,
+                                          Eigen::Matrix3d cmat) const
+{
+    const auto natmin = natmin3 / 3;
+    Eigen::Vector3d vec_tmp;
+    const Eigen::Matrix3d cmat_t = cmat.transpose();
+
+    for (auto icol = 0; icol < ncols; ++ icol) {
+        for (auto iat = 0; iat < natmin; ++iat) {
+            for (auto i = 0; i < 3; ++i) {
+                vec_tmp(i) = amat_orig_tmp[3 * iat + i][icol];
+            }
+            vec_tmp = cmat_t * vec_tmp;
+            for (auto i = 0; i < 3; ++i) {
+                amat_orig_tmp[3 * iat + i][icol] = vec_tmp(i);
+            }
+        }
     }
 }
 
@@ -1784,8 +1825,13 @@ int Optimize::fit_algebraic_constraints(const size_t N,
     }
 
     if (nrank < N) {
-        warn("fit_without_constraints",
-             "Matrix is rank-deficient. Force constants could not be determined uniquely :(");
+        std::cout << " **************************************************************************\n";
+        std::cout << "  WARNING : Rank deficient                                                 \n\n";
+        std::cout << "  Force constants could not be determined uniquely because                 \n";
+        std::cout << "  the sensing matrix is not full rank.                                     \n";
+        std::cout << "  You may need to reduce the cutoff radii and/or increase the number of    \n";
+        std::cout << "  training datasets.                                                       \n";
+        std::cout << " **************************************************************************\n";
     }
 
     if (nrank == N && verbosity > 0) {
@@ -1855,6 +1901,11 @@ void Optimize::get_matrix_elements(const int maxorder,
     data_multiplier(u_in, u_multi, symmetry);
     data_multiplier(f_in, f_multi, symmetry);
 
+    if (fcs->get_forceconstant_basis() == "Lattice") {
+        apply_basis_converter(u_multi,
+                              fcs->get_basis_conversion_matrix());
+    }
+
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -1914,6 +1965,16 @@ void Optimize::get_matrix_elements(const int maxorder,
                     }
                     ++iparam;
                 }
+                }
+
+            // When the force constants are defined in the fractional coordinate,
+            // we need to multiply the basis_conversion_matrix to obtain atomic forces
+            // in the Cartesian coordinate.
+            if (fcs->get_forceconstant_basis() == "Lattice") {
+                apply_basis_converter_amat(natmin3,
+                                           ncols,
+                                           amat_orig_tmp,
+                                           fcs->get_basis_conversion_matrix());
             }
 
             for (i = 0; i < natmin3; ++i) {
@@ -1977,6 +2038,11 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
 
     data_multiplier(u_in, u_multi, symmetry);
     data_multiplier(f_in, f_multi, symmetry);
+
+    if (fcs->get_forceconstant_basis() == "Lattice") {
+        apply_basis_converter(u_multi,
+                              fcs->get_basis_conversion_matrix());
+    }
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -2047,6 +2113,16 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
                 }
             }
 
+            // When the force constants are defined in the fractional coordinate,
+            // we need to multiply the basis_conversion_matrix to obtain atomic forces
+            // in the Cartesian coordinate.
+            if (fcs->get_forceconstant_basis() == "Lattice") {
+                apply_basis_converter_amat(natmin3,
+                                           ncols,
+                                           amat_orig_tmp,
+                                           fcs->get_basis_conversion_matrix());
+            }
+
             // Convert the full matrix and vector into a smaller irreducible form
             // by using constraint information.
 
@@ -2062,8 +2138,6 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
                             * amat_orig_tmp[j][ishift + constraint->get_const_fix(order)[i].p_index_target];
                     }
                 }
-
-                //                std::cout << "pass const_fix" << std::endl;
 
                 for (const auto &it : constraint->get_index_bimap(order)) {
                     inew = it.left + iparam;
@@ -2118,7 +2192,6 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
     f_multi.clear();
 }
 
-#ifdef WITH_SPARSE_SOLVER
 void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
                                                   SpMat &sp_amat,
                                                   Eigen::VectorXd &sp_bvec,
@@ -2159,6 +2232,11 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
 
     data_multiplier(u_in, u_multi, symmetry);
     data_multiplier(f_in, f_multi, symmetry);
+
+    if (fcs->get_forceconstant_basis() == "Lattice") {
+        apply_basis_converter(u_multi,
+                              fcs->get_basis_conversion_matrix());
+    }
 
 #ifdef _OPENMP
 #pragma omp parallel private(irow, i, j)
@@ -2229,6 +2307,16 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
                     }
                     ++iparam;
                 }
+            }
+
+            // When the force constants are defined in the fractional coordinate,
+            // we need to multiply the basis_conversion_matrix to obtain atomic forces
+            // in the Cartesian coordinate.
+            if (fcs->get_forceconstant_basis() == "Lattice") {
+                apply_basis_converter_amat(natmin3,
+                    ncols,
+                    amat_orig_tmp,
+                    fcs->get_basis_conversion_matrix());
             }
 
             // Convert the full matrix and vector into a smaller irreducible form
@@ -2306,7 +2394,6 @@ void Optimize::get_matrix_elements_in_sparse_form(const int maxorder,
     sp_amat.setFromTriplets(nonzero_entries.begin(), nonzero_entries.end());
     sp_amat.makeCompressed();
 }
-#endif
 
 
 void Optimize::recover_original_forceconstants(const int maxorder,
@@ -2518,72 +2605,101 @@ int Optimize::rankQRD(const size_t m,
 }
 
 
-#ifdef WITH_SPARSE_SOLVER
-int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
+int Optimize::run_eigen_sparse_solver(const SpMat &sp_mat,
                                  const Eigen::VectorXd &sp_bvec,
                                  std::vector<double> &param_out,
                                  const double fnorm,
                                  const int maxorder,
                                  const Fcs *fcs,
                                  const Constraint *constraint,
+                                      const std::string solver_type,
                                  const int verbosity) const
 {
-    //    Eigen::BenchTimer t;
+    const auto solver_type_lower = boost::algorithm::to_lower_copy(solver_type);
+    Eigen::VectorXd x;
 
     if (verbosity > 0) {
-        std::cout << "  Solve least-squares problem by sparse LDLT." << std::endl;
+        std::cout << "  Solve least-squares problem by Eigen " + solver_type + ".\n";
     }
 
+    if (solver_type_lower == "simplicialldlt") {
     SpMat AtA = sp_mat.transpose() * sp_mat;
-    Eigen::VectorXd AtB, x;
-    AtB = sp_mat.transpose() * sp_bvec;
+        Eigen::VectorXd AtB = sp_mat.transpose() * sp_bvec;
 
-    /*
-        t.reset();
-        t.start();
-        Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> qr(sp_mat);
+        Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
+        x = ldlt.solve(AtB);
+
+        if (ldlt.info() != Eigen::Success) {
+            std::cerr << "  Fitting by " + solver_type + " failed." << std::endl;
+            std::cerr << ldlt.info() << std::endl;
+            return 1;
+        }
+
+    } else if (solver_type_lower == "sparseqr") {
+
+        Eigen::SparseQR<SpMat, Eigen::COLAMDOrdering<int>> qr(sp_mat);
         x = qr.solve(sp_bvec);
 
-        t.stop();
-        std::cout << "sqr   : " << qr.info() << " ; " << t.value()
-        << "s ;  err: " << (AtA * x - AtB).norm() / AtB.norm() << "\n";
+        if (qr.info() != Eigen::Success) {
+            std::cerr << "  Fitting by " + solver_type + " failed." << std::endl;
+            std::cerr << qr.info() << std::endl;
+            return 1;
+        }
 
-        t.reset();
-        t.start();
-    */
-    Eigen::SimplicialLDLT<SpMat> ldlt(AtA);
-    x = ldlt.solve(AtB);
-    //       t.stop();
-    //   std::cout << "ldlt  : " << ldlt.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+    } else if (solver_type_lower == "conjugategradient") {
+        SpMat AtA = sp_mat.transpose() * sp_mat;
+        Eigen::VectorXd AtB = sp_mat.transpose() * sp_bvec;
 
-    /*
-         t.reset(); t.start();
          Eigen::ConjugateGradient<SpMat> cg(AtA);
          cg.setTolerance(optcontrol.tolerance_iteration);
          cg.setMaxIterations(optcontrol.maxnum_iteration);
-         x.setZero(); x = cg.solve(AtB);
-         t.stop();
-         std::cout << "cg    : " << cg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
-    */
-    /*   t.reset(); t.start();
+        x.setZero();
+        x = cg.solve(AtB);
+
+        if (cg.info() != Eigen::Success) {
+            std::cerr << "  Fitting by " + solver_type + " failed." << std::endl;
+            std::cerr << cg.info() << std::endl;
+            return 1;
+        }
+
+    } else if (solver_type_lower == "leastsquaresconjugategradient") {
+
+#if EIGEN_VERSION_AT_LEAST(3, 3, 0)
        Eigen::LeastSquaresConjugateGradient<SpMat> lscg(sp_mat);
-       lscg.setTolerance(eps10);
-       lscg.setMaxIterations(10000000);
-       x.setZero(); x = lscg.solve(sp_bvec);
+        lscg.setTolerance(optcontrol.tolerance_iteration);
+        lscg.setMaxIterations(optcontrol.maxnum_iteration);
+        x.setZero();
+        x = lscg.solve(sp_bvec);
 
-       t.stop();
-       std::cout << "lscg  : " << lscg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";*/
+        if (lscg.info() != Eigen::Success) {
+            std::cerr << "  Fitting by " + solver_type + " failed." << std::endl;
+            std::cerr << lscg.info() << std::endl;
+            return 1;
+        }
 
-    /*
-         t.reset(); t.start();
+#else
+        std::cerr << "The linked Eigen version is too old\n";
+        std::cerr << solver_type + " is available as of 3.3.0\n";
+        return 1;
+#endif
+
+    } else if (solver_type_lower == "bicgstab") {
+        SpMat AtA = sp_mat.transpose() * sp_mat;
+        Eigen::VectorXd AtB = sp_mat.transpose() * sp_bvec;
+
          Eigen::BiCGSTAB<SpMat> bicg(AtA);
          bicg.setTolerance(optcontrol.tolerance_iteration);
          bicg.setMaxIterations(optcontrol.maxnum_iteration);
-         x.setZero(); x = bicg.solve(AtB);
-         t.stop();
-         std::cout << "bicg    : " << bicg.info() << " ; " << t.value() << "s ;  err: " << (AtA*x-AtB).norm() / AtB.norm() << "\n";
+        x.setZero();
+        x = bicg.solve(AtB);
 
-    */
+        if (bicg.info() != Eigen::Success) {
+            std::cerr << "  Fitting by " + solver_type + " failed." << std::endl;
+            std::cerr << bicg.info() << std::endl;
+            return 1;
+        }
+    }
+
     auto res = sp_bvec - sp_mat * x;
     const auto res2norm = res.squaredNorm();
     const auto nparams = x.size();
@@ -2593,7 +2709,6 @@ int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
         param_irred[i] = x(i);
     }
 
-    if (ldlt.info() == Eigen::Success) {
         // Recover reducible set of force constants
 
         recover_original_forceconstants(maxorder,
@@ -2610,17 +2725,7 @@ int Optimize::run_eigen_sparseQR(const SpMat &sp_mat,
         }
 
         return 0;
-
-    } else {
-
-        std::cerr << "  Fitting by LDLT failed." << std::endl;
-        std::cerr << ldlt.info() << std::endl;
-
-        return 1;
-    }
 }
-
-#endif
 
 
 void Optimize::set_optimizer_control(const OptimizerControl &optcontrol_in)

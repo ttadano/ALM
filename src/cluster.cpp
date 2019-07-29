@@ -504,7 +504,6 @@ void Cluster::define(const int maxorder_in,
             }
         }
     }
-
 }
 
 int* Cluster::get_nbody_include() const
@@ -542,7 +541,7 @@ void Cluster::print_interaction_information(const size_t natmin,
                                             const std::vector<std::vector<int>> &map_p2s,
                                             const std::vector<int> &kd,
                                             const std::string *kdname,
-                                            const std::vector<int> * const *interaction_list)
+                                            const std::vector<int> *const *interaction_list) const
 {
     std::vector<int> intlist;
 

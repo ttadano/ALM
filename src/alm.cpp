@@ -211,6 +211,16 @@ void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
     optimize->set_optimizer_control(optctrl);
 }
 
+void ALM::set_forceconstant_basis(const std::string preferred_basis) const // FC_BASIS
+{
+    fcs->set_forceconstant_basis(preferred_basis);
+}
+
+std::string ALM::get_forceconstant_basis() const
+{
+    return fcs->get_forceconstant_basis();
+}
+
 void ALM::define(const int maxorder,
                  const size_t nkd,
                  const int *nbody_include,
@@ -650,7 +660,7 @@ void ALM::initialize_interaction()
                   timer);
     fcs->init(cluster,
               symmetry,
-              system->get_supercell().number_of_atoms,
+              system->get_supercell(),
               verbosity,
               timer);
 

@@ -233,7 +233,7 @@ namespace ALM_NS
                                                         const size_t natmin,
                                                         const std::vector<int> &kd,
                                                         const std::vector<std::vector<int>> &map_p2s,
-                                                        const double * const *rc,
+                                                        const double *const *rc,
                                                         std::vector<int> *interaction_list) const;
 
         void set_interaction_by_cutoff(const size_t nat,
@@ -251,7 +251,7 @@ namespace ALM_NS
                                            const std::vector<std::vector<int>> &map_p2s,
                                            const std::vector<int> &kd,
                                            const std::string *kdname,
-                                           const std::vector<int> * const *interaction_list);
+                                           const std::vector<int> *const *interaction_list) const;
 
         double distance(const double *,
                         const double *) const;

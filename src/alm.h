@@ -73,6 +73,9 @@ namespace ALM_NS
         void set_fc_file(const int order, const std::string fc_file) const;
         void set_fc_fix(const int order, const bool fc_fix) const;
         void set_sparse_mode(const int sparse_mode) const;
+        void set_forceconstant_basis(const std::string preferred_basis) const;
+        std::string get_forceconstant_basis() const;
+
         //void set_fitting_filenames(std::string dfile,
         //                           std::string ffile) const;
         void define(const int maxorder,

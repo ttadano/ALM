@@ -55,6 +55,7 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << "  KD = ";
     for (i = 0; i < nkd; ++i) std::cout << std::setw(4) << alm->get_kdname()[i];
     std::cout << '\n';
+    std::cout << "  FC_BASIS = " << alm->get_forceconstant_basis() << '\n';
     std::cout << "  PERIODIC = ";
     for (i = 0; i < 3; ++i) std::cout << std::setw(3) << alm->get_periodicity()[i];
     std::cout << '\n';
@@ -95,7 +96,10 @@ void Writer::write_input_vars(const ALM *alm) const
         std::cout << "  ROTAXIS = " << alm->constraint->get_rotation_axis() << '\n';
         std::cout << "  FC2XML = " << alm->constraint->get_fc_file(2) << '\n';
         std::cout << "  FC3XML = " << alm->constraint->get_fc_file(3) << "\n\n";
-        std::cout << "  SPARSE = " << optctrl.use_sparse_solver << "\n\n";
+        std::cout << "  SPARSE = " << optctrl.use_sparse_solver << '\n';
+        std::cout << "  SPARSESOLVER = " << optctrl.sparsesolver << '\n';
+        std::cout << "  CONV_TOL = " << optctrl.tolerance_iteration << '\n';
+        std::cout << "  MAXITER = " << optctrl.maxnum_iteration << "\n\n";
         if (optctrl.linear_model == 2) {
             std::cout << " Elastic-net related variables:\n";
             std::cout << "  CV = " << std::setw(5) << optctrl.cross_validation << '\n';
@@ -110,8 +114,6 @@ void Writer::write_input_vars(const ALM *alm) const
                 << ";  CV_NALPHA = " << optctrl.num_l1_alpha << '\n';
             std::cout << "  STANDARDIZE = " << optctrl.standardize << '\n';
             std::cout << "  ENET_DNORM = " << optctrl.displacement_normalization_factor << '\n';
-            std::cout << "  CONV_TOL = " << optctrl.tolerance_iteration << '\n';
-            std::cout << "  MAXITER = " << optctrl.maxnum_iteration << '\n';
             std::cout << "  NWRITE = " << std::setw(5) << optctrl.output_frequency << '\n';
             std::cout << "  DEBIAS_OLS = " << optctrl.debiase_after_l1opt << '\n';
             std::cout << '\n';
@@ -122,7 +124,7 @@ void Writer::write_input_vars(const ALM *alm) const
     alm->timer->stop_clock("writer");
 }
 
-void Writer::writeall(ALM *alm)
+void Writer::writeall(ALM *alm) const
 {
     alm->timer->start_clock("writer");
 
@@ -199,7 +201,7 @@ void Writer::write_force_constants(ALM *alm) const
                 j = alm->symmetry->get_map_s2p()[alm->fcs->get_fc_table()[order][m].elems[0] / 3].atom_num;
                 std::sort(atom_tmp.begin(), atom_tmp.end());
 
-                auto iter_cluster
+                const auto iter_cluster
                     = alm->cluster->get_interaction_cluster(order, j).
                            find(InteractionCluster(atom_tmp, cell_dummy));
 
@@ -339,7 +341,7 @@ void Writer::write_displacement_pattern(ALM *alm) const
 }
 
 
-void Writer::write_misc_xml(ALM *alm)
+void Writer::write_misc_xml(ALM *alm) const
 {
     SystemInfo system_structure;
 
@@ -376,7 +378,7 @@ void Writer::write_misc_xml(ALM *alm)
     std::string str_pos[3];
 
     pt.put("Data.ALM_version", ALAMODE_VERSION);
-    //pt.put("Data.Fitting.DisplaceFile", alm->files->file_disp);
+        pt.put("Data.Optimize.DFSET", alm->files->get_datfile_train().filename);
     //pt.put("Data.Fitting.ForceFile", alm->files->file_force);
     pt.put("Data.Fitting.Constraint", alm->constraint->get_constraint_mode());
 
@@ -443,7 +445,7 @@ void Writer::write_misc_xml(ALM *alm)
     str_tmp.clear();
 
     pt.put("Data.ForceConstants.HarmonicUnique.NFC2", alm->fcs->get_nequiv()[0].size());
-
+    pt.put("Data.ForceConstants.HarmonicUnique.Basis", alm->get_forceconstant_basis());
     size_t ihead = 0;
     size_t k = 0;
     const auto nelem = alm->cluster->get_maxorder() + 1;
@@ -490,6 +492,7 @@ void Writer::write_misc_xml(ALM *alm)
     if (alm->cluster->get_maxorder() > 1) {
 
         pt.put("Data.ForceConstants.CubicUnique.NFC3", alm->fcs->get_nequiv()[1].size());
+        pt.put("Data.ForceConstants.CubicUnique.Basis", alm->get_forceconstant_basis());
 
         for (unsigned int ui = 0; ui < alm->fcs->get_nequiv()[1].size(); ++ui) {
             for (i = 0; i < 3; ++i) {
@@ -524,18 +527,18 @@ void Writer::write_misc_xml(ALM *alm)
         }
     }
 
-    size_t ip;
     int imult;
     std::string elementname = "Data.ForceConstants.HARMONIC.FC2";
 
-    std::sort(alm->fcs->get_fc_table()[0].begin(), alm->fcs->get_fc_table()[0].end());
+    auto fc_cart_harmonic = alm->fcs->get_fc_cart()[0];
 
-    for (auto it = alm->fcs->get_fc_table()[0].begin(); it != alm->fcs->get_fc_table()[0].end(); ++it) {
-        auto fctmp = *it;
-        ip = fctmp.mother;
+    std::sort(fc_cart_harmonic.begin(),
+              fc_cart_harmonic.end());
+
+    for (const auto &it : fc_cart_harmonic) {
 
         for (k = 0; k < 2; ++k) {
-            pair_tmp[k] = fctmp.elems[k] / 3;
+            pair_tmp[k] = it.atoms[k];
         }
 
         j = alm->symmetry->get_map_s2p()[pair_tmp[0]].atom_num;
@@ -550,19 +553,18 @@ void Writer::write_misc_xml(ALM *alm)
             multiplicity = (*iter_cluster).cell.size();
 
             for (imult = 0; imult < multiplicity; ++imult) {
-                std::vector<int> cell_now = (*iter_cluster).cell[imult];
+                auto cell_now = (*iter_cluster).cell[imult];
 
-                ptree &child = pt.add(elementname,
-                                      double2string(alm->optimize->get_params()[ip] * fctmp.sign
-                                          / static_cast<double>(multiplicity)));
+                auto &child = pt.add(elementname,
+                                     double2string(it.fc_value / static_cast<double>(multiplicity)));
 
                 child.put("<xmlattr>.pair1", std::to_string(j + 1)
-                          + " " + std::to_string(fctmp.elems[0] % 3 + 1));
+                          + " " + std::to_string(it.coords[0] + 1));
 
                 for (k = 1; k < 2; ++k) {
                     child.put("<xmlattr>.pair" + std::to_string(k + 1),
                               std::to_string(pair_tmp[k] + 1)
-                              + " " + std::to_string(fctmp.elems[k] % 3 + 1)
+                              + " " + std::to_string(it.coords[k] + 1)
                               + " " + std::to_string(cell_now[k - 1] + 1));
                 }
             }
@@ -577,15 +579,17 @@ void Writer::write_misc_xml(ALM *alm)
 
     for (auto order = 1; order < alm->cluster->get_maxorder(); ++order) {
 
-        std::sort(alm->fcs->get_fc_table()[order].begin(), alm->fcs->get_fc_table()[order].end());
+        auto fc_cart_anharm = alm->fcs->get_fc_cart()[order];
 
-        for (auto it = alm->fcs->get_fc_table()[order].begin();
-             it != alm->fcs->get_fc_table()[order].end(); ++it) {
-            auto fctmp = *it;
-            ip = fctmp.mother + ishift;
+        std::sort(fc_cart_anharm.begin(),
+                  fc_cart_anharm.end());
+
+        for (const auto &it : fc_cart_anharm) {
+
+            // Save nonzero force constants only 
 
             for (k = 0; k < order + 2; ++k) {
-                pair_tmp[k] = fctmp.elems[k] / 3;
+                pair_tmp[k] = it.atoms[k];
             }
             j = alm->symmetry->get_map_s2p()[pair_tmp[0]].atom_num;
 
@@ -610,16 +614,15 @@ void Writer::write_misc_xml(ALM *alm)
                     auto cell_now = (*iter_cluster).cell[imult];
 
                     auto &child = pt.add(elementname,
-                                         double2string(alm->optimize->get_params()[ip] * fctmp.sign
-                                             / static_cast<double>(multiplicity)));
+                                         double2string(it.fc_value / static_cast<double>(multiplicity)));
 
                     child.put("<xmlattr>.pair1", std::to_string(j + 1)
-                              + " " + std::to_string(fctmp.elems[0] % 3 + 1));
+                              + " " + std::to_string(it.coords[0] + 1));
 
                     for (k = 1; k < order + 2; ++k) {
                         child.put("<xmlattr>.pair" + std::to_string(k + 1),
                                   std::to_string(pair_tmp[k] + 1)
-                                  + " " + std::to_string(fctmp.elems[k] % 3 + 1)
+                                  + " " + std::to_string(it.coords[k] + 1)
                                   + " " + std::to_string(cell_now[k - 1] + 1));
                     }
                 }
@@ -670,18 +673,17 @@ void Writer::write_hessian(ALM *alm) const
         }
     }
 
-    for (auto it = alm->fcs->get_fc_table()[0].begin();
-         it != alm->fcs->get_fc_table()[0].end(); ++it) {
-        auto fctmp = *it;
-        const auto ip = fctmp.mother;
+    for (const auto &it : alm->fcs->get_fc_table()[0]) {
 
-        for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
+        const auto ip = it.mother;
+
+        for (i = 0; i < 2; ++i) pair_tmp[i] = it.elems[i] / 3;
         for (size_t itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
             for (i = 0; i < 2; ++i) {
                 pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }
-            hessian[3 * pair_tran[0] + fctmp.elems[0] % 3][3 * pair_tran[1] + fctmp.elems[1] % 3]
-                = alm->optimize->get_params()[ip] * fctmp.sign;
+            hessian[3 * pair_tran[0] + it.elems[0] % 3][3 * pair_tran[1] + it.elems[1] % 3]
+                = alm->optimize->get_params()[ip] * it.sign;
         }
     }
 
@@ -735,25 +737,24 @@ void Writer::write_in_QEformat(ALM *alm) const
             hessian[i][j] = 0.0;
         }
     }
+    for (const auto &it : alm->fcs->get_fc_table()[0]) {
 
-    for (auto it = alm->fcs->get_fc_table()[0].begin(); it != alm->fcs->get_fc_table()[0].end(); ++it) {
-        auto fctmp = *it;
-        const auto ip = fctmp.mother;
+        const auto ip = it.mother;
 
-        for (i = 0; i < 2; ++i) pair_tmp[i] = fctmp.elems[i] / 3;
+        for (i = 0; i < 2; ++i) pair_tmp[i] = it.elems[i] / 3;
         for (size_t itran = 0; itran < alm->symmetry->get_ntran(); ++itran) {
             for (i = 0; i < 2; ++i) {
                 pair_tran[i] = alm->symmetry->get_map_sym()[pair_tmp[i]][alm->symmetry->get_symnum_tran()[itran]];
             }
-            hessian[3 * pair_tran[0] + fctmp.elems[0] % 3][3 * pair_tran[1] + fctmp.elems[1] % 3]
-                = alm->optimize->get_params()[ip] * fctmp.sign;
+            hessian[3 * pair_tran[0] + it.elems[0] % 3][3 * pair_tran[1] + it.elems[1] % 3]
+                = alm->optimize->get_params()[ip] * it.sign;
         }
     }
 
     auto file_fc = alm->files->get_prefix() + ".fc";
 
     ofs_hes.open(file_fc.c_str(), std::ios::out);
-    if (!ofs_hes) exit("write_hessian", "cannot create hessian file");
+    if (!ofs_hes) exit("write_in_QEformat", "cannot create fc file");
 
     ofs_hes << "  1  1  1" << std::endl;
     for (auto icrd = 0; icrd < 3; ++icrd) {
@@ -818,13 +819,13 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
 
     const auto ishift = alm->fcs->get_nequiv()[0].size();
 
-    for (auto it = alm->fcs->get_fc_table()[1].begin(); it != alm->fcs->get_fc_table()[1].end(); ++it) {
-        auto fctmp = *it;
-        const auto ip = fctmp.mother + ishift;
+    for (const auto &it : alm->fcs->get_fc_table()[1]) {
+
+        const auto ip = it.mother + ishift;
 
         for (i = 0; i < 3; ++i) {
-            pair_tmp[i] = fctmp.elems[i] / 3;
-            coord_tmp[i] = fctmp.elems[i] % 3;
+            pair_tmp[i] = it.elems[i] / 3;
+            coord_tmp[i] = it.elems[i] % 3;
         }
 
         j = alm->symmetry->get_map_s2p()[pair_tmp[0]].atom_num;
@@ -842,14 +843,16 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
             nelems += (*iter_cluster).cell.size();
             has_element[j][pair_tmp[1]][pair_tmp[2]] = 1;
         }
-        fc3[3 * j + coord_tmp[0]][fctmp.elems[1]][fctmp.elems[2]] = alm->optimize->get_params()[ip] * fctmp.sign;
+        fc3[3 * j + coord_tmp[0]][it.elems[1]][it.elems[2]]
+            = alm->optimize->get_params()[ip] * it.sign;
 
-        if (fctmp.elems[1] != fctmp.elems[2]) {
+        if (it.elems[1] != it.elems[2]) {
             if (!has_element[j][pair_tmp[2]][pair_tmp[1]]) {
                 nelems += (*iter_cluster).cell.size();
                 has_element[j][pair_tmp[2]][pair_tmp[1]] = 1;
             }
-            fc3[3 * j + coord_tmp[0]][fctmp.elems[2]][fctmp.elems[1]] = alm->optimize->get_params()[ip] * fctmp.sign;
+            fc3[3 * j + coord_tmp[0]][it.elems[2]][it.elems[1]]
+                = alm->optimize->get_params()[ip] * it.sign;
         }
     }
 
