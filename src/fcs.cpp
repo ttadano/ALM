@@ -118,8 +118,8 @@ void Fcs::set_default_variables()
     fc_cart = nullptr;
     store_zeros = true;
 
-    // preferred_basis = "Cartesian";
-    preferred_basis = "Lattice";
+    preferred_basis = "Cartesian";
+    //preferred_basis = "Lattice";
 }
 
 void Fcs::deallocate_variables()
