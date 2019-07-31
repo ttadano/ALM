@@ -8,7 +8,7 @@ except ImportError:
     home = os.path.expanduser("~")
 
 # This is the switch for ALM developement. Always True for general cases.
-compile_with_sources = True
+compile_with_sources = False
 
 # Configurations to pass to extention.
 # The following directory structure and use of conda are supposed.
@@ -75,13 +75,10 @@ if compile_with_sources:
     extra_link_args.append(os.path.join(spglib_dir, "libsymspg.a"))
 else:  # compile with library
     sources = ['_alm.c', 'alm_wrapper.cpp']
-    # static link library
+    # 'libalmcxx.a' static link library has to come before depending
+    # dynamic link libraries '-lgomp', '-llapack'.
+    extra_link_args.insert(0, os.path.join("..", "lib", "libalmcxx.a"))
     extra_link_args.append(os.path.join(spglib_dir, "libsymspg.a"))
-    extra_link_args.append(os.path.join("..", "lib", "libalmcxx.a"))
-    # dynamic link library (LD_LIBRARY_PATH has to be set properly.)
-    # extra_link_args += ['-lalmcxx', '-lsymspg']
-    # library_dirs.append(os.path.join("..", "lib"))
-    # library_dirs.append(spglib_dir)
 
 extension = Extension('alm._alm',
                       include_dirs=include_dirs,
