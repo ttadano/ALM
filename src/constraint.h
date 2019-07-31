@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <boost/bimap.hpp>
 #include <utility>
 #include <vector>
@@ -150,6 +151,10 @@ namespace ALM_NS
         ConstraintDoubleElement(const size_t col_in,
                                 const double val_in) :
             col(col_in), val(val_in) {}
+
+        bool operator<(const ConstraintDoubleElement &obj) const {
+            return col < obj.col;
+        }
     };
 
     // Operator for sort
@@ -324,7 +329,7 @@ namespace ALM_NS
                                                        const Symmetry *symmetry,
                                                        const Cluster *cluster,
                                                        const Fcs *fcs,
-                                                       const int verbosity);
+                                                       const int verbosity) const;
 
         void get_constraint_translation(const Cell &supercell,
                                         const Symmetry *symmetry,
@@ -341,7 +346,7 @@ namespace ALM_NS
                                                const Symmetry *,
                                                const Cluster *,
                                                const Fcs *,
-                                               const int);
+                                               const int) const;
 
         void fix_forceconstants_to_file(const int,
                                         const Symmetry *,

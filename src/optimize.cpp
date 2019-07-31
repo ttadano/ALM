@@ -123,8 +123,9 @@ int Optimize::optimize_main(const Symmetry *symmetry,
     // Run optimization and obtain force constants
 
     std::vector<double> fcs_tmp(N, 0.0);
+    if (optcontrol.linear_model == 1) {
+        // Use ordinary least-squares
 
-    if (optcontrol.linear_model == 1) {  // Use ordinary least-squares
 
         info_fitting = least_squares(maxorder,
                                      N,
@@ -136,7 +137,8 @@ int Optimize::optimize_main(const Symmetry *symmetry,
                                      constraint,
                                      fcs_tmp);
 
-    } else if (optcontrol.linear_model == 2) {  // Use elastic net
+    } else if (optcontrol.linear_model == 2) {
+        // Use elastic net
 
         if (!constraint->get_constraint_algebraic()) {
             exit("optimize_main",
