@@ -124,7 +124,7 @@ extern "C" {
         }
         std::string *kdname = new std::string[nkd];
         //std::string kdname[nkd];
-        for (int i = 0; i < nkd; i++) {
+        for (i = 0; i < nkd; i++) {
             kdname[i] = atom_name[abs(kind_unique[i]) % 118];
         }
 
@@ -155,8 +155,8 @@ extern "C" {
         u.resize(ndata_used, std::vector<double>(3 * nat));
         f.resize(ndata_used, std::vector<double>(3 * nat));
 
-        for (auto i = 0; i < ndata_used; i++) {
-            for (auto j = 0; j < 3 * nat; j++) {
+        for (size_t i = 0; i < ndata_used; i++) {
+            for (size_t j = 0; j < 3 * nat; j++) {
                 u[i][j] = u_in[i * nat * 3 + j];
                 f[i][j] = f_in[i * nat * 3 + j];
             }
@@ -397,4 +397,29 @@ extern "C" {
         }
         alm[id]->set_optimizer_control(optctrl);
     }
+
+    struct optimizer_control alm_get_optimizer_control(const int id)
+    {
+        struct optimizer_control optcontrol;
+        auto optctrl = alm[id]->get_optimizer_control();
+
+        optcontrol.linear_model = optctrl.linear_model;
+        optcontrol.use_sparse_solver = optctrl.use_sparse_solver;
+        optcontrol.maxnum_iteration = optctrl.maxnum_iteration;
+        optcontrol.tolerance_iteration = optctrl.tolerance_iteration;
+        optcontrol.output_frequency = optctrl.output_frequency;
+        optcontrol.standardize = optctrl.standardize;
+        optcontrol.displacement_normalization_factor = optctrl.displacement_normalization_factor;
+        optcontrol.debiase_after_l1opt = optctrl.debiase_after_l1opt;
+        optcontrol.cross_validation = optctrl.cross_validation;
+        optcontrol.l1_alpha = optctrl.l1_alpha;
+        optcontrol.l1_alpha_min = optctrl.l1_alpha_min;
+        optcontrol.l1_alpha_max = optctrl.l1_alpha_max;
+        optcontrol.num_l1_alpha = optctrl.num_l1_alpha;
+        optcontrol.l1_ratio = optctrl.l1_ratio;
+        optcontrol.save_solution_path = optctrl.save_solution_path;
+
+        return optcontrol;
+    }
+
 }
