@@ -19,8 +19,9 @@ endif()
 
 if (UNIX)
   #set(ENV{BLA_VENDOR} "Intel10_64lp")
-  find_package(LAPACK REQUIRED)
+  #find_package(LAPACK REQUIRED)
   #set(LAPACK_LIBRARIES "-lopenblas")
+  set(LAPACK_LIBRARIES "-llapack")
   set(spglib "-lsymspg")
 endif()
 include_directories($ENV{CONDA_PREFIX}/include)
@@ -31,8 +32,8 @@ link_directories($ENV{CONDA_PREFIX}/lib)
 #
 find_package(OpenMP)
 if (OPENMP_FOUND)
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  #set(openmp "-lomp")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(openmp "-lgomp")
 endif()
 
 find_package(Boost REQUIRED)
@@ -92,7 +93,6 @@ add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
                    ${PROJECT_SOURCE_DIR}/src/alm_cui.cpp
                    ${SOURCES} ${HEADERS})
 target_link_libraries(alm ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib} ${openmp})
-target_link_libraries(alm ${LAPACK_LIBRARIES})
 set_property(TARGET alm PROPERTY CXX_STANDARD 11)
 set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
 
@@ -101,9 +101,7 @@ set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # Shared library
 add_library(almcxx SHARED ${SOURCES})
-#target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
-target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib})
-#target_link_libraries(almcxx ${LAPACK_LIBRARIES})
+target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib} ${openmp})
 set_property(TARGET almcxx PROPERTY VERSION ${serial})
 set_property(TARGET almcxx PROPERTY SOVERSION ${soserial})
 set_property(TARGET almcxx PROPERTY CXX_STANDARD 11)
