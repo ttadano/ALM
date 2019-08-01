@@ -1,5 +1,23 @@
+import warnings
 import numpy as np
 from . import _alm as alm
+
+
+optimizer_control_keys = ('linear_model',
+                          'use_sparse_solver',
+                          'maxnum_iteration',
+                          'tolerance_iteration',
+                          'output_frequency',
+                          'standardize',
+                          'displacement_normalization_factor',
+                          'debiase_after_l1opt',
+                          'cross_validation',
+                          'l1_alpha',
+                          'l1_alpha_min',
+                          'l1_alpha_max',
+                          'num_l1_alpha',
+                          'l1_ratio',
+                          'save_solution_path')
 
 
 class ALM:
@@ -7,60 +25,170 @@ class ALM:
 
     Attributes
     ----------
-    kind_indices : array_like
+    lavec : ndarray
+        Basis vectors. a, b, c are given as column vectors.
+        shape=(3, 3), dtype='double'
+    xcoord : ndarray
+        Fractional coordinates of atomic points.
+        shape=(num_atoms, 3), dtype='double'
+    numbers : ndarray
+        Atomic numbers.
+        shape=(num_atoms,), dtype='intc'
+    kind_indices : ndarray
         Atomic types represented by integer numbers starting from 1, which
         are used internally, but currently needed to specify cutoff radii
         in define method.
-        shape=(num_atoms,)
-        dtype='intc'
+        shape=(num_atoms,), dtype='intc'
 
     """
 
-    def __init__(self, lavec, xcoord, atomic_numbers):
+    def __init__(self, lavec, xcoord, numbers, verbosity=0):
         """
 
         Parameters
         ----------
         lavec : array_like
             Basis vectors. a, b, c are given as column vectors.
-            shape=(3, 3)
-            dtype='double'
+            shape=(3, 3), dtype='double'
         xcoord : array_like
             Fractional coordinates of atomic points.
-            shape=(num_atoms, 3)
-            dtype='double'
-        atomic_numbers : array_like
+            shape=(num_atoms, 3), dtype='double'
+        numbers : array_like
             Atomic numbers.
-            shape=(num_atoms,)
-            dtype='intc'
+            shape=(num_atoms,), dtype='intc'
+        verbosity : int
+            Level of the output frequency either 0 (no output) or
+            1 (normal output). Default is 0.
 
         """
 
         self._id = None
-        self._lavec = np.array(lavec, dtype='double', order='C')
-        self._xcoord = np.array(xcoord, dtype='double', order='C')
-        self._atomic_numbers = np.array(atomic_numbers,
-                                        dtype='intc', order='C')
+        self._cell = None
+        self.lavec = lavec
+        self.xcoord = xcoord
+        self.numbers = numbers
+        self._verbosity = verbosity
         self._kind_indices = None
         self._iconst = 11
-        self._verbosity = 0
         self._maxorder = 1
 
-    @property
-    def cell(self):
-        return self._lavec
+        self._output_filename_prefix = None
+
+        # Whether python parameters are needed to be copied to C++ instance
+        # or not.
+        self._need_transfer = True
 
     @property
-    def scaled_positions(self):
-        return self._xcoord
+    def lavec(self):
+        """Getter of basis vectors
+
+        Returns
+        -------
+        lavec : ndarray
+        Copy of basis vectors. a, b, c are given as column vectors.
+        shape=(3, 3), dtype='double', order='C'
+
+        """
+        return np.array(self._lavec, dtype='double', order='C')
+
+    @lavec.setter
+    def lavec(self, lavec):
+        """Setter of basis vectors
+
+        Parameters
+        ----------
+        lavec : array_like
+        Basis vectors. a, b, c are given as column vectors.
+        shape=(3, 3), dtype='double', order='C'
+
+        """
+
+        self._need_transfer = True
+        self._lavec = np.array(lavec, dtype='double', order='C')
+
+    @property
+    def xcoord(self):
+        """Getter of atomic point coordinates
+
+        Returns
+        -------
+        xcoord : ndarray
+        Atomic point coordinates.
+        shape=(num_atom, 3), dtype='double', order='C'
+
+        """
+
+        return np.array(self._xcoord, dtype='double', order='C')
+
+    @xcoord.setter
+    def xcoord(self, xcoord):
+        """Setter of atomic point coordinates
+
+        Returns
+        -------
+        xcoord : ndarray
+        Atomic point coordinates.
+        shape=(num_atom, 3), dtype='double', order='C'
+
+        """
+
+        self._need_transfer = True
+        self._xcoord = np.array(xcoord, dtype='double', order='C')
 
     @property
     def numbers(self):
-        return self._atomic_numbers
+        """Getter of atomic numbers
+
+        Returns
+        -------
+        numbers : ndarray
+        Atomic numbers.
+        shape=(num_atom,), dtype='intc', order='C'
+
+        """
+
+        return np.array(self._numbers, dtype='intc', order='C')
+
+    @numbers.setter
+    def numbers(self, numbers):
+        """Setter of atomic numbers
+
+        Parameters
+        ----------
+        numbers : ndarray
+        Atomic numbers.
+        shape=(num_atom,), dtype='intc', order='C'
+
+        """
+
+        self._need_transfer = True
+        self._numbers = np.array(numbers, dtype='intc', order='C')
 
     @property
     def kind_indices(self):
         return self._kind_indices
+
+    @property
+    def verbosity(self):
+        return self._verbosity
+
+    @verbosity.setter
+    def verbosity(self, verbosity):
+        """Set verbosity of output.
+
+        Parameters
+        ----------
+        verbosity : int
+            Choose the level of the output frequency from
+            0 (no output) or 1 (normal output).
+
+        """
+
+        self._verbosity = verbosity
+        self._need_transfer = True
+
+    def set_verbosity(self, verbosity):
+        self.verbosity = verbosity
 
     def __enter__(self):
         self.alm_new()
@@ -76,7 +204,7 @@ class ALM:
 
         ex.::
 
-           with ALM(lavec, xcoord, kind) as alm:
+           with ALM(lavec, xcoord, numbers) as alm:
 
         Note
         ----
@@ -89,8 +217,7 @@ class ALM:
             self._id = alm.alm_new()
             if self._id < 0:
                 raise RuntimeError("Too many ALM objects")
-            self._set_cell()
-            self._set_verbosity()
+            self._transfer_parameters()
         else:
             raise("This ALM object is already initialized.")
 
@@ -111,20 +238,13 @@ class ALM:
         alm.alm_delete(self._id)
         self._id = None
 
-    def set_output_filename_prefix(self, prefix=None):
-        """Set output prefix of output filename"""
-
-        if self._id is None:
-            self._show_error_message()
-
-        if type(prefix) is str:
-            alm.set_output_filename_prefix(self._id, prefix)
-
     def suggest(self):
         """Compute displacement patterns to obtain force constants."""
 
         if self._id is None:
             self._show_error_message()
+
+        self._transfer_parameters()
 
         alm.suggest(self._id)
 
@@ -153,6 +273,8 @@ class ALM:
         if self._id is None:
             self._show_error_message()
 
+        self._transfer_parameters()
+
         if solver not in ['dense', 'SimplicialLDLT']:
             msgs = ["The given solver option is not supported.",
                     "Available options are 'dense' and 'SimplicialLDLT'."]
@@ -162,23 +284,37 @@ class ALM:
 
         return info
 
-    def set_optimizer_control(self, optcontrol):
-        keys = ('linear_model',
-                'use_sparse_solver',
-                'maxnum_iteration',
-                'tolerance_iteration',
-                'output_frequency',
-                'standardize',
-                'displacement_normalization_factor',
-                'debiase_after_l1opt',
-                'cross_validation',
-                'l1_alpha',
-                'l1_alpha_min',
-                'l1_alpha_max',
-                'num_l1_alpha',
-                'l1_ratio',
-                'save_solution_path')
+    @property
+    def output_filename_prefix(self):
+        return self._output_filename_prefix
 
+    @output_filename_prefix.setter
+    def output_filename_prefix(self, prefix):
+        if self._id is None:
+            self._show_error_message()
+
+        if type(prefix) is str:
+            self._output_filename_prefix = prefix
+            alm.set_output_filename_prefix(self._id, prefix)
+
+    def set_output_filename_prefix(self, prefix):
+        """Set output prefix of output filename"""
+        self.output_filename_prefix = prefix
+
+    @property
+    def optimizer_control(self):
+        if self._id is None:
+            self._show_error_message()
+
+        optctrl = alm.get_optimizer_control(self._id)
+        optcontrol = dict(zip(optimizer_control_keys, optctrl))
+        return optcontrol
+
+    def set_optimizer_control(self, optcontrol):
+        if self._id is None:
+            self._show_error_message()
+
+        keys = optimizer_control_keys
         optctrl = []
         optcontrol_l = {key.lower(): optcontrol[key] for key in optcontrol}
 
@@ -227,6 +363,10 @@ class ALM:
             np.array(f, dtype='double', order='C'))
 
     def set_displacement_and_force(self, u, f):
+        warnings.warn("ALM.set_displacement_and_force is deprecated. "
+                      "Use ALM.set_displacement_and_force is deprecated.",
+                      DeprecationWarning)
+
         self.set_training_data(u, f)
 
     def define(self, maxorder, cutoff_radii=None, nbody=None):
@@ -257,6 +397,8 @@ class ALM:
 
         if self._id is None:
             self._show_error_message()
+
+        self._transfer_parameters()
 
         if nbody is None:
             nbody = []
@@ -316,31 +458,6 @@ class ALM:
 
         self._iconst = iconst
         alm.set_constraint_type(self._id, self._iconst)
-
-    def set_verbosity(self, verbosity):
-        """Set verbosity of output.
-
-        Parameters
-        ----------
-        verbosity : int
-            Choose the level of the output frequency from
-            0 (no output) or 1 (normal output).
-
-        """
-
-        if self._id is None:
-            self._show_error_message()
-
-        self._verbosity = verbosity
-        alm.set_verbosity(self._id, self._verbosity)
-
-    def _set_verbosity(self):
-        """Private method to set the verbosity."""
-
-        if self._id is None:
-            self._show_error_message()
-
-        alm.set_verbosity(self._id, self._verbosity)
 
     def getmap_primitive_to_supercell(self):
         """Returns the mapping information from the primitive cell to the supercell.
@@ -537,11 +654,11 @@ class ALM:
 
         Returns
         -------
-        amat : array_like, dtype='double'
-            shape=(3 * num_atoms * ndata_training, num_fc_irred)
+        amat : ndarray, dtype='double'
+            shape=(3 * num_atoms * ndata_training, num_fc_irred), order='F'.
             The sensing matrix A calculated from the displacements.
 
-        bvec : array_like, dtype='double'
+        bvec : ndarray, dtype='double'
             shape=(3 * num_atoms * ndata_training,)
             The vector b calculated from the atomic forces.
 
@@ -551,6 +668,7 @@ class ALM:
         From the amat (``A``) and bvec (``b``), the force constant vector ``x``
         can be obtained by solving the least-square problem:
         x = argmin_{x} | Ax-b|^{2}.
+
         """
 
         if self._id is None:
@@ -567,8 +685,7 @@ class ALM:
         bvec = np.zeros(nrows, dtype='double')
         alm.get_matrix_elements(self._id, amat, bvec)
 
-        return (np.reshape(amat, (nrows, fc_length), order='F'),
-                bvec)
+        return (np.reshape(amat, (nrows, fc_length), order='F'), bvec)
 
     def get_cv_l1_alpha(self):
         """Returns L1 alpha at minimum CV"""
@@ -578,14 +695,46 @@ class ALM:
 
         return alm.get_cv_l1_alpha(self._id)
 
+    def _transfer_parameters(self):
+        if self._need_transfer:
+            self._set_cell()
+            self._set_verbosity()
+            self._need_transfer = False
+
     def _set_cell(self):
-        """Private method to setup the crystal lattice information"""
+        """Inject crystal structure in C++ instance"""
+
         if self._id is None:
             self._show_error_message()
 
-        self._kind_indices = np.zeros_like(self._atomic_numbers)
-        alm.set_cell(self._id, self._lavec, self._xcoord, self._atomic_numbers,
+        if self._lavec is None:
+            msg = "Basis vectors are not set."
+            raise RuntimeError(msg)
+
+        if self._xcoord is None:
+            msg = "Atomic point coordinates (positions) are not set."
+            raise RuntimeError(msg)
+
+        if self._numbers is None:
+            msg = "Atomic numbers are not set."
+            raise RuntimeError(msg)
+
+        if len(self._xcoord) != len(self._numbers):
+            msg = "Numbers of atomic points and atomic numbers don't agree."
+            raise RuntimeError(msg)
+
+        self._kind_indices = np.zeros_like(self._numbers)
+        alm.set_cell(self._id, self._lavec, self._xcoord, self._numbers,
                      self._kind_indices)
+        self._cell = (self._lavec, self._xcoord, self._numbers)
+
+    def _set_verbosity(self):
+        """Inject verbosity in C++ instance."""
+
+        if self._id is None:
+            self._show_error_message()
+
+        alm.set_verbosity(self._id, self._verbosity)
 
     def _get_nrows_amat(self):
         """Private method to return the number of training data sets"""

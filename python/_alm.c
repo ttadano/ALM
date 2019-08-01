@@ -227,9 +227,7 @@ static PyObject * py_get_optimizer_control(PyObject *self, PyObject *args)
   struct optimizer_control optcontrol;
   int len_list, n;
 
-  if (!PyArg_ParseTuple(args, "iO",
-                        &id,
-                        &py_optcontrol)) {
+  if (!PyArg_ParseTuple(args, "i", &id)) {
     return NULL;
   }
 
