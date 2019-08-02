@@ -448,15 +448,17 @@ static PyObject * py_define(PyObject *self, PyObject *args)
 
   PyArrayObject* py_nbody_include;
   PyArrayObject* py_cutoff_radii;
+  char* forceconstant_basis;
 
   size_t nkd;
   double *cutoff_radii;
 
-  if (!PyArg_ParseTuple(args, "iiOO",
+  if (!PyArg_ParseTuple(args, "iiOOs",
                         &id,
                         &maxorder,
                         &py_nbody_include,
-                        &py_cutoff_radii)) {
+                        &py_cutoff_radii,
+                        &forceconstant_basis)) {
     return NULL;
   }
 
@@ -470,7 +472,8 @@ static PyObject * py_define(PyObject *self, PyObject *args)
   }
   const int *nbody_include = (int*)PyArray_DATA(py_nbody_include);
 
-  alm_define(id, maxorder, nkd, nbody_include, cutoff_radii);
+  alm_define(id, maxorder, nkd, nbody_include, cutoff_radii,
+             forceconstant_basis);
 
   Py_RETURN_NONE;
 }

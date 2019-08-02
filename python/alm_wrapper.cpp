@@ -190,8 +190,11 @@ extern "C" {
                     const int maxorder,
                     const size_t nkd,
                     const int *nbody_include,
-                    const double *cutoff_radii_in)
+                    const double *cutoff_radii_in,
+                    const char *fc_basis)
     {
+        std::string str_fc_basis = std::string(fc_basis);
+
     /*    double ***cutoff_radii;
         int count;
 
@@ -209,6 +212,11 @@ extern "C" {
         } else {
             cutoff_radii = nullptr;
         }*/
+
+
+        if (str_fc_basis == "Lattice" || str_fc_basis == "Cartesian") {
+            alm[id]->set_forceconstant_basis(str_fc_basis);
+        }
 
         alm[id]->define(maxorder,
                         nkd,
@@ -339,6 +347,7 @@ extern "C" {
             return EXIT_FAILURE;
         }
         alm[id]->set_optimizer_control(optctrl);
+
         info = alm[id]->run_optimize();
 
         return info;

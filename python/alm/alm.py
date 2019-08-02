@@ -369,7 +369,8 @@ class ALM:
 
         self.set_training_data(u, f)
 
-    def define(self, maxorder, cutoff_radii=None, nbody=None):
+    def define(self, maxorder, cutoff_radii=None, nbody=None,
+               symmetrization_basis='Lattice'):
         """Define the Taylor expansion potential.
 
         Parameters
@@ -392,6 +393,11 @@ class ALM:
             Option to neglect multi-body interactions.
             dtype='intc'
             shape=(maxorder,)
+
+        symmetrization_basis : str, default='Lattice'
+            Either 'Cartesian' or 'Lattice'. Symmetrization of force constants
+            is done either in the matrix based on crystal coordinates
+            ('Lattice') or Cartesian coordinates ('Cartesian').
 
         """
 
@@ -426,10 +432,17 @@ class ALM:
                                        order='C')
 
         self._maxorder = maxorder
+
+        if symmetrization_basis.lower() in ['lattice', 'cartesian']:
+            fc_basis = symmetrization_basis.capitalize()
+        else:
+            fc_basis = 'Lattice'
+
         alm.define(self._id,
                    maxorder,
                    np.array(nbody, dtype='intc'),
-                   _cutoff_radii)
+                   _cutoff_radii,
+                   fc_basis)
 
         alm.generate_force_constant(self._id)
 
