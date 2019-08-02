@@ -8,7 +8,7 @@ except ImportError:
     home = os.path.expanduser("~")
 
 # This is the switch for ALM developement. Always True for general cases.
-compile_with_sources = False
+compile_with_sources = True
 
 # Configurations to pass to extention.
 # The following directory structure and use of conda are supposed.
