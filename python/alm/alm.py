@@ -64,13 +64,18 @@ class ALM:
 
         self._id = None
         self._cell = None
-        self.lavec = lavec
-        self.xcoord = xcoord
-        self.numbers = numbers
-        self._verbosity = verbosity
+        self._lavec = None
+        self._xcoord = None
+        self._numbers = None
+        self._verbosity = False
         self._kind_indices = None
         self._iconst = 11
         self._maxorder = 1
+
+        self.lavec = lavec
+        self.xcoord = xcoord
+        self.numbers = numbers
+        self.verbosity = verbosity
 
         self._output_filename_prefix = None
 
@@ -462,7 +467,7 @@ class ALM:
         """
 
         if rotation is True:
-            raise("Rotational invariance is not supported in API.")
+            raise("Rotational invariance is not supported in python API.")
 
         if translation is True:
             iconst = 11
