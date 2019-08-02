@@ -20,7 +20,7 @@ optimizer_control_keys = ('linear_model',
                           'save_solution_path')
 
 
-class ALM:
+class ALM(object):
     """Calculate harmonic and anharmonic interatomic force constants
 
     Attributes
@@ -222,7 +222,6 @@ class ALM:
             self._id = alm.alm_new()
             if self._id < 0:
                 raise RuntimeError("Too many ALM objects")
-            self._transfer_parameters()
         else:
             raise("This ALM object is already initialized.")
 
