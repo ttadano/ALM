@@ -59,6 +59,13 @@ void Fcs::init(const Cluster *cluster,
     if (verbosity > 0) {
         std::cout << " FORCE CONSTANT" << std::endl;
         std::cout << " ==============" << std::endl << std::endl;
+        std::cout << "  Symmetry is handled in ";
+        if (preferred_basis == "Lattice") {
+            std::cout << "crystallographic (fractional) coordinates.";
+        } else {
+            std::cout << "Cartesian coordinates.";
+        }
+        std::cout << std::endl;
     }
 
     if (fc_table) {
@@ -1085,7 +1092,7 @@ Eigen::Matrix3d Fcs::get_basis_conversion_matrix() const
 void Fcs::set_basis_conversion_matrix(const Cell &supercell)
 {
     if (preferred_basis == "Lattice") {
-        // multiply the scale factor for making the determinant of the basis_conversion_matrix 
+        // multiply the scale factor for making the determinant of the basis_conversion_matrix
         // as one.
         const auto scale_factor = std::pow(supercell.volume, 1.0 / 3.0) / (2.0 * pi);
         for (auto i = 0; i < 3; ++i) {

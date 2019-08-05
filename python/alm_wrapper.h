@@ -67,7 +67,8 @@ extern "C" {
                   const int maxorder,
                   const size_t nkd,
                   const int *nbody_include,
-                  const double *cutoff_radii);
+                  const double *cutoff_radii_in,
+                  const char *fc_basis);
   void alm_generate_force_constant(const int id);
   int alm_get_atom_mapping_by_pure_translations(const int id,
                                                 int *map_p2s);
@@ -115,6 +116,7 @@ extern "C" {
   void alm_set_optimizer_control(const int id,
                                  const struct optimizer_control optcontrol,
                                  const int updated[15]);
+  struct optimizer_control alm_get_optimizer_control(const int id);
 
 #ifdef __cplusplus
 }

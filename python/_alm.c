@@ -19,6 +19,7 @@ static PyObject * py_alm_delete(PyObject *self, PyObject *args);
 static PyObject * py_set_output_filename_prefix(PyObject *self, PyObject *args);
 static PyObject * py_suggest(PyObject *self, PyObject *args);
 static PyObject * py_optimize(PyObject *self, PyObject *args);
+static PyObject * py_get_optimizer_control(PyObject *self, PyObject *args);
 static PyObject * py_set_optimizer_control(PyObject *self, PyObject *args);
 static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
@@ -67,6 +68,7 @@ static PyMethodDef _alm_methods[] = {
   {"set_output_filename_prefix", py_set_output_filename_prefix, METH_VARARGS, ""},
   {"suggest", py_suggest, METH_VARARGS, ""},
   {"optimize", py_optimize, METH_VARARGS, ""},
+  {"get_optimizer_control", py_get_optimizer_control, METH_VARARGS, ""},
   {"set_optimizer_control", py_set_optimizer_control, METH_VARARGS, ""},
   {"set_cell", py_set_cell, METH_VARARGS, ""},
   {"set_verbosity", py_set_verbosity, METH_VARARGS, ""},
@@ -213,6 +215,62 @@ static PyObject * py_optimize(PyObject *self, PyObject *args)
   info = alm_optimize(id, solver);
 
   return PyLong_FromLong((long) info);
+}
+
+static PyObject * py_get_optimizer_control(PyObject *self, PyObject *args)
+{
+  int id;
+  PyObject* py_optcontrol;
+  PyObject* py_value;
+
+  PyObject *array;
+  struct optimizer_control optcontrol;
+  int len_list, n;
+
+  if (!PyArg_ParseTuple(args, "i", &id)) {
+    return NULL;
+  }
+
+  len_list = 15;
+  array = PyList_New(len_list);
+  n = 0;
+
+  optcontrol = alm_get_optimizer_control(id);
+
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.linear_model));
+  n++;  /* 0 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.use_sparse_solver));
+  n++;  /* 1 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.maxnum_iteration));
+  n++;  /* 2 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.tolerance_iteration));
+  n++;  /* 3 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.output_frequency));
+  n++;  /* 4 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.standardize));
+  n++;  /* 5 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.displacement_normalization_factor));
+  n++;  /* 6 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.debiase_after_l1opt));
+  n++;  /* 7 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.cross_validation));
+  n++;  /* 8 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_alpha));
+  n++;  /* 9 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_alpha_min));
+  n++;  /* 10 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_alpha_max));
+  n++;  /* 11 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.num_l1_alpha));
+  n++;  /* 12 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_ratio));
+  n++;  /* 13 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.save_solution_path));
+  n++;  /* 14 */
+
+  assert(n == len_list);
+
+  return array;
 }
 
 static PyObject * py_set_optimizer_control(PyObject *self, PyObject *args)
@@ -390,15 +448,17 @@ static PyObject * py_define(PyObject *self, PyObject *args)
 
   PyArrayObject* py_nbody_include;
   PyArrayObject* py_cutoff_radii;
+  char* forceconstant_basis;
 
   size_t nkd;
   double *cutoff_radii;
 
-  if (!PyArg_ParseTuple(args, "iiOO",
+  if (!PyArg_ParseTuple(args, "iiOOs",
                         &id,
                         &maxorder,
                         &py_nbody_include,
-                        &py_cutoff_radii)) {
+                        &py_cutoff_radii,
+                        &forceconstant_basis)) {
     return NULL;
   }
 
@@ -412,7 +472,8 @@ static PyObject * py_define(PyObject *self, PyObject *args)
   }
   const int *nbody_include = (int*)PyArray_DATA(py_nbody_include);
 
-  alm_define(id, maxorder, nkd, nbody_include, cutoff_radii);
+  alm_define(id, maxorder, nkd, nbody_include, cutoff_radii,
+             forceconstant_basis);
 
   Py_RETURN_NONE;
 }

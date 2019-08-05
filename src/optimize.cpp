@@ -96,21 +96,27 @@ int Optimize::optimize_main(const Symmetry *symmetry,
         std::cout << " OPTIMIZATION\n";
         std::cout << " ============\n\n";
         std::cout << "  LMODEL = " << str_linearmodel[optcontrol.linear_model - 1] << "\n\n";
-        std::cout << "  Training data file (DFSET) : " << filedata_train.filename << "\n\n";
-        std::cout << "  NSTART = " << filedata_train.nstart << "; NEND = " << filedata_train.nend << '\n';
-        if (filedata_train.skip_s < filedata_train.skip_e)
-            std::cout << ": SKIP = " << filedata_train.skip_s << "-" <<
-                filedata_train.skip_e - 1 << '\n';
-        std::cout << "  " << ndata_used
-            << " entries will be used for training.\n\n";
+        if (filedata_train.filename != "") {
+            std::cout << "  Training data file (DFSET) : " << filedata_train.filename << "\n\n";
+            std::cout << "  NSTART = " << filedata_train.nstart << "; NEND = " << filedata_train.nend << '\n';
+            if (filedata_train.skip_s < filedata_train.skip_e) {
+                std::cout << ": SKIP = " << filedata_train.skip_s << "-" <<
+                    filedata_train.skip_e - 1 << '\n';
+            }
+            std::cout << "  " << ndata_used
+                      << " entries will be used for training.\n\n";
+        }
 
         if (optcontrol.cross_validation == -1) {
             std::cout << "  CV = -1 : Manual cross-validation mode is selected\n";
-            std::cout << "  Validation data file (DFSET_CV) : " << filedata_validation.filename << "\n\n";
-            std::cout << "  NSTART_CV = " << filedata_validation.nstart << "; NEND_CV = " << filedata_validation.nend <<
-                std::endl;
-            std::cout << "  " << ndata_used_validation
-                << " entries will be used for validation." << std::endl << std::endl;
+            if (filedata_validation.filename != "") {
+
+                std::cout << "  Validation data file (DFSET_CV) : " << filedata_validation.filename << "\n\n";
+                std::cout << "  NSTART_CV = " << filedata_validation.nstart << "; NEND_CV = " << filedata_validation.nend <<
+                    std::endl;
+                std::cout << "  " << ndata_used_validation
+                          << " entries will be used for validation." << std::endl << std::endl;
+            }
         }
 
         std::cout << "  Total Number of Parameters : " << N << '\n';
@@ -1162,11 +1168,11 @@ void Optimize::run_elastic_net_optimization(const int maxorder,
 
         std::cout << std::endl;
         if (optcontrol.standardize) {
-            std::cout << " STANDARDIZE = 1 : Standardization will be performed for matrix A and vector b." << std::endl;
-            std::cout << "                   The ENET_DNORM-tag will be neglected." << std::endl;
+            std::cout << "  STANDARDIZE = 1 : Standardization will be performed for matrix A and vector b." << std::endl;
+            std::cout << "                    The ENET_DNORM-tag will be neglected." << std::endl << std::endl;
         } else {
-            std::cout << " STANDARDIZE = 0 : No standardization of matrix A and vector b." << std::endl;
-            std::cout << "                   Columns of matrix A will be scaled by the ENET_DNORM value." << std::endl;
+            std::cout << "  STANDARDIZE = 0 : No standardization of matrix A and vector b." << std::endl;
+            std::cout << "                    Columns of matrix A will be scaled by the ENET_DNORM value." << std::endl << std::endl;
         }
     }
 
