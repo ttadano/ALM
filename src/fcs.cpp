@@ -787,6 +787,10 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
     }
     allocate(fc_cart, maxorder);
 
+    std::vector<int> elems_permutation;
+
+    std::vector<FcProperty> fc_table_copy;
+
 
     for (int i = 0; i < maxorder; ++i) {
 
@@ -805,7 +809,17 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
         for (j = 0; j < nelems; ++j) atoms_old[j] = -1;
         int icount = 0;
 
-        auto fc_table_copy = fc_table[i];
+        fc_table_copy.clear();
+        for (const auto &it : fc_table[i]) {
+            elems_permutation = it.elems;
+            do {
+                fc_table_copy.emplace_back(nelems,
+                                           it.sign,
+                                           &elems_permutation[0],
+                                           it.mother);
+            } while (std::next_permutation(elems_permutation.begin() + 1,
+                                           elems_permutation.end()));
+        }
 
         // Sort fc_table_copy in ascending order of atomic indices.
         std::sort(fc_table_copy.begin(),
