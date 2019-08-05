@@ -1,4 +1,5 @@
 import os
+import warnings
 from setuptools import setup, Extension
 import numpy
 try:
@@ -16,6 +17,7 @@ compile_with_sources = True
 # $HOME
 # |-- ALM
 # |   `-- ALM
+# |       |-- bin/
 # |       |-- include/
 # |       |-- lib/
 # |       |-- python/setup.py
@@ -23,9 +25,10 @@ compile_with_sources = True
 # |       |-- _build/
 # |       |-- CMakeLists.txt
 # |       `-- ...
-#
+# |
 # |-- $CONDA_PREFIX/include
 # |-- $CONDA_PREFIX/include/eigen3
+# |-- $CONDA_PREFIX/lib
 # `-- ...
 
 if 'CONDA_PREFIX' in os.environ:
@@ -34,18 +37,30 @@ else:
     conda_prefix = os.path.join(home, "miniconda", "envs", "alm")
 
 library_dirs = []
+extra_link_args = []
 
-# For linux
-extra_link_args = ['-lgomp', '-llapack']
-# For macOS
-#extra_link_args = ['-lomp']
+# OpenMP library
+if 'CC' in os.environ:
+    if 'clang' in os.environ['CC']:
+        if 'clang++' not in os.environ['CC']:
+            warnings.warn("clang++ is used instead of clang.")
+            os.environ['CC'] = os.environ['CC'].replace('clang', 'clang++')
+        extra_link_args.append('-lomp')
+    elif 'gcc' in os.environ['CC'] or 'gnu-cc' in os.environ['CC']:
+        extra_link_args.append('-lgomp')
+
+if not extra_link_args:  # Default libgomp
+    extra_link_args.append('-lgomp')
+
+# Lapack library
+extra_link_args.append('-llapack')
 
 spglib_dir = os.path.join(conda_prefix, "lib")
-
 include_dirs = []
 include_dirs.append(numpy.get_include())
 include_dirs.append(os.path.join(conda_prefix, "include"))
 include_dirs.append(os.path.join(conda_prefix, "include", "eigen3"))
+
 
 if compile_with_sources:
     cpp_files = ['alm.cpp',
@@ -83,8 +98,8 @@ else:  # compile with library
 extension = Extension('alm._alm',
                       include_dirs=include_dirs,
                       library_dirs=library_dirs,
-                      extra_compile_args = ['-fopenmp', '-std=c++11',
-                                            '-DWITH_SPARSE_SOLVER'],
+                      extra_compile_args=['-fopenmp', '-std=c++11',
+                                          '-DWITH_SPARSE_SOLVER'],
                       extra_link_args=extra_link_args,
                       sources=sources)
 
