@@ -817,8 +817,6 @@ void Writer::write_fc3_thirdorderpy_format(ALM *alm) const
 
     for (const auto &it : alm->fcs->get_fc_cart()[1]) {
 
-      //  const auto ip = it.mother + ishift;
-
         if (!it.is_ascending_order) continue;
 
         for (i = 0; i < 3; ++i) {
