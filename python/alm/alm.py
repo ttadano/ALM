@@ -456,8 +456,8 @@ class ALM(object):
         Parameters
         ----------
         translation : bool, optional (default = True)
-            When set to ``True``, the translational invariance (aka acoustic sum rule)
-            is imposed between force constants.
+            When set to ``True``, the translational invariance
+            (aka acoustic sum rule) is imposed between force constants.
 
         rotation : bool, optional (default = False)
             When set to ``True``, the rotational invariance is imposed between
@@ -515,9 +515,9 @@ class ALM(object):
         -------
         all_disps : array_like, shape = (n_patterns,)
             The array of tuples (``atom_index``, ``direction``, ``basis``),
-            where ``direction`` is the numpy.ndarray of size = (3,) representing
-            the direction of the displacement, and ``basis`` is a string
-            either "Cartesian" or "Fractional".
+            where ``direction`` is the numpy.ndarray of size = (3,)
+            representing the direction of the displacement,
+            and ``basis`` is a string either "Cartesian" or "Fractional".
 
         """
 
@@ -591,8 +591,11 @@ class ALM(object):
 
         Note
         ----
-        This method does not return force constants elements that
-        can be replicated by the permutation of indices.
+        This method returns force constants in Cartesian basis
+        when ``mode = origin`` and ``mode = all`.
+        When ``mode = irred``, it returns the irreducible set of
+        force constants in the basis defined via "symmetrization_basis"
+        of the alm.define method.
 
         """
 
@@ -657,8 +660,8 @@ class ALM(object):
         Note
         ----
         When an external optimizer, such as numpy.linalg.lstsq, is used to fit
-        force constants, the force constants need to be passed to the ALM instance
-        by ``set_fc`` to use the ``get_fc`` method.
+        force constants, the force constants need to be passed to
+        the ALM instance by ``set_fc`` to use the ``get_fc`` method.
 
         """
 
