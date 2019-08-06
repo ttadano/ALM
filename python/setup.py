@@ -98,8 +98,7 @@ else:  # compile with library
 extension = Extension('alm._alm',
                       include_dirs=include_dirs,
                       library_dirs=library_dirs,
-                      extra_compile_args=['-fopenmp', '-std=c++11',
-                                          '-DWITH_SPARSE_SOLVER'],
+                      extra_compile_args=['-fopenmp', '-std=c++11'],
                       extra_link_args=extra_link_args,
                       sources=sources)
 
