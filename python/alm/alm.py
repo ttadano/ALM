@@ -548,7 +548,7 @@ class ALM(object):
             all_disps.append(disp)
         return all_disps
 
-    def get_fc(self, fc_order, mode="origin"):
+    def get_fc(self, fc_order, mode="origin", permutation=0):
         """Returns the force constant values
 
         Parameters
@@ -571,6 +571,15 @@ class ALM(object):
               force constants.
             - If "all", returns the all non-zero elements of force constants
               in the supercell.
+
+        permutation : int
+            The flag for printing out elements with permutation symmetry.
+            Effective only when ``mode = origin`` or ``mode = all``.
+
+            - If ``permutation = 0``, returns force constants without
+              replicating elements by the permutation of indices.
+            - If ``permutation = 1``, returns force constants after
+              replicating elements by the permutation of indices.
 
         Returns
         -------
@@ -597,12 +606,12 @@ class ALM(object):
 
         if mode == "origin":
 
-            fc_length = self._get_number_of_fc_elements(fc_order)
+            fc_length = self._get_number_of_fc_origin(fc_order, permutation)
             fc_values = np.zeros(fc_length, dtype='double')
             elem_indices = np.zeros((fc_length, fc_order + 1),
                                     dtype='intc', order='C')
 
-            alm.get_fc_origin(self._id, fc_values, elem_indices)
+            alm.get_fc_origin(self._id, fc_values, elem_indices, permutation)
 
             return fc_values, elem_indices
 
@@ -622,12 +631,13 @@ class ALM(object):
             map_p2s = np.zeros(len(self._xcoord), dtype='intc')
             ntrans = alm.get_atom_mapping_by_pure_translations(self._id,
                                                                map_p2s)
-            fc_length = self._get_number_of_fc_elements(fc_order) * ntrans
+            fc_length = self._get_number_of_fc_origin(
+                fc_order, permutation) * ntrans
             fc_values = np.zeros(fc_length, dtype='double')
             elem_indices = np.zeros((fc_length, fc_order + 1),
                                     dtype='intc', order='C')
 
-            alm.get_fc_all(self._id, fc_values, elem_indices)
+            alm.get_fc_all(self._id, fc_values, elem_indices, permutation)
 
             return fc_values, elem_indices
 
@@ -806,6 +816,24 @@ class ALM(object):
         """
 
         return alm.get_number_of_fc_elements(self._id, fc_order)
+
+    def _get_number_of_fc_origin(self, fc_order, permutation):
+        """Private method to get the number of force constants for fc_origin
+
+        Parameters
+        ----------
+        fc_order : int
+            The order of force constants.
+            fc_order = 1 for harmonic, fc_order = 2 for cubic ...
+
+        permutation: int
+            Flag to include permutated elements
+            permutation = 0 for skipping permutated elements,
+            permutation = 1 for including them
+
+        """
+
+        return alm.get_number_of_fc_origin(self._id, fc_order, permutation)
 
     def _get_number_of_irred_fc_elements(self, fc_order):
         """Private method to get the number of irreducible set of force constants

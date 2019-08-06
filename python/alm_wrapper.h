@@ -84,13 +84,18 @@ extern "C" {
   size_t alm_get_number_of_fc_elements(const int id,
                                        const int fc_order); // harmonic=1, ...
 
+  size_t alm_get_number_of_fc_origin(const int id,
+                                     const int fc_order, // harmonic=1, ...
+                                     const int permutation);
+
   size_t alm_get_number_of_irred_fc_elements(const int id,
                                              const int fc_order); // harmonic=1, ...
 
   void alm_get_fc_origin(const int id,
                          double *fc_value,
                          int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
-                         const int fc_order);
+                         const int fc_order,
+                         const int permutation);
 
   void alm_get_fc_irreducible(const int id,
                               double *fc_value,
@@ -100,7 +105,8 @@ extern "C" {
   void alm_get_fc_all(const int id,
                       double *fc_value,
                       int *elem_indices, // (len(fc_value), fc_order + 1) is flatten.
-                      const int fc_order);
+                      const int fc_order,
+                      const int permutation);
 
   void alm_set_fc(const int id, double *fc_in);
 

@@ -282,6 +282,13 @@ extern "C" {
         return alm[id]->get_number_of_fc_elements(fc_order);
     }
 
+    size_t alm_get_number_of_fc_origin(const int id,
+                                       const int fc_order, // harmonic = 1
+                                       const int permutation)
+    {
+        return alm[id]->get_number_of_fc_origin(fc_order, permutation);
+    }
+
     size_t alm_get_number_of_irred_fc_elements(const int id,
                                                const int fc_order)
     {
@@ -291,9 +298,10 @@ extern "C" {
     void alm_get_fc_origin(const int id,
                            double *fc_values,
                            int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
-                           const int fc_order)
+                           const int fc_order,
+                           const int permutation)
     {
-        alm[id]->get_fc_origin(fc_values, elem_indices, fc_order);
+        alm[id]->get_fc_origin(fc_values, elem_indices, fc_order, permutation);
     }
 
     void alm_get_fc_irreducible(const int id,
@@ -307,9 +315,10 @@ extern "C" {
     void alm_get_fc_all(const int id,
                         double *fc_values,
                         int *elem_indices, // (len(fc_values), fc_order + 1) is flatten.
-                        const int fc_order)
+                        const int fc_order,
+                        const int permutation)
     {
-        alm[id]->get_fc_all(fc_values, elem_indices, fc_order);
+        alm[id]->get_fc_all(fc_values, elem_indices, fc_order, permutation);
     }
 
     void alm_set_fc(const int id, double *fc_in)

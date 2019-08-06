@@ -142,7 +142,7 @@ void Fcs::deallocate_variables()
     }
     if (fc_cart) {
         deallocate(fc_cart);
-}
+    }
 }
 
 
@@ -791,6 +791,8 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
 
     std::vector<FcProperty> fc_table_copy;
 
+    nfc_cart_permu.resize(maxorder);
+    nfc_cart_nopermu.resize(maxorder);
 
     for (int i = 0; i < maxorder; ++i) {
 
@@ -831,7 +833,7 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
             for (j = 0; j < nelems; ++j) {
                 atoms_now[j] = it.elems[j] / 3;
                 coords_now[j] = it.elems[j] % 3;
-}
+            }
 
             if (atoms_now == atoms_old) {
 
@@ -899,6 +901,20 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
         ishift += nequiv[i].size();
 
         deallocate(xyzcomponent);
+
+        nfc_cart_permu[i] = fc_cart[i].size();
+        nfc_cart_nopermu[i] = std::count_if(fc_cart[i].begin(),
+                                            fc_cart[i].end(),
+                                            [](const ForceConstantTable &obj){return obj.is_ascending_order;});
+    }
+}
+
+std::vector<size_t> Fcs::get_nfc_cart(const int permutation) const
+{
+    if (permutation) {
+        return nfc_cart_permu;
+    } else {
+        return nfc_cart_nopermu;
     }
 }
 

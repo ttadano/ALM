@@ -36,6 +36,7 @@ static PyObject * py_get_number_of_displacement_patterns
 static PyObject * py_get_number_of_displaced_atoms(PyObject *self, PyObject *args);
 static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_fc_elements(PyObject *self, PyObject *args);
+static PyObject * py_get_number_of_fc_origin(PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_irred_fc_elements(PyObject *self, PyObject *args);
 static PyObject * py_get_fc_origin(PyObject *self, PyObject *args);
 static PyObject * py_get_fc_irreducible(PyObject *self, PyObject *args);
@@ -86,6 +87,7 @@ static PyMethodDef _alm_methods[] = {
   {"get_cv_l1_alpha", py_get_cv_l1_alpha, METH_VARARGS, ""},
   {"get_displacement_patterns", py_get_displacement_patterns, METH_VARARGS, ""},
   {"get_number_of_fc_elements", py_get_number_of_fc_elements, METH_VARARGS, ""},
+  {"get_number_of_fc_origin", py_get_number_of_fc_origin, METH_VARARGS, ""},
   {"get_number_of_irred_fc_elements", py_get_number_of_irred_fc_elements, METH_VARARGS, ""},
   {"get_fc_origin", py_get_fc_origin, METH_VARARGS, ""},
   {"get_fc_irreducible", py_get_fc_irreducible, METH_VARARGS, ""},
@@ -585,6 +587,22 @@ static PyObject * py_get_number_of_fc_elements(PyObject *self, PyObject *args)
   return PyLong_FromSize_t(num_fc_elems);
 }
 
+static PyObject * py_get_number_of_fc_origin(PyObject *self, PyObject *args)
+{
+  int id, fc_order, permutation;
+
+  if (!PyArg_ParseTuple(args, "iii",
+                        &id,
+                        &fc_order,
+                        &permutation)) {
+    return NULL;
+  }
+
+  const size_t num_fc_elems = alm_get_number_of_fc_origin(id, fc_order, permutation);
+
+  return PyLong_FromSize_t(num_fc_elems);
+}
+
 static PyObject * py_get_number_of_irred_fc_elements(PyObject *self, PyObject *args)
 {
   int id, fc_order;
@@ -630,11 +648,13 @@ static PyObject * py_get_fc_origin(PyObject *self, PyObject *args)
   int id;
   PyArrayObject* py_fc_values;
   PyArrayObject* py_elem_indices;
+  int permutation;
 
-  if (!PyArg_ParseTuple(args, "iOO",
+  if (!PyArg_ParseTuple(args, "iOOi",
                         &id,
                         &py_fc_values,
-                        &py_elem_indices)) {
+                        &py_elem_indices,
+                        &permutation)) {
     return NULL;
   }
 
@@ -642,7 +662,7 @@ static PyObject * py_get_fc_origin(PyObject *self, PyObject *args)
   int (*elem_indices) = (int*)PyArray_DATA(py_elem_indices);
   const int fc_order = PyArray_DIMS(py_elem_indices)[1] - 1;
 
-  alm_get_fc_origin(id, fc_values, elem_indices, fc_order);
+  alm_get_fc_origin(id, fc_values, elem_indices, fc_order, permutation);
 
   Py_RETURN_NONE;
 }
@@ -674,11 +694,13 @@ static PyObject * py_get_fc_all(PyObject *self, PyObject *args)
   int id;
   PyArrayObject* py_fc_values;
   PyArrayObject* py_elem_indices;
+  int permutation;
 
-  if (!PyArg_ParseTuple(args, "iOO",
+  if (!PyArg_ParseTuple(args, "iOOi",
                         &id,
                         &py_fc_values,
-                        &py_elem_indices)) {
+                        &py_elem_indices,
+                        &permutation)) {
     return NULL;
   }
 
@@ -686,7 +708,7 @@ static PyObject * py_get_fc_all(PyObject *self, PyObject *args)
   int (*elem_indices) = (int*)PyArray_DATA(py_elem_indices);
   const int fc_order = PyArray_DIMS(py_elem_indices)[1] - 1;
 
-  alm_get_fc_all(id, fc_values, elem_indices, fc_order);
+  alm_get_fc_all(id, fc_values, elem_indices, fc_order, permutation);
 
   Py_RETURN_NONE;
 }
