@@ -9,7 +9,7 @@ except ImportError:
     home = os.path.expanduser("~")
 
 # This is the switch for ALM developement. Always True for general cases.
-compile_with_sources = False
+compile_with_sources = True
 
 # Configurations to pass to extention.
 # The following directory structure and use of conda are supposed.
@@ -64,14 +64,10 @@ include_dirs.append(os.path.join(conda_prefix, "include", "eigen3"))
 
 if compile_with_sources:
     cpp_files = ['alm.cpp',
-                 'alm_cui.cpp',
                  'cluster.cpp',
                  'constraint.cpp',
                  'fcs.cpp',
                  'files.cpp',
-                 'input_parser.cpp',
-                 'input_setter.cpp',
-                 'main.cpp',
                  'optimize.cpp',
                  'patterndisp.cpp',
                  'rref.cpp',

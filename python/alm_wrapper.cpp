@@ -312,11 +312,9 @@ extern "C" {
     int alm_get_u_train(const int id, double* u_out, const int nelems_in)
     {
         auto u = alm[id]->get_u_train();
-        auto nelems = u.size() * u[0].size();
 
         // Data is not copied.
-        if (nelems != nelems_in) {
-            printf("%d != %d\n", nelems, nelems_in);
+        if (u.size() * u[0].size() != nelems_in) {
             return 0;
         }
 
@@ -333,10 +331,9 @@ extern "C" {
     int alm_get_f_train(const int id, double* f_out, const int nelems_in)
     {
         auto f = alm[id]->get_f_train();
-        auto nelems = f.size() * f[0].size();
 
         // Data is not copied.
-        if (nelems != nelems_in) {
+        if (f.size() * f[0].size() != nelems_in) {
             return 0;
         }
 
