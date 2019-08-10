@@ -200,7 +200,8 @@ void InputSetter::set_optimize_vars(ALM *alm,
                                     const std::vector<std::vector<double>> &f_validation_in,
                                     const OptimizerControl &optcontrol_in) const
 {
-    alm->set_training_data(u_train_in, f_train_in);
+    alm->set_u_train(u_train_in);
+    alm->set_f_train(f_train_in);
     alm->set_validation_data(u_validation_in, f_validation_in);
     alm->set_optimizer_control(optcontrol_in);
 }

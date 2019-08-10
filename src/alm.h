@@ -62,8 +62,8 @@ namespace ALM_NS
                                  const int noncollinear,
                                  const int trev_sym_mag,
                                  const std::string str_magmom) const;
-        void set_training_data(const std::vector<std::vector<double>> &u,
-                               const std::vector<std::vector<double>> &f) const;
+        void set_u_train(const std::vector<std::vector<double>> &u) const;
+        void set_f_train(const std::vector<std::vector<double>> &f) const;
         void set_validation_data(const std::vector<std::vector<double>> &u,
                                  const std::vector<std::vector<double>> &f) const;
         void set_optimizer_control(const OptimizerControl &optcontrol_in) const;
@@ -84,6 +84,9 @@ namespace ALM_NS
                     const double *cutoff_radii) const;
         //int get_ndata_used() const;
         OptimizerControl get_optimizer_control() const;
+        std::vector<std::vector<double>> get_u_train() const;
+        std::vector<std::vector<double>> get_f_train() const;
+        size_t get_number_of_data() const;
         size_t get_nrows_sensing_matrix() const;
         double get_cv_l1_alpha() const;
         Cell get_supercell() const;

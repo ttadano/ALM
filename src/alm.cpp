@@ -157,10 +157,14 @@ void ALM::set_magnetic_params(const size_t nat,
     system->set_str_magmom(str_magmom);
 }
 
-void ALM::set_training_data(const std::vector<std::vector<double>> &u,
-                            const std::vector<std::vector<double>> &f) const
+void ALM::set_u_train(const std::vector<std::vector<double>> &u) const
 {
-    optimize->set_training_data(u, f);
+    optimize->set_u_train(u);
+}
+
+void ALM::set_f_train(const std::vector<std::vector<double>> &f) const
+{
+    optimize->set_f_train(f);
 }
 
 void ALM::set_validation_data(const std::vector<std::vector<double>> &u,
@@ -238,6 +242,21 @@ void ALM::define(const int maxorder,
 OptimizerControl ALM::get_optimizer_control() const
 {
     return optimize->get_optimizer_control();
+}
+
+std::vector<std::vector<double>> ALM::get_u_train() const
+{
+    return optimize->get_u_train();
+}
+
+std::vector<std::vector<double>> ALM::get_f_train() const
+{
+    return optimize->get_f_train();
+}
+
+size_t ALM::get_number_of_data() const
+{
+    return optimize->get_number_of_data();
 }
 
 size_t ALM::get_nrows_sensing_matrix() const

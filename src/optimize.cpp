@@ -1515,14 +1515,17 @@ void Optimize::apply_basis_converter_amat(const int natmin3,
 }
 
 
-void Optimize::set_training_data(const std::vector<std::vector<double>> &u_train_in,
-                                 const std::vector<std::vector<double>> &f_train_in)
+void Optimize::set_u_train(const std::vector<std::vector<double>> &u_train_in)
 {
     u_train.clear();
-    f_train.clear();
     u_train = u_train_in;
-    f_train = f_train_in;
     u_train.shrink_to_fit();
+}
+
+void Optimize::set_f_train(const std::vector<std::vector<double>> &f_train_in)
+{
+    f_train.clear();
+    f_train = f_train_in;
     f_train.shrink_to_fit();
 }
 
@@ -1547,6 +1550,10 @@ std::vector<std::vector<double>> Optimize::get_f_train() const
     return f_train;
 }
 
+size_t Optimize::get_number_of_data() const
+{
+    return u_train.size();
+}
 
 void Optimize::set_fcs_values(const int maxorder,
                               double *fc_in,
@@ -1589,7 +1596,6 @@ size_t Optimize::get_number_of_rows_sensing_matrix() const
 {
     return u_train.size() * u_train[0].size();
 }
-
 
 int Optimize::fit_without_constraints(const size_t N,
                                       const size_t M,
