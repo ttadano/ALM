@@ -95,7 +95,6 @@ void Constraint::setup(const System *system,
                        const Fcs *fcs,
                        const Cluster *cluster,
                        const Symmetry *symmetry,
-                       const std::string alm_mode,
                        const int verbosity,
                        Timer *timer)
 {
@@ -109,14 +108,6 @@ void Constraint::setup(const System *system,
     constraint_algebraic = constraint_mode / 10;
     constraint_mode = constraint_mode % 10;
     const auto maxorder = cluster->get_maxorder();
-
-    if (alm_mode == "lasso") {
-        if (constraint_mode > 1) {
-            warn("Constraint::setup()", "Sorry, only ICONST = 11 is supported when MODE = lasso.");
-            constraint_mode = 1;
-        }
-        constraint_algebraic = 1;
-    }
 
     switch (constraint_mode) {
     case 0: // do nothing

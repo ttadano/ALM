@@ -38,8 +38,6 @@ namespace ALM_NS
         class Displace *displace{};
         class Timer *timer{};
 
-        void set_run_mode(std::string run_mode_in);
-        std::string get_run_mode() const;
         void set_verbosity(int verbosity_in);
         int get_verbosity() const;
         void set_output_filename_prefix(std::string prefix) const;
@@ -136,23 +134,18 @@ namespace ALM_NS
 
         void get_matrix_elements(double *amat,
                                  double *bvec) const;
-        void generate_force_constant();
         int run_optimize();
-        void run_suggest() const;
-        void run();
+        void run_suggest();
+        void init_fc_table();
 
     private:
         class System *system{};
 
-        std::string run_mode;
         int verbosity;
-
         bool structure_initialized;
         bool ready_to_fit;
         std::ofstream *ofs_alm;
         std::streambuf *coutbuf;
-        void create();
-        void initialize_structure();
-        void initialize_interaction();
+        void init_instances();
     };
 }

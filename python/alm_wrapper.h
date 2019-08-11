@@ -39,7 +39,7 @@ extern "C" {
   void alm_suggest(const int id);
   int alm_optimize(const int id,
                    const char *solver);
-  void alm_generate_force_constant(const int id);
+  void alm_init_fc_table(const int id);
   void alm_set_optimizer_control(const int id,
                                  const struct optimizer_control optcontrol,
                                  const int updated[15]);

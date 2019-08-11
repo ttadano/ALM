@@ -141,7 +141,6 @@ void InputSetter::set_general_vars(ALM *alm,
     size_t i;
 
     alm->set_output_filename_prefix(prefix);
-    alm->set_run_mode(mode);
     alm->set_verbosity(verbosity);
     nat = nat_in;
     nkd = nkd_in;

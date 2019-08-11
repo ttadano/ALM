@@ -55,6 +55,12 @@ class ALM(object):
         Pairs of (atomic number, element name). Since the atomic number is the
         key of OrderedDict, only unique atomic numbers are stored and the
         order of ``numbers`` is preserved in the keys of this OrderedDict.
+    displacements : ndarray
+        Displacements of atoms in supercells used as training data.
+        shape=(supercells, num_atoms, 3), dtype='double', order='C'
+    forces : ndarray
+        Forces of atoms in supercells used as training data.
+        shape=(supercells, num_atoms, 3), dtype='double', order='C'
     verbosity : int
         Level of the output frequency either 0 (no output) or
         1 (normal output). Default is 0.
@@ -374,6 +380,15 @@ class ALM(object):
 
     @property
     def displacements(self):
+        """Get displacements
+
+        Returns
+        --------
+        u : ndarray
+            Atomic displacement patterns in supercells in Cartesian.
+            shape=(supercells, num_atoms, 3), dtype='double', order='C'
+
+        """
         if self._id is None:
             self._show_error_message()
 
@@ -393,8 +408,7 @@ class ALM(object):
         ----------
         u : array_like
             Atomic displacement patterns in supercells in Cartesian.
-            dtype='double'
-            shape=(supercells, num_atoms, 3)
+            shape=(supercells, num_atoms, 3), dtype='double'
 
         """
 
@@ -409,6 +423,16 @@ class ALM(object):
 
     @property
     def forces(self):
+        """Get forces
+
+        Returns
+        --------
+        f : ndarray
+            Forces in supercells.
+            shape=(supercells, num_atoms, 3), dtype='double', order='C'
+
+        """
+
         if self._id is None:
             self._show_error_message()
 
@@ -428,8 +452,7 @@ class ALM(object):
         ----------
         f : array_like
             Forces in supercells.
-            dtype='double'
-            shape=(supercells, num_atoms, 3)
+            shape=(supercells, num_atoms, 3), dtype='double'
 
         """
 
@@ -542,7 +565,7 @@ class ALM(object):
                    _cutoff_radii,
                    fc_basis)
 
-        alm.generate_force_constant(self._id)
+        alm.init_fc_table(self._id)
 
     def set_constraint(self, translation=True, rotation=False):
         """Set constraints for the translational and rotational invariances

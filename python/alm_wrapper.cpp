@@ -94,13 +94,11 @@ extern "C" {
 
     void alm_suggest(const int id)
     {
-        alm[id]->set_run_mode("suggest");
         alm[id]->run_suggest();
     }
 
     int alm_optimize(const int id, const char *solver)
     {
-        alm[id]->set_run_mode("optimize");
         std::string str_solver = std::string(solver);
 
         int info;
@@ -121,9 +119,9 @@ extern "C" {
         return info;
     }
 
-    void alm_generate_force_constant(const int id)
+    void alm_init_fc_table(const int id)
     {
-        alm[id]->generate_force_constant();
+        alm[id]->init_fc_table();
     }
 
     void alm_set_optimizer_control(const int id,

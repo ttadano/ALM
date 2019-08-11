@@ -19,7 +19,7 @@ static PyObject * py_alm_delete(PyObject *self, PyObject *args);
 static PyObject * py_define(PyObject *self, PyObject *args);
 static PyObject * py_suggest(PyObject *self, PyObject *args);
 static PyObject * py_optimize(PyObject *self, PyObject *args);
-static PyObject * py_generate_force_constant(PyObject *self, PyObject *args);
+static PyObject * py_init_fc_table(PyObject *self, PyObject *args);
 static PyObject * py_set_optimizer_control(PyObject *self, PyObject *args);
 static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
@@ -73,7 +73,7 @@ static PyMethodDef _alm_methods[] = {
   {"define", py_define, METH_VARARGS, ""},
   {"suggest", py_suggest, METH_VARARGS, ""},
   {"optimize", py_optimize, METH_VARARGS, ""},
-  {"generate_force_constant", py_generate_force_constant, METH_VARARGS, ""},
+  {"init_fc_table", py_init_fc_table, METH_VARARGS, ""},
   {"set_optimizer_control", py_set_optimizer_control, METH_VARARGS, ""},
   {"set_cell", py_set_cell, METH_VARARGS, ""},
   {"set_verbosity", py_set_verbosity, METH_VARARGS, ""},
@@ -264,14 +264,14 @@ static PyObject * py_optimize(PyObject *self, PyObject *args)
   return PyLong_FromLong((long) info);
 }
 
-static PyObject * py_generate_force_constant(PyObject *self, PyObject *args)
+static PyObject * py_init_fc_table(PyObject *self, PyObject *args)
 {
   int id;
   if (!PyArg_ParseTuple(args, "i", &id)) {
     return NULL;
   }
 
-  alm_generate_force_constant(id);
+  alm_init_fc_table(id);
 
   Py_RETURN_NONE;
 }

@@ -58,6 +58,10 @@ void InputParser::run(ALM *alm,
     parse_input(alm);
 }
 
+std::string InputParser::get_run_mode() const
+{
+    return mode;
+}
 
 void InputParser::parse_displacement_and_force_files(std::vector<std::vector<double>> &u,
                                                      std::vector<std::vector<double>> &f,
@@ -106,7 +110,7 @@ void InputParser::parse_displacement_and_force_files(std::vector<std::vector<dou
     ifs_data.close();
 
     // Check if the length of the vector is correct.
-    // Also, estimate ndata if it is not set. 
+    // Also, estimate ndata if it is not set.
     const auto n_entries = value_arr.size();
 
     if (nrequired == -1) {

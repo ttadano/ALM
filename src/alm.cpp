@@ -25,13 +25,12 @@ using namespace ALM_NS;
 
 ALM::ALM()
 {
-    create();
+    init_instances();
     verbosity = 1;
     structure_initialized = false;
     ready_to_fit = false;
     ofs_alm = nullptr;
     coutbuf = nullptr;
-    run_mode = "suggest";
 }
 
 ALM::~ALM()
@@ -47,7 +46,7 @@ ALM::~ALM()
     delete timer;
 }
 
-void ALM::create()
+void ALM::init_instances()
 {
     files = new Files();
     system = new System();
@@ -58,20 +57,6 @@ void ALM::create()
     constraint = new Constraint();
     displace = new Displace();
     timer = new Timer();
-}
-
-void ALM::set_run_mode(const std::string run_mode_in)
-{
-    if (run_mode_in != "optimize" && run_mode_in != "suggest") {
-        std::cout << "Invalid run mode: " << run_mode_in << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    run_mode = run_mode_in;
-}
-
-std::string ALM::get_run_mode() const
-{
-    return run_mode;
 }
 
 void ALM::set_verbosity(const int verbosity_in)
@@ -391,7 +376,6 @@ size_t ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, .
                           fcs,
                           cluster,
                           symmetry,
-                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -492,7 +476,6 @@ void ALM::get_fc_irreducible(double *fc_values,
                           fcs,
                           cluster,
                           symmetry,
-                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -618,28 +601,10 @@ void ALM::get_matrix_elements(double *amat,
     //bvec = bvec_vec.data();
 }
 
-
-void ALM::generate_force_constant()
-{
-    initialize_structure();
-    initialize_interaction();
-}
-
-void ALM::run()
-{
-    generate_force_constant();
-
-    if (run_mode == "optimize") {
-        run_optimize();
-    } else if (run_mode == "suggest") {
-        run_suggest();
-    }
-}
-
 int ALM::run_optimize()
 {
     if (!structure_initialized) {
-        std::cout << "initialize_structure must be called beforehand." << std::endl;
+        std::cout << "initialize must be called beforehand." << std::endl;
         exit(EXIT_FAILURE);
     }
     if (!ready_to_fit) {
@@ -647,7 +612,6 @@ int ALM::run_optimize()
                           fcs,
                           cluster,
                           symmetry,
-                          run_mode,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -670,7 +634,7 @@ int ALM::run_optimize()
     return info;
 }
 
-void ALM::run_suggest() const
+void ALM::run_suggest()
 {
     displace->gen_displacement_pattern(cluster,
                                        symmetry,
@@ -680,7 +644,7 @@ void ALM::run_suggest() const
                                        verbosity);
 }
 
-void ALM::initialize_structure()
+void ALM::init_fc_table()
 {
     // Initialization of structure information.
     // Perform initialization only once.
@@ -690,10 +654,7 @@ void ALM::initialize_structure()
     files->init();
     symmetry->init(system, verbosity, timer);
     structure_initialized = true;
-}
 
-void ALM::initialize_interaction()
-{
     // Build cluster & force constant table
     cluster->init(system,
                   symmetry,

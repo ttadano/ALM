@@ -214,7 +214,6 @@ namespace ALM_NS
                    const Fcs *fcs,
                    const Cluster *cluster,
                    const Symmetry *symmetry,
-                   const std::string alm_mode,
                    const int verbosity,
                    Timer *timer);
 
