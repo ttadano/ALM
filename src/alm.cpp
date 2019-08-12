@@ -376,6 +376,7 @@ size_t ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, .
                           fcs,
                           cluster,
                           symmetry,
+                          get_optimizer_control().linear_model,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -476,6 +477,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                           fcs,
                           cluster,
                           symmetry,
+                          get_optimizer_control().linear_model,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -612,6 +614,7 @@ int ALM::run_optimize()
                           fcs,
                           cluster,
                           symmetry,
+                          get_optimizer_control().linear_model,
                           verbosity,
                           timer);
         ready_to_fit = true;
