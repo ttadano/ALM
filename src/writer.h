@@ -59,7 +59,7 @@ namespace ALM_NS
         ~Writer();
 
         void writeall(ALM *) const;
-        void write_input_vars(const ALM *) const;
+        void write_input_vars(const ALM *alm, const std::string run_mode) const;
         void write_displacement_pattern(ALM *) const;
 
     private:

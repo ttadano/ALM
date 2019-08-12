@@ -34,7 +34,7 @@ Writer::Writer() = default;
 
 Writer::~Writer() = default;
 
-void Writer::write_input_vars(const ALM *alm) const
+void Writer::write_input_vars(const ALM *alm, const std::string run_mode) const
 {
     size_t i;
 
@@ -48,7 +48,7 @@ void Writer::write_input_vars(const ALM *alm) const
     std::cout << " -------------------------------------------------------------------" << '\n';
     std::cout << " General:\n";
     std::cout << "  PREFIX = " << alm->files->get_prefix() << '\n';
-    std::cout << "  MODE = " << alm->get_run_mode() << '\n';
+    std::cout << "  MODE = " << run_mode << '\n';
     std::cout << "  NAT = " << nat << "; NKD = " << nkd << '\n';
     std::cout << "  PRINTSYM = " << alm->symmetry->get_print_symmetry()
         << "; TOLERANCE = " << alm->symmetry->get_tolerance() << '\n';
@@ -71,10 +71,10 @@ void Writer::write_input_vars(const ALM *alm) const
     }
     std::cout << "\n\n";
 
-    if (alm->get_run_mode() == "suggest") {
+    if (run_mode == "suggest") {
         std::cout << "  DBASIS = " << alm->displace->get_disp_basis() << "\n\n";
 
-    } else if (alm->get_run_mode() == "optimize") {
+    } else if (run_mode == "optimize") {
         const auto optctrl = alm->optimize->get_optimizer_control();
         std::vector<std::string> str_linearmodel{"least-squares", "elastic-net"};
         std::cout << " Optimize:\n";

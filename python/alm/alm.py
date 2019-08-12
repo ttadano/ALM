@@ -1,23 +1,40 @@
 import warnings
+from collections import OrderedDict
 import numpy as np
 from . import _alm as alm
 
+atom_names = ("X", "H", "He", "Li", "Be", "B", "C", "N", "O", "F",
+              "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K",
+              "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu",
+              "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y",
+              "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In",
+              "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr",
+              "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm",
+              "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au",
+              "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac",
+              "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es",
+              "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt",
+              "Ds", "Rg", "Cn", "Uut", "Uuq", "Uup", "Uuh", "Uus", "Uuo")
 
-optimizer_control_keys = ('linear_model',
-                          'use_sparse_solver',
-                          'maxnum_iteration',
-                          'tolerance_iteration',
-                          'output_frequency',
-                          'standardize',
-                          'displacement_normalization_factor',
-                          'debiase_after_l1opt',
-                          'cross_validation',
-                          'l1_alpha',
-                          'l1_alpha_min',
-                          'l1_alpha_max',
-                          'num_l1_alpha',
-                          'l1_ratio',
-                          'save_solution_path')
+# From src/optimize.h
+# {sparsefolver: str} is omitted because this is set at ALM.optimize.
+# This order is not allowed to change because it is explicitly used in _alm.c.
+optimizer_control_data_types = OrderedDict([
+    ('linear_model', int),
+    ('use_sparse_solver', int),
+    ('maxnum_iteration', int),
+    ('tolerance_iteration', float),
+    ('output_frequency', int),
+    ('standardize', int),
+    ('displacement_normalization_factor', float),
+    ('debiase_after_l1opt', int),
+    ('cross_validation', int),
+    ('l1_alpha', float),
+    ('l1_alpha_min', float),
+    ('l1_alpha_max', float),
+    ('num_l1_alpha', int),
+    ('l1_ratio', float),
+    ('save_solution_path', int)])
 
 
 class ALM(object):
@@ -34,11 +51,27 @@ class ALM(object):
     numbers : ndarray
         Atomic numbers.
         shape=(num_atoms,), dtype='intc'
-    kind_indices : ndarray
-        Atomic types represented by integer numbers starting from 1, which
-        are used internally, but currently needed to specify cutoff radii
-        in define method.
-        shape=(num_atoms,), dtype='intc'
+    kind_names : OrderedDict
+        Pairs of (atomic number, element name). Since the atomic number is the
+        key of OrderedDict, only unique atomic numbers are stored and the
+        order of ``numbers`` is preserved in the keys of this OrderedDict.
+    displacements : ndarray
+        Displacements of atoms in supercells used as training data.
+        shape=(supercells, num_atoms, 3), dtype='double', order='C'
+    forces : ndarray
+        Forces of atoms in supercells used as training data.
+        shape=(supercells, num_atoms, 3), dtype='double', order='C'
+    verbosity : int
+        Level of the output frequency either 0 (no output) or
+        1 (normal output). Default is 0.
+    output_filename_prefix : str
+        More detailed logs are stored in files when this is given. This string
+        is used to the prefix of filenames of logs.
+    optimizer_control : dict
+        Parameters to use elastic net regression.
+    cv_l1_alpha : float (read-only)
+        Alpha value to minimize fitting error of elastic net regression
+        obtained by cross validation.
 
     """
 
@@ -63,12 +96,11 @@ class ALM(object):
         """
 
         self._id = None
-        self._cell = None
         self._lavec = None
         self._xcoord = None
         self._numbers = None
         self._verbosity = False
-        self._kind_indices = None
+        self._kind_names = None
         self._iconst = 11
         self._maxorder = 1
 
@@ -152,7 +184,7 @@ class ALM(object):
 
         """
 
-        return np.array(self._numbers, dtype='intc', order='C')
+        return np.array(self._numbers, dtype='intc')
 
     @numbers.setter
     def numbers(self, numbers):
@@ -167,11 +199,14 @@ class ALM(object):
         """
 
         self._need_transfer = True
-        self._numbers = np.array(numbers, dtype='intc', order='C')
+        self._numbers = np.array(numbers, dtype='intc')
+        self._kind_names = OrderedDict.fromkeys(self._numbers)
+        for key in self._kind_names:
+            self._kind_names[key] = atom_names[key % 118]
 
     @property
-    def kind_indices(self):
-        return self._kind_indices
+    def kind_names(self):
+        return self._kind_names
 
     @property
     def verbosity(self):
@@ -232,7 +267,7 @@ class ALM(object):
 
         ex.::
 
-           with ALM(lavec, xcoord, kind) as alm:
+           with ALM(lavec, xcoord, numbers) as alm:
 
         """
 
@@ -279,12 +314,14 @@ class ALM(object):
 
         self._transfer_parameters()
 
-        if solver not in ['dense', 'SimplicialLDLT']:
+        solvers = {'dense': 'dense', 'simplicialldlt': 'SimplicialLDLT'}
+
+        if solver.lower() not in solvers:
             msgs = ["The given solver option is not supported.",
                     "Available options are 'dense' and 'SimplicialLDLT'."]
             raise ValueError("\n".join(msgs))
 
-        info = alm.optimize(self._id, solver)
+        info = alm.optimize(self._id, solvers[solver.lower()])
 
         return info
 
@@ -294,6 +331,8 @@ class ALM(object):
 
     @output_filename_prefix.setter
     def output_filename_prefix(self, prefix):
+        """Set output prefix of output filename"""
+
         if self._id is None:
             self._show_error_message()
 
@@ -302,7 +341,6 @@ class ALM(object):
             alm.set_output_filename_prefix(self._id, prefix)
 
     def set_output_filename_prefix(self, prefix):
-        """Set output prefix of output filename"""
         self.output_filename_prefix = prefix
 
     @property
@@ -311,14 +349,16 @@ class ALM(object):
             self._show_error_message()
 
         optctrl = alm.get_optimizer_control(self._id)
-        optcontrol = dict(zip(optimizer_control_keys, optctrl))
+        keys = optimizer_control_data_types.keys()
+        optcontrol = dict(zip(keys, optctrl))
         return optcontrol
 
-    def set_optimizer_control(self, optcontrol):
+    @optimizer_control.setter
+    def optimizer_control(self, optcontrol):
         if self._id is None:
             self._show_error_message()
 
-        keys = optimizer_control_keys
+        keys = optimizer_control_data_types.keys()
         optctrl = []
         optcontrol_l = {key.lower(): optcontrol[key] for key in optcontrol}
 
@@ -334,6 +374,96 @@ class ALM(object):
                 optctrl.append(None)
 
         alm.set_optimizer_control(self._id, optctrl)
+
+    def set_optimizer_control(self, optcontrol):
+        self.optimizer_control = optcontrol
+
+    @property
+    def displacements(self):
+        """Get displacements
+
+        Returns
+        --------
+        u : ndarray
+            Atomic displacement patterns in supercells in Cartesian.
+            shape=(supercells, num_atoms, 3), dtype='double', order='C'
+
+        """
+        if self._id is None:
+            self._show_error_message()
+
+        ndata = alm.get_number_of_data(self._id)
+        u = np.zeros((ndata, len(self._xcoord), 3), dtype='double', order='C')
+        succeeded = alm.get_u_train(self._id, u)
+        if succeeded:
+            return u
+        else:
+            return None
+
+    @displacements.setter
+    def displacements(self, u):
+        """Set displacements
+
+        Parameters
+        ----------
+        u : array_like
+            Atomic displacement patterns in supercells in Cartesian.
+            shape=(supercells, num_atoms, 3), dtype='double'
+
+        """
+
+        if self._id is None:
+            self._show_error_message()
+
+        if u.ndim != 3:
+            msg = "Displacement array has to be three dimensions."
+            raise RuntimeError(msg)
+
+        alm.set_u_train(self._id, np.array(u, dtype='double', order='C'))
+
+    @property
+    def forces(self):
+        """Get forces
+
+        Returns
+        --------
+        f : ndarray
+            Forces in supercells.
+            shape=(supercells, num_atoms, 3), dtype='double', order='C'
+
+        """
+
+        if self._id is None:
+            self._show_error_message()
+
+        ndata = alm.get_number_of_data(self._id)
+        f = np.zeros((ndata, len(self._xcoord), 3), dtype='double', order='C')
+        succeeded = alm.get_f_train(self._id, f)
+        if succeeded:
+            return f
+        else:
+            return None
+
+    @forces.setter
+    def forces(self, f):
+        """Set forces
+
+        Parameters
+        ----------
+        f : array_like
+            Forces in supercells.
+            shape=(supercells, num_atoms, 3), dtype='double'
+
+        """
+
+        if self._id is None:
+            self._show_error_message()
+
+        if f.ndim != 3:
+            msg = "Force array has to be three dimensions."
+            raise RuntimeError(msg)
+
+        alm.set_f_train(self._id, np.array(f, dtype='double', order='C'))
 
     def set_training_data(self, u, f):
         """Set displacements and respective forces in supercell.
@@ -351,25 +481,12 @@ class ALM(object):
 
         """
 
-        if self._id is None:
-            self._show_error_message()
-
-        if u.ndim != 3:
-            msg = "Displacement array has to be three dimensions."
-            raise RuntimeError(msg)
-        if f.ndim != 3:
-            msg = "Force array has to be three dimensions."
-            raise RuntimeError(msg)
-
-        alm.set_training_data(
-            self._id,
-            np.array(u, dtype='double', order='C'),
-            np.array(f, dtype='double', order='C'))
+        self.displacements = u
+        self.forces = f
 
     def set_displacement_and_force(self, u, f):
-        warnings.warn("ALM.set_displacement_and_force is deprecated. "
-                      "Use ALM.set_displacement_and_force is deprecated.",
-                      DeprecationWarning)
+        warnings.warn("set_displacement_and_force is deprecated. "
+                      "Use set_training_data.", DeprecationWarning)
 
         self.set_training_data(u, f)
 
@@ -448,7 +565,7 @@ class ALM(object):
                    _cutoff_radii,
                    fc_basis)
 
-        alm.generate_force_constant(self._id)
+        alm.init_fc_table(self._id)
 
     def set_constraint(self, translation=True, rotation=False):
         """Set constraints for the translational and rotational invariances
@@ -717,13 +834,17 @@ class ALM(object):
 
         return (np.reshape(amat, (nrows, fc_length), order='F'), bvec)
 
-    def get_cv_l1_alpha(self):
+    @property
+    def cv_l1_alpha(self):
         """Returns L1 alpha at minimum CV"""
 
         if self._id is None:
             self._show_error_message()
 
         return alm.get_cv_l1_alpha(self._id)
+
+    def get_cv_l1_alpha(self):
+        return self.cv_l1_alpha
 
     def _transfer_parameters(self):
         if self._need_transfer:
@@ -753,10 +874,9 @@ class ALM(object):
             msg = "Numbers of atomic points and atomic numbers don't agree."
             raise RuntimeError(msg)
 
-        self._kind_indices = np.zeros_like(self._numbers)
+        kind_numbers = np.array(list(self._kind_names.keys()), dtype='intc')
         alm.set_cell(self._id, self._lavec, self._xcoord, self._numbers,
-                     self._kind_indices)
-        self._cell = (self._lavec, self._xcoord, self._numbers)
+                     kind_numbers)
 
     def _set_verbosity(self):
         """Inject verbosity in C++ instance."""

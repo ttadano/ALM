@@ -25,13 +25,12 @@ using namespace ALM_NS;
 
 ALM::ALM()
 {
-    create();
+    init_instances();
     verbosity = 1;
     structure_initialized = false;
     ready_to_fit = false;
     ofs_alm = nullptr;
     coutbuf = nullptr;
-    run_mode = "suggest";
 }
 
 ALM::~ALM()
@@ -47,7 +46,7 @@ ALM::~ALM()
     delete timer;
 }
 
-void ALM::create()
+void ALM::init_instances()
 {
     files = new Files();
     system = new System();
@@ -58,20 +57,6 @@ void ALM::create()
     constraint = new Constraint();
     displace = new Displace();
     timer = new Timer();
-}
-
-void ALM::set_run_mode(const std::string run_mode_in)
-{
-    if (run_mode_in != "optimize" && run_mode_in != "suggest") {
-        std::cout << "Invalid run mode: " << run_mode_in << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    run_mode = run_mode_in;
-}
-
-std::string ALM::get_run_mode() const
-{
-    return run_mode;
 }
 
 void ALM::set_verbosity(const int verbosity_in)
@@ -157,10 +142,14 @@ void ALM::set_magnetic_params(const size_t nat,
     system->set_str_magmom(str_magmom);
 }
 
-void ALM::set_training_data(const std::vector<std::vector<double>> &u,
-                            const std::vector<std::vector<double>> &f) const
+void ALM::set_u_train(const std::vector<std::vector<double>> &u) const
 {
-    optimize->set_training_data(u, f);
+    optimize->set_u_train(u);
+}
+
+void ALM::set_f_train(const std::vector<std::vector<double>> &f) const
+{
+    optimize->set_f_train(f);
 }
 
 void ALM::set_validation_data(const std::vector<std::vector<double>> &u,
@@ -238,6 +227,21 @@ void ALM::define(const int maxorder,
 OptimizerControl ALM::get_optimizer_control() const
 {
     return optimize->get_optimizer_control();
+}
+
+std::vector<std::vector<double>> ALM::get_u_train() const
+{
+    return optimize->get_u_train();
+}
+
+std::vector<std::vector<double>> ALM::get_f_train() const
+{
+    return optimize->get_f_train();
+}
+
+size_t ALM::get_number_of_data() const
+{
+    return optimize->get_number_of_data();
 }
 
 size_t ALM::get_nrows_sensing_matrix() const
@@ -599,28 +603,10 @@ void ALM::get_matrix_elements(double *amat,
     //bvec = bvec_vec.data();
 }
 
-
-void ALM::generate_force_constant()
-{
-    initialize_structure();
-    initialize_interaction();
-}
-
-void ALM::run()
-{
-    generate_force_constant();
-
-    if (run_mode == "optimize") {
-        run_optimize();
-    } else if (run_mode == "suggest") {
-        run_suggest();
-    }
-}
-
 int ALM::run_optimize()
 {
     if (!structure_initialized) {
-        std::cout << "initialize_structure must be called beforehand." << std::endl;
+        std::cout << "initialize must be called beforehand." << std::endl;
         exit(EXIT_FAILURE);
     }
     if (!ready_to_fit) {
@@ -651,7 +637,7 @@ int ALM::run_optimize()
     return info;
 }
 
-void ALM::run_suggest() const
+void ALM::run_suggest()
 {
     displace->gen_displacement_pattern(cluster,
                                        symmetry,
@@ -661,7 +647,7 @@ void ALM::run_suggest() const
                                        verbosity);
 }
 
-void ALM::initialize_structure()
+void ALM::init_fc_table()
 {
     // Initialization of structure information.
     // Perform initialization only once.
@@ -671,10 +657,7 @@ void ALM::initialize_structure()
     files->init();
     symmetry->init(system, verbosity, timer);
     structure_initialized = true;
-}
 
-void ALM::initialize_interaction()
-{
     // Build cluster & force constant table
     cluster->init(system,
                   symmetry,

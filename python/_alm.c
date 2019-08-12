@@ -16,24 +16,29 @@ extern "C" {
 
 static PyObject * py_alm_new(PyObject *self, PyObject *args);
 static PyObject * py_alm_delete(PyObject *self, PyObject *args);
-static PyObject * py_set_output_filename_prefix(PyObject *self, PyObject *args);
+static PyObject * py_define(PyObject *self, PyObject *args);
 static PyObject * py_suggest(PyObject *self, PyObject *args);
 static PyObject * py_optimize(PyObject *self, PyObject *args);
-static PyObject * py_get_optimizer_control(PyObject *self, PyObject *args);
+static PyObject * py_init_fc_table(PyObject *self, PyObject *args);
 static PyObject * py_set_optimizer_control(PyObject *self, PyObject *args);
 static PyObject * py_set_cell(PyObject *self, PyObject *args);
 static PyObject * py_set_verbosity(PyObject *self, PyObject *args);
-static PyObject * py_set_training_data(PyObject *self, PyObject *args);
-static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args);
-static PyObject * py_get_cv_l1_alpha(PyObject *self, PyObject *args);
+static PyObject * py_set_u_train(PyObject *self, PyObject *args);
+static PyObject * py_set_f_train(PyObject *self, PyObject *args);
 static PyObject * py_set_constraint_type(PyObject *self, PyObject *args);
-static PyObject * py_define(PyObject *self, PyObject *args);
-static PyObject * py_generate_force_constant(PyObject *self, PyObject *args);
+static PyObject * py_set_fc(PyObject *self, PyObject *args);
+static PyObject * py_set_output_filename_prefix(PyObject *self, PyObject *args);
+static PyObject * py_get_optimizer_control(PyObject *self, PyObject *args);
+static PyObject * py_get_u_train(PyObject *self, PyObject *args);
+static PyObject * py_get_f_train(PyObject *self, PyObject *args);
+static PyObject * py_get_cv_l1_alpha(PyObject *self, PyObject *args);
 static PyObject * py_get_atom_mapping_by_pure_translations
 (PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_displacement_patterns
 (PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_displaced_atoms(PyObject *self, PyObject *args);
+static PyObject * py_get_number_of_data(PyObject *self, PyObject *args);
+static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args);
 static PyObject * py_get_displacement_patterns(PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_fc_elements(PyObject *self, PyObject *args);
 static PyObject * py_get_number_of_fc_origin(PyObject *self, PyObject *args);
@@ -41,7 +46,6 @@ static PyObject * py_get_number_of_irred_fc_elements(PyObject *self, PyObject *a
 static PyObject * py_get_fc_origin(PyObject *self, PyObject *args);
 static PyObject * py_get_fc_irreducible(PyObject *self, PyObject *args);
 static PyObject * py_get_fc_all(PyObject *self, PyObject *args);
-static PyObject * py_set_fc(PyObject *self, PyObject *args);
 static PyObject * py_get_matrix_elements(PyObject *self, PyObject *args);
 
 struct module_state {
@@ -66,25 +70,30 @@ static PyMethodDef _alm_methods[] = {
   {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
   {"alm_new", py_alm_new, METH_VARARGS, ""},
   {"alm_delete", py_alm_delete, METH_VARARGS, ""},
-  {"set_output_filename_prefix", py_set_output_filename_prefix, METH_VARARGS, ""},
+  {"define", py_define, METH_VARARGS, ""},
   {"suggest", py_suggest, METH_VARARGS, ""},
   {"optimize", py_optimize, METH_VARARGS, ""},
-  {"get_optimizer_control", py_get_optimizer_control, METH_VARARGS, ""},
+  {"init_fc_table", py_init_fc_table, METH_VARARGS, ""},
   {"set_optimizer_control", py_set_optimizer_control, METH_VARARGS, ""},
   {"set_cell", py_set_cell, METH_VARARGS, ""},
   {"set_verbosity", py_set_verbosity, METH_VARARGS, ""},
-  {"set_training_data", py_set_training_data, METH_VARARGS, ""},
+  {"set_u_train", py_set_u_train, METH_VARARGS, ""},
+  {"set_f_train", py_set_f_train, METH_VARARGS, ""},
   {"set_constraint_type", py_set_constraint_type, METH_VARARGS, ""},
-  {"define", py_define, METH_VARARGS, ""},
-  {"generate_force_constant", py_generate_force_constant, METH_VARARGS, ""},
+  {"set_fc", py_set_fc, METH_VARARGS, ""},
+  {"set_output_filename_prefix", py_set_output_filename_prefix, METH_VARARGS, ""},
+  {"get_optimizer_control", py_get_optimizer_control, METH_VARARGS, ""},
+  {"get_u_train", py_get_u_train, METH_VARARGS, ""},
+  {"get_f_train", py_get_f_train, METH_VARARGS, ""},
+  {"get_cv_l1_alpha", py_get_cv_l1_alpha, METH_VARARGS, ""},
   {"get_atom_mapping_by_pure_translations", py_get_atom_mapping_by_pure_translations,
    METH_VARARGS, ""},
   {"get_number_of_displacement_patterns", py_get_number_of_displacement_patterns,
    METH_VARARGS, ""},
   {"get_number_of_displaced_atoms", py_get_number_of_displaced_atoms,
    METH_VARARGS, ""},
+  {"get_number_of_data", py_get_number_of_data, METH_VARARGS, ""},
   {"get_nrows_amat", py_get_nrows_amat, METH_VARARGS, ""},
-  {"get_cv_l1_alpha", py_get_cv_l1_alpha, METH_VARARGS, ""},
   {"get_displacement_patterns", py_get_displacement_patterns, METH_VARARGS, ""},
   {"get_number_of_fc_elements", py_get_number_of_fc_elements, METH_VARARGS, ""},
   {"get_number_of_fc_origin", py_get_number_of_fc_origin, METH_VARARGS, ""},
@@ -92,7 +101,6 @@ static PyMethodDef _alm_methods[] = {
   {"get_fc_origin", py_get_fc_origin, METH_VARARGS, ""},
   {"get_fc_irreducible", py_get_fc_irreducible, METH_VARARGS, ""},
   {"get_fc_all", py_get_fc_all, METH_VARARGS, ""},
-  {"set_fc", py_set_fc, METH_VARARGS, ""},
   {"get_matrix_elements", py_get_matrix_elements, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
@@ -177,6 +185,43 @@ static PyObject * py_alm_delete(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject * py_define(PyObject *self, PyObject *args)
+{
+  int id;
+  int maxorder;
+
+  PyArrayObject* py_nbody_include;
+  PyArrayObject* py_cutoff_radii;
+  char* forceconstant_basis;
+
+  size_t nkd;
+  double *cutoff_radii;
+
+  if (!PyArg_ParseTuple(args, "iiOOs",
+                        &id,
+                        &maxorder,
+                        &py_nbody_include,
+                        &py_cutoff_radii,
+                        &forceconstant_basis)) {
+    return NULL;
+  }
+
+
+  if ((PyObject*)py_cutoff_radii == Py_None) {
+    cutoff_radii = NULL;
+    nkd = 0;
+  } else {
+    nkd = (size_t)PyArray_DIM(py_cutoff_radii, 1);
+    cutoff_radii = (double*)PyArray_DATA(py_cutoff_radii);
+  }
+  const int *nbody_include = (int*)PyArray_DATA(py_nbody_include);
+
+  alm_define(id, maxorder, nkd, nbody_include, cutoff_radii,
+             forceconstant_basis);
+
+  Py_RETURN_NONE;
+}
+
 static PyObject * py_suggest(PyObject *self, PyObject *args)
 {
   int id;
@@ -219,60 +264,16 @@ static PyObject * py_optimize(PyObject *self, PyObject *args)
   return PyLong_FromLong((long) info);
 }
 
-static PyObject * py_get_optimizer_control(PyObject *self, PyObject *args)
+static PyObject * py_init_fc_table(PyObject *self, PyObject *args)
 {
   int id;
-  PyObject* py_optcontrol;
-  PyObject* py_value;
-
-  PyObject *array;
-  struct optimizer_control optcontrol;
-  int len_list, n;
-
   if (!PyArg_ParseTuple(args, "i", &id)) {
     return NULL;
   }
 
-  len_list = 15;
-  array = PyList_New(len_list);
-  n = 0;
+  alm_init_fc_table(id);
 
-  optcontrol = alm_get_optimizer_control(id);
-
-  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.linear_model));
-  n++;  /* 0 */
-  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.use_sparse_solver));
-  n++;  /* 1 */
-  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.maxnum_iteration));
-  n++;  /* 2 */
-  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.tolerance_iteration));
-  n++;  /* 3 */
-  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.output_frequency));
-  n++;  /* 4 */
-  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.standardize));
-  n++;  /* 5 */
-  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.displacement_normalization_factor));
-  n++;  /* 6 */
-  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.debiase_after_l1opt));
-  n++;  /* 7 */
-  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.cross_validation));
-  n++;  /* 8 */
-  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_alpha));
-  n++;  /* 9 */
-  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_alpha_min));
-  n++;  /* 10 */
-  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_alpha_max));
-  n++;  /* 11 */
-  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.num_l1_alpha));
-  n++;  /* 12 */
-  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_ratio));
-  n++;  /* 13 */
-  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.save_solution_path));
-  n++;  /* 14 */
-
-  assert(n == len_list);
-
-  return array;
+  Py_RETURN_NONE;
 }
 
 static PyObject * py_set_optimizer_control(PyObject *self, PyObject *args)
@@ -369,25 +370,26 @@ static PyObject * py_set_cell(PyObject *self, PyObject *args)
   int id;
   PyArrayObject* py_lavec;
   PyArrayObject* py_xcoord;
-  PyArrayObject* py_kind_in;
-  PyArrayObject* py_kind_indices;
+  PyArrayObject* py_numbers;
+  PyArrayObject* py_kind_numbers;
 
   if (!PyArg_ParseTuple(args, "iOOOO",
                         &id,
                         &py_lavec,
                         &py_xcoord,
-                        &py_kind_in,
-                        &py_kind_indices)) {
+                        &py_numbers,
+                        &py_kind_numbers)) {
     return NULL;
   }
 
   double (*lavec)[3] = (double(*)[3])PyArray_DATA(py_lavec);
   double (*xcoord)[3] = (double(*)[3])PyArray_DATA(py_xcoord);
-  const int* kind_in = (int*)PyArray_DATA(py_kind_in);
-  const size_t nat = (size_t)PyArray_DIMS(py_kind_in)[0];
-  int* kind_indices = (int*)PyArray_DATA(py_kind_indices);
+  const int* numbers = (int*)PyArray_DATA(py_numbers);
+  const size_t nat = (size_t)PyArray_DIMS(py_numbers)[0];
+  const int* kind_numbers = (int*)PyArray_DATA(py_kind_numbers);
+  const size_t nkind = (size_t)PyArray_DIMS(py_kind_numbers)[0];
 
-  alm_set_cell(id, nat, lavec, xcoord, kind_in, kind_indices);
+  alm_set_cell(id, nat, lavec, xcoord, numbers, nkind, kind_numbers);
 
   Py_RETURN_NONE;
 }
@@ -406,25 +408,40 @@ static PyObject * py_set_verbosity(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_set_training_data(PyObject *self, PyObject *args)
+static PyObject * py_set_u_train(PyObject *self, PyObject *args)
 {
   int id;
   PyArrayObject* py_u;
-  PyArrayObject* py_f;
-  if (!PyArg_ParseTuple(args, "iOO",
-                        &id,
-                        &py_u,
-                        &py_f)) {
+
+  if (!PyArg_ParseTuple(args, "iO", &id, &py_u)) {
     return NULL;
   }
 
   const double* u = (double*)PyArray_DATA(py_u);
+
+  const size_t ndata_used = (size_t)PyArray_DIMS(py_u)[0];
+  const size_t nat = (size_t)PyArray_DIMS(py_u)[1];
+
+  alm_set_u_train(id, u, nat, ndata_used);
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_set_f_train(PyObject *self, PyObject *args)
+{
+  int id;
+  PyArrayObject* py_f;
+
+  if (!PyArg_ParseTuple(args, "iO", &id, &py_f)) {
+    return NULL;
+  }
+
   const double* f = (double*)PyArray_DATA(py_f);
 
   const size_t ndata_used = (size_t)PyArray_DIMS(py_f)[0];
   const size_t nat = (size_t)PyArray_DIMS(py_f)[1];
 
-  alm_set_training_data(id, u, f, nat, ndata_used);
+  alm_set_f_train(id, f, nat, ndata_used);
 
   Py_RETURN_NONE;
 }
@@ -443,53 +460,133 @@ static PyObject * py_set_constraint_type(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_define(PyObject *self, PyObject *args)
+static PyObject * py_set_fc(PyObject *self, PyObject *args)
 {
   int id;
-  int maxorder;
+  PyArrayObject* py_fc_in;
 
-  PyArrayObject* py_nbody_include;
-  PyArrayObject* py_cutoff_radii;
-  char* forceconstant_basis;
-
-  size_t nkd;
-  double *cutoff_radii;
-
-  if (!PyArg_ParseTuple(args, "iiOOs",
+  if (!PyArg_ParseTuple(args, "iO",
                         &id,
-                        &maxorder,
-                        &py_nbody_include,
-                        &py_cutoff_radii,
-                        &forceconstant_basis)) {
+                        &py_fc_in)) {
     return NULL;
   }
 
+  double *fc_in = (double*)PyArray_DATA(py_fc_in);
 
-  if ((PyObject*)py_cutoff_radii == Py_None) {
-    cutoff_radii = NULL;
-    nkd = 0;
-  } else {
-    nkd = (size_t)PyArray_DIM(py_cutoff_radii, 1);
-    cutoff_radii = (double*)PyArray_DATA(py_cutoff_radii);
-  }
-  const int *nbody_include = (int*)PyArray_DATA(py_nbody_include);
-
-  alm_define(id, maxorder, nkd, nbody_include, cutoff_radii,
-             forceconstant_basis);
+  alm_set_fc(id, fc_in);
 
   Py_RETURN_NONE;
 }
 
-static PyObject * py_generate_force_constant(PyObject *self, PyObject *args)
+static PyObject * py_get_optimizer_control(PyObject *self, PyObject *args)
 {
   int id;
+  PyObject *array;
+  struct optimizer_control optcontrol;
+  int len_list, n;
+
   if (!PyArg_ParseTuple(args, "i", &id)) {
     return NULL;
   }
 
-  alm_generate_force_constant(id);
+  len_list = 15;
+  array = PyList_New(len_list);
+  n = 0;
 
-  Py_RETURN_NONE;
+  optcontrol = alm_get_optimizer_control(id);
+
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.linear_model));
+  n++;  /* 0 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.use_sparse_solver));
+  n++;  /* 1 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.maxnum_iteration));
+  n++;  /* 2 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.tolerance_iteration));
+  n++;  /* 3 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.output_frequency));
+  n++;  /* 4 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.standardize));
+  n++;  /* 5 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.displacement_normalization_factor));
+  n++;  /* 6 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.debiase_after_l1opt));
+  n++;  /* 7 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.cross_validation));
+  n++;  /* 8 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_alpha));
+  n++;  /* 9 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_alpha_min));
+  n++;  /* 10 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_alpha_max));
+  n++;  /* 11 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.num_l1_alpha));
+  n++;  /* 12 */
+  PyList_SetItem(array, n, PyFloat_FromDouble(optcontrol.l1_ratio));
+  n++;  /* 13 */
+  PyList_SetItem(array, n, PyLong_FromLong((long) optcontrol.save_solution_path));
+  n++;  /* 14 */
+
+  assert(n == len_list);
+
+  return array;
+}
+
+static PyObject * py_get_u_train(PyObject *self, PyObject *args)
+{
+  int id;
+  PyArrayObject* py_u;
+  int succeeded;
+
+  if (!PyArg_ParseTuple(args, "iO", &id, &py_u)) {
+    return NULL;
+  }
+
+  double* u = (double*)PyArray_DATA(py_u);
+  const size_t ndata_used = (size_t)PyArray_DIMS(py_u)[0];
+  const size_t nat = (size_t)PyArray_DIMS(py_u)[1];
+
+  succeeded = alm_get_u_train(id, u, ndata_used * nat * 3);
+
+  if (succeeded) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+}
+
+static PyObject * py_get_f_train(PyObject *self, PyObject *args)
+{
+  int id;
+  PyArrayObject* py_f;
+  int succeeded;
+
+  if (!PyArg_ParseTuple(args, "iO", &id, &py_f)) {
+    return NULL;
+  }
+
+  double* f = (double*)PyArray_DATA(py_f);
+  const size_t ndata_used = (size_t)PyArray_DIMS(py_f)[0];
+  const size_t nat = (size_t)PyArray_DIMS(py_f)[1];
+
+  succeeded = alm_get_f_train(id, f, ndata_used * nat * 3);
+
+  if (succeeded) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+}
+
+static PyObject * py_get_cv_l1_alpha(PyObject *self, PyObject *args)
+{
+    int id;
+
+    if (!PyArg_ParseTuple(args, "i", &id)) {
+        return NULL;
+    }
+    double cv_l1_alpha = alm_get_cv_l1_alpha(id);
+
+    return PyFloat_FromDouble(cv_l1_alpha);
 }
 
 static PyObject * py_get_atom_mapping_by_pure_translations
@@ -619,6 +716,18 @@ static PyObject * py_get_number_of_irred_fc_elements(PyObject *self, PyObject *a
 }
 
 
+static PyObject * py_get_number_of_data(PyObject *self, PyObject *args)
+{
+    int id;
+
+    if (!PyArg_ParseTuple(args, "i", &id)) {
+        return NULL;
+    }
+    size_t ndata = alm_get_number_of_data(id);
+
+    return PyLong_FromSize_t(ndata);
+}
+
 static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args)
 {
     int id;
@@ -629,18 +738,6 @@ static PyObject * py_get_nrows_amat(PyObject *self, PyObject *args)
     size_t nrows = alm_get_nrows_sensing_matrix(id);
 
     return PyLong_FromSize_t(nrows);
-}
-
-static PyObject * py_get_cv_l1_alpha(PyObject *self, PyObject *args)
-{
-    int id;
-
-    if (!PyArg_ParseTuple(args, "i", &id)) {
-        return NULL;
-    }
-    double cv_l1_alpha = alm_get_cv_l1_alpha(id);
-
-    return PyFloat_FromDouble(cv_l1_alpha);
 }
 
 static PyObject * py_get_fc_origin(PyObject *self, PyObject *args)
@@ -709,24 +806,6 @@ static PyObject * py_get_fc_all(PyObject *self, PyObject *args)
   const int fc_order = PyArray_DIMS(py_elem_indices)[1] - 1;
 
   alm_get_fc_all(id, fc_values, elem_indices, fc_order, permutation);
-
-  Py_RETURN_NONE;
-}
-
-static PyObject * py_set_fc(PyObject *self, PyObject *args)
-{
-  int id;
-  PyArrayObject* py_fc_in;
-
-  if (!PyArg_ParseTuple(args, "iO",
-                        &id,
-                        &py_fc_in)) {
-    return NULL;
-  }
-
-  double *fc_in = (double*)PyArray_DATA(py_fc_in);
-
-  alm_set_fc(id, fc_in);
 
   Py_RETURN_NONE;
 }

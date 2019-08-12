@@ -64,14 +64,10 @@ include_dirs.append(os.path.join(conda_prefix, "include", "eigen3"))
 
 if compile_with_sources:
     cpp_files = ['alm.cpp',
-                 'alm_cui.cpp',
                  'cluster.cpp',
                  'constraint.cpp',
                  'fcs.cpp',
                  'files.cpp',
-                 'input_parser.cpp',
-                 'input_setter.cpp',
-                 'main.cpp',
                  'optimize.cpp',
                  'patterndisp.cpp',
                  'rref.cpp',

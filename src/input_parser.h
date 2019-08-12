@@ -31,6 +31,7 @@ namespace ALM_NS
                  const char * const *arg);
 
         std::string str_magmom;
+        std::string get_run_mode() const;
 
     private:
         std::ifstream ifs_input;
