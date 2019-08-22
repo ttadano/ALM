@@ -665,7 +665,7 @@ class ALM(object):
             all_disps.append(disp)
         return all_disps
 
-    def get_fc(self, fc_order, mode="origin", permutation=0):
+    def get_fc(self, fc_order, mode="origin", permutation=True):
         """Returns the force constant values
 
         Parameters
@@ -684,19 +684,21 @@ class ALM(object):
             - If "origin", returns the reducible set of force constants,
               whose first element corresponds to an atom in the
               primitive cell at the origin.
-            - If "irreducible" or "irred", returns the irreducible set of
-              force constants.
             - If "all", returns the all non-zero elements of force constants
               in the supercell.
+            - If "irreducible" or "irred", returns the irreducible set of
+              force constants.
 
-        permutation : int
+        permutation : bool (default=True)
             The flag for printing out elements with permutation symmetry.
             Effective only when ``mode = origin`` or ``mode = all``.
 
-            - If ``permutation = 0``, returns force constants without
-              replicating elements by the permutation of indices.
-            - If ``permutation = 1``, returns force constants after
-              replicating elements by the permutation of indices.
+            - If True, returns force constants after replicating elements
+              by the permutation of indices.
+            - If False, returns force constants without replicating elements
+              by the permutation of indices. For "origin" and "all", all
+              indices except the first index participate to the permutation
+              of indices to reduce the number of the output values.
 
         Returns
         -------
@@ -724,14 +726,16 @@ class ALM(object):
                    "(maxorder).")
             raise ValueError(msg)
 
+        perm_int = permutation * 1
+
         if mode == "origin":
 
-            fc_length = self._get_number_of_fc_origin(fc_order, permutation)
+            fc_length = self._get_number_of_fc_origin(fc_order, perm_int)
             fc_values = np.zeros(fc_length, dtype='double')
             elem_indices = np.zeros((fc_length, fc_order + 1),
                                     dtype='intc', order='C')
 
-            alm.get_fc_origin(self._id, fc_values, elem_indices, permutation)
+            alm.get_fc_origin(self._id, fc_values, elem_indices, perm_int)
 
             return fc_values, elem_indices
 
@@ -752,12 +756,12 @@ class ALM(object):
             ntrans = alm.get_atom_mapping_by_pure_translations(self._id,
                                                                map_p2s)
             fc_length = self._get_number_of_fc_origin(
-                fc_order, permutation) * ntrans
+                fc_order, perm_int) * ntrans
             fc_values = np.zeros(fc_length, dtype='double')
             elem_indices = np.zeros((fc_length, fc_order + 1),
                                     dtype='intc', order='C')
 
-            alm.get_fc_all(self._id, fc_values, elem_indices, permutation)
+            alm.get_fc_all(self._id, fc_values, elem_indices, perm_int)
 
             return fc_values, elem_indices
 
