@@ -96,7 +96,7 @@ with ALM(lavec, xcoord, kd) as alm:
         c2 = elem[1] % 3
         print("%f %d%s %d%s" % ((fc, v1 + 1, c[c1], v2 + 1, c[c2])))
 
-    fc_values, elem_indices = alm.get_fc(2, permutation=1)  # cubic fc
+    fc_values, elem_indices = alm.get_fc(2)  # cubic fc
     for (fc, elem) in zip(fc_values, elem_indices):
         v1 = elem[0] // 3
         c1 = elem[0] % 3
