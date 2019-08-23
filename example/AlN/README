@@ -1,0 +1,7 @@
+DFSET_AlN can be extracted from DFSET_AlN.lzma wth GNU tar by
+
+% tar xvfa DFSET_AlN.lzma
+
+With BSD command
+
+% tar xvfz DFSET_AlN.lzma
