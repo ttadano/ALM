@@ -12,8 +12,9 @@ Welcome to ALM's documentation!
 
    intro
    compile-with-conda-packages
-   compile-with-makefile 
+   compile-with-makefile
    input-tags
+   python-module
    format-dfset
    formalism
    modules

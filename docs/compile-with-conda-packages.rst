@@ -43,11 +43,6 @@ For macOS
 
    % conda install -c conda-forge clang_osx-64 clangxx_osx-64 llvm-openmp cmake boost eigen numpy scipy h5py spglib ipython
 
-..
-   Along with this installation of compilers, conda activation and
-   deactivation scripts of environment variables are installed under
-   ``$CONDA_PREFIX/etc/conda/activate.d`` and
-   ``$CONDA_PREFIX/etc/conda/deactivate.d``, respectively.
 
 .. _build_ALMlib:
 

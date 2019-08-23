@@ -107,13 +107,16 @@ class ALM(object):
         self.lavec = lavec
         self.xcoord = xcoord
         self.numbers = numbers
-        self.verbosity = verbosity
+        self._verbosity = verbosity
 
         self._output_filename_prefix = None
 
         # Whether python parameters are needed to be copied to C++ instance
         # or not.
         self._need_transfer = True
+
+        # self.define() has been done or not.
+        self._defined = False
 
     @property
     def lavec(self):
@@ -225,7 +228,7 @@ class ALM(object):
         """
 
         self._verbosity = verbosity
-        self._need_transfer = True
+        self._set_verbosity()
 
     def set_verbosity(self, verbosity):
         self.verbosity = verbosity
@@ -257,6 +260,8 @@ class ALM(object):
             self._id = alm.alm_new()
             if self._id < 0:
                 raise RuntimeError("Too many ALM objects")
+            if self._verbosity is not None:
+                self.verbosity = self._verbosity
         else:
             raise("This ALM object is already initialized.")
 
@@ -272,7 +277,7 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         alm.alm_delete(self._id)
         self._id = None
@@ -281,11 +286,12 @@ class ALM(object):
         """Compute displacement patterns to obtain force constants."""
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
-        self._transfer_parameters()
-
-        alm.suggest(self._id)
+        if self._defined:
+            alm.suggest(self._id)
+        else:
+            self._show_error_not_defined()
 
     def optimize(self, solver='dense'):
         """Fit force constants to forces.
@@ -310,9 +316,10 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
-        self._transfer_parameters()
+        if not self._defined:
+            self._show_error_not_defined()
 
         solvers = {'dense': 'dense', 'simplicialldlt': 'SimplicialLDLT'}
 
@@ -334,7 +341,7 @@ class ALM(object):
         """Set output prefix of output filename"""
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         if type(prefix) is str:
             self._output_filename_prefix = prefix
@@ -346,7 +353,7 @@ class ALM(object):
     @property
     def optimizer_control(self):
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         optctrl = alm.get_optimizer_control(self._id)
         keys = optimizer_control_data_types.keys()
@@ -356,7 +363,7 @@ class ALM(object):
     @optimizer_control.setter
     def optimizer_control(self, optcontrol):
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         keys = optimizer_control_data_types.keys()
         optctrl = []
@@ -390,7 +397,7 @@ class ALM(object):
 
         """
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         ndata = alm.get_number_of_data(self._id)
         u = np.zeros((ndata, len(self._xcoord), 3), dtype='double', order='C')
@@ -413,7 +420,7 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         if u.ndim != 3:
             msg = "Displacement array has to be three dimensions."
@@ -434,7 +441,7 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         ndata = alm.get_number_of_data(self._id)
         f = np.zeros((ndata, len(self._xcoord), 3), dtype='double', order='C')
@@ -457,7 +464,7 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         if f.ndim != 3:
             msg = "Force array has to be three dimensions."
@@ -523,7 +530,7 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         self._transfer_parameters()
 
@@ -567,6 +574,8 @@ class ALM(object):
 
         alm.init_fc_table(self._id)
 
+        self._defined = True
+
     def set_constraint(self, translation=True, rotation=False):
         """Set constraints for the translational and rotational invariances
 
@@ -607,7 +616,10 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
+
+        if not self._defined:
+            self._show_error_not_defined()
 
         map_p2s = np.zeros(len(self._xcoord), dtype='intc')
         ntrans = alm.get_atom_mapping_by_pure_translations(self._id, map_p2s)
@@ -639,7 +651,7 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         if fc_order > self._maxorder:
             msg = ("The fc_order must not be larger than the maximum order "
@@ -719,7 +731,7 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         if fc_order > self._maxorder:
             msg = ("The fc_order must not be larger than the maximum order "
@@ -787,7 +799,7 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         maxorder = self._maxorder
         fc_length_irred = 0
@@ -823,7 +835,7 @@ class ALM(object):
         """
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         maxorder = self._maxorder
         nrows = self._get_nrows_amat()
@@ -843,7 +855,7 @@ class ALM(object):
         """Returns L1 alpha at minimum CV"""
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         return alm.get_cv_l1_alpha(self._id)
 
@@ -853,14 +865,14 @@ class ALM(object):
     def _transfer_parameters(self):
         if self._need_transfer:
             self._set_cell()
-            self._set_verbosity()
             self._need_transfer = False
+            self._defined = False
 
     def _set_cell(self):
         """Inject crystal structure in C++ instance"""
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         if self._lavec is None:
             msg = "Basis vectors are not set."
@@ -886,14 +898,14 @@ class ALM(object):
         """Inject verbosity in C++ instance."""
 
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
 
         alm.set_verbosity(self._id, self._verbosity)
 
     def _get_nrows_amat(self):
         """Private method to return the number of training data sets"""
         if self._id is None:
-            self._show_error_message()
+            self._show_error_not_initizalied()
         nrows_amat = alm.get_nrows_amat(self._id)
         return nrows_amat
 
@@ -974,7 +986,12 @@ class ALM(object):
         """
         return alm.get_number_of_irred_fc_elements(self._id, fc_order)
 
-    def _show_error_message(self):
+    def _show_error_not_initizalied(self):
         """Private method to raise an error"""
-        msg = "This ALM object has to be initialized by ALM::alm_new()"
+        msg = ("This ALM instance has to be initialized by ALM.alm_new() or "
+               "context manager.")
+        raise RuntimeError(msg)
+
+    def _show_error_not_defined(self):
+        msg = "This ALM.define() has to be done beforehand."
         raise RuntimeError(msg)
