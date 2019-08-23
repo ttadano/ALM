@@ -187,6 +187,7 @@ extern "C" {
                       const int kind_numbers[])
     {
         int atom_mapping[nat];
+        double lavec_T[3][3];
         std::string *kdname = new std::string[nkind];
 
         for (auto i = 0; i < nkind; i++) {
@@ -202,7 +203,14 @@ extern "C" {
             }
         }
 
-        alm[id]->set_cell(nat, lavec, xcoord, atom_mapping, kdname);
+        // Transpose lavec because alm.cpp's definition is by column vectors.
+        for (auto i = 0; i < 3; i++) {
+            for (auto j = 0; j < 3; j++) {
+                lavec_T[i][j] = lavec[j][i];
+            }
+        }
+
+        alm[id]->set_cell(nat, lavec_T, xcoord, atom_mapping, kdname);
         delete [] kdname;
     }
 

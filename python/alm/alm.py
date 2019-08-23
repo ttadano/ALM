@@ -43,7 +43,7 @@ class ALM(object):
     Attributes
     ----------
     lavec : ndarray
-        Basis vectors. a, b, c are given as column vectors.
+        Basis vectors. a, b, c are given as row vectors.
         shape=(3, 3), dtype='double'
     xcoord : ndarray
         Fractional coordinates of atomic points.
@@ -122,7 +122,7 @@ class ALM(object):
         Returns
         -------
         lavec : ndarray
-        Copy of basis vectors. a, b, c are given as column vectors.
+        Copy of basis vectors. a, b, c are given as row vectors.
         shape=(3, 3), dtype='double', order='C'
 
         """
@@ -135,7 +135,7 @@ class ALM(object):
         Parameters
         ----------
         lavec : array_like
-        Basis vectors. a, b, c are given as column vectors.
+        Basis vectors. a, b, c are given as row vectors.
         shape=(3, 3), dtype='double', order='C'
 
         """
