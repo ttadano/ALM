@@ -36,6 +36,51 @@ Cluster::~Cluster()
     deallocate_variables();
 }
 
+void Cluster::set_default_variables()
+{
+    maxorder = 0;
+    nbody_include = nullptr;
+    cutoff_radii = nullptr;
+    distall = nullptr;
+    mindist_pairs = nullptr;
+    cluster_list = nullptr;
+    interaction_pair = nullptr;
+    interaction_cluster = nullptr;
+}
+
+void Cluster::deallocate_variables()
+{
+    if (nbody_include) {
+        deallocate(nbody_include);
+        nbody_include = nullptr;
+    }
+    if (cutoff_radii) {
+        deallocate(cutoff_radii);
+        cutoff_radii = nullptr;
+    }
+    if (cluster_list) {
+        deallocate(cluster_list);
+        cluster_list = nullptr;
+    }
+    if (mindist_pairs) {
+        deallocate(mindist_pairs);
+        mindist_pairs = nullptr;
+    }
+    if (interaction_pair) {
+        deallocate(interaction_pair);
+        interaction_pair = nullptr;
+    }
+    if (interaction_cluster) {
+        deallocate(interaction_cluster);
+        interaction_cluster = nullptr;
+    }
+    if (distall) {
+        deallocate(distall);
+        distall = nullptr;
+    }
+}
+
+
 void Cluster::init(const System *system,
                    const Symmetry *symmetry,
                    const int verbosity,
@@ -79,7 +124,7 @@ void Cluster::init(const System *system,
     allocate(cluster_list, maxorder);
 
     // Default values of cutoof_radii and nbody_include
-    if (! cutoff_radii) {
+    if (!cutoff_radii) {
         allocate(cutoff_radii, maxorder, nkd, nkd);
         for (i = 0; i < maxorder; ++i) {
             for (j = 0; j < nkd; ++j) {
@@ -89,16 +134,16 @@ void Cluster::init(const System *system,
             }
         }
     }
-    if (! nbody_include) {
+    if (!nbody_include) {
         allocate(nbody_include, maxorder);
         for (i = 0; i < maxorder; ++i) {
             nbody_include[i] = i + 2;
         }
     }
 
-    get_pairs_of_minimum_distance(nat,
-                                  system->get_x_image(),
-                                  system->get_exist_image());
+    generate_pairs_of_minimum_distance(nat,
+                                       system->get_x_image(),
+                                       system->get_exist_image());
 
     set_interaction_by_cutoff(system->get_supercell().number_of_atoms,
                               system->get_supercell().kind,
@@ -200,49 +245,6 @@ void Cluster::generate_pairs(const size_t natmin,
     }
 }
 
-void Cluster::set_default_variables()
-{
-    maxorder = 0;
-    nbody_include = nullptr;
-    cutoff_radii = nullptr;
-    distall = nullptr;
-    mindist_pairs = nullptr;
-    cluster_list = nullptr;
-    interaction_pair = nullptr;
-    interaction_cluster = nullptr;
-}
-
-void Cluster::deallocate_variables()
-{
-    if (nbody_include) {
-        deallocate(nbody_include);
-        nbody_include = nullptr;
-    }
-    if (cutoff_radii) {
-        deallocate(cutoff_radii);
-        cutoff_radii = nullptr;
-    }
-    if (cluster_list) {
-        deallocate(cluster_list);
-        cluster_list = nullptr;
-    }
-    if (mindist_pairs) {
-        deallocate(mindist_pairs);
-        mindist_pairs = nullptr;
-    }
-    if (interaction_pair) {
-        deallocate(interaction_pair);
-        interaction_pair = nullptr;
-    }
-    if (interaction_cluster) {
-        deallocate(interaction_cluster);
-        interaction_cluster = nullptr;
-    }
-    if (distall) {
-        deallocate(distall);
-        distall = nullptr;
-    }
-}
 
 double Cluster::distance(const double *x1,
                          const double *x2) const
@@ -253,9 +255,9 @@ double Cluster::distance(const double *x1,
     return dist;
 }
 
-void Cluster::get_pairs_of_minimum_distance(const size_t nat,
-                                            const double * const * const *xc_in,
-                                            const int *exist) const
+void Cluster::generate_pairs_of_minimum_distance(const size_t nat,
+                                                 const double *const *const *xc_in,
+                                                 const int *exist) const
 {
     size_t i, j;
     double vec[3];
@@ -419,9 +421,11 @@ void Cluster::generate_interaction_information_by_cutoff(const size_t nat,
                                                          const size_t natmin,
                                                          const std::vector<int> &kd,
                                                          const std::vector<std::vector<int>> &map_p2s,
-                                                         const double * const *rc,
+                                                         const double *const *rc,
                                                          std::vector<int> *interaction_list) const
 {
+    // For each atom 'i' in the unit cell at origin, generate a list of atoms 'j'
+    // whose distance from atom 'i' is smaller than the given cutoff radius.
     for (size_t i = 0; i < natmin; ++i) {
 
         interaction_list[i].clear();
@@ -648,7 +652,7 @@ bool Cluster::satisfy_nbody_rule(const int nelem,
 void Cluster::calc_interaction_clusters(const size_t natmin,
                                         const std::vector<int> &kd,
                                         const std::vector<std::vector<int>> &map_p2s,
-                                        const double * const * const *x_image,
+                                        const double *const *const *x_image,
                                         const int *exist) const
 {
     //
@@ -674,7 +678,7 @@ void Cluster::set_interaction_cluster(const int order,
                                       const std::vector<int> &kd,
                                       const std::vector<std::vector<int>> &map_p2s,
                                       const std::vector<int> *interaction_pair_in,
-                                      const double * const * const *x_image,
+                                      const double *const *const *x_image,
                                       const int *exist,
                                       std::set<InteractionCluster> *interaction_cluster_out) const
 {

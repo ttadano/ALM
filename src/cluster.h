@@ -225,7 +225,7 @@ namespace ALM_NS
 
         // can be made const function, but mindist_pairs is modified
         // in this function.
-        void get_pairs_of_minimum_distance(const size_t nat,
+        void generate_pairs_of_minimum_distance(const size_t nat,
                                            const double * const * const *xc_in,
                                            const int *exist) const;
 
