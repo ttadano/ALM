@@ -148,7 +148,7 @@ void Fcs::deallocate_variables()
 
 void Fcs::generate_force_constant_table(const int order,
                                         const size_t nat,
-                                        const std::set<IntList> &pairs,
+                                        const std::set<ClusterEntry> &pairs,
                                         const Symmetry *symm_in,
                                         const std::string basis,
                                         std::vector<FcProperty> &fc_vec,
@@ -208,7 +208,7 @@ void Fcs::generate_force_constant_table(const int order,
     allocate(xyzcomponent, nxyz, order + 2);
     get_xyzcomponent(order + 2, xyzcomponent);
 
-    std::unordered_set<IntList> list_found;
+    std::unordered_set<ClusterEntry> list_found;
 
     for (const auto &pair : pairs) {
 
@@ -227,7 +227,7 @@ void Fcs::generate_force_constant_table(const int order,
 
             is_zero = false;
 
-            if (list_found.find(IntList(order + 2, ind)) != list_found.end()) continue; // Already exits!
+            if (list_found.find(ClusterEntry(order + 2, ind)) != list_found.end()) continue; // Already exits!
 
             // Search symmetrically-dependent parameter set
 
@@ -273,8 +273,8 @@ void Fcs::generate_force_constant_table(const int order,
 
                         // Add to found list (set) and fcset (vector) if the created is new one.
 
-                        if (list_found.find(IntList(order + 2, ind_mapped)) == list_found.end()) {
-                            list_found.insert(IntList(order + 2, ind_mapped));
+                        if (list_found.find(ClusterEntry(order + 2, ind_mapped)) == list_found.end()) {
+                            list_found.insert(ClusterEntry(order + 2, ind_mapped));
 
                             fc_vec.emplace_back(FcProperty(order + 2,
                                                            c_tmp,
