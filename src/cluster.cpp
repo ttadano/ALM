@@ -46,6 +46,7 @@ void Cluster::set_default_variables()
     cluster_list = nullptr;
     interaction_pair = nullptr;
     cluster_each_atom = nullptr;
+    cluster_table = nullptr;
 }
 
 void Cluster::deallocate_variables()
@@ -77,6 +78,10 @@ void Cluster::deallocate_variables()
     if (distall) {
         deallocate(distall);
         distall = nullptr;
+    }
+    if (cluster_table) {
+        deallocate(cluster_table);
+        cluster_table = nullptr;
     }
 }
 
@@ -123,6 +128,11 @@ void Cluster::init(const System *system,
     }
     allocate(cluster_list, maxorder);
 
+    if (cluster_table) {
+        deallocate(cluster_table);
+    }
+    allocate(cluster_table, maxorder);
+
     // If cutoff_radii and nbody_include is not set up to now,
     // use the default values.
     if (!cutoff_radii) {
@@ -156,6 +166,8 @@ void Cluster::init(const System *system,
                               symmetry->get_map_p2s(),
                               system->get_x_image(),
                               system->get_exist_image());
+
+    identify_irreducible_clusters(symmetry, symmetry->get_map_sym());
 
     if (verbosity > 0) {
         std::cout << "  +++ Cutoff Radii Matrix (NKD x NKD matrix) +++" << std::endl;
@@ -632,11 +644,12 @@ void Cluster::calc_interaction_clusters(const size_t natmin,
                         exist,
                         cluster_tmp[order]);
 
-        for (size_t i = 0; i < natmin; ++i) {
-            std::cout << "clusters, order, iat = " << cluster_tmp[order][i].size() << std::endl;
-        }
+        /*      for (size_t i = 0; i < natmin; ++i) {
+                  std::cout << "clusters, order, iat = " << cluster_tmp[order][i].size() << std::endl;
+              }*/
 
 
+        // This method is left here temporary and will be removed in future.
         set_interaction_cluster(order,
                                 natmin,
                                 kd,
@@ -925,7 +938,7 @@ void Cluster::search_clusters(const int order,
                               const std::vector<int> *interaction_pair_in,
                               const double *const*const*x_image,
                               const int *exist,
-                              std::vector<std::vector<int>> *interaction_cluster_out) const
+                              std::vector<std::vector<int>> *cluster_tmp) const
 {
     //
     // Calculate a set of clusters for the given order
@@ -963,7 +976,7 @@ void Cluster::search_clusters(const int order,
 
     for (size_t i = 0; i < natmin; ++i) {
 
-        interaction_cluster_out[i].clear();
+        cluster_tmp[i].clear();
 
         const auto iat = map_p2s[i][0];
         const auto ikd = kd[iat] - 1;
@@ -988,7 +1001,7 @@ void Cluster::search_clusters(const int order,
                 atom_tmp.clear();
                 atom_tmp.push_back(jat);
 
-                interaction_cluster_out[i].emplace_back(atom_tmp);
+                cluster_tmp[i].emplace_back(atom_tmp);
             }
 
         } else if (order > 0) {
@@ -1102,14 +1115,14 @@ void Cluster::search_clusters(const int order,
                     if (isok) {
                         // If any of the mirror image combination satisfies the 
                         // cutoff radii criterion, add the cluster to the list and break the loop.
-                        interaction_cluster_out[i].emplace_back(data_now);
+                        cluster_tmp[i].emplace_back(data_now);
                         break;
                     }
                 } // close loop over the mirror image combination
             }
         }
 
-        for (const auto &it : interaction_cluster_out[i]) {
+        for (const auto &it : cluster_tmp[i]) {
 
             list_now[0] = iat;
             for (j = 0; j < order + 1; ++j) {
@@ -1131,4 +1144,61 @@ void Cluster::search_clusters(const int order,
         cluster_list[order].insert(it);
     }
     deallocate(list_now);
+}
+
+void Cluster::identify_irreducible_clusters(const Symmetry *symm_in,
+                                            const std::vector<std::vector<int>> &map_sym)
+{
+    const auto nsym = map_sym[0].size();
+
+    std::vector<int> atoms, atoms_symm;
+
+
+    for (size_t order = 0; order < maxorder; ++order) {
+        atoms.resize(order + 2);
+        atoms_symm.resize(order + 2);
+
+        auto cluster_list_copy(cluster_list[order]);
+        auto it = cluster_list_copy.begin();
+
+        //while (true) {
+        //    if (cluster_list_copy.empty()) break;
+
+
+        //}
+
+        for (const auto &it : cluster_list[order]) {
+
+            for (size_t i = 0; i < order + 2; ++i) {
+                atoms[i] = it.iarray[i];
+            }
+
+            for (size_t isym = 0; isym < nsym; ++isym) {
+
+                for (size_t i = 0; i < order + 2; ++i) {
+                    atoms_symm[i] = map_sym[atoms[i]][isym];
+                }
+
+                if (!is_ascending(atoms_symm)) continue;
+                if (!symm_in->is_anyof_inside_primitive(atoms_symm)) continue;
+
+                for (size_t i = 0; i < order + 2; ++i) {
+                    std::cout << std::setw(5) << atoms_symm[i] + 1;
+                }
+                std::cout << std::endl;
+
+
+            }
+            std::cout << std::endl;
+        }
+    }
+}
+
+bool Cluster::is_ascending(const std::vector<int>& arr) const
+{
+    const auto n = arr.size();
+    for (auto i = 0; i < n - 1; ++i) {
+        if (arr[i] > arr[i + 1]) return false;
+    }
+    return true;
 }

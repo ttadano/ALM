@@ -205,7 +205,7 @@ namespace ALM_NS
         const std::vector<int>& get_interaction_pair(const unsigned int order,
                                                      const size_t atom_index) const;
         const std::set<InteractionCluster>& get_cluster_each_atom(const unsigned int order,
-                                                                    const size_t atom_index) const;
+                                                                  const size_t atom_index) const;
 
         //void erase_cluster(const unsigned int order,
         //                   const std::vector<int> &target_cluster,
@@ -217,10 +217,11 @@ namespace ALM_NS
         int *nbody_include;
         double ***cutoff_radii;
         std::set<ClusterEntry> *cluster_list; // List of clusters without duplication
-        std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
+        std::vector<int> **interaction_pair;  // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **cluster_each_atom;
+        std::vector<std::vector<ClusterEntry>> *cluster_table;
 
-        std::vector<DistInfo> **distall; // Distance of all pairs (i,j) under the PBC
+        std::vector<DistInfo> **distall;       // Distance of all pairs (i,j) under the PBC
         std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
         // Interacting many-body clusters with mirrow image information
 
@@ -277,12 +278,16 @@ namespace ALM_NS
                              const std::vector<int> *interaction_pair_in,
                              const double *const*const*x_image,
                              const int *exist,
-                             std::vector<std::vector<int>> *interaction_cluster_out) const;
+                             std::vector<std::vector<int>> *cluster_tmp) const;
+
+        void identify_irreducible_clusters(const Symmetry *symm_in,
+                                           const std::vector<std::vector<int>> &map_sym);
 
         void cell_combination(const std::vector<std::vector<int>> &,
                               const size_t,
                               const std::vector<int> &,
                               std::vector<std::vector<int>> &) const;
+        bool is_ascending(const std::vector<int> &arr) const;
     };
 }
 
