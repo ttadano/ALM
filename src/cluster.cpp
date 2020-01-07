@@ -482,6 +482,24 @@ const std::set<InteractionCluster>& Cluster::get_cluster_each_atom(const unsigne
     return cluster_each_atom[order][atom_index];
 }
 
+//void Cluster::erase_cluster(const unsigned order,
+//                            const std::vector<int> &target_cluster,
+//                            const Symmetry *symmetry)
+//{
+//    if (order >= maxorder) return;
+//
+//    for (auto i = 0; i < target_cluster.size(); ++i) {
+//
+//        auto iat = target_cluster[i];
+//        auto is_inside_primitive = false;
+//
+//        for (auto j = 0; j < symmetry->get_nat_prim(), ++j) {
+//            
+//        }
+//    
+//    }
+//}
+
 void Cluster::print_interaction_information(const size_t natmin,
                                             const std::vector<std::vector<int>> &map_p2s,
                                             const std::vector<int> &kd,

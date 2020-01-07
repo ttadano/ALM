@@ -159,10 +159,9 @@ void Fcs::generate_force_constant_table(const int order,
     size_t i, j;
     int i1, i2;
     int i_prim;
-    int *atmn, *atmn_mapped;
-    int *ind, *ind_mapped;
-    int *ind_tmp, *ind_mapped_tmp;
-    int nxyz;
+    std::vector<int> atmn, atmn_mapped;
+    std::vector<int> ind, ind_mapped;
+    std::vector<int> ind_tmp, ind_mapped_tmp;
     unsigned int isym;
 
     double c_tmp;
@@ -190,12 +189,12 @@ void Fcs::generate_force_constant_table(const int order,
                          rotation,
                          use_compatible);
 
-    allocate(atmn, order + 2);
-    allocate(atmn_mapped, order + 2);
-    allocate(ind, order + 2);
-    allocate(ind_mapped, order + 2);
-    allocate(ind_tmp, order);
-    allocate(ind_mapped_tmp, order + 2);
+    atmn.resize(order + 2);
+    atmn_mapped.resize(order + 2);
+    ind.resize(order + 2);
+    ind_mapped.resize(order + 2);
+    ind_tmp.resize(order);
+    ind_mapped_tmp.resize(order + 2);
     allocate(is_searched, 3 * nat);
 
     fc_vec.clear();
@@ -203,7 +202,7 @@ void Fcs::generate_force_constant_table(const int order,
     fc_zeros_out.clear();
     size_t nmother = 0;
 
-    nxyz = static_cast<int>(std::pow(3.0, order + 2));
+    const auto nxyz = static_cast<int>(std::pow(3.0, order + 2));
 
     allocate(xyzcomponent, nxyz, order + 2);
     get_xyzcomponent(order + 2, xyzcomponent);
@@ -215,19 +214,21 @@ void Fcs::generate_force_constant_table(const int order,
         for (i = 0; i < order + 2; ++i) atmn[i] = pair.iarray[i];
 
         for (i1 = 0; i1 < nxyz; ++i1) {
-            for (i = 0; i < order + 2; ++i) ind[i] = 3 * atmn[i] + xyzcomponent[i1][i];
+            for (i = 0; i < order + 2; ++i) {
+                ind[i] = 3 * atmn[i] + xyzcomponent[i1][i];
+            }
 
-            if (!is_ascending(order + 2, ind)) continue;
+            if (!is_ascending(ind)) continue;
 
-            i_prim = get_minimum_index_in_primitive(order + 2, ind, nat,
+            i_prim = get_minimum_index_in_primitive(order + 2, &ind[0], nat,
                                                     symm_in->get_nat_prim(),
                                                     symm_in->get_map_p2s());
             std::swap(ind[0], ind[i_prim]);
-            sort_tail(order + 2, ind);
+            sort_tail(order + 2, &ind[0]);
 
             is_zero = false;
 
-            if (list_found.find(ClusterEntry(order + 2, ind)) != list_found.end()) continue; // Already exits!
+            if (list_found.find(ClusterEntry(order + 2, &ind[0])) != list_found.end()) continue; // Already exits!
 
             // Search symmetrically-dependent parameter set
 
@@ -237,11 +238,7 @@ void Fcs::generate_force_constant_table(const int order,
 
                 for (i = 0; i < order + 2; ++i) atmn_mapped[i] = map_sym[atmn[i]][isym];
 
-                if (!is_inprim(order + 2,
-                               atmn_mapped,
-                               symm_in->get_nat_prim(),
-                               symm_in->get_map_p2s()))
-                    continue;
+                if (!symm_in->is_anyof_inside_primitive(atmn_mapped)) continue;
 
                 for (i2 = 0; i2 < nxyz; ++i2) {
 
@@ -251,16 +248,17 @@ void Fcs::generate_force_constant_table(const int order,
                                      xyzcomponent[i2]);
 
                     if (std::abs(c_tmp) > eps12) {
-                        for (i = 0; i < order + 2; ++i)
+                        for (i = 0; i < order + 2; ++i) {
                             ind_mapped[i] = 3 * atmn_mapped[i] + xyzcomponent[i2][i];
+                        }
 
                         i_prim = get_minimum_index_in_primitive(order + 2,
-                                                                ind_mapped,
+                                                                &ind_mapped[0],
                                                                 nat,
                                                                 symm_in->get_nat_prim(),
                                                                 symm_in->get_map_p2s());
                         std::swap(ind_mapped[0], ind_mapped[i_prim]);
-                        sort_tail(order + 2, ind_mapped);
+                        sort_tail(order + 2, &ind_mapped[0]);
 
                         if (!is_zero) {
                             bool zeroflag = true;
@@ -273,12 +271,12 @@ void Fcs::generate_force_constant_table(const int order,
 
                         // Add to found list (set) and fcset (vector) if the created is new one.
 
-                        if (list_found.find(ClusterEntry(order + 2, ind_mapped)) == list_found.end()) {
-                            list_found.insert(ClusterEntry(order + 2, ind_mapped));
+                        if (list_found.find(ClusterEntry(order + 2, &ind_mapped[0])) == list_found.end()) {
+                            list_found.insert(ClusterEntry(order + 2, &ind_mapped[0]));
 
                             fc_vec.emplace_back(FcProperty(order + 2,
                                                            c_tmp,
-                                                           ind_mapped,
+                                                           &ind_mapped[0],
                                                            nmother));
                             ++ndeps;
 
@@ -289,20 +287,20 @@ void Fcs::generate_force_constant_table(const int order,
                             for (i = 0; i < 3 * nat; ++i) is_searched[i] = false;
                             is_searched[ind_mapped[0]] = true;
                             for (i = 1; i < order + 2; ++i) {
-                                if ((!is_searched[ind_mapped[i]]) && is_inprim(ind_mapped[i],
-                                                                               symm_in->get_nat_prim(),
-                                                                               symm_in->get_map_p2s())) {
+                                std::vector<int> ind_mapped_search;
+                                ind_mapped_search.push_back(ind_mapped[i] / 3);
+                            
+                                if ((!is_searched[ind_mapped[i]])
+                                    && symm_in->is_anyof_inside_primitive(ind_mapped_search)) {
 
                                     for (j = 0; j < order + 2; ++j) ind_mapped_tmp[j] = ind_mapped[j];
                                     std::swap(ind_mapped_tmp[0], ind_mapped_tmp[i]);
-                                    sort_tail(order + 2, ind_mapped_tmp);
+                                    sort_tail(order + 2, &ind_mapped_tmp[0]);
                                     fc_vec.emplace_back(FcProperty(order + 2,
                                                                    c_tmp,
-                                                                   ind_mapped_tmp,
+                                                                   &ind_mapped_tmp[0],
                                                                    nmother));
-
                                     ++ndeps;
-
                                     is_searched[ind_mapped[i]] = true;
                                 }
                             }
@@ -327,16 +325,10 @@ void Fcs::generate_force_constant_table(const int order,
             }
 
         } // close xyz component loop
-    }     // close atom number loop (iterator)
+    } // close atom number loop (iterator)
 
     deallocate(xyzcomponent);
     list_found.clear();
-    deallocate(atmn);
-    deallocate(atmn_mapped);
-    deallocate(ind);
-    deallocate(ind_mapped);
-    deallocate(ind_tmp);
-    deallocate(ind_mapped_tmp);
     deallocate(is_searched);
     deallocate(rotation);
     deallocate(map_sym);
@@ -431,7 +423,8 @@ void Fcs::get_constraint_symmetry(const size_t nat,
         int i_prim;
         int loc_nonzero;
         int *ind;
-        int *atm_index, *atm_index_symm;
+        int *atm_index;
+        std::vector<int> atm_index_symm;
         int *xyz_index;
         double c_tmp;
         // double maxabs;
@@ -445,7 +438,7 @@ void Fcs::get_constraint_symmetry(const size_t nat,
 
         allocate(ind, order + 2);
         allocate(atm_index, order + 2);
-        allocate(atm_index_symm, order + 2);
+        atm_index_symm.resize(order + 2);
         allocate(xyz_index, order + 2);
 
         const_omp.clear();
@@ -463,9 +456,8 @@ void Fcs::get_constraint_symmetry(const size_t nat,
 
             for (isym = 0; isym < nsym_in_use; ++isym) {
 
-                for (i = 0; i < order + 2; ++i)
-                    atm_index_symm[i] = map_sym[atm_index[i]][isym];
-                if (!is_inprim(order + 2, atm_index_symm, natmin, symmetry->get_map_p2s())) continue;
+                for (i = 0; i < order + 2; ++i) atm_index_symm[i] = map_sym[atm_index[i]][isym];
+                if (!symmetry->is_anyof_inside_primitive(atm_index_symm)) continue;
 
                 for (i = 0; i < nparams; ++i) const_now_omp[i] = 0.0;
 
@@ -501,11 +493,11 @@ void Fcs::get_constraint_symmetry(const size_t nat,
                 }
 
             } // close isym loop
-        }     // close ii loop
+        } // close ii loop
 
         deallocate(ind);
         deallocate(atm_index);
-        deallocate(atm_index_symm);
+        //deallocate(atm_index_symm);
         deallocate(xyz_index);
 
 #pragma omp critical
@@ -627,7 +619,8 @@ void Fcs::get_constraint_symmetry_in_integer(const size_t nat,
         int i_prim;
         int loc_nonzero;
         int *ind;
-        int *atm_index, *atm_index_symm;
+        int* atm_index;
+        std::vector<int> atm_index_symm;
         int *xyz_index;
         int c_tmp;
 
@@ -640,7 +633,7 @@ void Fcs::get_constraint_symmetry_in_integer(const size_t nat,
 
         allocate(ind, order + 2);
         allocate(atm_index, order + 2);
-        allocate(atm_index_symm, order + 2);
+        atm_index_symm.resize(order + 2);
         allocate(xyz_index, order + 2);
 
         const_omp.clear();
@@ -660,7 +653,8 @@ void Fcs::get_constraint_symmetry_in_integer(const size_t nat,
 
                 for (i = 0; i < order + 2; ++i)
                     atm_index_symm[i] = map_sym[atm_index[i]][isym];
-                if (!is_inprim(order + 2, atm_index_symm, natmin, symmetry->get_map_p2s())) continue;
+
+                if (!symmetry->is_anyof_inside_primitive(atm_index_symm)) continue;
 
                 for (i = 0; i < nparams; ++i) const_now_omp[i] = 0;
 
@@ -700,7 +694,6 @@ void Fcs::get_constraint_symmetry_in_integer(const size_t nat,
 
         deallocate(ind);
         deallocate(atm_index);
-        deallocate(atm_index_symm);
         deallocate(xyz_index);
 
 #pragma omp critical
@@ -995,9 +988,9 @@ double Fcs::coef_sym(const int n,
     return tmp;
 }
 
-bool Fcs::is_ascending(const int n,
-                       const int *arr) const
+bool Fcs::is_ascending(const std::vector<int> &arr) const
 {
+    const auto n = arr.size();
     for (auto i = 0; i < n - 1; ++i) {
         if (arr[i] > arr[i + 1]) return false;
     }
@@ -1036,32 +1029,6 @@ int Fcs::get_minimum_index_in_primitive(const int n,
     }
 
     return minloc;
-}
-
-bool Fcs::is_inprim(const int n,
-                    const int *arr,
-                    const size_t natmin,
-                    const std::vector<std::vector<int>> &map_p2s) const
-{
-    for (auto i = 0; i < n; ++i) {
-        for (size_t j = 0; j < natmin; ++j) {
-            if (map_p2s[j][0] == arr[i]) return true;
-        }
-    }
-    return false;
-}
-
-bool Fcs::is_inprim(const int n,
-                    const size_t natmin,
-                    const std::vector<std::vector<int>> &map_p2s) const
-{
-    const auto atmn = n / 3;
-
-    for (size_t i = 0; i < natmin; ++i) {
-        if (map_p2s[i][0] == atmn) return true;
-    }
-
-    return false;
 }
 
 void Fcs::get_xyzcomponent(const int n,

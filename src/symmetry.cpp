@@ -99,6 +99,16 @@ size_t Symmetry::get_nat_prim() const
     return nat_prim;
 }
 
+bool Symmetry::is_anyof_inside_primitive(const std::vector<int> &atoms) const
+{
+    for (auto atom : atoms) {
+        for (size_t j = 0; j < nat_prim; ++j) {
+            if (map_p2s[j][0] == atom) return true;
+        }
+    }
+    return false;
+}
+
 void Symmetry::init(const System *system,
                     const int verbosity,
                     Timer *timer)
@@ -903,3 +913,4 @@ void Symmetry::set_primitive_lattice(const double aa[3][3],
     deallocate(position);
     deallocate(types_tmp);
 }
+

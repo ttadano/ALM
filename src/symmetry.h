@@ -123,6 +123,7 @@ namespace ALM_NS
         size_t get_nsym() const;
         size_t get_ntran() const;
         size_t get_nat_prim() const;
+        bool is_anyof_inside_primitive(const std::vector<int> &atoms) const;
 
     private:
         size_t nsym, ntran, nat_prim;
