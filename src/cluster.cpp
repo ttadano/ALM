@@ -45,7 +45,7 @@ void Cluster::set_default_variables()
     mindist_pairs = nullptr;
     cluster_list = nullptr;
     interaction_pair = nullptr;
-    interaction_cluster = nullptr;
+    cluster_each_atom = nullptr;
 }
 
 void Cluster::deallocate_variables()
@@ -70,9 +70,9 @@ void Cluster::deallocate_variables()
         deallocate(interaction_pair);
         interaction_pair = nullptr;
     }
-    if (interaction_cluster) {
-        deallocate(interaction_cluster);
-        interaction_cluster = nullptr;
+    if (cluster_each_atom) {
+        deallocate(cluster_each_atom);
+        cluster_each_atom = nullptr;
     }
     if (distall) {
         deallocate(distall);
@@ -113,10 +113,10 @@ void Cluster::init(const System *system,
     }
     allocate(interaction_pair, maxorder, symmetry->get_nat_prim());
 
-    if (interaction_cluster) {
-        deallocate(interaction_cluster);
+    if (cluster_each_atom) {
+        deallocate(cluster_each_atom);
     }
-    allocate(interaction_cluster, maxorder, symmetry->get_nat_prim());
+    allocate(cluster_each_atom, maxorder, symmetry->get_nat_prim());
 
     if (cluster_list) {
         deallocate(cluster_list);
@@ -476,10 +476,10 @@ const std::vector<int>& Cluster::get_interaction_pair(const unsigned int order,
     return interaction_pair[order][atom_index];
 }
 
-const std::set<InteractionCluster>& Cluster::get_interaction_cluster(const unsigned int order,
-                                                                     const size_t atom_index) const
+const std::set<InteractionCluster>& Cluster::get_cluster_each_atom(const unsigned int order,
+                                                                   const size_t atom_index) const
 {
-    return interaction_cluster[order][atom_index];
+    return cluster_each_atom[order][atom_index];
 }
 
 void Cluster::print_interaction_information(const size_t natmin,
@@ -626,7 +626,7 @@ void Cluster::calc_interaction_clusters(const size_t natmin,
                                 interaction_pair[order],
                                 x_image,
                                 exist,
-                                interaction_cluster[order]);
+                                cluster_each_atom[order]);
 
     }
     deallocate(cluster_tmp);
@@ -1106,8 +1106,7 @@ void Cluster::search_clusters(const int order,
     cluster_merged.erase(std::unique(cluster_merged.begin(), cluster_merged.end()),
                          cluster_merged.end());
 
-    std::cout << "cluster_merged.size() = " << cluster_merged.size() << std::endl;
-
+    // Create cluster_list for later reference.
     cluster_list[order].clear();
 
     for (const auto &it : cluster_merged) {
