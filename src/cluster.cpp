@@ -318,19 +318,29 @@ void Cluster::print_neighborlist(const size_t nat,
     int iat;
     int icount;
 
-    std::vector<DistList> *neighborlist;
+    std::vector<std::pair<size_t, double>> *neighbor;
+    std::pair<size_t, double> pair_tmp;
 
-    allocate(neighborlist, natmin);
+    allocate(neighbor, natmin);
 
     for (i = 0; i < natmin; ++i) {
-        neighborlist[i].clear();
 
         iat = map_p2s[i][0];
 
         for (j = 0; j < nat; ++j) {
-            neighborlist[i].emplace_back(DistList(j, mindist_pairs[iat][j][0].dist));
+            pair_tmp.first = j;
+            pair_tmp.second = mindist_pairs[iat][j][0].dist;
+            neighbor[i].push_back(pair_tmp);
         }
-        std::sort(neighborlist[i].begin(), neighborlist[i].end());
+        std::sort(neighbor[i].begin(), neighbor[i].end(),
+                  [](const std::pair<size_t, double> &a,
+                     const std::pair<size_t, double> &b)
+                  {
+                      if (std::abs(a.second - b.second) > eps8) {
+                          return a.second < b.second;
+                      }
+                      return a.first < b.first;
+                  });
     }
 
     std::cout << std::endl;
@@ -353,9 +363,9 @@ void Cluster::print_neighborlist(const size_t nat,
 
         for (j = 0; j < nat; ++j) {
 
-            if (neighborlist[i][j].dist < eps8) continue; // distance is zero
+            if (neighbor[i][j].second < eps8) continue; // distance is zero
 
-            if (std::abs(neighborlist[i][j].dist - dist_tmp) > eps6) {
+            if (std::abs(neighbor[i][j].second - dist_tmp) > eps6) {
 
                 if (!atomlist.empty()) {
                     nthnearest += 1;
@@ -383,11 +393,11 @@ void Cluster::print_neighborlist(const size_t nat,
                 }
 
 
-                dist_tmp = neighborlist[i][j].dist;
+                dist_tmp = neighbor[i][j].second;
                 atomlist.clear();
-                atomlist.push_back(neighborlist[i][j].atom);
+                atomlist.push_back(neighbor[i][j].first);
             } else {
-                atomlist.push_back(neighborlist[i][j].atom);
+                atomlist.push_back(neighbor[i][j].first);
             }
         }
         if (!atomlist.empty()) {
@@ -417,7 +427,7 @@ void Cluster::print_neighborlist(const size_t nat,
         std::cout << std::endl;
     }
     atomlist.clear();
-    deallocate(neighborlist);
+    deallocate(neighbor);
 }
 
 

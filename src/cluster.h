@@ -85,27 +85,6 @@ namespace ALM_NS
         }
     };
 
-    class DistList
-        // This class is used only in print_neighborlist. Can be replaced by a more generalic function.
-    {
-    public:
-        size_t atom;
-        double dist;
-
-        DistList() = default;
-
-        DistList(const size_t atom_,
-                 const double dist_) : atom(atom_), dist(dist_) { };
-
-        bool operator<(const DistList &a) const
-        {
-            if (std::abs(dist - a.dist) > eps8) {
-                return dist < a.dist;
-            }
-            return atom < a.atom;
-        }
-    };
-
     class SortCluster
     {
     public:
