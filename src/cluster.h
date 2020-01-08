@@ -106,6 +106,28 @@ namespace ALM_NS
         }
     };
 
+    class SortCluster
+    {
+    public:
+        std::vector<int> atoms;
+        size_t multiplicity;
+        double distance_min, distance_max;
+
+        SortCluster() = default;
+        ~SortCluster() = default;
+
+        SortCluster(const std::vector<int> atoms_,
+                    const size_t multiplicity_,
+                    const double dist_min,
+                    const double dist_max)
+        {
+            atoms = atoms_;
+            multiplicity = multiplicity_;
+            distance_min = dist_min;
+            distance_max = dist_max;
+        }
+    };
+
     class MinDistList
     {
     public:
@@ -207,6 +229,11 @@ namespace ALM_NS
         const std::set<InteractionCluster>& get_cluster_each_atom(const unsigned int order,
                                                                   const size_t atom_index) const;
 
+        std::vector<double> get_cluster_distance(const std::vector<int> &atoms,
+                                                 const std::vector<int> &kd,
+                                                 const double *const*const*x_image,
+                                                 const bool use_cutoff_radii = false) const;
+
         //void erase_cluster(const unsigned int order,
         //                   const std::vector<int> &target_cluster,
         //                   const );
@@ -244,11 +271,11 @@ namespace ALM_NS
                                 const std::vector<int> &,
                                 const std::string *) const;
 
-        void print_interaction_information(const size_t natmin,
-                                           const std::vector<std::vector<int>> &map_p2s,
-                                           const std::vector<int> &kd,
-                                           const std::string *kdname,
-                                           const std::vector<int> *const *interaction_list) const;
+        void print_cluster_information(const size_t natmin,
+                                       const std::vector<std::vector<int>> &map_p2s,
+                                       const std::vector<int> &kd,
+                                       const std::string *kdname,
+                                       const double *const*const*x_image) const;
 
         double distance(const double *,
                         const double *) const;

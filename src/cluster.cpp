@@ -195,11 +195,11 @@ void Cluster::init(const System *system,
     }
 
     if (verbosity > 1) {
-        print_interaction_information(symmetry->get_nat_prim(),
-                                      symmetry->get_map_p2s(),
-                                      system->get_supercell().kind,
-                                      system->get_kdname(),
-                                      interaction_pair);
+        print_cluster_information(symmetry->get_nat_prim(),
+                                  symmetry->get_map_p2s(),
+                                  system->get_supercell().kind,
+                                  system->get_kdname(),
+                                  system->get_x_image());
     }
 
     if (verbosity > 0) {
@@ -494,6 +494,108 @@ const std::set<InteractionCluster>& Cluster::get_cluster_each_atom(const unsigne
     return cluster_each_atom[order][atom_index];
 }
 
+std::vector<double> Cluster::get_cluster_distance(const std::vector<int> &atoms,
+                                                  const std::vector<int> &kd,
+                                                  const double *const*const*x_image,
+                                                  const bool use_cutoff_radii) const
+{
+    std::vector<double> distances(2);
+    auto atoms_unique(atoms);
+
+    const auto order = atoms.size() - 2;
+
+    // Remove duplicate entries
+    std::sort(atoms_unique.begin(), atoms_unique.end());
+    atoms_unique.erase(std::unique(atoms_unique.begin(), atoms_unique.end()),
+                       atoms_unique.end());
+
+    if (atoms_unique.size() == 1) {
+        distances[0] = 0.0;
+        distances[1] = 0.0;
+        return distances;
+    }
+
+    // For multi-body terms, searching the maximum and minimum distances of a cluster
+    // under the periodic boundary condition is not trivial.
+
+    std::vector<int> cell_vector, accum_tmp;
+    std::vector<std::vector<int>> pairs_icell, comb_cell;
+
+    const auto iat = atoms_unique[0];
+
+    for (size_t i = 0; i < atoms_unique.size() - 1; ++i) {
+        const auto jat = atoms_unique[i + 1];
+
+        cell_vector.clear();
+
+        // Loop over the cell images of atom 'jat' and add to the list
+        // as a candidate for the cluster.
+
+        if (use_cutoff_radii) {
+            // The mirror images whose distance is larger than the minimum value
+            // of the distance(iat, jat) may also be added to the cell_vector list.
+            const auto rc_tmp = cutoff_radii[order][kd[iat] - 1][kd[jat] - 1];
+            for (const auto &it : distall[iat][jat]) {
+                if (rc_tmp < 0.0 || it.dist <= rc_tmp) {
+                    cell_vector.push_back(it.cell);
+                }
+            }
+        } else {
+            for (const auto &it : distall[iat][jat]) {
+                cell_vector.push_back(it.cell);
+            }
+        }
+
+        pairs_icell.push_back(cell_vector);
+    }
+
+    accum_tmp.clear();
+    comb_cell.clear();
+    cell_combination(pairs_icell, 0, accum_tmp, comb_cell);
+
+    std::vector<double> dist_vector;
+
+    auto dist_max = 1.0e+8;
+    auto dist_min = 1.0e+8;
+
+    for (const auto &cell_now : comb_cell) {
+
+        dist_vector.clear();
+
+        for (size_t j = 0; j < cell_now.size(); ++j) {
+            const auto dist_tmp = distance(x_image[cell_now[j]][atoms_unique[j + 1]],
+                                           x_image[0][iat]);
+            dist_vector.push_back(dist_tmp);
+        }
+
+        for (size_t j = 0; j < cell_now.size(); ++j) {
+            for (size_t k = j + 1; k < cell_now.size(); ++k) {
+                const auto dist_tmp = distance(x_image[cell_now[j]][atoms_unique[j + 1]],
+                                               x_image[cell_now[k]][atoms_unique[k + 1]]);
+                dist_vector.push_back(dist_tmp);
+            }
+        }
+        std::sort(dist_vector.begin(), dist_vector.end());
+
+        // If the maximum distance is smaller than the previously found one,
+        // the new one can be a candidate of the combination of mirror images
+        // that gives the minimum cluster size.
+        if (dist_vector.back() < dist_max) {
+            dist_max = dist_vector.back();
+
+            // If the minimum distance is smaller as well,
+            // it should be the smaller cluster size.
+            if (dist_vector.front() < dist_min) {
+                dist_min = dist_vector.front();
+            }
+        }
+    }
+    distances[0] = dist_min;
+    distances[1] = dist_max;
+
+    return distances;
+}
+
 //void Cluster::erase_cluster(const unsigned order,
 //                            const std::vector<int> &target_cluster,
 //                            const Symmetry *symmetry)
@@ -512,58 +614,72 @@ const std::set<InteractionCluster>& Cluster::get_cluster_each_atom(const unsigne
 //    }
 //}
 
-void Cluster::print_interaction_information(const size_t natmin,
-                                            const std::vector<std::vector<int>> &map_p2s,
-                                            const std::vector<int> &kd,
-                                            const std::string *kdname,
-                                            const std::vector<int> *const *interaction_list) const
+
+void Cluster::print_cluster_information(const size_t natmin,
+                                        const std::vector<std::vector<int>> &map_p2s,
+                                        const std::vector<int> &kd,
+                                        const std::string *kdname,
+                                        const double *const*const*x_image) const
 {
     std::vector<int> intlist;
 
     std::cout << std::endl;
-    std::cout << "  List of interacting atom pairs considered for each order:" << std::endl;
+    std::cout << "  List of irreducible clusters:" << std::endl;
+
 
     for (auto order = 0; order < maxorder; ++order) {
 
-        std::cout << std::endl << "   ***" << get_ordername(order) << "***" << std::endl;
+        std::cout << std::endl << "   ***" << get_ordername(order) << "***\n\n";
 
-        for (size_t i = 0; i < natmin; ++i) {
+        std::cout << "   Number of unique clusters:" << std::setw(6) << cluster_table[order].size() << std::endl;
+        std::cout << "   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
-            if (interaction_list[order][i].empty()) {
-                std::cout << "   No interacting atoms! Skipped." << std::endl;
-                continue; // no interaction
-            }
 
-            const auto iat = map_p2s[i][0];
+        std::vector<SortCluster> cluster_sorted;
 
-            intlist.clear();
-            for (auto &it : interaction_list[order][i]) {
-                intlist.push_back(it);
-            }
-            std::sort(intlist.begin(), intlist.end());
-
-            // write atoms inside the cutoff radius
-            std::cout << "    Atom " << std::setw(5) << iat + 1
-                << "(" << std::setw(3) << kdname[kd[iat] - 1]
-                << ")" << " interacts with atoms ... " << std::endl;
-
-            for (size_t id = 0; id < intlist.size(); ++id) {
-                if (id % 6 == 0) {
-                    if (id == 0) {
-                        std::cout << "   ";
-                    } else {
-                        std::cout << std::endl;
-                        std::cout << "   ";
-                    }
-                }
-                std::cout << std::setw(5) << intlist[id] + 1 << "("
-                    << std::setw(3) << kdname[kd[intlist[id]] - 1] << ")";
-            }
-
-            std::cout << std::endl << std::endl;
-            std::cout << "    Number of total interaction pairs = "
-                << interaction_list[order][i].size() << std::endl << std::endl;
+        for (const auto &it : cluster_table[order]) {
+            const auto it2 = it.begin();
+            const auto distances = get_cluster_distance(it2->iarray, kd, x_image, true);
+            cluster_sorted.push_back(SortCluster(it2->iarray,
+                                                 it.size(),
+                                                 distances[0],
+                                                 distances[1]));
         }
+
+        // Sort twice
+        std::stable_sort(cluster_sorted.begin(), cluster_sorted.end(),
+                         [](const SortCluster &a,
+                            const SortCluster &b)
+                         {
+                             return a.distance_min < b.distance_min;
+                         });
+        std::stable_sort(cluster_sorted.begin(), cluster_sorted.end(),
+                         [](const SortCluster &a,
+                            const SortCluster &b)
+                         {
+                             return a.distance_max < b.distance_max;
+                         });
+
+        size_t i = 0;
+
+        for (const auto &it : cluster_sorted) {
+
+
+            std::cout << "   " << std::setw(6) << i + 1;
+            std::cout << "(" << std::setw(5) << it.multiplicity << ") | ";
+
+            for (const auto j : it.atoms) {
+                std::cout << std::setw(5) << j + 1;
+                std::cout << "(" << std::setw(3) << kdname[kd[j] - 1] << ")";
+            }
+            std::cout << std::setw(10) << it.distance_min;
+            std::cout << std::setw(10) << it.distance_max;
+            std::cout << "\n";
+
+            ++i;
+        }
+        std::cout << "   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+
     }
 
     std::cout << std::endl;
@@ -644,11 +760,6 @@ void Cluster::calc_interaction_clusters(const size_t natmin,
                         exist,
                         cluster_tmp[order]);
 
-        /*      for (size_t i = 0; i < natmin; ++i) {
-                  std::cout << "clusters, order, iat = " << cluster_tmp[order][i].size() << std::endl;
-              }*/
-
-
         // This method is left here temporary and will be removed in future.
         set_interaction_cluster(order,
                                 natmin,
@@ -713,7 +824,7 @@ void Cluster::set_interaction_cluster(const int order,
         list_now[0] = iat;
 
         // List of 2-body interaction pairs
-        std::vector<int> intlist(interaction_pair_in[i]);
+        auto intlist(interaction_pair_in[i]);
         std::sort(intlist.begin(), intlist.end()); // Need to sort here
 
         if (order == 0) {
@@ -965,7 +1076,7 @@ void Cluster::search_clusters(const int order,
     std::vector<int> intpair_uniq, cellpair;
     std::vector<int> group_atom;
     std::vector<int> data_now;
-    std::vector<MinDistList> distance_list;
+    // std::vector<MinDistList> distance_list;
     std::vector<std::vector<int>> data_vec;
 
     std::vector<ClusterEntry> cluster_merged;
@@ -1078,7 +1189,6 @@ void Cluster::search_clusters(const int order,
                 comb_cell.clear();
                 cell_combination(pairs_icell, 0, accum_tmp, comb_cell);
 
-                distance_list.clear();
                 for (j = 0; j < comb_cell.size(); ++j) {
 
                     cellpair.clear();
@@ -1152,52 +1262,62 @@ void Cluster::identify_irreducible_clusters(const Symmetry *symm_in,
     const auto nsym = map_sym[0].size();
 
     std::vector<int> atoms, atoms_symm;
-
+    size_t i;
+    std::vector<ClusterEntry> cluster_table_tmp;
 
     for (size_t order = 0; order < maxorder; ++order) {
         atoms.resize(order + 2);
         atoms_symm.resize(order + 2);
 
         auto cluster_list_copy(cluster_list[order]);
-        auto it = cluster_list_copy.begin();
+        auto it_orig = cluster_list_copy.begin();
 
-        //while (true) {
-        //    if (cluster_list_copy.empty()) break;
+        cluster_table[order].clear();
 
+        while (it_orig != cluster_list_copy.end()) {
 
-        //}
-
-        for (const auto &it : cluster_list[order]) {
-
-            for (size_t i = 0; i < order + 2; ++i) {
-                atoms[i] = it.iarray[i];
+            for (i = 0; i < order + 2; ++i) {
+                atoms[i] = it_orig->iarray[i];
             }
 
-            for (size_t isym = 0; isym < nsym; ++isym) {
+            cluster_table_tmp.clear();
 
-                for (size_t i = 0; i < order + 2; ++i) {
+            for (size_t isym = 0; isym < nsym; ++isym) {
+                for (i = 0; i < order + 2; ++i) {
                     atoms_symm[i] = map_sym[atoms[i]][isym];
                 }
 
                 if (!is_ascending(atoms_symm)) continue;
                 if (!symm_in->is_anyof_inside_primitive(atoms_symm)) continue;
 
-                for (size_t i = 0; i < order + 2; ++i) {
-                    std::cout << std::setw(5) << atoms_symm[i] + 1;
+                auto it_target = cluster_list_copy.find(ClusterEntry(order + 2, &atoms_symm[0]));
+
+                // If the newly generated cluster is a member of the original cluster,
+                // remove it from the cluster_list_copy.
+                if (it_target != cluster_list_copy.end()) {
+                    it_orig = cluster_list_copy.erase(it_target);
                 }
-                std::cout << std::endl;
 
-
+                // Add the current cluster to a temporary list
+                cluster_table_tmp.push_back(ClusterEntry(order + 2, &atoms_symm[0]));
             }
-            std::cout << std::endl;
+
+            // Sort & uniq the temporary cluster
+            std::sort(cluster_table_tmp.begin(), cluster_table_tmp.end());
+            cluster_table_tmp.erase(std::unique(cluster_table_tmp.begin(), cluster_table_tmp.end()),
+                                    cluster_table_tmp.end());
+
+            // Register the temporary cluster to the cluster_table
+            cluster_table[order].push_back(cluster_table_tmp);
+
         }
     }
 }
 
-bool Cluster::is_ascending(const std::vector<int>& arr) const
+bool Cluster::is_ascending(const std::vector<int> &arr) const
 {
     const auto n = arr.size();
-    for (auto i = 0; i < n - 1; ++i) {
+    for (size_t i = 0; i < n - 1; ++i) {
         if (arr[i] > arr[i + 1]) return false;
     }
     return true;
