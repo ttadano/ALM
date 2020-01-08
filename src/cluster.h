@@ -225,11 +225,11 @@ namespace ALM_NS
         std::set<ClusterEntry> *cluster_list; // List of clusters without duplication
         std::vector<int> **interaction_pair;  // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **cluster_each_atom;
-        std::vector<std::vector<ClusterEntry>> *cluster_table;
+        std::vector<std::vector<ClusterEntry>> *cluster_table; // List of merged clusters for each order
 
         std::vector<DistInfo> **distall;       // Distance of all pairs (i,j) under the PBC
         std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
-        // Interacting many-body clusters with mirrow image information
+        // Interacting many-body clusters with mirror image information
 
         void set_default_variables();
         void deallocate_variables();
@@ -243,6 +243,9 @@ namespace ALM_NS
                                        const std::vector<int> &kd,
                                        const size_t nat_prim,
                                        const std::vector<std::vector<int>> &map_p2s) const;
+
+        void build_cluster_table(const System *system,
+                                 const Symmetry *symmetry) const;
 
         void print_neighborlist(const size_t,
                                 const size_t,
@@ -261,11 +264,11 @@ namespace ALM_NS
         int nbody(const int,
                   const int *) const;
 
-        void calc_interaction_clusters(const size_t natmin,
-                                       const std::vector<int> &kd,
-                                       const std::vector<std::vector<int>> &map_p2s,
-                                       const double *const *const *x_image,
-                                       const int *exist) const;
+        void search_clusters_all(const size_t natmin,
+                                 const std::vector<int> &kd,
+                                 const std::vector<std::vector<int>> &map_p2s,
+                                 const double *const *const *x_image,
+                                 const int *exist) const;
 
 
         void set_interaction_cluster(const int order,
@@ -274,7 +277,6 @@ namespace ALM_NS
                                      const std::vector<std::vector<int>> &map_p2s,
                                      const std::vector<int> *interaction_pair_in,
                                      const double *const*const*x_image,
-                                     const int *exist,
                                      std::set<InteractionCluster> *interaction_cluster_out) const;
 
         void search_clusters(const int order,
@@ -283,16 +285,15 @@ namespace ALM_NS
                              const std::vector<std::vector<int>> &map_p2s,
                              const std::vector<int> *interaction_pair_in,
                              const double *const*const*x_image,
-                             const int *exist,
                              std::vector<std::vector<int>> *cluster_tmp) const;
 
         void identify_irreducible_clusters(const Symmetry *symm_in,
                                            const std::vector<std::vector<int>> &map_sym) const;
 
         static void cell_combination(const std::vector<std::vector<int>> &,
-                              const size_t,
-                              const std::vector<int> &,
-                              std::vector<std::vector<int>> &);
+                                     const size_t,
+                                     const std::vector<int> &,
+                                     std::vector<std::vector<int>> &);
         static bool is_ascending(const std::vector<int> &arr);
     };
 }

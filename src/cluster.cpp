@@ -161,13 +161,15 @@ void Cluster::init(const System *system,
                               symmetry->get_nat_prim(),
                               symmetry->get_map_p2s());
 
-    calc_interaction_clusters(symmetry->get_nat_prim(),
-                              system->get_supercell().kind,
-                              symmetry->get_map_p2s(),
-                              system->get_x_image(),
-                              system->get_exist_image());
+    build_cluster_table(system, symmetry);
 
-    identify_irreducible_clusters(symmetry, symmetry->get_map_sym());
+    // this call is temporary
+    search_clusters_all(symmetry->get_nat_prim(),
+                        system->get_supercell().kind,
+                        symmetry->get_map_p2s(),
+                        system->get_x_image(),
+                        system->get_exist_image());
+
 
     if (verbosity > 0) {
         std::cout << "  +++ Cutoff Radii Matrix (NKD x NKD matrix) +++" << std::endl;
@@ -192,17 +194,16 @@ void Cluster::init(const System *system,
                            symmetry->get_map_p2s(),
                            system->get_supercell().kind,
                            system->get_kdname());
-    }
 
-    if (verbosity > 1) {
-        print_cluster_information(symmetry->get_nat_prim(),
-                                  symmetry->get_map_p2s(),
-                                  system->get_supercell().kind,
-                                  system->get_kdname(),
-                                  system->get_x_image());
-    }
 
-    if (verbosity > 0) {
+        if (verbosity > 1) {
+            print_cluster_information(symmetry->get_nat_prim(),
+                                      symmetry->get_map_p2s(),
+                                      system->get_supercell().kind,
+                                      system->get_kdname(),
+                                      system->get_x_image());
+        }
+
         for (i = 0; i < maxorder; ++i) {
             if (i + 2 > nbody_include[i]) {
                 std::cout << "  For " << std::setw(8) << get_ordername(i) << ", ";
@@ -303,6 +304,29 @@ void Cluster::set_interaction_by_cutoff(const size_t nat,
             }
         }
     }
+}
+
+void Cluster::build_cluster_table(const System *system,
+                                  const Symmetry *symmetry) const
+{
+    std::vector<std::vector<int>> **cluster_tmp;
+
+    allocate(cluster_tmp, maxorder, symmetry->get_nat_prim());
+
+    for (auto order = 0; order < maxorder; ++order) {
+
+        search_clusters(order,
+                        symmetry->get_nat_prim(),
+                        system->get_supercell().kind,
+                        symmetry->get_map_p2s(),
+                        interaction_pair[order],
+                        system->get_x_image(),
+                        cluster_tmp[order]);
+
+    }
+    deallocate(cluster_tmp);
+
+    identify_irreducible_clusters(symmetry, symmetry->get_map_sym());
 }
 
 void Cluster::print_neighborlist(const size_t nat,
@@ -740,29 +764,16 @@ bool Cluster::satisfy_nbody_rule(const int nelem,
 }
 
 
-void Cluster::calc_interaction_clusters(const size_t natmin,
-                                        const std::vector<int> &kd,
-                                        const std::vector<std::vector<int>> &map_p2s,
-                                        const double *const *const *x_image,
-                                        const int *exist) const
+void Cluster::search_clusters_all(const size_t natmin,
+                                  const std::vector<int> &kd,
+                                  const std::vector<std::vector<int>> &map_p2s,
+                                  const double *const *const *x_image,
+                                  const int *exist) const
 {
     //
     // Calculate the complete set of clusters for all orders.
     //
-
-    std::vector<std::vector<int>> **cluster_tmp;
-
-    allocate(cluster_tmp, maxorder, natmin);
     for (auto order = 0; order < maxorder; ++order) {
-
-        search_clusters(order,
-                        natmin,
-                        kd,
-                        map_p2s,
-                        interaction_pair[order],
-                        x_image,
-                        exist,
-                        cluster_tmp[order]);
 
         // This method is left here temporary and will be removed in future.
         set_interaction_cluster(order,
@@ -771,11 +782,9 @@ void Cluster::calc_interaction_clusters(const size_t natmin,
                                 map_p2s,
                                 interaction_pair[order],
                                 x_image,
-                                exist,
                                 cluster_each_atom[order]);
 
     }
-    deallocate(cluster_tmp);
 }
 
 
@@ -785,7 +794,6 @@ void Cluster::set_interaction_cluster(const int order,
                                       const std::vector<std::vector<int>> &map_p2s,
                                       const std::vector<int> *interaction_pair_in,
                                       const double *const *const *x_image,
-                                      const int *exist,
                                       std::set<InteractionCluster> *interaction_cluster_out) const
 {
     //
@@ -1050,16 +1058,14 @@ void Cluster::search_clusters(const int order,
                               const std::vector<std::vector<int>> &map_p2s,
                               const std::vector<int> *interaction_pair_in,
                               const double *const*const*x_image,
-                              const int *exist,
                               std::vector<std::vector<int>> *cluster_tmp) const
 {
     //
     // Calculate a set of clusters for the given order
     //
 
-    size_t j, k;
+    size_t k, ii;
     int jat;
-    size_t ii;
     int jkd;
     int icount;
 
@@ -1067,25 +1073,21 @@ void Cluster::search_clusters(const int order,
 
     bool isok;
 
-    int *list_now;
-
+    std::vector<int> atoms_now;
     std::vector<int> cell_vector;
-    std::vector<double> dist_vector;
     std::vector<std::vector<int>> pairs_icell, comb_cell, comb_cell_min;
     std::vector<std::vector<int>> comb_cell_atom_center;
     std::vector<int> accum_tmp;
-    std::vector<int> atom_tmp, cell_tmp;
+    std::vector<int> tailing_atoms_now, cell_tmp;
     std::vector<int> intpair_uniq, cellpair;
     std::vector<int> group_atom;
-    std::vector<int> data_now;
-    // std::vector<MinDistList> distance_list;
     std::vector<std::vector<int>> data_vec;
 
     std::vector<ClusterEntry> cluster_merged;
 
     cluster_merged.clear();
 
-    allocate(list_now, order + 2);
+    atoms_now.resize(order + 2);
 
     for (size_t i = 0; i < natmin; ++i) {
 
@@ -1093,28 +1095,26 @@ void Cluster::search_clusters(const int order,
 
         const auto iat = map_p2s[i][0];
         const auto ikd = kd[iat] - 1;
-        list_now[0] = iat;
+        atoms_now[0] = iat;
 
         // List of 2-body interaction pairs
         auto intlist(interaction_pair_in[i]);
         std::sort(intlist.begin(), intlist.end()); // Need to sort here
 
+        tailing_atoms_now.resize(order + 1);
+
         if (order == 0) {
 
             // Harmonic term
 
-            for (auto ielem : intlist) {
+            for (const auto &j : intlist) {
 
-                jat = ielem;
-                list_now[1] = jat;
+                atoms_now[1] = j;
 
-                if (!satisfy_nbody_rule(2, list_now, 0)) continue;
+                if (!satisfy_nbody_rule(2, &atoms_now[0], 0)) continue;
 
-                comb_cell_min.clear();
-                atom_tmp.clear();
-                atom_tmp.push_back(jat);
-
-                cluster_tmp[i].emplace_back(atom_tmp);
+                tailing_atoms_now[0] = j;
+                cluster_tmp[i].emplace_back(tailing_atoms_now);
             }
 
         } else if (order > 0) {
@@ -1128,11 +1128,11 @@ void Cluster::search_clusters(const int order,
             do {
                 auto data = g.now();
 
-                list_now[0] = iat;
-                for (auto m = 0; m < order + 1; ++m) list_now[m + 1] = data[m];
+                atoms_now[0] = iat;
+                for (auto m = 0; m < order + 1; ++m) atoms_now[m + 1] = data[m];
 
                 // Save as a candidate if the cluster satisfies the NBODY-rule.
-                if (satisfy_nbody_rule(order + 2, list_now, order)) {
+                if (satisfy_nbody_rule(order + 2, &atoms_now[0], order)) {
                     data_vec.emplace_back(data);
                 }
 
@@ -1144,7 +1144,7 @@ void Cluster::search_clusters(const int order,
 
             for (size_t idata = 0; idata < ndata; ++idata) {
 
-                data_now = data_vec[idata];
+                tailing_atoms_now = data_vec[idata];
 
                 // Uniq the list of atoms in data like as follows:
                 // cubic   term : (i, i) --> [i] x 2
@@ -1154,19 +1154,22 @@ void Cluster::search_clusters(const int order,
                 icount = 1;
 
                 for (auto m = 0; m < order; ++m) {
-                    if (data_now[m] == data_now[m + 1]) {
+                    if (tailing_atoms_now[m] == tailing_atoms_now[m + 1]) {
                         ++icount;
                     } else {
                         group_atom.push_back(icount);
-                        intpair_uniq.push_back(data_now[m]);
+                        intpair_uniq.push_back(tailing_atoms_now[m]);
                         icount = 1;
                     }
                 }
                 group_atom.push_back(icount);
-                intpair_uniq.push_back(data_now[order]);
+                intpair_uniq.push_back(tailing_atoms_now[order]);
 
                 pairs_icell.clear();
-                for (j = 0; j < intpair_uniq.size(); ++j) {
+
+                const auto nuniq = intpair_uniq.size();
+
+                for (size_t j = 0; j < nuniq; ++j) {
                     jat = intpair_uniq[j];
                     jkd = kd[jat] - 1;
 
@@ -1178,10 +1181,8 @@ void Cluster::search_clusters(const int order,
                     // The mirror images whose distance is larger than the minimum value
                     // of the distance(iat, jat) may also be added to the cell_vector list.
                     for (const auto &it : distall[iat][jat]) {
-                        if (exist[it.cell]) {
-                            if (rc_tmp < 0.0 || it.dist <= rc_tmp) {
-                                cell_vector.push_back(it.cell);
-                            }
+                        if (rc_tmp < 0.0 || it.dist <= rc_tmp) {
+                            cell_vector.push_back(it.cell);
                         }
                     }
                     pairs_icell.push_back(cell_vector);
@@ -1191,43 +1192,28 @@ void Cluster::search_clusters(const int order,
                 comb_cell.clear();
                 cell_combination(pairs_icell, 0, accum_tmp, comb_cell);
 
-                for (j = 0; j < comb_cell.size(); ++j) {
+                for (size_t j = 0; j < comb_cell.size(); ++j) {
 
-                    cellpair.clear();
-
-                    for (k = 0; k < group_atom.size(); ++k) {
-                        for (auto m = 0; m < group_atom[k]; ++m) {
-                            cellpair.push_back(comb_cell[j][k]);
-                        }
-                    }
-
-                    dist_vector.clear();
-
-                    for (k = 0; k < cellpair.size(); ++k) {
-                        dist_tmp = distance(x_image[cellpair[k]][data_now[k]], x_image[0][iat]);
-                        dist_vector.push_back(dist_tmp);
-                    }
-
-                    // Flag to check if the distance is smaller than the cutoff radius
                     isok = true;
 
-                    for (k = 0; k < cellpair.size(); ++k) {
-                        for (ii = k + 1; ii < cellpair.size(); ++ii) {
-                            dist_tmp = distance(x_image[cellpair[k]][data_now[k]],
-                                                x_image[cellpair[ii]][data_now[ii]]);
-                            rc_tmp = cutoff_radii[order][kd[data_now[k]] - 1][kd[data_now[ii]] - 1];
-                            if (rc_tmp >= 0.0 && dist_tmp > rc_tmp) {
+                    // Check if all pair distances are smaller than the corresponding cutoff radius.
+                    for (k = 0; k < nuniq; ++k) {
+                        for (ii = k + 1; ii < nuniq; ++ii) {
+                            dist_tmp = distance(x_image[comb_cell[j][k]][intpair_uniq[k]],
+                                                x_image[comb_cell[j][ii]][intpair_uniq[ii]]);
+                            rc_tmp = cutoff_radii[order][kd[intpair_uniq[k]] - 1][kd[intpair_uniq[ii]] - 1];
+                            if (rc_tmp > 0.0 && dist_tmp > rc_tmp) {
                                 isok = false;
                                 break;
                             }
-                            dist_vector.push_back(dist_tmp);
                         }
                         if (!isok) break;
                     }
+
                     if (isok) {
                         // If any of the mirror image combination satisfies the 
                         // cutoff radii criterion, add the cluster to the list and break the loop.
-                        cluster_tmp[i].emplace_back(data_now);
+                        cluster_tmp[i].emplace_back(tailing_atoms_now);
                         break;
                     }
                 } // close loop over the mirror image combination
@@ -1236,17 +1222,18 @@ void Cluster::search_clusters(const int order,
 
         for (const auto &it : cluster_tmp[i]) {
 
-            list_now[0] = iat;
-            for (j = 0; j < order + 1; ++j) {
-                list_now[j + 1] = it[j];
+            atoms_now[0] = iat;
+            for (size_t j = 0; j < order + 1; ++j) {
+                atoms_now[j + 1] = it[j];
             }
-            insort(order + 2, list_now);
-            cluster_merged.emplace_back(order + 2, list_now);
+            insort(order + 2, &atoms_now[0]);
+            cluster_merged.emplace_back(order + 2, &atoms_now[0]);
         }
     }
 
     std::sort(cluster_merged.begin(), cluster_merged.end());
-    cluster_merged.erase(std::unique(cluster_merged.begin(), cluster_merged.end()),
+    cluster_merged.erase(std::unique(cluster_merged.begin(),
+                                     cluster_merged.end()),
                          cluster_merged.end());
 
     // Create cluster_list for later reference.
@@ -1255,7 +1242,6 @@ void Cluster::search_clusters(const int order,
     for (const auto &it : cluster_merged) {
         cluster_list[order].insert(it);
     }
-    deallocate(list_now);
 }
 
 void Cluster::identify_irreducible_clusters(const Symmetry *symm_in,
