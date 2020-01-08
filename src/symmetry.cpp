@@ -11,6 +11,7 @@
 #include "symmetry.h"
 #include "error.h"
 #include "cluster.h"
+#include "constants.h"
 #include "memory.h"
 #include "mathfunctions.h"
 #include "system.h"

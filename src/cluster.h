@@ -16,7 +16,6 @@
 #include <set>
 #include <iterator>
 #include <algorithm>
-#include "constants.h"
 #include "system.h"
 #include "symmetry.h"
 #include "timer.h"
@@ -26,7 +25,7 @@ namespace ALM_NS
     class ClusterEntry
     {
     public:
-        std::vector<int> iarray;
+        std::vector<int> atoms;
 
         ClusterEntry() = default;
         ~ClusterEntry() = default;
@@ -36,23 +35,23 @@ namespace ALM_NS
                      const int *arr)
         {
             for (auto i = 0; i < n; ++i) {
-                iarray.push_back(arr[i]);
+                atoms.push_back(arr[i]);
             }
         }
 
         bool operator<(const ClusterEntry &a) const
         {
-            return std::lexicographical_compare(iarray.begin(), iarray.end(),
-                                                a.iarray.begin(), a.iarray.end());
+            return std::lexicographical_compare(atoms.begin(), atoms.end(),
+                                                a.atoms.begin(), a.atoms.end());
         }
 
         bool operator==(const ClusterEntry &a) const
         {
-            const auto n = iarray.size();
-            const auto n_ = a.iarray.size();
+            const auto n = atoms.size();
+            const auto n_ = a.atoms.size();
             if (n != n_) return false;
             for (size_t i = 0; i < n; ++i) {
-                if (iarray[i] != a.iarray[i]) return false;
+                if (atoms[i] != a.atoms[i]) return false;
             }
             return true;
         }
@@ -202,7 +201,6 @@ namespace ALM_NS
         int get_maxorder() const;
         int* get_nbody_include() const;
         std::string get_ordername(const unsigned int order) const;
-       //  const std::set<ClusterEntry>& get_cluster_merged_list(const unsigned int order) const;
         const std::vector<int>& get_interaction_pair(const unsigned int order,
                                                      const size_t atom_index) const;
         const std::set<InteractionCluster>& get_cluster_each_atom(const unsigned int order,
@@ -224,8 +222,9 @@ namespace ALM_NS
         int maxorder;
         int *nbody_include;
         double ***cutoff_radii;
-        std::set<ClusterEntry> *cluster_merged_list; // List of clusters without duplication
-        std::vector<int> **interaction_pair;         // List of atoms inside the cutoff radius for each order
+        std::set<ClusterEntry> *cluster_merged_list;
+        // List of clusters without duplication. Used for searching and updating cluster information.
+        std::vector<int> **interaction_pair; // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **cluster_each_atom;
         std::vector<std::vector<ClusterEntry>> *cluster_table;
         // List of merged clusters for each order with symmetry information
@@ -310,7 +309,7 @@ namespace std
         {
             hash<int> hasher;
             size_t seed = 0;
-            for (auto i : obj.iarray) {
+            for (auto i : obj.atoms) {
                 seed ^= hasher(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             }
             return seed;

@@ -212,7 +212,7 @@ void Fcs::generate_force_constant_table(const int order,
     for (const auto &uniq_cluster : pairs) {
         for (const auto &cluster_entry : uniq_cluster) {
 
-            for (i = 0; i < order + 2; ++i) atmn[i] = cluster_entry.iarray[i];
+            for (i = 0; i < order + 2; ++i) atmn[i] = cluster_entry.atoms[i];
 
             for (i1 = 0; i1 < nxyz; ++i1) {
                 for (i = 0; i < order + 2; ++i) {

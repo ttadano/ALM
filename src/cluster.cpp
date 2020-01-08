@@ -505,11 +505,6 @@ std::string Cluster::get_ordername(const unsigned int order) const
     }
 }
 
-//const std::set<ClusterEntry>& Cluster::get_cluster_merged_list(const unsigned int order) const
-//{
-//    return cluster_merged_list[order];
-//}
-
 const std::vector<int>& Cluster::get_interaction_pair(const unsigned int order,
                                                       const size_t atom_index) const
 {
@@ -672,8 +667,8 @@ void Cluster::print_cluster_information(const size_t natmin,
 
         for (const auto &it : cluster_table[order]) {
             const auto it2 = it.begin();
-            const auto distances = get_cluster_distance(it2->iarray, kd, x_image, true);
-            cluster_sorted.push_back(SortCluster(it2->iarray,
+            const auto distances = get_cluster_distance(it2->atoms, kd, x_image, true);
+            cluster_sorted.push_back(SortCluster(it2->atoms,
                                                  it.size(),
                                                  distances[0],
                                                  distances[1]));
@@ -1272,7 +1267,7 @@ void Cluster::identify_irreducible_clusters(const Symmetry *symm_in,
         while (it_orig != cluster_list_copy.end()) {
 
             for (i = 0; i < order + 2; ++i) {
-                atoms[i] = it_orig->iarray[i];
+                atoms[i] = it_orig->atoms[i];
             }
 
             cluster_table_tmp.clear();
