@@ -147,7 +147,7 @@ namespace ALM_NS
                               int **) const;
         void generate_force_constant_table(const int,
                                            const size_t nat,
-                                           const std::set<ClusterEntry> &,
+                                           const std::vector<std::vector<ClusterEntry>> &,
                                            const Symmetry *,
                                            const std::string,
                                            std::vector<FcProperty> &,

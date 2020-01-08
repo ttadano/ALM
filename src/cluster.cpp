@@ -43,7 +43,7 @@ void Cluster::set_default_variables()
     cutoff_radii = nullptr;
     distall = nullptr;
     mindist_pairs = nullptr;
-    cluster_list = nullptr;
+    cluster_merged_list = nullptr;
     interaction_pair = nullptr;
     cluster_each_atom = nullptr;
     cluster_table = nullptr;
@@ -59,9 +59,9 @@ void Cluster::deallocate_variables()
         deallocate(cutoff_radii);
         cutoff_radii = nullptr;
     }
-    if (cluster_list) {
-        deallocate(cluster_list);
-        cluster_list = nullptr;
+    if (cluster_merged_list) {
+        deallocate(cluster_merged_list);
+        cluster_merged_list = nullptr;
     }
     if (mindist_pairs) {
         deallocate(mindist_pairs);
@@ -123,10 +123,10 @@ void Cluster::init(const System *system,
     }
     allocate(cluster_each_atom, maxorder, symmetry->get_nat_prim());
 
-    if (cluster_list) {
-        deallocate(cluster_list);
+    if (cluster_merged_list) {
+        deallocate(cluster_merged_list);
     }
-    allocate(cluster_list, maxorder);
+    allocate(cluster_merged_list, maxorder);
 
     if (cluster_table) {
         deallocate(cluster_table);
@@ -505,10 +505,10 @@ std::string Cluster::get_ordername(const unsigned int order) const
     }
 }
 
-const std::set<ClusterEntry>& Cluster::get_cluster_list(const unsigned int order) const
-{
-    return cluster_list[order];
-}
+//const std::set<ClusterEntry>& Cluster::get_cluster_merged_list(const unsigned int order) const
+//{
+//    return cluster_merged_list[order];
+//}
 
 const std::vector<int>& Cluster::get_interaction_pair(const unsigned int order,
                                                       const size_t atom_index) const
@@ -520,6 +520,11 @@ const std::set<InteractionCluster>& Cluster::get_cluster_each_atom(const unsigne
                                                                    const size_t atom_index) const
 {
     return cluster_each_atom[order][atom_index];
+}
+
+const std::vector<std::vector<ClusterEntry>> & Cluster::get_cluster_table(const size_t order) const
+{
+    return cluster_table[order];
 }
 
 std::vector<double> Cluster::get_cluster_distance(const std::vector<int> &atoms,
@@ -1236,17 +1241,19 @@ void Cluster::search_clusters(const int order,
                                      cluster_merged.end()),
                          cluster_merged.end());
 
-    // Create cluster_list for later reference.
-    cluster_list[order].clear();
+    // Create cluster_merged_list for later reference.
+    cluster_merged_list[order].clear();
 
     for (const auto &it : cluster_merged) {
-        cluster_list[order].insert(it);
+        cluster_merged_list[order].insert(it);
     }
 }
 
 void Cluster::identify_irreducible_clusters(const Symmetry *symm_in,
                                             const std::vector<std::vector<int>> &map_sym) const
 {
+    // Generate cluster_table from cluster_merged_list.
+
     const auto nsym = map_sym[0].size();
 
     std::vector<int> atoms, atoms_symm;
@@ -1257,7 +1264,7 @@ void Cluster::identify_irreducible_clusters(const Symmetry *symm_in,
         atoms.resize(order + 2);
         atoms_symm.resize(order + 2);
 
-        auto cluster_list_copy(cluster_list[order]);
+        auto cluster_list_copy(cluster_merged_list[order]);
         auto it_orig = cluster_list_copy.begin();
 
         cluster_table[order].clear();

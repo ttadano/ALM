@@ -87,7 +87,7 @@ void Fcs::init(const Cluster *cluster,
     for (i = 0; i < maxorder; ++i) {
         generate_force_constant_table(i,
                                       supercell.number_of_atoms,
-                                      cluster->get_cluster_list(i),
+                                      cluster->get_cluster_table(i),
                                       symmetry,
                                       preferred_basis,
                                       fc_table[i],
@@ -148,7 +148,7 @@ void Fcs::deallocate_variables()
 
 void Fcs::generate_force_constant_table(const int order,
                                         const size_t nat,
-                                        const std::set<ClusterEntry> &pairs,
+                                        const std::vector<std::vector<ClusterEntry>> &pairs,
                                         const Symmetry *symm_in,
                                         const std::string basis,
                                         std::vector<FcProperty> &fc_vec,
@@ -209,123 +209,127 @@ void Fcs::generate_force_constant_table(const int order,
 
     std::unordered_set<ClusterEntry> list_found;
 
-    for (const auto &pair : pairs) {
+    for (const auto &uniq_cluster : pairs) {
+        for (const auto &cluster_entry : uniq_cluster) {
 
-        for (i = 0; i < order + 2; ++i) atmn[i] = pair.iarray[i];
+            for (i = 0; i < order + 2; ++i) atmn[i] = cluster_entry.iarray[i];
 
-        for (i1 = 0; i1 < nxyz; ++i1) {
-            for (i = 0; i < order + 2; ++i) {
-                ind[i] = 3 * atmn[i] + xyzcomponent[i1][i];
-            }
+            for (i1 = 0; i1 < nxyz; ++i1) {
+                for (i = 0; i < order + 2; ++i) {
+                    ind[i] = 3 * atmn[i] + xyzcomponent[i1][i];
+                }
 
-            if (!is_ascending(ind)) continue;
+                if (!is_ascending(ind)) continue;
 
-            i_prim = get_minimum_index_in_primitive(order + 2, &ind[0], nat,
-                                                    symm_in->get_nat_prim(),
-                                                    symm_in->get_map_p2s());
-            std::swap(ind[0], ind[i_prim]);
-            sort_tail(order + 2, &ind[0]);
+                i_prim = get_minimum_index_in_primitive(order + 2, &ind[0], nat,
+                                                        symm_in->get_nat_prim(),
+                                                        symm_in->get_map_p2s());
+                std::swap(ind[0], ind[i_prim]);
+                sort_tail(order + 2, &ind[0]);
 
-            is_zero = false;
+                is_zero = false;
 
-            if (list_found.find(ClusterEntry(order + 2, &ind[0])) != list_found.end()) continue; // Already exits!
+                if (list_found.find(ClusterEntry(order + 2, &ind[0])) != list_found.end()) continue; // Already exits!
 
-            // Search symmetrically-dependent parameter set
+                // Search symmetrically-dependent parameter set
 
-            size_t ndeps = 0;
+                size_t ndeps = 0;
 
-            for (isym = 0; isym < nsym_in_use; ++isym) {
+                for (isym = 0; isym < nsym_in_use; ++isym) {
 
-                for (i = 0; i < order + 2; ++i) atmn_mapped[i] = map_sym[atmn[i]][isym];
+                    for (i = 0; i < order + 2; ++i) atmn_mapped[i] = map_sym[atmn[i]][isym];
 
-                if (!symm_in->is_anyof_inside_primitive(atmn_mapped)) continue;
+                    if (!symm_in->is_anyof_inside_primitive(atmn_mapped)) continue;
 
-                for (i2 = 0; i2 < nxyz; ++i2) {
+                    for (i2 = 0; i2 < nxyz; ++i2) {
 
-                    c_tmp = coef_sym(order + 2,
-                                     rotation[isym],
-                                     xyzcomponent[i1],
-                                     xyzcomponent[i2]);
+                        c_tmp = coef_sym(order + 2,
+                                         rotation[isym],
+                                         xyzcomponent[i1],
+                                         xyzcomponent[i2]);
 
-                    if (std::abs(c_tmp) > eps12) {
-                        for (i = 0; i < order + 2; ++i) {
-                            ind_mapped[i] = 3 * atmn_mapped[i] + xyzcomponent[i2][i];
-                        }
-
-                        i_prim = get_minimum_index_in_primitive(order + 2,
-                                                                &ind_mapped[0],
-                                                                nat,
-                                                                symm_in->get_nat_prim(),
-                                                                symm_in->get_map_p2s());
-                        std::swap(ind_mapped[0], ind_mapped[i_prim]);
-                        sort_tail(order + 2, &ind_mapped[0]);
-
-                        if (!is_zero) {
-                            bool zeroflag = true;
+                        if (std::abs(c_tmp) > eps12) {
                             for (i = 0; i < order + 2; ++i) {
-                                zeroflag = zeroflag & (ind[i] == ind_mapped[i]);
+                                ind_mapped[i] = 3 * atmn_mapped[i] + xyzcomponent[i2][i];
                             }
-                            zeroflag = zeroflag & (std::abs(c_tmp + 1.0) < eps8);
-                            is_zero = zeroflag;
-                        }
 
-                        // Add to found list (set) and fcset (vector) if the created is new one.
+                            i_prim = get_minimum_index_in_primitive(order + 2,
+                                                                    &ind_mapped[0],
+                                                                    nat,
+                                                                    symm_in->get_nat_prim(),
+                                                                    symm_in->get_map_p2s());
+                            std::swap(ind_mapped[0], ind_mapped[i_prim]);
+                            sort_tail(order + 2, &ind_mapped[0]);
 
-                        if (list_found.find(ClusterEntry(order + 2, &ind_mapped[0])) == list_found.end()) {
-                            list_found.insert(ClusterEntry(order + 2, &ind_mapped[0]));
-
-                            fc_vec.emplace_back(FcProperty(order + 2,
-                                                           c_tmp,
-                                                           &ind_mapped[0],
-                                                           nmother));
-                            ++ndeps;
-
-                            // Add equivalent interaction list (permutation) if there are two or more indices
-                            // which belong to the primitive cell.
-                            // This procedure is necessary for constructing a sensing matrix.
-
-                            for (i = 0; i < 3 * nat; ++i) is_searched[i] = false;
-                            is_searched[ind_mapped[0]] = true;
-                            for (i = 1; i < order + 2; ++i) {
-                                std::vector<int> ind_mapped_search;
-                                ind_mapped_search.push_back(ind_mapped[i] / 3);
-                            
-                                if ((!is_searched[ind_mapped[i]])
-                                    && symm_in->is_anyof_inside_primitive(ind_mapped_search)) {
-
-                                    for (j = 0; j < order + 2; ++j) ind_mapped_tmp[j] = ind_mapped[j];
-                                    std::swap(ind_mapped_tmp[0], ind_mapped_tmp[i]);
-                                    sort_tail(order + 2, &ind_mapped_tmp[0]);
-                                    fc_vec.emplace_back(FcProperty(order + 2,
-                                                                   c_tmp,
-                                                                   &ind_mapped_tmp[0],
-                                                                   nmother));
-                                    ++ndeps;
-                                    is_searched[ind_mapped[i]] = true;
+                            if (!is_zero) {
+                                bool zeroflag = true;
+                                for (i = 0; i < order + 2; ++i) {
+                                    zeroflag = zeroflag & (ind[i] == ind_mapped[i]);
                                 }
+                                zeroflag = zeroflag & (std::abs(c_tmp + 1.0) < eps8);
+                                is_zero = zeroflag;
                             }
 
+                            // Add to found list (set) and fcset (vector) if the created is new one.
 
+                            if (list_found.find(ClusterEntry(order + 2, &ind_mapped[0])) == list_found.end()) {
+                                list_found.insert(ClusterEntry(order + 2, &ind_mapped[0]));
+
+                                fc_vec.emplace_back(FcProperty(order + 2,
+                                                               c_tmp,
+                                                               &ind_mapped[0],
+                                                               nmother));
+                                ++ndeps;
+
+                                // Add equivalent interaction list (permutation) if there are two or more indices
+                                // which belong to the primitive cell.
+                                // This procedure is necessary for constructing a sensing matrix.
+
+                                for (i = 0; i < 3 * nat; ++i) is_searched[i] = false;
+                                is_searched[ind_mapped[0]] = true;
+                                for (i = 1; i < order + 2; ++i) {
+                                    std::vector<int> ind_mapped_search;
+                                    ind_mapped_search.push_back(ind_mapped[i] / 3);
+
+                                    if ((!is_searched[ind_mapped[i]])
+                                        && symm_in->is_anyof_inside_primitive(ind_mapped_search)) {
+
+                                        for (j = 0; j < order + 2; ++j) ind_mapped_tmp[j] = ind_mapped[j];
+                                        std::swap(ind_mapped_tmp[0], ind_mapped_tmp[i]);
+                                        sort_tail(order + 2, &ind_mapped_tmp[0]);
+                                        fc_vec.emplace_back(FcProperty(order + 2,
+                                                                       c_tmp,
+                                                                       &ind_mapped_tmp[0],
+                                                                       nmother));
+                                        ++ndeps;
+                                        is_searched[ind_mapped[i]] = true;
+                                    }
+                                }
+
+
+                            }
                         }
                     }
-                }
-            } // close symmetry loop
+                } // close symmetry loop
 
-            if (is_zero) {
-                if (store_zeros_in) {
-                    for (auto it = fc_vec.rbegin(); it != fc_vec.rbegin() + ndeps; ++it) {
-                        (*it).mother = std::numeric_limits<size_t>::max();
-                        fc_zeros_out.push_back(*it);
+                if (is_zero) {
+                    if (store_zeros_in) {
+                        for (auto it = fc_vec.rbegin(); it != fc_vec.rbegin() + ndeps; ++it) {
+                            (*it).mother = std::numeric_limits<size_t>::max();
+                            fc_zeros_out.push_back(*it);
+                        }
                     }
+                    for (i = 0; i < ndeps; ++i) fc_vec.pop_back();
+                } else {
+                    ndup.push_back(ndeps);
+                    ++nmother;
                 }
-                for (i = 0; i < ndeps; ++i) fc_vec.pop_back();
-            } else {
-                ndup.push_back(ndeps);
-                ++nmother;
-            }
 
-        } // close xyz component loop
-    } // close atom number loop (iterator)
+            } // close xyz component loop
+        }     // close atom number loop (iterator)
+
+    }
+
 
     deallocate(xyzcomponent);
     list_found.clear();
@@ -493,7 +497,7 @@ void Fcs::get_constraint_symmetry(const size_t nat,
                 }
 
             } // close isym loop
-        } // close ii loop
+        }     // close ii loop
 
         deallocate(ind);
         deallocate(atm_index);
@@ -619,7 +623,7 @@ void Fcs::get_constraint_symmetry_in_integer(const size_t nat,
         int i_prim;
         int loc_nonzero;
         int *ind;
-        int* atm_index;
+        int *atm_index;
         std::vector<int> atm_index_symm;
         int *xyz_index;
         int c_tmp;
@@ -898,7 +902,7 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
         nfc_cart_permu[i] = fc_cart[i].size();
         nfc_cart_nopermu[i] = std::count_if(fc_cart[i].begin(),
                                             fc_cart[i].end(),
-                                            [](const ForceConstantTable &obj){return obj.is_ascending_order;});
+                                            [](const ForceConstantTable &obj) { return obj.is_ascending_order; });
     }
 }
 
@@ -976,7 +980,7 @@ void Fcs::get_available_symmop(const size_t nat,
 }
 
 double Fcs::coef_sym(const int n,
-                     const double * const *rot,
+                     const double *const *rot,
                      const int *arr1,
                      const int *arr2) const
 {

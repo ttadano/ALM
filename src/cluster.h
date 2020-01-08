@@ -202,11 +202,13 @@ namespace ALM_NS
         int get_maxorder() const;
         int* get_nbody_include() const;
         std::string get_ordername(const unsigned int order) const;
-        const std::set<ClusterEntry>& get_cluster_list(const unsigned int order) const;
+       //  const std::set<ClusterEntry>& get_cluster_merged_list(const unsigned int order) const;
         const std::vector<int>& get_interaction_pair(const unsigned int order,
                                                      const size_t atom_index) const;
         const std::set<InteractionCluster>& get_cluster_each_atom(const unsigned int order,
                                                                   const size_t atom_index) const;
+
+        const std::vector<std::vector<ClusterEntry>>& get_cluster_table(const size_t order) const;
 
         std::vector<double> get_cluster_distance(const std::vector<int> &atoms,
                                                  const std::vector<int> &kd,
@@ -222,10 +224,11 @@ namespace ALM_NS
         int maxorder;
         int *nbody_include;
         double ***cutoff_radii;
-        std::set<ClusterEntry> *cluster_list; // List of clusters without duplication
-        std::vector<int> **interaction_pair;  // List of atoms inside the cutoff radius for each order
+        std::set<ClusterEntry> *cluster_merged_list; // List of clusters without duplication
+        std::vector<int> **interaction_pair;         // List of atoms inside the cutoff radius for each order
         std::set<InteractionCluster> **cluster_each_atom;
-        std::vector<std::vector<ClusterEntry>> *cluster_table; // List of merged clusters for each order
+        std::vector<std::vector<ClusterEntry>> *cluster_table;
+        // List of merged clusters for each order with symmetry information
 
         std::vector<DistInfo> **distall;       // Distance of all pairs (i,j) under the PBC
         std::vector<DistInfo> **mindist_pairs; // All pairs (i,j) with the minimum distance
