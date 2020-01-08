@@ -287,13 +287,13 @@ namespace ALM_NS
                              std::vector<std::vector<int>> *cluster_tmp) const;
 
         void identify_irreducible_clusters(const Symmetry *symm_in,
-                                           const std::vector<std::vector<int>> &map_sym);
+                                           const std::vector<std::vector<int>> &map_sym) const;
 
-        void cell_combination(const std::vector<std::vector<int>> &,
+        static void cell_combination(const std::vector<std::vector<int>> &,
                               const size_t,
                               const std::vector<int> &,
-                              std::vector<std::vector<int>> &) const;
-        bool is_ascending(const std::vector<int> &arr) const;
+                              std::vector<std::vector<int>> &);
+        static bool is_ascending(const std::vector<int> &arr);
     };
 }
 

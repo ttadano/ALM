@@ -918,10 +918,8 @@ void Cluster::set_interaction_cluster(const int order,
                     // The mirror images whose distance is larger than the minimum value
                     // of the distance(iat, jat) can be added to the cell_vector list.
                     for (const auto &it : distall[iat][jat]) {
-                        if (exist[it.cell]) {
-                            if (rc_tmp < 0.0 || it.dist <= rc_tmp) {
-                                cell_vector.push_back(it.cell);
-                            }
+                        if (rc_tmp < 0.0 || it.dist <= rc_tmp) {
+                            cell_vector.push_back(it.cell);
                         }
                     }
                     pairs_icell.push_back(cell_vector);
@@ -1019,7 +1017,7 @@ void Cluster::set_interaction_cluster(const int order,
 void Cluster::cell_combination(const std::vector<std::vector<int>> &array,
                                const size_t i,
                                const std::vector<int> &accum,
-                               std::vector<std::vector<int>> &comb) const
+                               std::vector<std::vector<int>> &comb)
 {
     if (i == array.size()) {
         comb.push_back(accum);
@@ -1261,7 +1259,7 @@ void Cluster::search_clusters(const int order,
 }
 
 void Cluster::identify_irreducible_clusters(const Symmetry *symm_in,
-                                            const std::vector<std::vector<int>> &map_sym)
+                                            const std::vector<std::vector<int>> &map_sym) const
 {
     const auto nsym = map_sym[0].size();
 
@@ -1318,7 +1316,7 @@ void Cluster::identify_irreducible_clusters(const Symmetry *symm_in,
     }
 }
 
-bool Cluster::is_ascending(const std::vector<int> &arr) const
+bool Cluster::is_ascending(const std::vector<int> &arr)
 {
     const auto n = arr.size();
     for (size_t i = 0; i < n - 1; ++i) {
