@@ -6,8 +6,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2")
 set(CMAKE_BUILD_TYPE RELEASE)
 
 project(alm)
-# set(CMAKE_CXX_COMPILER "clang++")
-option(WITH_SPARSE_SOLVER "Use sparse solver option" ON)
 
 if(WIN32)
   LINK_DIRECTORIES(C:\\lapack)
@@ -18,15 +16,15 @@ if(WIN32)
 endif()
 
 if (UNIX)
-  include_directories("/Users/togo/code/spglib/include")
+  include_directories("/Users/tadano/src/spglib/include")
   find_package(LAPACK REQUIRED)
-  set(spglib "-L/Users/togo/code/spglib/lib -lsymspg")
+  set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
 endif()
 
 #
 # Add openmp flag if available
 #
-find_package(OpenMP)
+find_package(OpenMP REQUIRED)
 if (OPENMP_FOUND)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
@@ -34,11 +32,9 @@ endif()
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
-if (WITH_SPARSE_SOLVER)
-    add_definitions(-DWITH_SPARSE_SOLVER)
-    find_package(Eigen3 REQUIRED)
-    include_directories(${EIGEN3_INCLUDE_DIR})
-endif()
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
 # Version numbers
 file(READ ${PROJECT_SOURCE_DIR}/src/version.h version_file)
 string(REGEX MATCH "ALAMODE_VERSION = \"([0-9]+\\.[0-9]+\\.[0-9]+)\"" alm_version ${version_file})

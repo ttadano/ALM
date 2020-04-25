@@ -9,7 +9,7 @@
 # OpenMP-enabled gcc can be installed via homebrew
 CXX = g++-9
 CXXFLAGS = -O2 -fopenmp -std=c++11
-INCLUDE = -I../include -I$(HOME)/include -I$(SPGLIB_ROOT)/include
+INCLUDE = -I../include -I$(HOME)/include -I$(SPGLIB_ROOT)/include -I/usr/local/include/eigen3/ -I/usr/local/include/
 
 CXXL = ${CXX}
 LDFLAGS = -lgomp -L$(SPGLIB_ROOT)/lib -lsymspg

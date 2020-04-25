@@ -32,6 +32,8 @@
 #include <Eigen/SparseCholesky>
 #include <Eigen/IterativeLinearSolvers>
 
+#include <omp.h>
+
 using namespace ALM_NS;
 
 Optimize::Optimize()

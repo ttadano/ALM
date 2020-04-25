@@ -30,7 +30,9 @@
 
 using namespace ALM_NS;
 
-Writer::Writer() = default;
+Writer::Writer() {
+    maxorder_to_write = 3;
+};
 
 Writer::~Writer() = default;
 
@@ -578,6 +580,8 @@ void Writer::write_misc_xml(ALM *alm) const
     // Print anharmonic force constants to the xml file.
 
     for (auto order = 1; order < alm->cluster->get_maxorder(); ++order) {
+
+        if (order >= maxorder_to_write) break;
 
         auto fc_cart_anharm = alm->fcs->get_fc_cart()[order];
 
