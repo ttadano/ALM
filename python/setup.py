@@ -57,7 +57,7 @@ extra_link_args.append('-llapack')
 
 spglib_dir = os.path.join(conda_prefix, "lib")
 if not os.path.exists(os.path.join(spglib_dir, "libsymspg.a")):
-    spglib_dir = os.paht.join(conda_prefix, "lib64")
+    spglib_dir = os.path.join(conda_prefix, "lib64")
 include_dirs = []
 include_dirs.append(numpy.get_include())
 include_dirs.append(os.path.join(conda_prefix, "include"))
