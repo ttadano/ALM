@@ -66,7 +66,6 @@ std::string InputParser::get_run_mode() const
 void InputParser::parse_displacement_and_force_files(std::vector<std::vector<double>> &u,
                                                      std::vector<std::vector<double>> &f,
                                                      DispForceFile &datfile_in) const
-
 {
     int nrequired;
 

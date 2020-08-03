@@ -54,7 +54,6 @@ namespace ALM_NS
         DispForceFile get_datfile_train() const;
         DispForceFile get_datfile_validation() const;
 
-
     private:
 
         std::string job_title;

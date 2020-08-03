@@ -606,7 +606,7 @@ void ALM::get_matrix_elements(double *amat,
 int ALM::run_optimize()
 {
     if (!structure_initialized) {
-        std::cout << "initialize must be called beforehand." << std::endl;
+        std::cout << "initialize_structure must be called beforehand." << std::endl;
         exit(EXIT_FAILURE);
     }
     if (!ready_to_fit) {

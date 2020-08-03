@@ -351,7 +351,8 @@ int Optimize::elastic_net(const std::string job_prefix,
         = std::abs(optcontrol.displacement_normalization_factor - 1.0) > eps
         && optcontrol.standardize == 0;
 
-    if (optcontrol.cross_validation == 0) {  // Calculate force
+    if (optcontrol.cross_validation == 0) {
+        // Calculate force
                                              // constants at given L1-alpha
 
         if (scale_displacement) {
@@ -405,7 +406,8 @@ int Optimize::elastic_net(const std::string job_prefix,
                                         constraint);
         info_fitting = 0;
 
-    } else {  // Run cross validation (manually or automatically) to
+    } else {
+        // Run cross validation (manually or automatically) to
               // get L1 alpha to give minimum CV score
         if (scale_displacement) {
             apply_scalers(maxorder, constraint);
@@ -1503,7 +1505,7 @@ void Optimize::apply_basis_converter_amat(const int natmin3,
     Eigen::Vector3d vec_tmp;
     const Eigen::Matrix3d cmat_t = cmat.transpose();
 
-    for (auto icol = 0; icol < ncols; ++ icol) {
+    for (auto icol = 0; icol < ncols; ++icol) {
         for (auto iat = 0; iat < natmin; ++iat) {
             for (auto i = 0; i < 3; ++i) {
                 vec_tmp(i) = amat_orig_tmp[3 * iat + i][icol];
@@ -2171,6 +2173,7 @@ void Optimize::get_matrix_elements_algebraic_constraint(const int maxorder,
 
                     for (j = 0; j < constraint->get_const_relate(order)[i].alpha.size(); ++j) {
 
+                        // This part can issue an error when the constraint matrix is deviate from rref.
                         inew = constraint->get_index_bimap(order).right.at(
                                 constraint->get_const_relate(order)[i].p_index_orig[j]) +
                             iparam;
