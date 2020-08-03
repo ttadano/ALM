@@ -102,8 +102,8 @@ void Fcs::init(const Cluster *cluster,
         std::cout << std::endl;
         for (i = 0; i < maxorder; ++i) {
             std::cout << "  Number of " << std::setw(9)
-                << cluster->get_ordername(i)
-                << " FCs : " << nequiv[i].size();
+                      << cluster->get_ordername(i)
+                      << " FCs : " << nequiv[i].size();
             std::cout << std::endl;
         }
         std::cout << std::endl;
@@ -744,17 +744,17 @@ void Fcs::get_constraint_symmetry_in_integer(const size_t nat,
     if (do_rref) rref_sparse(nparams, const_out, tolerance);
 }
 
-std::vector<size_t>* Fcs::get_nequiv() const
+std::vector<size_t> *Fcs::get_nequiv() const
 {
     return nequiv;
 }
 
-std::vector<FcProperty>* Fcs::get_fc_table() const
+std::vector<FcProperty> *Fcs::get_fc_table() const
 {
     return fc_table;
 }
 
-std::vector<ForceConstantTable>* Fcs::get_fc_cart() const
+std::vector<ForceConstantTable> *Fcs::get_fc_cart() const
 {
     return fc_cart;
 }
@@ -860,7 +860,7 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
                     coord_list_grp.emplace_back(coord_list);
                     fc_list_grp.emplace_back(fc_list);
                     atoms_grp.emplace_back(atoms_old);
-                        }
+                }
 
                 atoms_old = atoms_now;
                 coord_list.clear();
@@ -885,24 +885,24 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
 
 #pragma omp for private(prod_matrix, j), schedule(guided), nowait
             for (int igrp = 0; igrp < ngrp; ++igrp) {
-            for (auto ixyz = 0; ixyz < nxyz; ++ixyz) {
+                for (auto ixyz = 0; ixyz < nxyz; ++ixyz) {
 
-                auto fcs_cart = 0.0;
+                    auto fcs_cart = 0.0;
                     const auto nentry = coord_list_grp[igrp].size();
                     for (j = 0; j < nentry; ++j) {
-                    prod_matrix = 1.0;
-                    for (auto k = 0; k < nelems; ++k) {
+                        prod_matrix = 1.0;
+                        for (auto k = 0; k < nelems; ++k) {
                             prod_matrix *= basis_conversion_matrix(coord_list_grp[igrp][j][k],
-                                                               xyzcomponent[ixyz][k]);
-                    }
+                                                                   xyzcomponent[ixyz][k]);
+                        }
                         fcs_cart += prod_matrix * fc_list_grp[igrp][j];
-                }
+                    }
 
-                if (std::abs(fcs_cart) > eps12) {
+                    if (std::abs(fcs_cart) > eps12) {
                         fc_cart_omp.emplace_back(nelems,
-                                            fcs_cart,
+                                                 fcs_cart,
                                                  &atoms_grp[igrp][0],
-                                            xyzcomponent[ixyz]);
+                                                 xyzcomponent[ixyz]);
                     }
                 }
             }
@@ -922,7 +922,7 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
         nfc_cart_permu[i] = fc_cart[i].size();
         nfc_cart_nopermu[i] = std::count_if(fc_cart[i].begin(),
                                             fc_cart[i].end(),
-                                            [](const ForceConstantTable &obj){return obj.is_ascending_order;});
+                                            [](const ForceConstantTable &obj) { return obj.is_ascending_order; });
     }
 }
 
@@ -980,7 +980,7 @@ void Fcs::get_available_symmop(const size_t nat,
                 for (i = 0; i < 3; ++i) {
                     for (j = 0; j < 3; ++j) {
                         rotation[nsym_avail][i][j]
-                            = static_cast<double>((*it).rotation[i][j]);
+                                = static_cast<double>((*it).rotation[i][j]);
                     }
                 }
                 for (i = 0; i < nat; ++i) {
@@ -1000,7 +1000,7 @@ void Fcs::get_available_symmop(const size_t nat,
 }
 
 double Fcs::coef_sym(const int n,
-                     const double * const *rot,
+                     const double *const *rot,
                      const int *arr1,
                      const int *arr2) const
 {
@@ -1145,7 +1145,7 @@ void Fcs::set_basis_conversion_matrix(const Cell &supercell)
         for (auto i = 0; i < 3; ++i) {
             for (auto j = 0; j < 3; ++j) {
                 basis_conversion_matrix(i, j)
-                    = supercell.reciprocal_lattice_vector[i][j] * scale_factor;
+                        = supercell.reciprocal_lattice_vector[i][j] * scale_factor;
             }
         }
     } else if (preferred_basis == "Cartesian") {

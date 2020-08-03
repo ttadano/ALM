@@ -13,7 +13,7 @@
 #include <cfloat>
 #include <cmath>
 
-static const double pi = 4.0*atan(1.0);
+static const double pi = 4.0 * atan(1.0);
 static const double amu = 1.660538782e-27;
 static const double electron_mass = 9.10938215e-31;
 static const double amu_ry = amu / electron_mass / 2.0;

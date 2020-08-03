@@ -113,56 +113,56 @@ void Constraint::setup(const System *system,
     if (linear_model == 2) {
         if (constraint_mode > 1) {
             warn("Constraint::setup", "Sorry, only ICONST = 11 is supported \n"
-            "                      when LMODEL = enet. We set ICONST = 11 in this run.\n");
+                                      "                      when LMODEL = enet. We set ICONST = 11 in this run.\n");
             constraint_mode = 1;
         }
         constraint_algebraic = 1;
     }
 
     switch (constraint_mode) {
-    case 0: // do nothing
-        impose_inv_T = false;
-        impose_inv_R = false;
-        if (verbosity > 0) {
-            std::cout << "  ICONST = 0: Constraint for translational/rotational invariance" << std::endl;
-            std::cout << "              will NOT be considered." << std::endl;
-        }
-        break;
-    case 1:
-        impose_inv_T = true;
-        impose_inv_R = false;
-        if (verbosity > 0) {
-            std::cout << "  ICONST = 1: Constraints for translational invariance" << std::endl;
-            std::cout << "              will be considered." << std::endl;
-        }
-        break;
-    case 2:
-        impose_inv_T = true;
-        impose_inv_R = true;
-        exclude_last_R = true;
-        if (verbosity > 0) {
-            std::cout << "  ICONST = 2: Constraints for translational and rotational invariance" << std::endl;
-            std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
-            std::cout << "              Rotational invariance of the maximum order will be neglected" << std::endl;
-        }
-        break;
-    case 3:
-        impose_inv_T = true;
-        impose_inv_R = true;
-        exclude_last_R = false;
-        if (verbosity > 0) {
-            std::cout << "  ICONST = 3: Constraints for translational and rotational invariance" << std::endl;
-            std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
-        }
-        break;
-    default:
-        exit("Constraint::setup", "invalid constraint_mode", constraint_mode);
-        break;
+        case 0: // do nothing
+            impose_inv_T = false;
+            impose_inv_R = false;
+            if (verbosity > 0) {
+                std::cout << "  ICONST = 0: Constraint for translational/rotational invariance" << std::endl;
+                std::cout << "              will NOT be considered." << std::endl;
+            }
+            break;
+        case 1:
+            impose_inv_T = true;
+            impose_inv_R = false;
+            if (verbosity > 0) {
+                std::cout << "  ICONST = 1: Constraints for translational invariance" << std::endl;
+                std::cout << "              will be considered." << std::endl;
+            }
+            break;
+        case 2:
+            impose_inv_T = true;
+            impose_inv_R = true;
+            exclude_last_R = true;
+            if (verbosity > 0) {
+                std::cout << "  ICONST = 2: Constraints for translational and rotational invariance" << std::endl;
+                std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
+                std::cout << "              Rotational invariance of the maximum order will be neglected" << std::endl;
+            }
+            break;
+        case 3:
+            impose_inv_T = true;
+            impose_inv_R = true;
+            exclude_last_R = false;
+            if (verbosity > 0) {
+                std::cout << "  ICONST = 3: Constraints for translational and rotational invariance" << std::endl;
+                std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
+            }
+            break;
+        default:
+            exit("Constraint::setup", "invalid constraint_mode", constraint_mode);
+            break;
     }
 
     if (fcs->get_forceconstant_basis() == "Lattice" && impose_inv_R) {
         exit("Constraint::setup()", "Sorry, rotational invariance with FC_BASIS = Lattice is "
-             "not supported.\n Use preferred_basis == Cartesian instead.");
+                                    "not supported.\n Use preferred_basis == Cartesian instead.");
     }
 
     if (verbosity > 0) std::cout << std::endl;
@@ -266,9 +266,9 @@ void Constraint::setup(const System *system,
         const auto nparam = fcs->get_nequiv()[order].size();
 
         const_self[order].reserve(
-            const_translation[order].size()
-            + const_rotation_self[order].size()
-            + const_symmetry[order].size());
+                const_translation[order].size()
+                + const_rotation_self[order].size()
+                + const_symmetry[order].size());
 
         // The order of const_symmetry and const_translation
         // should not be changed since the rref_sparse is sensitive to
@@ -301,7 +301,7 @@ void Constraint::setup(const System *system,
         size_t nparams = 0;
         for (auto order = 0; order < maxorder; ++order) {
             Pmax += const_self[order].size()
-                + const_rotation_cross[order].size();
+                    + const_rotation_cross[order].size();
         }
         if (fix_harmonic) {
             Pmax -= const_self[0].size();
@@ -332,10 +332,10 @@ void Constraint::setup(const System *system,
     }
 
     exist_constraint
-        = impose_inv_T
-        || fix_harmonic
-        || fix_cubic
-        || extra_constraint_from_symmetry;
+            = impose_inv_T
+              || fix_harmonic
+              || fix_cubic
+              || extra_constraint_from_symmetry;
 
     if (verbosity > 0) {
         if (exist_constraint) {
@@ -367,7 +367,7 @@ void Constraint::setup(const System *system,
 
             if (extra_constraint_from_symmetry) {
                 std::cout << "  Constraints of T-inv, R-inv (self), and those from crystal symmetry are merged."
-                    << std::endl;
+                          << std::endl;
             } else {
                 std::cout << "  Constraints of T-inv and R-inv (self) are merged." << std::endl;
             }
@@ -386,16 +386,16 @@ void Constraint::setup(const System *system,
             if (constraint_algebraic) {
 
                 std::cout << "  ICONST >= 10 : Constraints will be considered algebraically."
-                    << std::endl << std::endl;
+                          << std::endl << std::endl;
 
                 if (impose_inv_R) {
                     std::cout << "  WARNING : Inter-order constraints for rotational invariance will be neglected."
-                        << std::endl;
+                              << std::endl;
                 }
 
                 for (order = 0; order < maxorder; ++order) {
                     std::cout << "  Number of free" << std::setw(9) << cluster->get_ordername(order)
-                        << " FCs : " << index_bimap[order].size() << std::endl;
+                              << " FCs : " << index_bimap[order].size() << std::endl;
                 }
                 std::cout << std::endl;
 
@@ -628,7 +628,7 @@ void Constraint::get_mapping_constraint(const int nmax,
         for (i = 0; i < nparam; ++i) {
             if (has_constraint[order][i] == 0) {
                 index_bimap_out[order].insert(
-                    boost::bimap<size_t, size_t>::value_type(icount, i));
+                        boost::bimap<size_t, size_t>::value_type(icount, i));
                 ++icount;
             }
         }
@@ -655,12 +655,12 @@ size_t Constraint::get_number_of_constraints() const
 std::string Constraint::get_fc_file(const int order) const
 {
     switch (order) {
-    case 2:
-        return fc2_file;
-    case 3:
-        return fc3_file;
-    default:
-        return "";
+        case 2:
+            return fc2_file;
+        case 3:
+            return fc3_file;
+        default:
+            return "";
     }
 }
 
@@ -668,14 +668,14 @@ void Constraint::set_fc_file(const int order,
                              const std::string fc_file)
 {
     switch (order) {
-    case 2:
-        fc2_file = fc_file;
-        break;
-    case 3:
-        fc3_file = fc_file;
-        break;
-    default:
-        break;
+        case 2:
+            fc2_file = fc_file;
+            break;
+        case 3:
+            fc3_file = fc_file;
+            break;
+        default:
+            break;
     }
 }
 
@@ -704,12 +704,12 @@ int Constraint::get_constraint_algebraic() const
     return constraint_algebraic;
 }
 
-double** Constraint::get_const_mat() const
+double **Constraint::get_const_mat() const
 {
     return const_mat;
 }
 
-double* Constraint::get_const_rhs() const
+double *Constraint::get_const_rhs() const
 {
     return const_rhs;
 }
@@ -744,12 +744,12 @@ void Constraint::set_rotation_axis(const std::string rotation_axis_in)
     rotation_axis = rotation_axis_in;
 }
 
-const ConstraintSparseForm& Constraint::get_const_symmetry(const int order) const
+const ConstraintSparseForm &Constraint::get_const_symmetry(const int order) const
 {
     return const_symmetry[order];
 }
 
-const std::vector<ConstraintTypeFix>& Constraint::get_const_fix(const int order) const
+const std::vector<ConstraintTypeFix> &Constraint::get_const_fix(const int order) const
 {
     return const_fix[order];
 }
@@ -761,12 +761,12 @@ void Constraint::set_const_fix_val_to_fix(const int order,
     const_fix[order][idx].val_to_fix = val;
 }
 
-const std::vector<ConstraintTypeRelate>& Constraint::get_const_relate(const int order) const
+const std::vector<ConstraintTypeRelate> &Constraint::get_const_relate(const int order) const
 {
     return const_relate[order];
 }
 
-const boost::bimap<size_t, size_t>& Constraint::get_index_bimap(const int order) const
+const boost::bimap<size_t, size_t> &Constraint::get_index_bimap(const int order) const
 {
     return index_bimap[order];
 }
@@ -1241,16 +1241,16 @@ void Constraint::generate_rotational_constraint(const System *system,
         if (order == 0) {
             if (verbosity > 0) {
                 std::cout << "   Constraints between " << std::setw(8)
-                    << "1st-order IFCs (which are zero) and "
-                    << std::setw(8) << cluster->get_ordername(order) << " ...";
+                          << "1st-order IFCs (which are zero) and "
+                          << std::setw(8) << cluster->get_ordername(order) << " ...";
             }
 
             nparam_sub = nparams[order];
         } else {
             if (verbosity > 0) {
                 std::cout << "   Constraints between " << std::setw(8)
-                    << cluster->get_ordername(order - 1) << " and "
-                    << std::setw(8) << cluster->get_ordername(order) << " ...";
+                          << cluster->get_ordername(order - 1) << " and "
+                          << std::setw(8) << cluster->get_ordername(order) << " ...";
             }
 
             nparam_sub = nparams[order] + nparams[order - 1];
@@ -1321,7 +1321,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                 atom_tmp.push_back(jat);
                                 cell_dummy.clear();
                                 iter_cluster = cluster->get_interaction_cluster(order, i).find(
-                                    InteractionCluster(atom_tmp, cell_dummy));
+                                        InteractionCluster(atom_tmp, cell_dummy));
 
                                 if (iter_cluster == cluster->get_interaction_cluster(order, i).end()) {
                                     exit("generate_rotational_constraint",
@@ -1334,7 +1334,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                     for (j = 0; j < nsize_equiv; ++j) {
                                         for (auto k = 0; k < 3; ++k) {
                                             vec_for_rot[k]
-                                                += system->get_x_image()[(*iter_cluster).cell[j][0]][jat][k];
+                                                    += system->get_x_image()[(*iter_cluster).cell[j][0]][jat][k];
                                         }
                                     }
 
@@ -1356,7 +1356,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                                                         interaction_index, 1));
                                 if (iter_found != list_found.end()) {
                                     arr_constraint[(*iter_found).mother]
-                                        -= (*iter_found).sign * vec_for_rot[mu];
+                                            -= (*iter_found).sign * vec_for_rot[mu];
                                 }
                             }
 
@@ -1452,8 +1452,8 @@ void Constraint::generate_rotational_constraint(const System *system,
                                             std::sort(atom_tmp.begin(), atom_tmp.end());
 
                                             iter_cluster = cluster->get_interaction_cluster(order, i).find(
-                                                InteractionCluster(atom_tmp,
-                                                                   cell_dummy));
+                                                    InteractionCluster(atom_tmp,
+                                                                       cell_dummy));
                                             if (iter_cluster != cluster->get_interaction_cluster(order, i).end()) {
 
                                                 int iloc = -1;
@@ -1476,7 +1476,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                                 for (j = 0; j < nsize_equiv; ++j) {
                                                     for (auto k = 0; k < 3; ++k) {
                                                         vec_for_rot[k] += system->get_x_image()[(*iter_cluster).cell[j][
-                                                            iloc]][jat][k];
+                                                                iloc]][jat][k];
                                                     }
                                                 }
 
@@ -1494,10 +1494,10 @@ void Constraint::generate_rotational_constraint(const System *system,
                                             sort_tail(order + 2, interaction_tmp);
 
                                             iter_found = list_found.
-                                                find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
+                                                    find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
                                             if (iter_found != list_found.end()) {
                                                 arr_constraint[nparams[order - 1] + (*iter_found).mother]
-                                                    += (*iter_found).sign * vec_for_rot[nu];
+                                                        += (*iter_found).sign * vec_for_rot[nu];
                                             }
 
                                             // Exchange mu <--> nu and repeat again.
@@ -1508,10 +1508,10 @@ void Constraint::generate_rotational_constraint(const System *system,
                                             sort_tail(order + 2, interaction_tmp);
 
                                             iter_found = list_found.
-                                                find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
+                                                    find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
                                             if (iter_found != list_found.end()) {
                                                 arr_constraint[nparams[order - 1] + (*iter_found).mother]
-                                                    -= (*iter_found).sign * vec_for_rot[mu];
+                                                        -= (*iter_found).sign * vec_for_rot[mu];
                                             }
                                         }
 
@@ -1531,7 +1531,7 @@ void Constraint::generate_rotational_constraint(const System *system,
 
                                                 for (j = 0; j < 3; ++j) {
                                                     levi_factor += levi_civita(j, mu, nu) * levi_civita(
-                                                        j, mu_lambda, jcrd);
+                                                            j, mu_lambda, jcrd);
                                                 }
 
                                                 if (levi_factor == 0) continue;
@@ -1542,7 +1542,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                                                                              interaction_tmp, 1));
                                                 if (iter_found != list_found_last.end()) {
                                                     arr_constraint[(*iter_found).mother]
-                                                        += (*iter_found).sign * static_cast<double>(levi_factor);
+                                                            += (*iter_found).sign * static_cast<double>(levi_factor);
                                                 }
                                             }
                                         }
@@ -1670,7 +1670,7 @@ void Constraint::generate_rotational_constraint(const System *system,
                                                                                     interaction_tmp, 1));
                                             if (iter_found != list_found.end()) {
                                                 arr_constraint_self[(*iter_found).mother]
-                                                    += (*iter_found).sign * static_cast<double>(levi_factor);
+                                                        += (*iter_found).sign * static_cast<double>(levi_factor);
                                             }
                                         } // jcrd
                                     }     // lambda
@@ -1854,9 +1854,9 @@ void Constraint::fix_forceconstants_to_file(const int order,
     }
 
     const auto nat_ref = boost::lexical_cast<size_t>(
-        get_value_from_xml(pt, "Data.Structure.NumberOfAtoms"));
+            get_value_from_xml(pt, "Data.Structure.NumberOfAtoms"));
     const auto ntran_ref = boost::lexical_cast<size_t>(
-        get_value_from_xml(pt, "Data.Symmetry.NumberOfTranslations"));
+            get_value_from_xml(pt, "Data.Symmetry.NumberOfTranslations"));
     const auto natmin_ref = nat_ref / ntran_ref;
 
     if (natmin_ref != symmetry->get_nat_prim()) {
@@ -1868,7 +1868,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
 
     if (order == 0) {
         const auto nfcs_ref = boost::lexical_cast<size_t>(
-            get_value_from_xml(pt, "Data.ForceConstants.HarmonicUnique.NFC2"));
+                get_value_from_xml(pt, "Data.ForceConstants.HarmonicUnique.NFC2"));
 
         if (nfcs_ref != nfcs) {
             exit("fix_forceconstants_to_file",
@@ -1876,7 +1876,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
         }
 
         std::string preferred_basis_ref = boost::lexical_cast<std::string>(
-            get_value_from_xml(pt, "Data.ForceConstants.HarmonicUnique.Basis", 0));
+                get_value_from_xml(pt, "Data.ForceConstants.HarmonicUnique.Basis", 0));
 
         if (preferred_basis_ref == "") preferred_basis_ref = "Cartesian";
 
@@ -1886,7 +1886,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
         }
     } else if (order == 1) {
         const auto nfcs_ref = boost::lexical_cast<size_t>(
-            get_value_from_xml(pt, "Data.ForceConstants.CubicUnique.NFC3"));
+                get_value_from_xml(pt, "Data.ForceConstants.CubicUnique.NFC3"));
 
         if (nfcs_ref != nfcs) {
             exit("fix_forceconstants_to_file",
@@ -1894,7 +1894,7 @@ void Constraint::fix_forceconstants_to_file(const int order,
         }
 
         std::string preferred_basis_ref = boost::lexical_cast<std::string>(
-            get_value_from_xml(pt, "Data.ForceConstants.CubicUnique.Basis", 0));
+                get_value_from_xml(pt, "Data.ForceConstants.CubicUnique.Basis", 0));
         if (preferred_basis_ref == "") preferred_basis_ref = "Cartesian";
 
         if (preferred_basis_ref != fcs->get_forceconstant_basis()) {
@@ -1912,31 +1912,31 @@ void Constraint::fix_forceconstants_to_file(const int order,
     int counter = 0;
 
     if (order == 0) {
-        BOOST_FOREACH(const ptree::value_type & child_, pt.get_child("Data.ForceConstants.HarmonicUnique")) {
-            if (child_.first == "FC2") {
-                const auto &child = child_.second;
-                const auto str_intpair = child.get<std::string>("<xmlattr>.pairs");
-                const auto str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
+        BOOST_FOREACH(const ptree::value_type &child_, pt.get_child("Data.ForceConstants.HarmonicUnique")) {
+                        if (child_.first == "FC2") {
+                            const auto &child = child_.second;
+                            const auto str_intpair = child.get<std::string>("<xmlattr>.pairs");
+                            const auto str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
 
-                std::istringstream is(str_intpair);
-                is >> intpair_ref[counter][0] >> intpair_ref[counter][1];
-                fcs_ref[counter] = boost::lexical_cast<double>(child.data());
-                ++counter;
-            }
-        }
+                            std::istringstream is(str_intpair);
+                            is >> intpair_ref[counter][0] >> intpair_ref[counter][1];
+                            fcs_ref[counter] = boost::lexical_cast<double>(child.data());
+                            ++counter;
+                        }
+                    }
     } else if (order == 1) {
-        BOOST_FOREACH(const ptree::value_type & child_, pt.get_child("Data.ForceConstants.CubicUnique")) {
-            if (child_.first == "FC3") {
-                const auto &child = child_.second;
-                const auto str_intpair = child.get<std::string>("<xmlattr>.pairs");
-                const auto str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
+        BOOST_FOREACH(const ptree::value_type &child_, pt.get_child("Data.ForceConstants.CubicUnique")) {
+                        if (child_.first == "FC3") {
+                            const auto &child = child_.second;
+                            const auto str_intpair = child.get<std::string>("<xmlattr>.pairs");
+                            const auto str_multiplicity = child.get<std::string>("<xmlattr>.multiplicity");
 
-                std::istringstream is(str_intpair);
-                is >> intpair_ref[counter][0] >> intpair_ref[counter][1] >> intpair_ref[counter][2];
-                fcs_ref[counter] = boost::lexical_cast<double>(child.data());
-                ++counter;
-            }
-        }
+                            std::istringstream is(str_intpair);
+                            is >> intpair_ref[counter][0] >> intpair_ref[counter][1] >> intpair_ref[counter][2];
+                            fcs_ref[counter] = boost::lexical_cast<double>(child.data());
+                            ++counter;
+                        }
+                    }
     }
 
     const auto nterms = order + 2;

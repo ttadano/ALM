@@ -18,13 +18,12 @@
 #include "timer.h"
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
+
 using SpMat = Eigen::SparseMatrix<double, Eigen::ColMajor>;
 
 
-namespace ALM_NS
-{
-    class OptimizerControl
-    {
+namespace ALM_NS {
+    class OptimizerControl {
     public:
         // General optimization options
         int linear_model;         // 1 : least-squares, 2 : elastic net
@@ -69,14 +68,16 @@ namespace ALM_NS
         }
 
         ~OptimizerControl() = default;
+
         OptimizerControl(const OptimizerControl &obj) = default;
-        OptimizerControl& operator=(const OptimizerControl &obj) = default;
+
+        OptimizerControl &operator=(const OptimizerControl &obj) = default;
     };
 
-    class Optimize
-    {
+    class Optimize {
     public:
         Optimize();
+
         ~Optimize();
 
         int optimize_main(const Symmetry *symmetry,
@@ -91,12 +92,14 @@ namespace ALM_NS
                           Timer *timer);
 
         void set_u_train(const std::vector<std::vector<double>> &u_train_in);
+
         void set_f_train(const std::vector<std::vector<double>> &f_train_in);
 
         void set_validation_data(const std::vector<std::vector<double>> &u_validation_in,
                                  const std::vector<std::vector<double>> &f_validation_in);
 
         std::vector<std::vector<double>> get_u_train() const;
+
         std::vector<std::vector<double>> get_f_train() const;
 
         size_t get_number_of_data() const;
@@ -118,9 +121,10 @@ namespace ALM_NS
 
         size_t get_number_of_rows_sensing_matrix() const;
 
-        double* get_params() const;
+        double *get_params() const;
 
         void set_optimizer_control(const OptimizerControl &);
+
         OptimizerControl get_optimizer_control() const;
 
         double get_cv_l1_alpha() const;
@@ -136,6 +140,7 @@ namespace ALM_NS
         OptimizerControl optcontrol;
 
         void set_default_variables();
+
         void deallocate_variables();
 
         void data_multiplier(const std::vector<std::vector<double>> &,
@@ -261,6 +266,7 @@ namespace ALM_NS
 
         void apply_scalers(const int maxorder,
                            Constraint *constraint);
+
         void finalize_scalers(const int maxorder,
                               Constraint *constraint);
 
@@ -296,7 +302,7 @@ namespace ALM_NS
                                  double *amat,
                                  const double *bvec,
                                  double *param_out,
-                                 const double * const *cmat,
+                                 const double *const *cmat,
                                  double *dvec,
                                  const int verbosity) const;
 
@@ -336,6 +342,7 @@ namespace ALM_NS
                                              const Constraint *constraint) const;
 
         int factorial(const int) const;
+
         int rankQRD(const size_t m,
                     const size_t n,
                     double *mat,

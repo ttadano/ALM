@@ -9,7 +9,7 @@
 */
 
 #pragma once
- 
+
 #include <string>
 
 static const std::string ALAMODE_VERSION = "2.0.0 Dev";
