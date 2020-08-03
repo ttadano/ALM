@@ -56,6 +56,8 @@ if not extra_link_args:  # Default libgomp
 extra_link_args.append('-llapack')
 
 spglib_dir = os.path.join(conda_prefix, "lib")
+if not os.path.exists(os.path.join(spglib_dir, "libsymspg.a")):
+    spglib_dir = os.paht.join(conda_prefix, "lib64")
 include_dirs = []
 include_dirs.append(numpy.get_include())
 include_dirs.append(os.path.join(conda_prefix, "include"))
@@ -99,7 +101,7 @@ extension = Extension('alm._alm',
                       sources=sources)
 
 setup(name='alm',
-      version='1.0.2',
+      version='1.2.0',
       description='Force constants generator',
       setup_requires=['numpy', 'setuptools>=18.0'],
       author='Terumasa Tadano',
