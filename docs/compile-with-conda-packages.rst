@@ -19,29 +19,17 @@ Preparing build tools by conda
 At first, it is recommended `to prepare a conda environment
 <https://conda.io/docs/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands>`_ by::
 
-   % conda create --name alm -c conda-forge python=3.7
+   % conda create --name alm -c conda-forge python=3.8
 
 Here the name of the conda environment is chosen ``alm``. The detailed
 instruction about the conda environment is found `here
 <https://conda.io/docs/user-guide/tasks/manage-environments.html>`_.
-For linux and macOS, compilers provided by conda are `different
-<https://conda.io/docs/user-guide/tasks/build-packages/compiler-tools.html>`_.
-Then to build ALM on linux or macOS, the following conda packages are
+To build ALM on linux or macOS, the following conda packages are
 installed by
 
-For linux
-~~~~~~~~~~
-
 ::
 
-   % conda install -c conda-forge gcc_linux-64 gxx_linux-64 h5py scipy numpy boost eigen cmake spglib ipython
-
-For macOS
-~~~~~~~~~~
-
-::
-
-   % conda install -c conda-forge clang_osx-64 clangxx_osx-64 llvm-openmp cmake boost eigen numpy scipy h5py spglib ipython
+   % conda install -c conda-forge numpy scipy h5py compilers "libblas=*=*mkl" spglib boost eigen cmake ipython mkl-include
 
 
 .. _build_ALMlib:
