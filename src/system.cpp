@@ -141,12 +141,21 @@ void System::set_supercell(const double lavec_in[3][3],
         for (j = 0; j < 3; ++j) {
             xtmp[j] = xf_in[i][j];
         }
+        // The fractional coordinate should be in the range of 0<=xf<1.
+        for (j = 0; j < 3; ++j) {
+            while (xtmp[j] >= 1.0) {
+                xtmp[j] -= 1.0;
+            }
+            while (xtmp[j] < 0.0) {
+                xtmp[j] += 1.0;
+            }
+        }
         supercell.x_fractional.push_back(xtmp);
     }
 
     double xf_tmp[3], xc_tmp[3];
 
-    for (const auto &xf : supercell.x_fractional) {
+    for (const auto &xf: supercell.x_fractional) {
         for (i = 0; i < 3; ++i) {
             xf_tmp[i] = xf[i];
         }
@@ -418,7 +427,7 @@ void System::set_atomtype_group()
 
     for (i = 0; i < supercell.number_of_atoms; ++i) {
         int count = 0;
-        for (auto it : set_type) {
+        for (auto it: set_type) {
             if (spin.noncollinear) {
                 if (supercell.kind[i] == it.element) {
                     atomtype_group[count].push_back(i);

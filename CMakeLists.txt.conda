@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.1)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -fopenmp")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0 -D_DEBUG")
 #set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_BUILD_TYPE RELEASE)
 
 project(alm)
-# set(CMAKE_CXX_COMPILER "clang++")
-option(WITH_SPARSE_SOLVER "Use sparse solver option" ON)
 
 if(WIN32)
   LINK_DIRECTORIES(C:\\lapack)
@@ -40,12 +41,16 @@ endif()
 
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
 
-if (WITH_SPARSE_SOLVER)
-  add_definitions(-DWITH_SPARSE_SOLVER)
-  find_package(Eigen3 REQUIRED)
-  include_directories(${EIGEN3_INCLUDE_DIR})
+if (WITH_HDF5_SUPPORT)
+    add_definitions(-D_HDF5)
+    find_package(HDF5 REQUIRED COMPONENTS CXX)
+    include_directories(${HDF5_INCLUDE_DIRS})
+    set(hdf5library ${HDF5_LIBRARIES})
 endif()
+
 # Version numbers
 file(READ ${PROJECT_SOURCE_DIR}/src/version.h version_file)
 string(REGEX MATCH "ALAMODE_VERSION = \"([0-9]+\\.[0-9]+\\.[0-9]+)\"" alm_version ${version_file})
@@ -91,17 +96,19 @@ add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
                    ${PROJECT_SOURCE_DIR}/src/alm_cui.cpp
                    ${SOURCES} ${HEADERS})
 target_link_libraries(alm ${Boost_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib} ${openmp})
-set_property(TARGET alm PROPERTY CXX_STANDARD 11)
-set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
+if (WITH_HDF5_SUPPORT)
+    target_link_libraries(alm ${hdf5library})
+endif()
 install(TARGETS alm DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 # Shared library
 add_library(almcxx SHARED ${SOURCES})
 target_link_libraries(almcxx ${Boost_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib} ${openmp})
+if (WITH_HDF5_SUPPORT)
+    target_link_libraries(almcxx ${hdf5library})
+endif()
 set_property(TARGET almcxx PROPERTY VERSION ${serial})
 set_property(TARGET almcxx PROPERTY SOVERSION ${soserial})
-set_property(TARGET almcxx PROPERTY CXX_STANDARD 11)
-set_property(TARGET almcxx PROPERTY CXX_STANDARD_REQUIRED ON)
 install(TARGETS almcxx DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Static link library
@@ -109,8 +116,6 @@ add_library(almcxx_static STATIC ${SOURCES})
 set_property(TARGET almcxx_static PROPERTY VERSION ${serial})
 set_property(TARGET almcxx_static PROPERTY SOVERSION ${soserial})
 set_property(TARGET almcxx_static PROPERTY OUTPUT_NAME almcxx)
-set_property(TARGET almcxx_static PROPERTY CXX_STANDARD 11)
-set_property(TARGET almcxx_static PROPERTY CXX_STANDARD_REQUIRED ON)
 install(TARGETS almcxx_static ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Header file

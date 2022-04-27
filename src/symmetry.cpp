@@ -172,6 +172,14 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
 
     SymmData.clear();
 
+    if (spin.lspin && spin.noncollinear) {
+        use_internal_symm_finder = true;
+
+        if (verbosity > 0) {
+            std::cout << "  Switch to the internal symmetry finder from spglib when NONCOLLINEAR = 1.\n";
+        }
+    }
+
     if (use_internal_symm_finder) {
         // SymmData is written.
         findsym_alm(cell, is_periodic, atomtype_group, spin);
@@ -201,7 +209,7 @@ void Symmetry::setup_symmetry_operation(const Cell &cell,
         ofs_sym.open(file_sym.c_str(), std::ios::out);
         ofs_sym << nsym << std::endl;
 
-        for (auto &p : SymmData) {
+        for (auto &p: SymmData) {
             for (i = 0; i < 3; ++i) {
                 for (j = 0; j < 3; ++j) {
                     ofs_sym << std::setw(4) << p.rotation[i][j];
@@ -431,7 +439,7 @@ void Symmetry::find_crystal_symmetry(const Cell &cell,
                           is_compatible(rot_cart),
                           is_translation(rot_int));
 
-    for (auto &it_latsym : LatticeSymmList) {
+    for (auto &it_latsym: LatticeSymmList) {
 
         iat = atomtype_group[0][0];
 
@@ -579,13 +587,8 @@ int Symmetry::findsym_spglib(const Cell &cell,
 
     const auto nat = cell.number_of_atoms;
 
-    if (spin.lspin && spin.noncollinear) {
-        exit("findsym_spglib", "NONCOLLINEAR spin is not supported in spglib.");
-    }
-
     allocate(position, nat);
     allocate(types_tmp, nat);
-
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {

@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.1)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O2")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0 -D_DEBUG")
 #set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_BUILD_TYPE RELEASE)
 
@@ -16,9 +18,16 @@ if(WIN32)
 endif()
 
 if (UNIX)
-  include_directories("/Users/tadano/src/spglib/include")
   find_package(LAPACK REQUIRED)
-  set(spglib "-L/Users/tadano/src/spglib/lib -lsymspg")
+  include_directories(${Lapack_INCLUDE_DIRS})
+endif()
+
+if (SPGLIB_ROOT)
+    include_directories("${SPGLIB_ROOT}/include")
+    set(spglib "-L${SPGLIB_ROOT}/lib -L${SPGLIB_ROOT}/lib64 -lsymspg")
+else()
+    message("SPGLIB_ROOT is not given by -DSPGLIB_ROOT option. Just add -lsymspg.")
+    set(spglib "-lsymspg")
 endif()
 
 #
@@ -27,13 +36,52 @@ endif()
 find_package(OpenMP REQUIRED)
 if (OPENMP_FOUND)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set (openmplibrary OpenMP::OpenMP_CXX)
 endif()
 
-find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
+find_package(Boost)
+if (Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+else()
+    if (BOOST_INCLUDE)
+        include_directories(${BOOST_INCLUDE})
+    else()
+        message(FATAL_ERROR "Boost was not found.
+        Please specify the location of boost include directories
+        via -DBOOST_INCLUDE option.")
+    endif()
+endif()
 
-find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
+find_package(Eigen3)
+if (Eigen3_FOUND)
+    include_directories(${EIGEN3_INCLUDE_DIR})
+else()
+    if (EIGEN3_INCLUDE)
+        include_directories(${EIGEN3_INCLUDE})
+    else()
+        message(FATAL_ERROR "Eigen3 was not found.
+        Please specify the location of boost include directories
+        via -DEIGEN3_INCLUDE option.")
+    endif()
+endif()
+
+if (WITH_HDF5_SUPPORT)
+    add_definitions(-D_HDF5)
+    find_package(HDF5 COMPONENTS CXX)
+    if (HDF5_FOUND)
+        include_directories(${HDF5_INCLUDE_DIRS})
+        set(hdf5library ${HDF5_LIBRARIES})
+    else()
+        if (HDF5_ROOT)
+            include_directories("${HDF5_ROOT}/include")
+            set(hdf5library "-L${HDF5_ROOT}/lib -lhdf5_cpp -lhdf5")
+        else()
+            message(FATAL_ERROR "HDF5 was not found.
+            Please specify the HDF5 install directory
+            via -DHDF5_ROOT option.")
+        endif()
+    endif()
+endif()
 
 # Version numbers
 file(READ ${PROJECT_SOURCE_DIR}/src/version.h version_file)
@@ -83,24 +131,20 @@ set(HEADERS ${PROJECT_SOURCE_DIR}/src/alm.h
 add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp
                    ${PROJECT_SOURCE_DIR}/src/alm_cui.cpp
                    ${SOURCES} ${HEADERS})
-target_link_libraries(alm ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib})
-target_link_libraries(alm ${LAPACK_LIBRARIES})
-set_property(TARGET alm PROPERTY CXX_STANDARD 11)
-set_property(TARGET alm PROPERTY CXX_STANDARD_REQUIRED ON)
 
-# add_executable(alm ${PROJECT_SOURCE_DIR}/src/main.cpp)
-# target_link_libraries(alm ${almcxx_static} ${Boost_LIBRARIES} lapack)
+target_link_libraries(alm ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib} ${openmplibrary})
+if (WITH_HDF5_SUPPORT)
+    target_link_libraries(alm ${hdf5library})
+endif()
 
 # Shared library
 add_library(almcxx SHARED ${SOURCES})
-#target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
-target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib})
-#target_link_libraries(almcxx ${LAPACK_LIBRARIES})
+target_link_libraries(almcxx ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${spglib} ${openmplibrary})
+if (WITH_HDF5_SUPPORT)
+    target_link_libraries(almcxx ${hdf5library})
+endif()
 set_property(TARGET almcxx PROPERTY VERSION ${serial})
 set_property(TARGET almcxx PROPERTY SOVERSION ${soserial})
-set_property(TARGET almcxx PROPERTY CXX_STANDARD 11)
-set_property(TARGET almcxx PROPERTY CXX_STANDARD_REQUIRED ON)
-#install(TARGETS almcxx LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 install(TARGETS almcxx DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Static link library
@@ -108,8 +152,6 @@ add_library(almcxx_static STATIC ${SOURCES})
 set_property(TARGET almcxx_static PROPERTY VERSION ${serial})
 set_property(TARGET almcxx_static PROPERTY SOVERSION ${soserial})
 set_property(TARGET almcxx_static PROPERTY OUTPUT_NAME almcxx)
-set_property(TARGET almcxx_static PROPERTY CXX_STANDARD 11)
-set_property(TARGET almcxx_static PROPERTY CXX_STANDARD_REQUIRED ON)
 install(TARGETS almcxx_static ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 # Header file

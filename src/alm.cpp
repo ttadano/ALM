@@ -44,6 +44,7 @@ ALM::~ALM()
     delete constraint;
     delete displace;
     delete timer;
+    delete writer;
 }
 
 void ALM::init_instances()
@@ -57,6 +58,7 @@ void ALM::init_instances()
     constraint = new Constraint();
     displace = new Displace();
     timer = new Timer();
+    writer = new Writer();
 }
 
 void ALM::set_verbosity(const int verbosity_in)
@@ -72,11 +74,6 @@ int ALM::get_verbosity() const
 void ALM::set_output_filename_prefix(const std::string prefix) const // PREFIX
 {
     files->set_prefix(prefix);
-}
-
-void ALM::set_print_hessian(const bool print_hessian) const // HESSIAN
-{
-    files->print_hessian = print_hessian;
 }
 
 void ALM::set_print_symmetry(const int printsymmetry) const // PRINTSYM
@@ -125,10 +122,10 @@ void ALM::set_cell(const size_t nat,
 }
 
 void ALM::set_magnetic_params(const size_t nat,
-                              const double (*magmom)[3],     // MAGMOM
+                              const double (*magmom)[3], // MAGMOM
                               const bool lspin,
-                              const int noncollinear,        // NONCOLLINEAR
-                              const int trev_sym_mag,        // TREVSYM
+                              const int noncollinear, // NONCOLLINEAR
+                              const int trev_sym_mag, // TREVSYM
                               const std::string str_magmom) const // MAGMOM
 {
     system->set_spin_variables(nat,
@@ -199,7 +196,7 @@ void ALM::set_sparse_mode(const int sparse_mode) const // SPARSE
     optimize->set_optimizer_control(optctrl);
 }
 
-void ALM::set_forceconstant_basis(const std::string preferred_basis) const // FC_BASIS
+void ALM::set_forceconstant_basis(const std::string preferred_basis) const // FCSYM_BASIS
 {
     fcs->set_forceconstant_basis(preferred_basis);
 }
@@ -207,6 +204,16 @@ void ALM::set_forceconstant_basis(const std::string preferred_basis) const // FC
 std::string ALM::get_forceconstant_basis() const
 {
     return fcs->get_forceconstant_basis();
+}
+
+void ALM::set_nmaxsave(const int nmaxsave) const // NMAXSAVE
+{
+    writer->set_output_maxorder(nmaxsave);
+}
+
+int ALM::get_nmaxsave() const
+{
+    return writer->get_output_maxorder();
 }
 
 void ALM::define(const int maxorder,
@@ -323,7 +330,7 @@ int ALM::get_displacement_patterns(int *atom_indices,
 
     auto i_atom = 0;
     auto i_disp = 0;
-    for (const auto &displacements : displace->get_pattern_all(order)) {
+    for (const auto &displacements: displace->get_pattern_all(order)) {
         for (size_t j = 0; j < displacements.atoms.size(); ++j) {
             atom_indices[i_atom] = displacements.atoms[j];
             ++i_atom;
@@ -374,6 +381,7 @@ size_t ALM::get_number_of_irred_fc_elements(const int fc_order) // harmonic=1, .
                           cluster,
                           symmetry,
                           get_optimizer_control().linear_model,
+                          get_optimizer_control().mirror_image_conv,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -408,8 +416,7 @@ size_t ALM::get_number_of_fc_origin(const int fc_order,
 }
 
 void ALM::get_fc_origin(double *fc_values,
-                        int *elem_indices,
-        // (len(fc_values), fc_order + 1) is flatten.
+                        int *elem_indices,  // (len(fc_values), fc_order + 1) is flatten.
                         const int fc_order, // harmonic=1, ...
                         const int permutation) const
 {
@@ -429,7 +436,7 @@ void ALM::get_fc_origin(double *fc_values,
     auto id = 0;
 
     if (permutation) {
-        for (const auto &it : fcs->get_fc_cart()[fc_order - 1]) {
+        for (const auto &it: fcs->get_fc_cart()[fc_order - 1]) {
             fc_values[id] = it.fc_value;
             for (auto i = 0; i < fc_order + 1; ++i) {
                 elem_indices[id * (fc_order + 1) + i] = it.flattenarray[i];
@@ -437,7 +444,7 @@ void ALM::get_fc_origin(double *fc_values,
             ++id;
         }
     } else {
-        for (const auto &it : fcs->get_fc_cart()[fc_order - 1]) {
+        for (const auto &it: fcs->get_fc_cart()[fc_order - 1]) {
             if (it.is_ascending_order) {
                 fc_values[id] = it.fc_value;
                 for (auto i = 0; i < fc_order + 1; ++i) {
@@ -451,8 +458,7 @@ void ALM::get_fc_origin(double *fc_values,
 
 
 void ALM::get_fc_irreducible(double *fc_values,
-                             int *elem_indices,
-        // (len(fc_values), fc_order + 1) is flatten.
+                             int *elem_indices,  // (len(fc_values), fc_order + 1) is flatten.
                              const int fc_order) // harmonic=1, ...
 {
     // Return an irreducible set of force constants.
@@ -475,6 +481,7 @@ void ALM::get_fc_irreducible(double *fc_values,
                           cluster,
                           symmetry,
                           get_optimizer_control().linear_model,
+                          get_optimizer_control().mirror_image_conv,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -488,7 +495,7 @@ void ALM::get_fc_irreducible(double *fc_values,
         if (constraint->get_index_bimap(order).empty()) { continue; }
 
         if (order == fc_order - 1) {
-            for (const auto &it : constraint->get_index_bimap(order)) {
+            for (const auto &it: constraint->get_index_bimap(order)) {
                 inew = it.left;
                 iold = it.right + ishift;
 
@@ -527,7 +534,7 @@ void ALM::get_fc_all(double *fc_values,
     size_t id = 0;
 
     if (permutation) {
-        for (const auto &it : fcs->get_fc_cart()[fc_order - 1]) {
+        for (const auto &it: fcs->get_fc_cart()[fc_order - 1]) {
 
             for (size_t itran = 0; itran < ntran; ++itran) {
                 for (i = 0; i < fc_order + 1; ++i) {
@@ -541,7 +548,7 @@ void ALM::get_fc_all(double *fc_values,
             }
         }
     } else {
-        for (const auto &it : fcs->get_fc_cart()[fc_order - 1]) {
+        for (const auto &it: fcs->get_fc_cart()[fc_order - 1]) {
             if (it.is_ascending_order) {
                 for (size_t itran = 0; itran < ntran; ++itran) {
                     for (i = 0; i < fc_order + 1; ++i) {
@@ -589,11 +596,11 @@ void ALM::get_matrix_elements(double *amat,
                                                        constraint);
     // This may be inefficient.
     auto i = 0;
-    for (const auto it : amat_vec) {
+    for (const auto it: amat_vec) {
         amat[i++] = it;
     }
     i = 0;
-    for (const auto it : bvec_vec) {
+    for (const auto it: bvec_vec) {
         bvec[i++] = it;
     }
     //amat = amat_vec.data();
@@ -612,6 +619,7 @@ int ALM::run_optimize()
                           cluster,
                           symmetry,
                           get_optimizer_control().linear_model,
+                          get_optimizer_control().mirror_image_conv,
                           verbosity,
                           timer);
         ready_to_fit = true;
@@ -630,6 +638,7 @@ int ALM::run_optimize()
                                               verbosity,
                                               files->get_datfile_train(),
                                               files->get_datfile_validation(),
+                                              writer->get_output_maxorder(),
                                               timer);
     return info;
 }
@@ -651,13 +660,13 @@ void ALM::init_fc_table()
 
     if (structure_initialized) return;
     system->init(verbosity, timer);
-    files->init();
     symmetry->init(system, verbosity, timer);
     structure_initialized = true;
 
     // Build cluster & force constant table
     cluster->init(system,
                   symmetry,
+                  get_optimizer_control().mirror_image_conv,
                   verbosity,
                   timer);
     fcs->init(cluster,
@@ -669,4 +678,27 @@ void ALM::init_fc_table()
     // Switch off the ready flag because the force constants are updated
     // but corresponding constranits are not.
     ready_to_fit = false;
+}
+
+void ALM::save_fc(const std::string fcs_format) const
+{
+    writer->save_fcs_with_specific_format(fcs_format,
+                                          system,
+                                          symmetry,
+                                          cluster,
+                                          constraint,
+                                          fcs,
+                                          optimize,
+                                          files,
+                                          verbosity);
+}
+
+void ALM::set_fcs_save_flag(const std::string fcs_format, const int val) const
+{
+    writer->set_fcs_save_flag(fcs_format, val);
+}
+
+int ALM::get_fcs_save_flag(const std::string fcs_format) const
+{
+    return writer->get_fcs_save_flag(fcs_format);
 }

@@ -125,7 +125,6 @@ void Fcs::set_default_variables()
     fc_cart = nullptr;
     store_zeros = true;
 
-    // preferred_basis = "Cartesian";
     preferred_basis = "Lattice";
 }
 
@@ -210,7 +209,7 @@ void Fcs::generate_force_constant_table(const int order,
 
     std::unordered_set<IntList> list_found;
 
-    for (const auto &pair : pairs) {
+    for (const auto &pair: pairs) {
 
         for (i = 0; i < order + 2; ++i) atmn[i] = pair.iarray[i];
 
@@ -368,7 +367,6 @@ void Fcs::get_constraint_symmetry(const size_t nat,
     // Necessary for hexagonal systems.
 
     int i;
-    // int j;
     unsigned int isym;
     int ixyz;
     int *index_tmp;
@@ -416,7 +414,7 @@ void Fcs::get_constraint_symmetry(const size_t nat,
 
     // Generate temporary list of parameters
     list_found.clear();
-    for (const auto &p : fc_table_in) {
+    for (const auto &p: fc_table_in) {
         for (i = 0; i < order + 2; ++i) index_tmp[i] = p.elems[i];
         list_found.insert(FcProperty(order + 2, p.sign,
                                      index_tmp, p.mother));
@@ -510,7 +508,7 @@ void Fcs::get_constraint_symmetry(const size_t nat,
 
 #pragma omp critical
         {
-            for (const auto &it : constraint_list_omp) {
+            for (const auto &it: constraint_list_omp) {
                 constraint_all.emplace_back(it);
             }
         }
@@ -532,10 +530,10 @@ void Fcs::get_constraint_symmetry(const size_t nat,
     int counter;
     const_out.clear();
 
-    for (const auto &it : constraint_all) {
+    for (const auto &it: constraint_all) {
         const_tmp2.clear();
         counter = 0;
-        for (const auto &it2 : it) {
+        for (const auto &it2: it) {
             if (counter == 0) {
                 division_factor = 1.0 / it2.val;
             }
@@ -613,7 +611,7 @@ void Fcs::get_constraint_symmetry_in_integer(const size_t nat,
 
     // Generate temporary list of parameters
     list_found.clear();
-    for (const auto &p : fc_table_in) {
+    for (const auto &p: fc_table_in) {
         for (i = 0; i < order + 2; ++i) index_tmp[i] = p.elems[i];
         list_found.insert(FcProperty(order + 2, p.sign,
                                      index_tmp, p.mother));
@@ -705,7 +703,7 @@ void Fcs::get_constraint_symmetry_in_integer(const size_t nat,
 
 #pragma omp critical
         {
-            for (const auto &it : constraint_list_omp) {
+            for (const auto &it: constraint_list_omp) {
                 constraint_all.emplace_back(it);
             }
         }
@@ -727,10 +725,10 @@ void Fcs::get_constraint_symmetry_in_integer(const size_t nat,
     int counter;
     const_out.clear();
 
-    for (const auto &it : constraint_all) {
+    for (const auto &it: constraint_all) {
         const_tmp2.clear();
         counter = 0;
-        for (const auto &it2 : it) {
+        for (const auto &it2: it) {
             if (counter == 0) {
                 division_factor = 1.0 / it2.val;
             }
@@ -761,7 +759,13 @@ std::vector<ForceConstantTable> *Fcs::get_fc_cart() const
 
 void Fcs::set_forceconstant_basis(const std::string preferred_basis_in)
 {
-    preferred_basis = preferred_basis_in;
+    if (preferred_basis_in[0] == 'c') {
+        preferred_basis = "Cartesian";
+    } else if (preferred_basis_in[0] == 'l') {
+        preferred_basis = "Lattice";
+    } else {
+        preferred_basis = preferred_basis_in;
+    }
 }
 
 std::string Fcs::get_forceconstant_basis() const
@@ -820,7 +824,7 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
         auto icount = 0;
 
         fc_table_copy.clear();
-        for (const auto &it : fc_table[i]) {
+        for (const auto &it: fc_table[i]) {
             elems_permutation = it.elems;
             do {
                 fc_table_copy.emplace_back(nelems,
@@ -840,7 +844,7 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
         fc_list_grp.clear();
         atoms_grp.clear();
 
-        for (const auto &it : fc_table_copy) {
+        for (const auto &it: fc_table_copy) {
 
             for (j = 0; j < nelems; ++j) {
                 atoms_now[j] = it.elems[j] / 3;
@@ -909,7 +913,7 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
 
 #pragma omp critical
             {
-                for (const auto &it : fc_cart_omp) {
+                for (const auto &it: fc_cart_omp) {
                     fc_cart[i].emplace_back(it);
                 }
             }
@@ -1139,7 +1143,7 @@ Eigen::Matrix3d Fcs::get_basis_conversion_matrix() const
 void Fcs::set_basis_conversion_matrix(const Cell &supercell)
 {
     if (preferred_basis == "Lattice") {
-        // multiply the scale factor for making the determinant of the basis_conversion_matrix
+        // multiply the scale factor for making the determinant of the basis_conversion_matrix 
         // as one.
         const auto scale_factor = std::pow(supercell.volume, 1.0 / 3.0) / (2.0 * pi);
         for (auto i = 0; i < 3; ++i) {
@@ -1155,7 +1159,6 @@ void Fcs::set_basis_conversion_matrix(const Cell &supercell)
                     basis_conversion_matrix(i, j) = 1.0;
                 } else {
                     basis_conversion_matrix(i, j) = 0.0;
-
                 }
             }
         }
