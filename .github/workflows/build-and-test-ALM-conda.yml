@@ -1,8 +1,13 @@
 name: Conda build
 
-on: [push]
+on:
+  push:
+    paths:
+      - '**.cpp'
+      - '**.h'
+      - '**.py'
+      - '**.c'
 #  workflow_dispatch:
-  
   
 jobs:
   build:
@@ -11,7 +16,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
 #        os: [ubuntu-latest, windows-latest, macOS-latest]
-        python-version: [2.7, 3.7, 3.8, 3.9]
+        python-version: [2.7, 3.9, 3.10]
     name: OS ${{ matrix.os }} Python ${{ matrix.python-version }} 
     defaults:
       run:
