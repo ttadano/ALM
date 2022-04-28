@@ -9,10 +9,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-#        os: [ubuntu-latest, windows-latest, macOS-latest]
-#         python-version: [2.7, 3.7, 3.8, 3.9]
-         os: [macOS-latest]
-         python-version: [3.8]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        python-version: [2.7, 3.7, 3.8, 3.9]
+#          os: [macOS-latest]
+#          python-version: [3.8]
     name: OS ${{ matrix.os }} Python ${{ matrix.python-version }} 
     defaults:
       run:
@@ -31,12 +31,9 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-      - run: conda env list
-      - run: conda activate alm
       - name: Install conda libraries
         run: conda install --yes numpy scipy h5py compilers spglib boost eigen cmake
       - run: echo ${CC} ${CXX}
-      - run: export
       - name: Build ALM library
         working-directory: ./python
         run: python setup.py build
