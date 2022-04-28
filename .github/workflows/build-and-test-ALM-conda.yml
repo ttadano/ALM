@@ -23,6 +23,8 @@ jobs:
       - run: conda --version
       - name: Install conda libraries
         run: conda install --yes numpy scipy h5py compilers spglib boost eigen cmake
+      - run: echo ${CC} ${CXX}
+      - run: export
       - name: Build ALM library
         working-directory: ./python
         run: python setup.py build
