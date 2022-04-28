@@ -108,3 +108,6 @@ with ALM(lavec, xcoord, kd) as alm:
                                       v1 + 1, c[c1],
                                       v2 + 1, c[c2],
                                       v3 + 1, c[c3])))
+
+    alm.save_fc('FORCE_CONSTANT_3RD', format='shengbte')
+

@@ -93,3 +93,5 @@ with ALM(lavec, xcoord, kd) as alm:
         v2 = elem[1] // 3
         c2 = elem[1] % 3
         print("%f %d%s %d%s" % ((fc, v1 + 1, c[c1], v2 + 1, c[c2])))
+
+    alm.save_fc('alamode_fc.xml', format='alamode')

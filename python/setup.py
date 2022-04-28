@@ -8,10 +8,10 @@ try:
 except ImportError:
     home = os.path.expanduser("~")
 
-# This is the switch for ALM developement. Always True for general cases.
+# This is the switch for ALM development. Always True for general cases.
 compile_with_sources = True
 
-# Configurations to pass to extention.
+# Configurations to pass to extension.
 # The following directory structure and use of conda are supposed.
 #
 # $HOME
@@ -101,7 +101,7 @@ extension = Extension('alm._alm',
                       sources=sources)
 
 setup(name='alm',
-      version='1.2.0',
+      version='1.4.0',
       description='Force constants generator',
       setup_requires=['numpy', 'setuptools>=18.0'],
       author='Terumasa Tadano',

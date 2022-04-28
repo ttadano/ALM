@@ -34,7 +34,8 @@ optimizer_control_data_types = OrderedDict([
     ('l1_alpha_max', float),
     ('num_l1_alpha', int),
     ('l1_ratio', float),
-    ('save_solution_path', int)])
+    ('save_solution_path', int),
+    ('mirror_image_conv', int)])
 
 
 class ALM(object):
@@ -849,6 +850,61 @@ class ALM(object):
         alm.get_matrix_elements(self._id, amat, bvec)
 
         return (np.reshape(amat, (nrows, fc_length), order='F'), bvec)
+
+    def save_fc(self, filename, format='alamode', maxorder_to_save=3):
+        """Save the fitted force constants to a file with a given format and filename.
+
+        Parameters
+        ----------
+        filename : str
+            The filename where the force constants are saved.
+
+        format : str, optional (default="alamode")
+            The file format to save the force constants
+
+            - If "alamode", save force constants in the ALAMODE XML format.
+              This file can be read by the ANPHON code of ALAMODE.
+            - If "shengbte" or "thirdorderpy", save third-order force constants
+              in the thirdorder.py format only when the model includes the
+              third-order terms. This file can be read by the ShengBTE code.
+            - If "qe-fc", save harmonic force constants in the Quantum-ESPRESSO (QE)
+              fc format. The file can be processed by QE matdyn.x or other third-party
+              softwares such as EPW.
+
+        maxorder_to_save : int, optional (default=3)
+            Defines the maximum order of force constants to save in the file.
+
+            Effective only when format="alamode".
+            The default value is maxorder_to_save=3, which means that the force constants
+            up to the fourth-order (order = 3) are saved and higher-order terms are omitted.
+            The default setting should be adequate for most cases (thermal conductivity,
+            self-consistent phonon calculations).
+
+        """
+
+        if self._id is None:
+            self._show_error_not_initizalied()
+
+        if filename is None:
+            raise ValueError("filename is invalid.")
+
+        if format == "alamode":
+            alm.save_fc(self._id, filename, format, maxorder_to_save)
+
+        elif format == "shengbte" or format == "thirdorderpy":
+            if self._maxorder < 2:
+                msg = ("The current force constant model does not have"
+                       " third-order terms")
+                raise ValueError(msg)
+            else:
+                alm.save_fc(self._id, filename, "shengbte", maxorder_to_save)
+
+        elif format == "qe-fc":
+            alm.save_fc(self._id, filename, "qefc", maxorder_to_save)
+
+        else:
+            raise ValueError("Invalid format in save_fc.")
+
 
     @property
     def cv_l1_alpha(self):
