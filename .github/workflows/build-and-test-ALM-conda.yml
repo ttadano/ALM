@@ -1,0 +1,27 @@
+name: Build and test ALM using Conda
+
+on: 
+  workflow_dispatch:
+  
+  
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        python-version: [3.7, 3.8]
+    name: Python ${{ matrix.python-version }} example
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup conda
+        uses: s-weigand/setup-conda@v1
+        with:
+          activate-cond: true
+          python-version: ${{ matrix.python-version }}
+          conda-channels: conda-forge
+      - run: conda --version
+      - run: conda install --yes numpy scipy h5py compilers spglib boost eigen cmake
+      - run: pwd
+      - run: ls
+      - run: which python
