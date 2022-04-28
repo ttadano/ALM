@@ -21,11 +21,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
           conda-channels: conda-forge
       - run: conda --version
-      - run: conda install --yes numpy scipy h5py compilers spglib boost eigen cmake
-      - run: cd python
-      - run: python setup.py build
-      - run: pip install -e .
-      - run: cd ../test
-      - run: python Si_fitting.py
-      - run: python SiC_fitting.py
+      - name: Install conda libraries
+        run: conda install --yes numpy scipy h5py compilers spglib boost eigen cmake
+      - name: Build ALM library
+        working-directory: ./python
+        run: python setup.py build
+      - name: Place ALM library
+        working-directory: ./python
+        run: pip install -e .
+      - name: Run test Si
+        working-directory: ./test
+        run: python Si_fitting.py
+      - name: Run test SiC
+        working-directory: ./test
+        run: python SiC_fitting.py
 
