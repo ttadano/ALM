@@ -2,7 +2,7 @@
 
 [![License][license-image]][license-url]
 [![Doc status][docs-image]][docs-url]
-[![Build Status][travis-image]][travis-url]
+[![Conda build](https://github.com/ttadano/ALM/actions/workflows/build-and-test-ALM-conda.yml/badge.svg)](https://github.com/ttadano/ALM/actions/workflows/build-and-test-ALM-conda.yml)
 
 ### Version 2.0.0 Dev
 
