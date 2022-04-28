@@ -17,7 +17,7 @@ jobs:
       - name: Setup conda
         uses: s-weigand/setup-conda@v1
         with:
-          activate-cond: true
+          activate-conda: true
           python-version: ${{ matrix.python-version }}
           conda-channels: conda-forge
       - run: conda --version
