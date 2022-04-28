@@ -10,8 +10,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        python-version: [3.7, 3.8]
-    name: Python ${{ matrix.python-version }} example
+        python-version: [2.7, 3.7, 3.8, 3.9]
+    name: OS ${{ matrix.os }} Python ${{ matrix.python-version }} 
     steps:
       - uses: actions/checkout@v3
       - name: Setup conda
@@ -22,6 +22,10 @@ jobs:
           conda-channels: conda-forge
       - run: conda --version
       - run: conda install --yes numpy scipy h5py compilers spglib boost eigen cmake
-      - run: pwd
-      - run: ls
-      - run: which python
+      - run: cd python
+      - run: python setup.py build
+      - run: pip install -e .
+      - run: cd ../test
+      - run: python Si_fitting.py
+      - run: python SiC_fitting.py
+
