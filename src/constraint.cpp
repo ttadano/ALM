@@ -290,13 +290,7 @@ void Constraint::setup(const System *system,
 //        rref_sparse(nparam, const_self[order], tolerance_constraint);
         rref_sparse(nparam, const_self[order], tolerance_constraint);
     }
-
-    get_mapping_constraint(maxorder,
-                           fcs->get_nequiv(),
-                           const_self,
-                           const_fix,
-                           const_relate,
-                           index_bimap);
+    
 
 #ifdef _DEBUG
     for (auto order = 0; order < maxorder; ++order) {
@@ -356,6 +350,13 @@ void Constraint::setup(const System *system,
                                                        fcs->get_nequiv(),
                                                        nparams);
     }
+
+    get_mapping_constraint(maxorder,
+                           fcs->get_nequiv(),
+                           const_self,
+                           const_fix,
+                           const_relate,
+                           index_bimap);
 
     exist_constraint
             = impose_inv_T
