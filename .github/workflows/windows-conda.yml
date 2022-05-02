@@ -1,0 +1,45 @@
+name: Python Package using Conda
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        python-version: [3.8]
+    name: OS ${{ matrix.os }} Python ${{ matrix.python-version }} 
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: alm
+          python-version: ${{ matrix.python-version }}
+          auto-update-conda: true
+          channels: conda-forge
+      - run: |
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+      - name: Install conda libraries
+        run: conda install --yes numpy scipy h5py m2w64-gcc spglib boost eigen cmake
+      - run: echo ${CC} ${CXX}
+      - name: Build ALM library
+        working-directory: ./python
+        run: python setup.py build
+      - name: Place ALM library
+        working-directory: ./python
+        run: pip install -e .
+      - name: Run test Si
+        working-directory: ./test
+        run: python Si_fitting.py
+      - name: Run test SiC
+        working-directory: ./test
+        run: python SiC_fitting.py
