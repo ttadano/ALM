@@ -290,7 +290,7 @@ void Constraint::setup(const System *system,
 //        rref_sparse(nparam, const_self[order], tolerance_constraint);
         rref_sparse(nparam, const_self[order], tolerance_constraint);
     }
-    
+
 
 #ifdef _DEBUG
     for (auto order = 0; order < maxorder; ++order) {
@@ -466,7 +466,6 @@ size_t Constraint::calc_constraint_matrix(const int maxorder,
 
     for (order = 0; order < maxorder; ++order) {
         const auto nelems = nequiv[order].size();
-
         if (const_fix[order].empty()) {
             for (auto &p: const_self[order]) {
                 for (i = 0; i < nparams; ++i) arr_tmp[i] = 0.0;
@@ -478,7 +477,6 @@ size_t Constraint::calc_constraint_matrix(const int maxorder,
         }
         nshift += nelems;
     }
-
 
     const auto nconst1 = const_total.size();
 
