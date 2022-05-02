@@ -33,6 +33,8 @@ jobs:
       - run: export
       - run: echo ${CC} ${CXX}
       - run: which g++; which gcc
+      - run: export CC=`which gcc`; export CXX=`which g++`
+      - run: echo ${CC} ${CXX}
       - name: Build ALM library
         working-directory: ./python
         run: python setup.py build
