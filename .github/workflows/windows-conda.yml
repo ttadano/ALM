@@ -21,7 +21,7 @@ jobs:
         with:
           activate-environment: alm
           python-version: ${{ matrix.python-version }}
-          auto-update-conda: true
+          auto-update-conda: false
           channels: conda-forge
       - run: |
           conda info
@@ -30,7 +30,9 @@ jobs:
           conda config --show
       - name: Install conda libraries
         run: conda install --yes numpy scipy h5py m2w64-gcc spglib boost eigen cmake
+      - run: export
       - run: echo ${CC} ${CXX}
+      - run: which g++; which gcc
       - name: Build ALM library
         working-directory: ./python
         run: python setup.py build
