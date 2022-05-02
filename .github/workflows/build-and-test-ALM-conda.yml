@@ -33,6 +33,25 @@ jobs:
           python-version: ${{ matrix.python-version }}
 #          auto-update-conda: true
 #          channels: conda-forge
+     
+      - name: Get Date
+        id: get-date
+        run: echo "::set-output name=today::$(/bin/date -u '+%Y%m%d')"
+        shell: bash
+        
+      - name: Cache Conda env
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ${{ env.CONDA }}/envs
+          key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-${{ hashFiles('etc/alm-environment.yml') }}-${{ env.CACHE_NUMBER }}
+        id: cache
+         
+      - name: Update environment
+        run: mamba env update -n anaconda-client-env -f etc/alm-environment.yml
+        if: steps.cache.outputs.cache-hit != 'true'
       - run: |
           conda info
           conda list
