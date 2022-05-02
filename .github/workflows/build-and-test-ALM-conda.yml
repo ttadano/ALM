@@ -1,13 +1,13 @@
 name: Conda build
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - '**.cpp'
       - '**.h'
       - '**.py'
       - '**.c'
-#  workflow_dispatch:
   
 jobs:
   build:
