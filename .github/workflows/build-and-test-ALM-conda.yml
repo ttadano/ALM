@@ -63,7 +63,7 @@ jobs:
       
       - name: Build ALM library
         working-directory: ./python
-        run: python setup.py build
+        run: python setup.py build -j 2
       - name: Place ALM library
         working-directory: ./python
         run: pip install -e .
