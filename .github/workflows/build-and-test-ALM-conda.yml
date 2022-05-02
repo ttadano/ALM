@@ -23,28 +23,30 @@ jobs:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v3
-      - name: Add conda to system path
-        run: |
-          echo $CONDA/bin >> $GITHUB_PATH
-      - name: Create conda environment
-        run: |
-          conda create -n alm --yes -c conda-forge python=${{ matrix.python-version }}
-          eval "$(${CONDA}/bin/conda shell.bash hook)"
-          conda activate alm
-#       - name: Setup conda
-#         uses: conda-incubator/setup-miniconda@v2
-#         with:
-#           activate-environment: alm
-#           python-version: ${{ matrix.python-version }}
-#           auto-update-conda: true
-#           channels: conda-forge
+#      - name: Add conda to system path
+#        run: |
+#          echo $CONDA/bin >> $GITHUB_PATH
+#      - name: Create conda environment
+#        run: |
+#          conda create -n alm --yes -c conda-forge python=${{ matrix.python-version }}
+#          eval "$(${CONDA}/bin/conda shell.bash hook)"
+#          conda activate alm # This did not work. Needs additional settings?
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: alm
+          mamba-version: "*"
+          python-version: ${{ matrix.python-version }}
+          auto-update-conda: true
+          channels: conda-forge
       - run: |
           conda info
           conda list
           conda config --show-sources
           conda config --show
+          printenv | sort
       - name: Install conda libraries
-        run: conda install --yes numpy scipy h5py compilers spglib boost eigen cmake
+        run: mamba install numpy scipy h5py compilers spglib boost eigen cmake
       - run: echo ${CC} ${CXX}
       - name: Build ALM library
         working-directory: ./python
