@@ -31,8 +31,7 @@ jobs:
           activate-environment: alm
           use-mamba: true
           python-version: ${{ matrix.python-version }}
-#          auto-update-conda: true
-#          channels: conda-forge
+
      
       - name: Get Date
         id: get-date
@@ -58,9 +57,10 @@ jobs:
           conda config --show-sources
           conda config --show
           printenv | sort
-      - name: Install conda libraries
-        run: mamba install numpy scipy h5py compilers spglib boost eigen cmake
+#      - name: Install conda libraries
+#        run: mamba install numpy scipy h5py compilers spglib boost eigen cmake
       - run: echo ${CC} ${CXX}
+      
       - name: Build ALM library
         working-directory: ./python
         run: python setup.py build
