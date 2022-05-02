@@ -23,22 +23,16 @@ jobs:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v3
-#      - name: Add conda to system path
-#        run: |
-#          echo $CONDA/bin >> $GITHUB_PATH
-#      - name: Create conda environment
-#        run: |
-#          conda create -n alm --yes -c conda-forge python=${{ matrix.python-version }}
-#          eval "$(${CONDA}/bin/conda shell.bash hook)"
-#          conda activate alm # This did not work. Needs additional settings?
-      - name: Setup conda
+      - name: Setup Mambaforge
         uses: conda-incubator/setup-miniconda@v2
         with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
           activate-environment: alm
-          mamba-version: "*"
+          use-mamba: true
           python-version: ${{ matrix.python-version }}
-          auto-update-conda: true
-          channels: conda-forge
+#          auto-update-conda: true
+#          channels: conda-forge
       - run: |
           conda info
           conda list
