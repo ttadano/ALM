@@ -1,45 +1,161 @@
+"""The main python file for ALM package."""
+
 import warnings
 from collections import OrderedDict
+
 import numpy as np
+
 from . import _alm as alm
 
-atom_names = ("X", "H", "He", "Li", "Be", "B", "C", "N", "O", "F",
-              "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K",
-              "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu",
-              "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y",
-              "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In",
-              "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr",
-              "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm",
-              "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au",
-              "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac",
-              "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es",
-              "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt",
-              "Ds", "Rg", "Cn", "Uut", "Uuq", "Uup", "Uuh", "Uus", "Uuo")
+atom_names = (
+    "X",
+    "H",
+    "He",
+    "Li",
+    "Be",
+    "B",
+    "C",
+    "N",
+    "O",
+    "F",
+    "Ne",
+    "Na",
+    "Mg",
+    "Al",
+    "Si",
+    "P",
+    "S",
+    "Cl",
+    "Ar",
+    "K",
+    "Ca",
+    "Sc",
+    "Ti",
+    "V",
+    "Cr",
+    "Mn",
+    "Fe",
+    "Co",
+    "Ni",
+    "Cu",
+    "Zn",
+    "Ga",
+    "Ge",
+    "As",
+    "Se",
+    "Br",
+    "Kr",
+    "Rb",
+    "Sr",
+    "Y",
+    "Zr",
+    "Nb",
+    "Mo",
+    "Tc",
+    "Ru",
+    "Rh",
+    "Pd",
+    "Ag",
+    "Cd",
+    "In",
+    "Sn",
+    "Sb",
+    "Te",
+    "I",
+    "Xe",
+    "Cs",
+    "Ba",
+    "La",
+    "Ce",
+    "Pr",
+    "Nd",
+    "Pm",
+    "Sm",
+    "Eu",
+    "Gd",
+    "Tb",
+    "Dy",
+    "Ho",
+    "Er",
+    "Tm",
+    "Yb",
+    "Lu",
+    "Hf",
+    "Ta",
+    "W",
+    "Re",
+    "Os",
+    "Ir",
+    "Pt",
+    "Au",
+    "Hg",
+    "Tl",
+    "Pb",
+    "Bi",
+    "Po",
+    "At",
+    "Rn",
+    "Fr",
+    "Ra",
+    "Ac",
+    "Th",
+    "Pa",
+    "U",
+    "Np",
+    "Pu",
+    "Am",
+    "Cm",
+    "Bk",
+    "Cf",
+    "Es",
+    "Fm",
+    "Md",
+    "No",
+    "Lr",
+    "Rf",
+    "Db",
+    "Sg",
+    "Bh",
+    "Hs",
+    "Mt",
+    "Ds",
+    "Rg",
+    "Cn",
+    "Uut",
+    "Uuq",
+    "Uup",
+    "Uuh",
+    "Uus",
+    "Uuo",
+)
 
 # From src/optimize.h
 # {sparsefolver: str} is omitted because this is set at ALM.optimize.
 # This order is not allowed to change because it is explicitly used in _alm.c.
-optimizer_control_data_types = OrderedDict([
-    ('linear_model', int),
-    ('use_sparse_solver', int),
-    ('maxnum_iteration', int),
-    ('tolerance_iteration', float),
-    ('output_frequency', int),
-    ('standardize', int),
-    ('displacement_normalization_factor', float),
-    ('debiase_after_l1opt', int),
-    ('cross_validation', int),
-    ('l1_alpha', float),
-    ('l1_alpha_min', float),
-    ('l1_alpha_max', float),
-    ('num_l1_alpha', int),
-    ('l1_ratio', float),
-    ('save_solution_path', int),
-    ('mirror_image_conv', int)])
+optimizer_control_data_types = OrderedDict(
+    [
+        ("linear_model", int),
+        ("use_sparse_solver", int),
+        ("maxnum_iteration", int),
+        ("tolerance_iteration", float),
+        ("output_frequency", int),
+        ("standardize", int),
+        ("displacement_normalization_factor", float),
+        ("debiase_after_l1opt", int),
+        ("cross_validation", int),
+        ("l1_alpha", float),
+        ("l1_alpha_min", float),
+        ("l1_alpha_max", float),
+        ("num_l1_alpha", int),
+        ("l1_ratio", float),
+        ("save_solution_path", int),
+        ("mirror_image_conv", int),
+    ]
+)
 
 
 class ALM(object):
-    """Calculate harmonic and anharmonic interatomic force constants
+    """Calculate harmonic and anharmonic interatomic force constants.
 
     Attributes
     ----------
@@ -77,7 +193,7 @@ class ALM(object):
     """
 
     def __init__(self, lavec, xcoord, numbers, verbosity=0):
-        """
+        """Initialize the alm object with the input crystal structure.
 
         Parameters
         ----------
@@ -95,7 +211,6 @@ class ALM(object):
             1 (normal output). Default is 0.
 
         """
-
         self._id = None
         self._lavec = None
         self._xcoord = None
@@ -121,7 +236,7 @@ class ALM(object):
 
     @property
     def lavec(self):
-        """Getter of basis vectors
+        """Getter of basis vectors.
 
         Returns
         -------
@@ -130,11 +245,11 @@ class ALM(object):
         shape=(3, 3), dtype='double', order='C'
 
         """
-        return np.array(self._lavec, dtype='double', order='C')
+        return np.array(self._lavec, dtype="double", order="C")
 
     @lavec.setter
     def lavec(self, lavec):
-        """Setter of basis vectors
+        """Setter of basis vectors.
 
         Parameters
         ----------
@@ -143,13 +258,12 @@ class ALM(object):
         shape=(3, 3), dtype='double', order='C'
 
         """
-
         self._need_transfer = True
-        self._lavec = np.array(lavec, dtype='double', order='C')
+        self._lavec = np.array(lavec, dtype="double", order="C")
 
     @property
     def xcoord(self):
-        """Getter of atomic point coordinates
+        """Getter of atomic point coordinates.
 
         Returns
         -------
@@ -158,12 +272,11 @@ class ALM(object):
         shape=(num_atom, 3), dtype='double', order='C'
 
         """
-
-        return np.array(self._xcoord, dtype='double', order='C')
+        return np.array(self._xcoord, dtype="double", order="C")
 
     @xcoord.setter
     def xcoord(self, xcoord):
-        """Setter of atomic point coordinates
+        """Setter of atomic point coordinates.
 
         Returns
         -------
@@ -172,13 +285,12 @@ class ALM(object):
         shape=(num_atom, 3), dtype='double', order='C'
 
         """
-
         self._need_transfer = True
-        self._xcoord = np.array(xcoord, dtype='double', order='C')
+        self._xcoord = np.array(xcoord, dtype="double", order="C")
 
     @property
     def numbers(self):
-        """Getter of atomic numbers
+        """Getter of atomic numbers.
 
         Returns
         -------
@@ -187,12 +299,11 @@ class ALM(object):
         shape=(num_atom,), dtype='intc', order='C'
 
         """
-
-        return np.array(self._numbers, dtype='intc')
+        return np.array(self._numbers, dtype="intc")
 
     @numbers.setter
     def numbers(self, numbers):
-        """Setter of atomic numbers
+        """Setter of atomic numbers.
 
         Parameters
         ----------
@@ -201,19 +312,20 @@ class ALM(object):
         shape=(num_atom,), dtype='intc', order='C'
 
         """
-
         self._need_transfer = True
-        self._numbers = np.array(numbers, dtype='intc')
+        self._numbers = np.array(numbers, dtype="intc")
         self._kind_names = OrderedDict.fromkeys(self._numbers)
         for key in self._kind_names:
             self._kind_names[key] = atom_names[key % 118]
 
     @property
     def kind_names(self):
+        """Return the kind names."""
         return self._kind_names
 
     @property
     def verbosity(self):
+        """Return the output verbosity."""
         return self._verbosity
 
     @verbosity.setter
@@ -227,18 +339,20 @@ class ALM(object):
             0 (no output) or 1 (normal output).
 
         """
-
         self._verbosity = verbosity
         self._set_verbosity()
 
     def set_verbosity(self, verbosity):
+        """Set the output verbosity."""
         self.verbosity = verbosity
 
     def __enter__(self):
+        """Run when entered in a with block."""
         self.alm_new()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """Delete the pointer when exit from a with block."""
         self.alm_delete()
 
     def alm_new(self):
@@ -256,7 +370,6 @@ class ALM(object):
         by ``alm_delete`` to avoid memory leak.
 
         """
-
         if self._id is None:
             self._id = alm.alm_new()
             if self._id < 0:
@@ -264,7 +377,7 @@ class ALM(object):
             if self._verbosity is not None:
                 self.verbosity = self._verbosity
         else:
-            raise("This ALM object is already initialized.")
+            raise ("This ALM object is already initialized.")
 
     def alm_delete(self):
         """Delete ALM instance in C++.
@@ -276,7 +389,6 @@ class ALM(object):
            with ALM(lavec, xcoord, numbers) as alm:
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -285,7 +397,6 @@ class ALM(object):
 
     def suggest(self):
         """Compute displacement patterns to obtain force constants."""
-
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -294,7 +405,7 @@ class ALM(object):
         else:
             self._show_error_not_defined()
 
-    def optimize(self, solver='dense'):
+    def optimize(self, solver="dense"):
         """Fit force constants to forces.
 
         Parameters
@@ -315,18 +426,19 @@ class ALM(object):
             0 if the fitting is successful, 1 otherwise.
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
         if not self._defined:
             self._show_error_not_defined()
 
-        solvers = {'dense': 'dense', 'simplicialldlt': 'SimplicialLDLT'}
+        solvers = {"dense": "dense", "simplicialldlt": "SimplicialLDLT"}
 
         if solver.lower() not in solvers:
-            msgs = ["The given solver option is not supported.",
-                    "Available options are 'dense' and 'SimplicialLDLT'."]
+            msgs = [
+                "The given solver option is not supported.",
+                "Available options are 'dense' and 'SimplicialLDLT'.",
+            ]
             raise ValueError("\n".join(msgs))
 
         info = alm.optimize(self._id, solvers[solver.lower()])
@@ -335,24 +447,25 @@ class ALM(object):
 
     @property
     def output_filename_prefix(self):
+        """Return the prefix used for the output filenames."""
         return self._output_filename_prefix
 
     @output_filename_prefix.setter
     def output_filename_prefix(self, prefix):
-        """Set output prefix of output filename"""
-
+        """Set output prefix of output filename."""
         if self._id is None:
             self._show_error_not_initizalied()
 
         if type(prefix) is str:
             self._output_filename_prefix = prefix
-            alm.set_output_filename_prefix(self._id, prefix)
+            self._set_output_filename_prefix(prefix)
 
-    def set_output_filename_prefix(self, prefix):
+    def _set_output_filename_prefix(self, prefix):
         self.output_filename_prefix = prefix
 
     @property
     def optimizer_control(self):
+        """Return the outimizer_control that containts the options for optimization."""
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -381,14 +494,14 @@ class ALM(object):
             else:
                 optctrl.append(None)
 
-        alm.set_optimizer_control(self._id, optctrl)
+        self._set_optimizer_control(optctrl)
 
-    def set_optimizer_control(self, optcontrol):
+    def _set_optimizer_control(self, optcontrol):
         self.optimizer_control = optcontrol
 
     @property
     def displacements(self):
-        """Get displacements
+        """Get displacements.
 
         Returns
         --------
@@ -401,7 +514,7 @@ class ALM(object):
             self._show_error_not_initizalied()
 
         ndata = alm.get_number_of_data(self._id)
-        u = np.zeros((ndata, len(self._xcoord), 3), dtype='double', order='C')
+        u = np.zeros((ndata, len(self._xcoord), 3), dtype="double", order="C")
         succeeded = alm.get_u_train(self._id, u)
         if succeeded:
             return u
@@ -410,7 +523,7 @@ class ALM(object):
 
     @displacements.setter
     def displacements(self, u):
-        """Set displacements
+        """Set displacements.
 
         Parameters
         ----------
@@ -419,7 +532,6 @@ class ALM(object):
             shape=(supercells, num_atoms, 3), dtype='double'
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -427,11 +539,11 @@ class ALM(object):
             msg = "Displacement array has to be three dimensions."
             raise RuntimeError(msg)
 
-        alm.set_u_train(self._id, np.array(u, dtype='double', order='C'))
+        alm.set_u_train(self._id, np.array(u, dtype="double", order="C"))
 
     @property
     def forces(self):
-        """Get forces
+        """Get forces.
 
         Returns
         --------
@@ -440,12 +552,11 @@ class ALM(object):
             shape=(supercells, num_atoms, 3), dtype='double', order='C'
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
         ndata = alm.get_number_of_data(self._id)
-        f = np.zeros((ndata, len(self._xcoord), 3), dtype='double', order='C')
+        f = np.zeros((ndata, len(self._xcoord), 3), dtype="double", order="C")
         succeeded = alm.get_f_train(self._id, f)
         if succeeded:
             return f
@@ -454,7 +565,7 @@ class ALM(object):
 
     @forces.setter
     def forces(self, f):
-        """Set forces
+        """Set forces.
 
         Parameters
         ----------
@@ -463,7 +574,6 @@ class ALM(object):
             shape=(supercells, num_atoms, 3), dtype='double'
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -471,7 +581,7 @@ class ALM(object):
             msg = "Force array has to be three dimensions."
             raise RuntimeError(msg)
 
-        alm.set_f_train(self._id, np.array(f, dtype='double', order='C'))
+        alm.set_f_train(self._id, np.array(f, dtype="double", order="C"))
 
     def set_training_data(self, u, f):
         """Set displacements and respective forces in supercell.
@@ -488,18 +598,21 @@ class ALM(object):
             shape=(supercells, num_atoms, 3)
 
         """
-
         self.displacements = u
         self.forces = f
 
     def set_displacement_and_force(self, u, f):
-        warnings.warn("set_displacement_and_force is deprecated. "
-                      "Use set_training_data.", DeprecationWarning)
+        """Set displacements and forces. Deprecated version."""
+        warnings.warn(
+            "set_displacement_and_force is deprecated. " "Use set_training_data.",
+            DeprecationWarning,
+        )
 
         self.set_training_data(u, f)
 
-    def define(self, maxorder, cutoff_radii=None, nbody=None,
-               symmetrization_basis='Lattice'):
+    def define(
+        self, maxorder, cutoff_radii=None, nbody=None, symmetrization_basis="Lattice"
+    ):
         """Define the Taylor expansion potential.
 
         Parameters
@@ -529,7 +642,6 @@ class ALM(object):
             ('Lattice') or Cartesian coordinates ('Cartesian').
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -548,37 +660,34 @@ class ALM(object):
         if cutoff_radii is None:
             _cutoff_radii = None
         else:
-            _cutoff_radii = np.array(cutoff_radii, dtype='double', order='C')
+            _cutoff_radii = np.array(cutoff_radii, dtype="double", order="C")
             nelem = len(_cutoff_radii.ravel())
             if (nelem // maxorder) * maxorder != nelem:
                 msg = "The array shape of cutoff_radii is wrong."
                 raise RuntimeError(msg)
             nkd = int(round(np.sqrt(nelem // maxorder)))
-            if nkd ** 2 - nelem // maxorder != 0:
+            if nkd**2 - nelem // maxorder != 0:
                 msg = "The array shape of cutoff_radii is wrong."
                 raise RuntimeError(msg)
-            _cutoff_radii = np.reshape(_cutoff_radii, (maxorder, nkd, nkd),
-                                       order='C')
+            _cutoff_radii = np.reshape(_cutoff_radii, (maxorder, nkd, nkd), order="C")
 
         self._maxorder = maxorder
 
-        if symmetrization_basis.lower() in ['lattice', 'cartesian']:
+        if symmetrization_basis.lower() in ["lattice", "cartesian"]:
             fc_basis = symmetrization_basis.capitalize()
         else:
-            fc_basis = 'Lattice'
+            fc_basis = "Lattice"
 
-        alm.define(self._id,
-                   maxorder,
-                   np.array(nbody, dtype='intc'),
-                   _cutoff_radii,
-                   fc_basis)
+        alm.define(
+            self._id, maxorder, np.array(nbody, dtype="intc"), _cutoff_radii, fc_basis
+        )
 
         alm.init_fc_table(self._id)
 
         self._defined = True
 
     def set_constraint(self, translation=True, rotation=False):
-        """Set constraints for the translational and rotational invariances
+        """Set constraints for the translational and rotational invariances.
 
         Parameters
         ----------
@@ -591,9 +700,8 @@ class ALM(object):
             force constants. This function is not implemented.
 
         """
-
         if rotation is True:
-            raise("Rotational invariance is not supported in python API.")
+            raise ("Rotational invariance is not supported in python API.")
 
         if translation is True:
             iconst = 11
@@ -604,7 +712,7 @@ class ALM(object):
         alm.set_constraint_type(self._id, self._iconst)
 
     def getmap_primitive_to_supercell(self):
-        """Returns the mapping information from the primitive cell to the supercell.
+        """Return the mapping information from the primitive cell to the supercell.
 
         Returns
         -------
@@ -615,19 +723,18 @@ class ALM(object):
             shape = (num_trans, num_atoms_primitive)
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
         if not self._defined:
             self._show_error_not_defined()
 
-        map_p2s = np.zeros(len(self._xcoord), dtype='intc')
+        map_p2s = np.zeros(len(self._xcoord), dtype="intc")
         ntrans = alm.get_atom_mapping_by_pure_translations(self._id, map_p2s)
         return map_p2s.reshape((ntrans, -1))
 
     def get_displacement_patterns(self, fc_order):
-        """Returns the displacement patterns to obtain force constants.
+        """Return the displacement patterns to obtain force constants.
 
         Parameters
         ----------
@@ -650,23 +757,22 @@ class ALM(object):
             and ``basis`` is a string either "Cartesian" or "Fractional".
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
         if fc_order > self._maxorder:
-            msg = ("The fc_order must not be larger than the maximum order "
-                   "(maxorder).")
+            msg = (
+                "The fc_order must not be larger than the maximum order " "(maxorder)."
+            )
             raise ValueError(msg)
 
         numbers = self._get_number_of_displaced_atoms(fc_order)
         tot_num = np.sum(numbers)
-        atom_indices = np.zeros(tot_num, dtype='intc')
-        disp_patterns = np.zeros((tot_num, 3), dtype='double', order='C')
-        nbasis = alm.get_displacement_patterns(self._id,
-                                               atom_indices,
-                                               disp_patterns,
-                                               fc_order)
+        atom_indices = np.zeros(tot_num, dtype="intc")
+        disp_patterns = np.zeros((tot_num, 3), dtype="double", order="C")
+        nbasis = alm.get_displacement_patterns(
+            self._id, atom_indices, disp_patterns, fc_order
+        )
         basis = ["Cartesian", "Fractional"][nbasis]
         all_disps = []
         pos = 0
@@ -679,7 +785,7 @@ class ALM(object):
         return all_disps
 
     def get_fc(self, fc_order, mode="origin", permutation=True):
-        """Returns the force constant values
+        """Return the force constant values.
 
         Parameters
         ----------
@@ -730,13 +836,13 @@ class ALM(object):
         of the alm.define method.
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
         if fc_order > self._maxorder:
-            msg = ("The fc_order must not be larger than the maximum order "
-                   "(maxorder).")
+            msg = (
+                "The fc_order must not be larger than the maximum order " "(maxorder)."
+            )
             raise ValueError(msg)
 
         perm_int = permutation * 1
@@ -744,9 +850,8 @@ class ALM(object):
         if mode == "origin":
 
             fc_length = self._get_number_of_fc_origin(fc_order, perm_int)
-            fc_values = np.zeros(fc_length, dtype='double')
-            elem_indices = np.zeros((fc_length, fc_order + 1),
-                                    dtype='intc', order='C')
+            fc_values = np.zeros(fc_length, dtype="double")
+            elem_indices = np.zeros((fc_length, fc_order + 1), dtype="intc", order="C")
 
             alm.get_fc_origin(self._id, fc_values, elem_indices, perm_int)
 
@@ -755,9 +860,8 @@ class ALM(object):
         elif mode == "irreducible" or mode == "irred":
 
             fc_length = self._get_number_of_irred_fc_elements(fc_order)
-            fc_values = np.zeros(fc_length, dtype='double')
-            elem_indices = np.zeros((fc_length, fc_order + 1),
-                                    dtype='intc', order='C')
+            fc_values = np.zeros(fc_length, dtype="double")
+            elem_indices = np.zeros((fc_length, fc_order + 1), dtype="intc", order="C")
 
             alm.get_fc_irreducible(self._id, fc_values, elem_indices)
 
@@ -765,14 +869,11 @@ class ALM(object):
 
         elif mode == "all":
 
-            map_p2s = np.zeros(len(self._xcoord), dtype='intc')
-            ntrans = alm.get_atom_mapping_by_pure_translations(self._id,
-                                                               map_p2s)
-            fc_length = self._get_number_of_fc_origin(
-                fc_order, perm_int) * ntrans
-            fc_values = np.zeros(fc_length, dtype='double')
-            elem_indices = np.zeros((fc_length, fc_order + 1),
-                                    dtype='intc', order='C')
+            map_p2s = np.zeros(len(self._xcoord), dtype="intc")
+            ntrans = alm.get_atom_mapping_by_pure_translations(self._id, map_p2s)
+            fc_length = self._get_number_of_fc_origin(fc_order, perm_int) * ntrans
+            fc_values = np.zeros(fc_length, dtype="double")
+            elem_indices = np.zeros((fc_length, fc_order + 1), dtype="intc", order="C")
 
             alm.get_fc_all(self._id, fc_values, elem_indices, perm_int)
 
@@ -798,7 +899,6 @@ class ALM(object):
         the ALM instance by ``set_fc`` to use the ``get_fc`` method.
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -811,10 +911,10 @@ class ALM(object):
             msg = "The size of the given force constant array is incorrect."
             raise RuntimeError(msg)
 
-        alm.set_fc(self._id, np.array(fc_in, dtype='double', order='C'))
+        alm.set_fc(self._id, np.array(fc_in, dtype="double", order="C"))
 
     def get_matrix_elements(self):
-        """Returns the sensing matrix A and force vector b
+        """Return the sensing matrix A and force vector b.
 
         Returns
         -------
@@ -834,7 +934,6 @@ class ALM(object):
         x = argmin_{x} | Ax-b|^{2}.
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -845,13 +944,13 @@ class ALM(object):
         for i in range(maxorder):
             fc_length += self._get_number_of_irred_fc_elements(i + 1)
 
-        amat = np.zeros(nrows * fc_length, dtype='double', order='C')
-        bvec = np.zeros(nrows, dtype='double')
+        amat = np.zeros(nrows * fc_length, dtype="double", order="C")
+        bvec = np.zeros(nrows, dtype="double")
         alm.get_matrix_elements(self._id, amat, bvec)
 
-        return (np.reshape(amat, (nrows, fc_length), order='F'), bvec)
+        return (np.reshape(amat, (nrows, fc_length), order="F"), bvec)
 
-    def save_fc(self, filename, format='alamode', maxorder_to_save=3):
+    def save_fc(self, filename, format="alamode", maxorder_to_save=3):
         """Save the fitted force constants to a file with a given format and filename.
 
         Parameters
@@ -875,13 +974,13 @@ class ALM(object):
             Defines the maximum order of force constants to save in the file.
 
             Effective only when format="alamode".
-            The default value is maxorder_to_save=3, which means that the force constants
-            up to the fourth-order (order = 3) are saved and higher-order terms are omitted.
-            The default setting should be adequate for most cases (thermal conductivity,
-            self-consistent phonon calculations).
+            The default value is maxorder_to_save=3, which means that the
+            force constants up to the fourth-order (order = 3) are saved
+            and higher-order terms are omitted.
+            The default setting should be adequate for most
+            cases (thermal conductivity, self-consistent phonon calculations).
 
         """
-
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -893,8 +992,10 @@ class ALM(object):
 
         elif format == "shengbte" or format == "thirdorderpy":
             if self._maxorder < 2:
-                msg = ("The current force constant model does not have"
-                       " third-order terms")
+                msg = (
+                    "The current force constant model does not have"
+                    " third-order terms"
+                )
                 raise ValueError(msg)
             else:
                 alm.save_fc(self._id, filename, "shengbte", maxorder_to_save)
@@ -905,17 +1006,15 @@ class ALM(object):
         else:
             raise ValueError("Invalid format in save_fc.")
 
-
     @property
     def cv_l1_alpha(self):
-        """Returns L1 alpha at minimum CV"""
-
+        """Return L1 alpha at minimum CV."""
         if self._id is None:
             self._show_error_not_initizalied()
 
-        return alm.get_cv_l1_alpha(self._id)
+        return self._get_cv_l1_alpha()
 
-    def get_cv_l1_alpha(self):
+    def _get_cv_l1_alpha(self):
         return self.cv_l1_alpha
 
     def _transfer_parameters(self):
@@ -925,8 +1024,7 @@ class ALM(object):
             self._defined = False
 
     def _set_cell(self):
-        """Inject crystal structure in C++ instance"""
-
+        """Inject crystal structure in C++ instance."""
         if self._id is None:
             self._show_error_not_initizalied()
 
@@ -946,31 +1044,29 @@ class ALM(object):
             msg = "Numbers of atomic points and atomic numbers don't agree."
             raise RuntimeError(msg)
 
-        kind_numbers = np.array(list(self._kind_names.keys()), dtype='intc')
-        alm.set_cell(self._id, self._lavec, self._xcoord, self._numbers,
-                     kind_numbers)
+        kind_numbers = np.array(list(self._kind_names.keys()), dtype="intc")
+        alm.set_cell(self._id, self._lavec, self._xcoord, self._numbers, kind_numbers)
 
     def _set_verbosity(self):
         """Inject verbosity in C++ instance."""
-
         if self._id is None:
             self._show_error_not_initizalied()
 
         alm.set_verbosity(self._id, self._verbosity)
 
     def _get_nrows_amat(self):
-        """Private method to return the number of training data sets"""
+        """Private method to return the number of training data sets."""
         if self._id is None:
             self._show_error_not_initizalied()
         nrows_amat = alm.get_nrows_amat(self._id)
         return nrows_amat
 
     def _get_id(self):
-        """Private method to return the instance ID"""
+        """Private method to return the instance ID."""
         return self._id
 
     def _get_number_of_displacement_patterns(self, fc_order):
-        """Private method to return the number of displacement patterns
+        """Private method to return the number of displacement patterns.
 
         Parameters
         ----------
@@ -979,11 +1075,10 @@ class ALM(object):
             fc_order = 1 for harmonic, fc_order = 2 for cubic ...
 
         """
-
         return alm.get_number_of_displacement_patterns(self._id, fc_order)
 
     def _get_number_of_displaced_atoms(self, fc_order):
-        """Private method to return the number of displaced atoms
+        """Private method to return the number of displaced atoms.
 
         Parameters
         ----------
@@ -992,15 +1087,13 @@ class ALM(object):
             fc_order = 1 for harmonic, fc_order = 2 for cubic ...
 
         """
-
-        num_disp_patterns = self._get_number_of_displacement_patterns(
-            fc_order)
-        numbers = np.zeros(num_disp_patterns, dtype='intc')
+        num_disp_patterns = self._get_number_of_displacement_patterns(fc_order)
+        numbers = np.zeros(num_disp_patterns, dtype="intc")
         alm.get_number_of_displaced_atoms(self._id, numbers, fc_order)
         return numbers
 
     def _get_number_of_fc_elements(self, fc_order):
-        """Private method to get the number of force constants
+        """Private method to get the number of force constants.
 
         Parameters
         ----------
@@ -1009,11 +1102,10 @@ class ALM(object):
             fc_order = 1 for harmonic, fc_order = 2 for cubic ...
 
         """
-
         return alm.get_number_of_fc_elements(self._id, fc_order)
 
     def _get_number_of_fc_origin(self, fc_order, permutation):
-        """Private method to get the number of force constants for fc_origin
+        """Private method to get the number of force constants for fc_origin.
 
         Parameters
         ----------
@@ -1027,11 +1119,10 @@ class ALM(object):
             permutation = 1 for including them
 
         """
-
         return alm.get_number_of_fc_origin(self._id, fc_order, permutation)
 
     def _get_number_of_irred_fc_elements(self, fc_order):
-        """Private method to get the number of irreducible set of force constants
+        """Private method to get the number of irreducible set of force constants.
 
         Parameters
         ----------
@@ -1043,9 +1134,11 @@ class ALM(object):
         return alm.get_number_of_irred_fc_elements(self._id, fc_order)
 
     def _show_error_not_initizalied(self):
-        """Private method to raise an error"""
-        msg = ("This ALM instance has to be initialized by ALM.alm_new() or "
-               "context manager.")
+        """Private method to raise an error."""
+        msg = (
+            "This ALM instance has to be initialized by ALM.alm_new() or "
+            "context manager."
+        )
         raise RuntimeError(msg)
 
     def _show_error_not_defined(self):
