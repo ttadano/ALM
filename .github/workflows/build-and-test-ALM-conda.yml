@@ -57,8 +57,9 @@ jobs:
           conda config --show-sources
           conda config --show
           printenv | sort
-#      - name: Install conda libraries
-#        run: mamba install numpy scipy h5py compilers spglib boost eigen cmake
+      - name: Install conda libraries
+        run: mamba install numpy scipy h5py compilers spglib boost eigen cmake
+        
       - run: echo ${CC} ${CXX}
       
       - name: Build ALM library
