@@ -1784,7 +1784,7 @@ void Constraint::set_rotation_constraints(const System *system,
     std::vector<double> arr_constraint_self;
     std::vector<double> arr_constraint_lower;
 
-    std::unordered_set<FcProperty>::iterator iter_found;
+    //std::unordered_set<FcProperty>::iterator iter_found;
 
     std::vector<int> atom_tmp;
     std::vector<std::vector<int>> cell_dummy;
@@ -1855,8 +1855,8 @@ void Constraint::set_rotation_constraints(const System *system,
 
                             jat = iter_list;
                             interaction_index[1] = 3 * jat + mu;
-                            iter_found = list_found.find(FcProperty(order + 2, 1.0,
-                                                                    &interaction_index[0], 1));
+                            auto iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                                         &interaction_index[0], 1));
 
                             atom_tmp.clear();
                             atom_tmp.push_back(jat);
@@ -2034,7 +2034,7 @@ void Constraint::set_rotation_constraints(const System *system,
 
                                         sort_tail(order + 2, &interaction_tmp[0]);
 
-                                        iter_found = list_found.
+                                        auto iter_found = list_found.
                                                 find(FcProperty(order + 2, 1.0, &interaction_tmp[0], 1));
                                         if (iter_found != list_found.end()) {
                                             arr_constraint[nparams[order - 1] + (*iter_found).mother]
@@ -2079,8 +2079,8 @@ void Constraint::set_rotation_constraints(const System *system,
 
                                             sort_tail(order + 1, &interaction_tmp[0]);
 
-                                            iter_found = list_found_last.find(FcProperty(order + 1, 1.0,
-                                                                                         &interaction_tmp[0], 1));
+                                            auto iter_found = list_found_last.find(FcProperty(order + 1, 1.0,
+                                                                                              &interaction_tmp[0], 1));
                                             if (iter_found != list_found_last.end()) {
                                                 arr_constraint[(*iter_found).mother]
                                                         += (*iter_found).sign * static_cast<double>(levi_factor);
@@ -2188,7 +2188,7 @@ void Constraint::set_rotation_constraints_extra(const System *system,
     std::vector<double> arr_constraint;
     std::vector<double> arr_constraint_self;
 
-    std::unordered_set<FcProperty>::iterator iter_found;
+    //std::unordered_set<FcProperty>::iterator iter_found;
 
     std::vector<int> atom_tmp;
     std::set<InteractionCluster>::iterator iter_cluster;
@@ -2271,8 +2271,8 @@ void Constraint::set_rotation_constraints_extra(const System *system,
 
                                     sort_tail(order + 2, &interaction_tmp[0]);
 
-                                    iter_found = list_found.find(FcProperty(order + 2, 1.0,
-                                                                            &interaction_tmp[0], 1));
+                                    auto iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                                                 &interaction_tmp[0], 1));
                                     if (iter_found != list_found.end()) {
                                         arr_constraint_self[(*iter_found).mother]
                                                 += (*iter_found).sign * static_cast<double>(levi_factor);
