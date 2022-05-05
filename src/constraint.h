@@ -253,8 +253,6 @@ public:
 
     bool get_exist_constraint() const;
 
-    bool get_extra_constraint_from_symmetry() const;
-
     std::string get_rotation_axis() const;
 
     void set_rotation_axis(const std::string);
@@ -275,6 +273,16 @@ public:
 
     void show_status_constraint() const;
 
+    void fix_forceconstants(const std::vector<std::vector<int>> &intpair_fix,
+                            const std::vector<double> &values_fix);
+
+    void update_constraint_matrix(const System *system,
+                                  const Symmetry *symmetry,
+                                  const Cluster *cluster,
+                                  const Fcs *fcs,
+                                  const int verbosity,
+                                  const int mirror_image_conv);
+
 
 private:
 
@@ -289,14 +297,11 @@ private:
 
     double tolerance_constraint;
 
-    bool exist_constraint;
-    bool extra_constraint_from_symmetry;
-
     std::string rotation_axis;
-    std::vector<ConstraintTypeFix> *const_fix;
-    std::vector<ConstraintTypeRelate> *const_relate;
-    std::vector<ConstraintTypeRelate> *const_relate_rotation;
-    boost::bimap<size_t, size_t> *index_bimap;
+    std::vector<std::vector<ConstraintTypeFix>> const_fix;
+    std::vector<std::vector<ConstraintTypeRelate>> const_relate;
+    std::vector<std::vector<ConstraintTypeRelate>> const_relate_rotation;
+    std::vector<boost::bimap<size_t, size_t>> index_bimap;
 
     bool impose_inv_T, impose_inv_R, exclude_last_R;
     bool ready_constraints;
@@ -307,9 +312,13 @@ private:
     std::vector<ConstraintSparseForm> const_rotation_cross;
     std::vector<ConstraintSparseForm> const_self;
 
+    std::vector<std::vector<int>> intpair_fix_fc2, intpair_fix_fc3;
+    std::vector<double> values_fix_fc2, values_fix_fc3;
+
+
     std::map<std::string, int> status_constraint_subset; // -1: not used,
-                                                         //  0: used but not ready,
-                                                         //  1: ready
+    //  0: used but not ready,
+    //  1: ready
 
     void set_default_variables();
 
@@ -333,6 +342,8 @@ private:
                                   const size_t nparams) const;
 
     void print_constraint(const ConstraintSparseForm &) const;
+
+    void print_constraint_information(const Cluster *cluster) const;
 
     void setup_rotation_axis(bool [3][3]);
 
@@ -359,6 +370,9 @@ private:
                                       const Cluster *cluster,
                                       const Fcs *fcs,
                                       const int verbosity);
+
+    void generate_fix_constraint(const Symmetry *symmetry,
+                                 const Fcs *fcs);
 
     void get_constraint_translation(const Cell &supercell,
                                     const Symmetry *symmetry,
@@ -394,6 +408,14 @@ private:
                                     const std::string,
                                     std::vector<ConstraintTypeFix> &) const;
 
+
+    void get_forceconstants_from_file(const int order,
+                                      const Symmetry *symmetry,
+                                      const Fcs *fcs,
+                                      const std::string file_to_fix,
+                                      std::vector<std::vector<int>> &intpair_fcs,
+                                      std::vector<double> &fcs_values) const;
+
     void set_rotation_constraints(const System *system,
                                   const Symmetry *symmetry,
                                   const Cluster *cluster,
@@ -407,14 +429,14 @@ private:
                                   std::vector<std::vector<ConstraintDoubleElement>> *const_cross_vec);
 
     void set_rotation_constraints_extra(const System *system,
-                                  const Symmetry *symmetry,
-                                  const Cluster *cluster,
-                                  const Fcs *fcs,
-                                  const int order,
-                                  const bool valid_rotation_axis[3][3],
-                                  const std::unordered_set<FcProperty> &list_found,
-                                  const double tolerance,
-                                  std::vector<std::vector<ConstraintDoubleElement>> *const_self_vec,
-                                  std::vector<std::vector<ConstraintDoubleElement>> *const_cross_vec);
+                                        const Symmetry *symmetry,
+                                        const Cluster *cluster,
+                                        const Fcs *fcs,
+                                        const int order,
+                                        const bool valid_rotation_axis[3][3],
+                                        const std::unordered_set<FcProperty> &list_found,
+                                        const double tolerance,
+                                        std::vector<std::vector<ConstraintDoubleElement>> *const_self_vec,
+                                        std::vector<std::vector<ConstraintDoubleElement>> *const_cross_vec);
 };
 }
