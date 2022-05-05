@@ -194,6 +194,9 @@ public:
 
     double get_fc_zero_threshold() const;
 
+    void translate_forceconstant_index_to_centercell(const Symmetry *symmetry,
+                                                     std::vector<std::vector<int>> &index_inout) const;
+
 private:
     std::vector<size_t> *nequiv;       // stores duplicate number of irreducible force constants
     std::vector<FcProperty> *fc_table; // all force constants in preferred_basis

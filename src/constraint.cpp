@@ -57,20 +57,24 @@ void Constraint::set_default_variables()
     extra_constraint_from_symmetry = false;
     const_mat = nullptr;
     const_rhs = nullptr;
-    const_symmetry = nullptr;
+    //const_symmetry = nullptr;
     const_fix = nullptr;
     const_relate = nullptr;
     const_relate_rotation = nullptr;
     index_bimap = nullptr;
     number_of_constraints = 0;
     tolerance_constraint = eps8;
+    ready_constraints = false;
+    status_constraint_subset["symmetry"] = 0;
+    status_constraint_subset["translation"] = -1;
+    status_constraint_subset["rotation"] = -1;
+    status_constraint_subset["rotation_extra"] = -1;
+    status_constraint_subset["fix2"] = -1;
+    status_constraint_subset["fix3"] = -1;
 }
 
 void Constraint::deallocate_variables()
 {
-    if (const_symmetry) {
-        deallocate(const_symmetry);
-    }
     if (const_fix) {
         deallocate(const_fix);
     }
@@ -111,7 +115,7 @@ void Constraint::setup(const System *system,
     constraint_mode = constraint_mode % 10;
     const auto maxorder = cluster->get_maxorder();
 
-    if (linear_model == 2) {
+    if (linear_model >= 2) {
         if (constraint_mode > 1) {
             warn("Constraint::setup", "Sorry, only ICONST = 11 is supported \n"
                                       "                      when LMODEL = enet. We set ICONST = 11 in this run.\n");
@@ -124,6 +128,9 @@ void Constraint::setup(const System *system,
         case 0: // do nothing
             impose_inv_T = false;
             impose_inv_R = false;
+            set_constraint_flag("translation", 0);
+            set_constraint_flag("rotation", 0);
+            set_constraint_flag("rotation_extra", 0);
             if (verbosity > 0) {
                 std::cout << "  ICONST = 0: Constraint for translational/rotational invariance" << std::endl;
                 std::cout << "              will NOT be considered." << std::endl;
@@ -132,6 +139,9 @@ void Constraint::setup(const System *system,
         case 1:
             impose_inv_T = true;
             impose_inv_R = false;
+            set_constraint_flag("translation", 1);
+            set_constraint_flag("rotation", 0);
+            set_constraint_flag("rotation_extra", 0);
             if (verbosity > 0) {
                 std::cout << "  ICONST = 1: Constraints for translational invariance" << std::endl;
                 std::cout << "              will be considered." << std::endl;
@@ -141,6 +151,9 @@ void Constraint::setup(const System *system,
             impose_inv_T = true;
             impose_inv_R = true;
             exclude_last_R = true;
+            set_constraint_flag("translation", 1);
+            set_constraint_flag("rotation", 1);
+            set_constraint_flag("rotation_extra", 0);
             if (verbosity > 0) {
                 std::cout << "  ICONST = 2: Constraints for translational and rotational invariance" << std::endl;
                 std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
@@ -151,6 +164,9 @@ void Constraint::setup(const System *system,
             impose_inv_T = true;
             impose_inv_R = true;
             exclude_last_R = false;
+            set_constraint_flag("translation", 1);
+            set_constraint_flag("rotation", 1);
+            set_constraint_flag("rotation_extra", 1);
             if (verbosity > 0) {
                 std::cout << "  ICONST = 3: Constraints for translational and rotational invariance" << std::endl;
                 std::cout << "              will be considered. Axis of rotation is " << rotation_axis << std::endl;
@@ -168,9 +184,7 @@ void Constraint::setup(const System *system,
 
     if (verbosity > 0) std::cout << std::endl;
 
-    if (const_symmetry) {
-        deallocate(const_symmetry);
-    }
+
     if (const_fix) {
         deallocate(const_fix);
     }
@@ -184,18 +198,11 @@ void Constraint::setup(const System *system,
     allocate(const_fix, maxorder);
     allocate(const_relate, maxorder);
     allocate(index_bimap, maxorder);
-    allocate(const_symmetry, maxorder);
-    allocate(const_translation, maxorder);
-    allocate(const_rotation_self, maxorder);
-    allocate(const_rotation_cross, maxorder);
-    allocate(const_self, maxorder);
+
+    const_self.resize(maxorder);
 
     for (auto order = 0; order < maxorder; ++order) {
-        const_translation[order].clear();
-        const_rotation_self[order].clear();
-        const_rotation_cross[order].clear();
         const_self[order].clear();
-        const_fix[order].clear();
     }
 
     if (fix_harmonic) {
@@ -229,11 +236,11 @@ void Constraint::setup(const System *system,
                                    const_fix[1]);
     }
 
-    generate_symmetry_constraint_in_cartesian(system->get_supercell().number_of_atoms,
-                                              symmetry,
-                                              cluster,
-                                              fcs,
-                                              verbosity);
+    generate_symmetry_constraint(system->get_supercell().number_of_atoms,
+                                 symmetry,
+                                 cluster,
+                                 fcs,
+                                 verbosity);
 
 
     extra_constraint_from_symmetry = false;
@@ -242,26 +249,23 @@ void Constraint::setup(const System *system,
         if (!const_symmetry[order].empty()) extra_constraint_from_symmetry = true;
     }
 
-    if (impose_inv_T) {
-        // const_translation is updated.
-        generate_translational_constraint(system->get_supercell(),
-                                          symmetry,
-                                          cluster,
-                                          fcs,
-                                          mirror_image_conv,
-                                          verbosity);
-    }
+    // const_translation is updated.
+    generate_translational_constraint(system->get_supercell(),
+                                      symmetry,
+                                      cluster,
+                                      fcs,
+                                      mirror_image_conv,
+                                      verbosity);
 
-    if (impose_inv_R) {
-        generate_rotational_constraint(system,
-                                       symmetry,
-                                       cluster,
-                                       fcs,
-                                       verbosity,
-                                       tolerance_constraint);
-    }
+    // const_rotation_self and const_rotation_cross are updated.
+    generate_rotational_constraint(system,
+                                   symmetry,
+                                   cluster,
+                                   fcs,
+                                   verbosity,
+                                   tolerance_constraint);
 
-    // Merge intra-order constrants and do reduction
+    // Merge intra-order constraints and do reduction
 
     for (auto order = 0; order < maxorder; ++order) {
 
@@ -287,7 +291,6 @@ void Constraint::setup(const System *system,
                                  const_rotation_self[order].begin(),
                                  const_rotation_self[order].end());
 
-//        rref_sparse(nparam, const_self[order], tolerance_constraint);
         rref_sparse(nparam, const_self[order], tolerance_constraint);
     }
 
@@ -353,7 +356,7 @@ void Constraint::setup(const System *system,
 
     get_mapping_constraint(maxorder,
                            fcs->get_nequiv(),
-                           const_self,
+                           &const_self[0],
                            const_fix,
                            const_relate,
                            index_bimap);
@@ -437,18 +440,9 @@ void Constraint::setup(const System *system,
         std::cout << std::endl;
     }
 
-
-    deallocate(const_translation);
-    const_translation = nullptr;
-    deallocate(const_rotation_self);
-    const_rotation_self = nullptr;
-    deallocate(const_rotation_cross);
-    const_rotation_cross = nullptr;
-    deallocate(const_self);
-    const_self = nullptr;
-
     timer->stop_clock("constraint");
 }
+
 
 size_t Constraint::calc_constraint_matrix(const int maxorder,
                                           const std::vector<size_t> *nequiv,
@@ -796,17 +790,45 @@ const boost::bimap<size_t, size_t> &Constraint::get_index_bimap(const int order)
     return index_bimap[order];
 }
 
-void Constraint::generate_symmetry_constraint_in_cartesian(const size_t nat,
-                                                           const Symmetry *symmetry,
-                                                           const Cluster *cluster,
-                                                           const Fcs *fcs,
-                                                           const int verbosity) const
+void Constraint::set_constraint_flag(const std::string const_name,
+                                     const int use_constraint)
+{
+    auto it = status_constraint_subset.find(const_name);
+
+    for (auto it2: status_constraint_subset) {
+        std::cout << it2.first << " " << it2.second << '\n';
+    }
+
+    std::cout << '\n' << const_name << std::endl;
+
+    if (it != status_constraint_subset.end()) {
+        if (use_constraint == 0) {
+            it->second = -1;
+        } else {
+            it->second = 0;
+        }
+    } else {
+        exit("set_constraint_flag",
+             "Invalid constraint name");
+    }
+}
+
+void Constraint::generate_symmetry_constraint(const size_t nat,
+                                              const Symmetry *symmetry,
+                                              const Cluster *cluster,
+                                              const Fcs *fcs,
+                                              const int verbosity)
 {
     // Create constraint matrices arising from the crystal symmetry.
+    // This function clears and updates const_symmetry.
 
     const auto maxorder = cluster->get_maxorder();
     auto has_constraint_from_symm = false;
     std::vector<std::vector<double>> const_tmp;
+
+    if (const_symmetry.empty()) {
+        const_symmetry.resize(maxorder);
+    }
 
     if (fcs->get_forceconstant_basis() == "Cartesian") {
         for (auto isym = 0; isym < symmetry->get_nsym(); ++isym) {
@@ -868,6 +890,8 @@ void Constraint::generate_symmetry_constraint_in_cartesian(const size_t nat,
     if (has_constraint_from_symm) {
         std::cout << "  Finished !" << std::endl << std::endl;
     }
+
+    status_constraint_subset["symmetry"] = 1;
 }
 
 
@@ -876,9 +900,16 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
                                                    const Cluster *cluster,
                                                    const Fcs *fcs,
                                                    const int mirror_image_conv,
-                                                   const int verbosity) const
+                                                   const int verbosity)
 {
     // Create constraint matrix for the translational invariance (aka acoustic sum rule).
+    const auto maxorder = cluster->get_maxorder();
+
+    if (const_translation.empty()) {
+        const_translation.resize(maxorder);
+    }
+
+    if (status_constraint_subset["translation"] == -1) return;
 
     if (verbosity > 0) {
         std::cout << "  Generating constraints for translational invariance ..." << std::endl;
@@ -888,6 +919,8 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
 
         if (verbosity > 0)
             std::cout << "   " << std::setw(8) << cluster->get_ordername(order) << " ...";
+
+        const_translation[order].clear();
 
         const auto nparams = fcs->get_nequiv()[order].size();
 
@@ -922,6 +955,7 @@ void Constraint::generate_translational_constraint(const Cell &supercell,
         if (verbosity > 0) std::cout << " done." << std::endl;
     }
 
+    status_constraint_subset["translation"] = 1;
     if (verbosity > 0) std::cout << "  Finished !" << std::endl << std::endl;
 }
 
@@ -952,6 +986,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
     const auto nat = supercell.number_of_atoms;
 
     unsigned int isize;
+    const auto maxorder = cluster->get_maxorder();
 
     std::vector<int> data;
     std::unordered_set<FcProperty> list_found;
@@ -1524,53 +1559,29 @@ void Constraint::generate_rotational_constraint(const System *system,
                                                 const double tolerance)
 {
     // Create constraints for the rotational invariance
+    const auto maxorder = cluster->get_maxorder();
+
+    if (const_rotation_self.empty()) {
+        const_rotation_self.resize(maxorder);
+    }
+    if (const_rotation_cross.empty()) {
+        const_rotation_cross.resize(maxorder);
+    }
+
+    if (status_constraint_subset["rotation"] == -1
+        and status_constraint_subset["rotation_extra"] == -1)
+        return;
+
 
     if (verbosity > 0)
         std::cout << "  Generating constraints for rotational invariance ..." << std::endl;
 
-#ifdef _DEBUG
-    std::ofstream ofs_constraint;
-    ofs_constraint.open("CONSTRAINT", std::ios::out);
-#endif
 
-    int i, j;
-    int iat, jat;
-    int icrd, jcrd;
     int order;
-    const auto maxorder = cluster->get_maxorder();
     const auto natmin = symmetry->get_nat_prim();
-    int mu, nu;
-    int ixyz, nxyz{0}, nxyz2;
-    int mu_lambda, lambda;
-    int levi_factor;
-
-    int *ind;
-    int **xyzcomponent = nullptr;
-    int **xyzcomponent2 = nullptr;
-    size_t *nparams, nparam_sub;
-    int *interaction_index, *interaction_atom;
-    int *interaction_tmp;
-    int loc_nonzero;
-
-    std::vector<double> arr_constraint;
-    std::vector<double> arr_constraint_self;
-    std::vector<double> arr_constraint_lower;
-
     bool valid_rotation_axis[3][3];
-
-    double vec_for_rot[3];
-
-    std::vector<int> interaction_list;
-
     std::unordered_set<FcProperty> list_found;
     std::unordered_set<FcProperty> list_found_last;
-    std::unordered_set<FcProperty>::iterator iter_found;
-
-    CombinationWithRepetition<int> g;
-
-    std::vector<int> atom_tmp;
-    std::vector<std::vector<int>> cell_dummy;
-    std::set<InteractionCluster>::iterator iter_cluster;
 
     typedef std::vector<ConstraintDoubleElement> ConstEntry;
     ConstEntry const_tmp;
@@ -1581,12 +1592,15 @@ void Constraint::generate_rotational_constraint(const System *system,
 
     setup_rotation_axis(valid_rotation_axis);
 
-    allocate(ind, maxorder + 1);
-    allocate(nparams, maxorder);
+    std::vector<size_t> nparams;
+    nparams.resize(maxorder);
 
     for (order = 0; order < maxorder; ++order) {
 
         nparams[order] = fcs->get_nequiv()[order].size();
+
+        const_rotation_self[order].clear();
+        const_rotation_cross[order].clear();
 
         if (order == 0) {
             if (verbosity > 0) {
@@ -1594,472 +1608,54 @@ void Constraint::generate_rotational_constraint(const System *system,
                           << "1st-order IFCs (which are zero) and "
                           << std::setw(8) << cluster->get_ordername(order) << " ...";
             }
-
-            nparam_sub = nparams[order];
         } else {
             if (verbosity > 0) {
                 std::cout << "   Constraints between " << std::setw(8)
                           << cluster->get_ordername(order - 1) << " and "
                           << std::setw(8) << cluster->get_ordername(order) << " ...";
             }
-
-            nparam_sub = nparams[order] + nparams[order - 1];
         }
-        arr_constraint.resize(nparam_sub);
-        arr_constraint_self.resize(nparams[order]);
 
-        if (order > 0) arr_constraint_lower.resize(nparams[order - 1]);
-
-        allocate(interaction_atom, order + 2);
-        allocate(interaction_index, order + 2);
-        allocate(interaction_tmp, order + 2);
         const_self_vec[order].clear();
         const_cross_vec[order].clear();
 
         if (order > 0) {
             list_found_last = list_found;
-            nxyz = static_cast<int>(pow(static_cast<double>(3), order));
-            allocate(xyzcomponent, nxyz, order);
-            fcs->get_xyzcomponent(order, xyzcomponent);
         }
 
         list_found.clear();
 
-        for (auto p = fcs->get_fc_table()[order].begin(); p != fcs->get_fc_table()[order].end(); ++p) {
-            for (i = 0; i < order + 2; ++i) {
-                ind[i] = (*p).elems[i];
-            }
+        // Accumulate set of non-zero force constants.
+        for (auto p = fcs->get_fc_table()[order].begin();
+             p != fcs->get_fc_table()[order].end(); ++p) {
             list_found.insert(FcProperty(order + 2, (*p).sign,
-                                         ind, (*p).mother));
+                                         &(*p).elems[0], (*p).mother));
         }
 
-        for (i = 0; i < natmin; ++i) {
-
-            iat = symmetry->get_map_p2s()[i][0];
-
-            interaction_atom[0] = iat;
-
-            if (order == 0) {
-
-                auto interaction_list_now(cluster->get_interaction_pair(order, i));
-                std::sort(interaction_list_now.begin(), interaction_list_now.end());
-
-                // Special treatment for harmonic force constants
-
-                for (icrd = 0; icrd < 3; ++icrd) {
-
-                    interaction_index[0] = 3 * iat + icrd;
-
-                    for (mu = 0; mu < 3; ++mu) {
-
-                        for (nu = 0; nu < 3; ++nu) {
-
-                            if (!valid_rotation_axis[mu][nu]) continue;
-
-                            // Clear history
-
-                            for (j = 0; j < nparam_sub; ++j) arr_constraint[j] = 0.0;
-
-                            for (auto &iter_list: interaction_list_now) {
-
-                                jat = iter_list;
-                                interaction_index[1] = 3 * jat + mu;
-                                iter_found = list_found.find(FcProperty(order + 2, 1.0,
-                                                                        interaction_index, 1));
-
-                                atom_tmp.clear();
-                                atom_tmp.push_back(jat);
-                                cell_dummy.clear();
-                                iter_cluster = cluster->get_interaction_cluster(order, i).find(
-                                        InteractionCluster(atom_tmp, cell_dummy));
-
-                                if (iter_cluster == cluster->get_interaction_cluster(order, i).end()) {
-                                    exit("generate_rotational_constraint",
-                                         "cluster not found ...");
-                                } else {
-                                    for (j = 0; j < 3; ++j) vec_for_rot[j] = 0.0;
-
-                                    const auto nsize_equiv = (*iter_cluster).cell.size();
-
-                                    for (j = 0; j < nsize_equiv; ++j) {
-                                        for (auto k = 0; k < 3; ++k) {
-                                            vec_for_rot[k]
-                                                    += system->get_x_image()[(*iter_cluster).cell[j][0]][jat][k];
-                                        }
-                                    }
-
-                                    for (j = 0; j < 3; ++j) {
-                                        vec_for_rot[j] /= static_cast<double>(nsize_equiv);
-                                    }
-                                }
-
-
-                                if (iter_found != list_found.end()) {
-                                    arr_constraint[(*iter_found).mother] += (*iter_found).sign * vec_for_rot[nu];
-                                }
-
-                                // Exchange mu <--> nu and repeat again. 
-                                // Note that the sign is inverted (+ --> -) in the summation
-
-                                interaction_index[1] = 3 * jat + nu;
-                                iter_found = list_found.find(FcProperty(order + 2, 1.0,
-                                                                        interaction_index, 1));
-                                if (iter_found != list_found.end()) {
-                                    arr_constraint[(*iter_found).mother]
-                                            -= (*iter_found).sign * vec_for_rot[mu];
-                                }
-                            }
-
-                            if (!is_allzero(arr_constraint, tolerance, loc_nonzero)) {
-                                // Add to constraint list
-                                if (arr_constraint[loc_nonzero] < 0.0) {
-                                    for (j = 0; j < nparam_sub; ++j) arr_constraint[j] *= -1.0;
-                                }
-                                const_tmp.clear();
-                                for (j = 0; j < nparam_sub; ++j) {
-                                    if (std::abs(arr_constraint[j]) >= tolerance) {
-                                        const_tmp.emplace_back(j, arr_constraint[j]);
-                                    }
-                                }
-                                const_self_vec[order].emplace_back(const_tmp);
-                            }
-
-                        } // nu
-                    }     // mu
-                }
-            } else {
-
-                // Constraint between different orders
-
-                auto interaction_list_now(cluster->get_interaction_pair(order, i));
-                auto interaction_list_old(cluster->get_interaction_pair(order - 1, i));
-                std::sort(interaction_list_now.begin(), interaction_list_now.end());
-                std::sort(interaction_list_old.begin(), interaction_list_old.end());
-
-                for (icrd = 0; icrd < 3; ++icrd) {
-
-                    interaction_index[0] = 3 * iat + icrd;
-
-                    const CombinationWithRepetition<int> g_now(interaction_list_now.begin(),
-                                                               interaction_list_now.end(), order);
-                    const CombinationWithRepetition<int> g_old(interaction_list_old.begin(),
-                                                               interaction_list_old.end(), order);
-
-                    // m    -th order --> (m-1)-th order
-                    // (m-1)-th order -->     m-th order
-                    // 2-different directions to find all constraints
-
-                    for (unsigned int direction = 0; direction < 2; ++direction) {
-
-                        if (direction == 0) {
-                            g = g_now;
-                            interaction_list = interaction_list_now;
-                        } else {
-                            g = g_old;
-                            interaction_list = interaction_list_old;
-                        }
-
-                        // Loop for the interacting pairs
-
-                        do {
-                            auto data = g.now();
-
-                            for (size_t idata = 0; idata < data.size(); ++idata) {
-                                interaction_atom[idata + 1] = data[idata];
-                            }
-
-                            for (ixyz = 0; ixyz < nxyz; ++ixyz) {
-
-                                for (j = 0; j < order; ++j)
-                                    interaction_index[j + 1] = 3 * interaction_atom[j + 1] + xyzcomponent[ixyz][j];
-
-                                for (mu = 0; mu < 3; ++mu) {
-
-                                    for (nu = 0; nu < 3; ++nu) {
-
-                                        if (!valid_rotation_axis[mu][nu]) continue;
-
-                                        // Search for a new constraint below
-
-                                        for (j = 0; j < nparam_sub; ++j) arr_constraint[j] = 0.0;
-
-                                        // Loop for m_{N+1}, a_{N+1}
-                                        for (auto &iter_list: interaction_list) {
-                                            jat = iter_list;
-
-                                            interaction_atom[order + 1] = jat;
-                                            if (!cluster->is_incutoff(order + 2,
-                                                                      interaction_atom,
-                                                                      order,
-                                                                      system->get_supercell().kind))
-                                                continue;
-
-                                            atom_tmp.clear();
-
-                                            for (j = 1; j < order + 2; ++j) {
-                                                atom_tmp.push_back(interaction_atom[j]);
-                                            }
-                                            std::sort(atom_tmp.begin(), atom_tmp.end());
-
-                                            iter_cluster = cluster->get_interaction_cluster(order, i).find(
-                                                    InteractionCluster(atom_tmp,
-                                                                       cell_dummy));
-                                            if (iter_cluster != cluster->get_interaction_cluster(order, i).end()) {
-
-                                                int iloc = -1;
-
-                                                for (j = 0; j < atom_tmp.size(); ++j) {
-                                                    if (atom_tmp[j] == jat) {
-                                                        iloc = j;
-                                                        break;
-                                                    }
-                                                }
-
-                                                if (iloc == -1) {
-                                                    exit("generate_rotational_constraint", "This cannot happen.");
-                                                }
-
-                                                for (j = 0; j < 3; ++j) vec_for_rot[j] = 0.0;
-
-                                                const auto nsize_equiv = (*iter_cluster).cell.size();
-
-                                                for (j = 0; j < nsize_equiv; ++j) {
-                                                    for (auto k = 0; k < 3; ++k) {
-                                                        vec_for_rot[k] += system->get_x_image()[(*iter_cluster).cell[j][
-                                                                iloc]][jat][k];
-                                                    }
-                                                }
-
-                                                for (j = 0; j < 3; ++j) {
-                                                    vec_for_rot[j] /= static_cast<double>(nsize_equiv);
-                                                }
-                                            }
-
-
-                                            // mu, nu
-
-                                            interaction_index[order + 1] = 3 * jat + mu;
-                                            for (j = 0; j < order + 2; ++j) interaction_tmp[j] = interaction_index[j];
-
-                                            sort_tail(order + 2, interaction_tmp);
-
-                                            iter_found = list_found.
-                                                    find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
-                                            if (iter_found != list_found.end()) {
-                                                arr_constraint[nparams[order - 1] + (*iter_found).mother]
-                                                        += (*iter_found).sign * vec_for_rot[nu];
-                                            }
-
-                                            // Exchange mu <--> nu and repeat again.
-
-                                            interaction_index[order + 1] = 3 * jat + nu;
-                                            for (j = 0; j < order + 2; ++j) interaction_tmp[j] = interaction_index[j];
-
-                                            sort_tail(order + 2, interaction_tmp);
-
-                                            iter_found = list_found.
-                                                    find(FcProperty(order + 2, 1.0, interaction_tmp, 1));
-                                            if (iter_found != list_found.end()) {
-                                                arr_constraint[nparams[order - 1] + (*iter_found).mother]
-                                                        -= (*iter_found).sign * vec_for_rot[mu];
-                                            }
-                                        }
-
-                                        for (lambda = 0; lambda < order + 1; ++lambda) {
-
-                                            mu_lambda = interaction_index[lambda] % 3;
-
-                                            for (jcrd = 0; jcrd < 3; ++jcrd) {
-
-                                                for (j = 0; j < order + 1; ++j)
-                                                    interaction_tmp[j] = interaction_index[j
-                                                    ];
-
-                                                interaction_tmp[lambda] = 3 * interaction_atom[lambda] + jcrd;
-
-                                                levi_factor = 0;
-
-                                                for (j = 0; j < 3; ++j) {
-                                                    levi_factor += levi_civita(j, mu, nu) * levi_civita(
-                                                            j, mu_lambda, jcrd);
-                                                }
-
-                                                if (levi_factor == 0) continue;
-
-                                                sort_tail(order + 1, interaction_tmp);
-
-                                                iter_found = list_found_last.find(FcProperty(order + 1, 1.0,
-                                                                                             interaction_tmp, 1));
-                                                if (iter_found != list_found_last.end()) {
-                                                    arr_constraint[(*iter_found).mother]
-                                                            += (*iter_found).sign * static_cast<double>(levi_factor);
-                                                }
-                                            }
-                                        }
-
-                                        if (!is_allzero(arr_constraint, tolerance, loc_nonzero)) {
-
-                                            // A Candidate for another constraint found !
-                                            // Add to the appropriate set
-
-                                            if (arr_constraint[loc_nonzero] < 0.0) {
-                                                for (j = 0; j < nparam_sub; ++j) arr_constraint[j] *= -1.0;
-                                            }
-                                            for (j = 0; j < nparams[order]; ++j) {
-                                                arr_constraint_self[j] = arr_constraint[j + nparams[order - 1]];
-                                            }
-                                            for (j = 0; j < nparams[order - 1]; ++j) {
-                                                arr_constraint_lower[j] = arr_constraint[j];
-                                            }
-
-                                            const_tmp.clear();
-
-                                            if (is_allzero(arr_constraint_self, tolerance, loc_nonzero)) {
-                                                // If all elements of the "order"th order is zero,
-                                                // the constraint is intraorder of the "order-1"th order.
-                                                for (j = 0; j < nparams[order - 1]; ++j) {
-                                                    if (std::abs(arr_constraint_lower[j]) >= tolerance) {
-                                                        const_tmp.emplace_back(j, arr_constraint_lower[j]);
-                                                    }
-                                                }
-                                                const_self_vec[order - 1].emplace_back(const_tmp);
-
-                                            } else if (is_allzero(arr_constraint_lower, tolerance, loc_nonzero)) {
-                                                // If all elements of the "order-1"th order is zero,
-                                                // the constraint is intraorder of the "order"th order.
-                                                for (j = 0; j < nparams[order]; ++j) {
-                                                    if (std::abs(arr_constraint_self[j]) >= tolerance) {
-                                                        const_tmp.emplace_back(j, arr_constraint_self[j]);
-                                                    }
-                                                }
-                                                const_self_vec[order].emplace_back(const_tmp);
-
-                                            } else {
-                                                // If nonzero elements exist in both of the "order-1" and "order",
-                                                // the constraint is intrerorder.
-
-                                                for (j = 0; j < nparam_sub; ++j) {
-                                                    if (std::abs(arr_constraint[j]) >= tolerance) {
-                                                        const_tmp.emplace_back(j, arr_constraint[j]);
-                                                    }
-                                                }
-                                                const_cross_vec[order].emplace_back(const_tmp);
-                                            }
-                                        }
-
-                                    } // nu
-                                }     // mu
-
-                            } // ixyz
-
-                        } while (g.next());
-
-                    } // direction
-                }     // icrd
-            }
-
-            // Additional constraint for the last order.
-            // All IFCs over maxorder-th order are neglected.
-
-            if (order == maxorder - 1 && !exclude_last_R) {
-
-                auto interaction_list_now(cluster->get_interaction_pair(order, i));
-                std::sort(interaction_list_now.begin(), interaction_list_now.end());
-
-                nxyz2 = static_cast<int>(pow(static_cast<double>(3), order + 1));
-                allocate(xyzcomponent2, nxyz2, order + 1);
-                fcs->get_xyzcomponent(order + 1, xyzcomponent2);
-
-                for (icrd = 0; icrd < 3; ++icrd) {
-
-                    interaction_index[0] = 3 * interaction_atom[0] + icrd;
-
-                    CombinationWithRepetition<int> g_now(interaction_list_now.begin(),
-                                                         interaction_list_now.end(), order + 1);
-                    do {
-
-                        auto data = g_now.now();
-
-                        for (auto idata = 0; idata < data.size(); ++idata)
-                            interaction_atom[idata + 1] = data[idata];
-
-                        for (ixyz = 0; ixyz < nxyz2; ++ixyz) {
-
-                            for (j = 0; j < order + 1; ++j)
-                                interaction_index[j + 1] = 3 * interaction_atom[j + 1] + xyzcomponent2[ixyz][j];
-
-                            for (mu = 0; mu < 3; ++mu) {
-
-                                for (nu = 0; nu < 3; ++nu) {
-
-                                    if (!valid_rotation_axis[mu][nu]) continue;
-
-                                    for (j = 0; j < nparams[order]; ++j) arr_constraint_self[j] = 0.0;
-
-                                    for (lambda = 0; lambda < order + 2; ++lambda) {
-
-                                        mu_lambda = interaction_index[lambda] % 3;
-
-                                        for (jcrd = 0; jcrd < 3; ++jcrd) {
-
-                                            for (j = 0; j < order + 2; ++j)
-                                                interaction_tmp[j] = interaction_index[j];
-
-                                            interaction_tmp[lambda] = 3 * interaction_atom[lambda] + jcrd;
-
-                                            levi_factor = 0;
-                                            for (j = 0; j < 3; ++j) {
-                                                levi_factor += levi_civita(j, mu, nu) * levi_civita(j, mu_lambda, jcrd);
-                                            }
-
-                                            if (levi_factor == 0) continue;
-
-                                            sort_tail(order + 2, interaction_tmp);
-
-                                            iter_found = list_found.find(FcProperty(order + 2, 1.0,
-                                                                                    interaction_tmp, 1));
-                                            if (iter_found != list_found.end()) {
-                                                arr_constraint_self[(*iter_found).mother]
-                                                        += (*iter_found).sign * static_cast<double>(levi_factor);
-                                            }
-                                        } // jcrd
-                                    }     // lambda
-
-                                    if (!is_allzero(arr_constraint_self, tolerance, loc_nonzero)) {
-                                        if (arr_constraint_self[loc_nonzero] < 0.0) {
-                                            for (j = 0; j < nparams[order]; ++j) arr_constraint_self[j] *= -1.0;
-                                        }
-                                        const_tmp.clear();
-                                        for (j = 0; j < nparams[order]; ++j) {
-                                            if (std::abs(arr_constraint_self[j]) >= tolerance) {
-                                                const_tmp.emplace_back(j, arr_constraint_self[j]);
-                                            }
-                                        }
-                                        const_self_vec[order].emplace_back(const_tmp);
-                                    }
-
-                                } // nu
-                            }     // mu
-
-                        } // ixyz
-
-
-                    } while (g_now.next());
-
-                } // icrd
-
-                deallocate(xyzcomponent2);
-            }
-        } // iat
+        set_rotation_constraints(system,
+                                 symmetry,
+                                 cluster,
+                                 fcs,
+                                 order,
+                                 valid_rotation_axis,
+                                 list_found,
+                                 list_found_last,
+                                 tolerance,
+                                 const_self_vec,
+                                 const_cross_vec);
+
+        set_rotation_constraints_extra(system,
+                                       symmetry,
+                                       cluster,
+                                       fcs,
+                                       order,
+                                       valid_rotation_axis,
+                                       list_found,
+                                       tolerance,
+                                       const_self_vec,
+                                       const_cross_vec);
 
         if (verbosity > 0) std::cout << " done." << std::endl;
-
-        if (order > 0) {
-            deallocate(xyzcomponent);
-        }
-        deallocate(interaction_tmp);
-        deallocate(interaction_index);
-        deallocate(interaction_atom);
     } // order
 
     int counter;
@@ -2121,10 +1717,560 @@ void Constraint::generate_rotational_constraint(const System *system,
 
     if (verbosity > 0) std::cout << "  Finished !" << std::endl << std::endl;
 
-    deallocate(ind);
-    deallocate(nparams);
+    if (status_constraint_subset["rotation"] == 0)  status_constraint_subset["rotation"] = 1;
+    if (status_constraint_subset["rotation_extra"] == 0) status_constraint_subset["rotation_extra"] = 1;
+
     deallocate(const_self_vec);
     deallocate(const_cross_vec);
+}
+
+void Constraint::set_rotation_constraints(const System *system,
+                                          const Symmetry *symmetry,
+                                          const Cluster *cluster,
+                                          const Fcs *fcs,
+                                          const int order,
+                                          const bool valid_rotation_axis[3][3],
+                                          const std::unordered_set<FcProperty> &list_found,
+                                          const std::unordered_set<FcProperty> &list_found_last,
+                                          const double tolerance,
+                                          std::vector<std::vector<ConstraintDoubleElement>> *const_self_vec,
+                                          std::vector<std::vector<ConstraintDoubleElement>> *const_cross_vec)
+{
+    const auto natmin = symmetry->get_nat_prim();
+    const auto maxorder = cluster->get_maxorder();
+
+    int iat, jat;
+    int icrd;
+
+    CombinationWithRepetition<int> g;
+    double vec_for_rot[3];
+
+    int ixyz, nxyz{0}, nxyz2;
+    int loc_nonzero;
+
+    int mu_lambda, lambda;
+    int levi_factor;
+
+    std::vector<double> arr_constraint;
+    std::vector<double> arr_constraint_self;
+    std::vector<double> arr_constraint_lower;
+
+    std::unordered_set<FcProperty>::iterator iter_found;
+
+    std::vector<int> atom_tmp;
+    std::vector<std::vector<int>> cell_dummy;
+
+    std::vector<int> interaction_list;
+
+    size_t nparam_sub;
+    std::vector<size_t> nparams;
+
+    std::vector<int> interaction_index, interaction_atom, interaction_tmp;
+    interaction_index.resize(order + 2);
+    interaction_atom.resize(order + 2);
+    interaction_tmp.resize(order + 2);
+
+    typedef std::vector<ConstraintDoubleElement> ConstEntry;
+    ConstEntry const_tmp;
+
+    for (int i = 0; i < maxorder; ++i) {
+        nparams.push_back(fcs->get_nequiv()[i].size());
+    }
+
+    if (order == 0) {
+        nparam_sub = nparams[order];
+    } else {
+        nparam_sub = nparams[order] + nparams[order - 1];
+    }
+    arr_constraint.resize(nparam_sub);
+    arr_constraint_self.resize(nparams[order]);
+
+    if (order > 0) arr_constraint_lower.resize(nparams[order - 1]);
+
+
+    int **xyzcomponent = nullptr;
+
+    if (order > 0) {
+        nxyz = static_cast<int>(pow(static_cast<double>(3), order));
+        allocate(xyzcomponent, nxyz, order);
+        fcs->get_xyzcomponent(order, xyzcomponent);
+    }
+
+    for (int i = 0; i < natmin; ++i) {
+
+        iat = symmetry->get_map_p2s()[i][0];
+
+        interaction_atom[0] = iat;
+
+        if (order == 0) {
+
+            auto interaction_list_now(cluster->get_interaction_pair(order, i));
+            std::sort(interaction_list_now.begin(), interaction_list_now.end());
+
+            // Special treatment for harmonic force constants
+
+            for (icrd = 0; icrd < 3; ++icrd) {
+
+                interaction_index[0] = 3 * iat + icrd;
+
+                for (int mu = 0; mu < 3; ++mu) {
+                    for (int nu = 0; nu < 3; ++nu) {
+
+                        if (!valid_rotation_axis[mu][nu]) continue;
+
+                        // Clear history
+
+                        for (int j = 0; j < nparam_sub; ++j) arr_constraint[j] = 0.0;
+
+                        for (auto &iter_list: interaction_list_now) {
+
+                            jat = iter_list;
+                            interaction_index[1] = 3 * jat + mu;
+                            iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                                    &interaction_index[0], 1));
+
+                            atom_tmp.clear();
+                            atom_tmp.push_back(jat);
+                            cell_dummy.clear();
+                            const auto iter_cluster = cluster->get_interaction_cluster(order, i).find(
+                                    InteractionCluster(atom_tmp, cell_dummy));
+
+                            if (iter_cluster == cluster->get_interaction_cluster(order, i).end()) {
+                                exit("generate_rotational_constraint",
+                                     "cluster not found ...");
+                            } else {
+                                for (int j = 0; j < 3; ++j) vec_for_rot[j] = 0.0;
+
+                                const auto nsize_equiv = (*iter_cluster).cell.size();
+
+                                for (int j = 0; j < nsize_equiv; ++j) {
+                                    for (auto k = 0; k < 3; ++k) {
+                                        vec_for_rot[k]
+                                                += system->get_x_image()[(*iter_cluster).cell[j][0]][jat][k];
+                                    }
+                                }
+
+                                for (int j = 0; j < 3; ++j) {
+                                    vec_for_rot[j] /= static_cast<double>(nsize_equiv);
+                                }
+                            }
+
+                            if (iter_found != list_found.end()) {
+                                arr_constraint[(*iter_found).mother]
+                                        += (*iter_found).sign * vec_for_rot[nu];
+                            }
+
+                            // Exchange mu <--> nu and repeat again.
+                            // Note that the sign is inverted (+ --> -) in the summation
+
+                            interaction_index[1] = 3 * jat + nu;
+                            iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                                    &interaction_index[0], 1));
+                            if (iter_found != list_found.end()) {
+                                arr_constraint[(*iter_found).mother]
+                                        -= (*iter_found).sign * vec_for_rot[mu];
+                            }
+                        }
+
+                        if (!is_allzero(arr_constraint, tolerance, loc_nonzero)) {
+                            // Add to constraint list
+                            if (arr_constraint[loc_nonzero] < 0.0) {
+                                for (int j = 0; j < nparam_sub; ++j) arr_constraint[j] *= -1.0;
+                            }
+                            const_tmp.clear();
+                            for (int j = 0; j < nparam_sub; ++j) {
+                                if (std::abs(arr_constraint[j]) >= tolerance) {
+                                    const_tmp.emplace_back(j, arr_constraint[j]);
+                                }
+                            }
+                            const_self_vec[order].emplace_back(const_tmp);
+                        }
+
+                    } // nu
+                }     // mu
+            }
+        } else {
+
+            // Constraint between different orders
+
+            auto interaction_list_now(cluster->get_interaction_pair(order, i));
+            auto interaction_list_old(cluster->get_interaction_pair(order - 1, i));
+            std::sort(interaction_list_now.begin(), interaction_list_now.end());
+            std::sort(interaction_list_old.begin(), interaction_list_old.end());
+
+            for (icrd = 0; icrd < 3; ++icrd) {
+
+                interaction_index[0] = 3 * iat + icrd;
+
+                const CombinationWithRepetition<int> g_now(interaction_list_now.begin(),
+                                                           interaction_list_now.end(), order);
+                const CombinationWithRepetition<int> g_old(interaction_list_old.begin(),
+                                                           interaction_list_old.end(), order);
+
+                // m    -th order --> (m-1)-th order
+                // (m-1)-th order -->     m-th order
+                // 2-different directions to find all constraints
+
+                for (unsigned int direction = 0; direction < 2; ++direction) {
+
+                    if (direction == 0) {
+                        g = g_now;
+                        interaction_list = interaction_list_now;
+                    } else {
+                        g = g_old;
+                        interaction_list = interaction_list_old;
+                    }
+
+                    // Loop for the interacting pairs
+
+                    do {
+                        auto data = g.now();
+
+                        for (size_t idata = 0; idata < data.size(); ++idata) {
+                            interaction_atom[idata + 1] = data[idata];
+                        }
+
+                        for (ixyz = 0; ixyz < nxyz; ++ixyz) {
+
+                            for (int j = 0; j < order; ++j)
+                                interaction_index[j + 1] = 3 * interaction_atom[j + 1] + xyzcomponent[ixyz][j];
+
+                            for (int mu = 0; mu < 3; ++mu) {
+                                for (int nu = 0; nu < 3; ++nu) {
+
+                                    if (!valid_rotation_axis[mu][nu]) continue;
+
+                                    // Search for a new constraint below
+
+                                    for (int j = 0; j < nparam_sub; ++j) arr_constraint[j] = 0.0;
+
+                                    // Loop for m_{N+1}, a_{N+1}
+                                    for (auto &iter_list: interaction_list) {
+                                        jat = iter_list;
+
+                                        interaction_atom[order + 1] = jat;
+                                        if (!cluster->is_incutoff(order + 2,
+                                                                  &interaction_atom[0],
+                                                                  order,
+                                                                  system->get_supercell().kind)) {
+                                            continue;
+                                        }
+
+                                        atom_tmp.clear();
+
+                                        for (int j = 1; j < order + 2; ++j) {
+                                            atom_tmp.push_back(interaction_atom[j]);
+                                        }
+                                        std::sort(atom_tmp.begin(), atom_tmp.end());
+
+                                        const auto iter_cluster = cluster->get_interaction_cluster(order, i).find(
+                                                InteractionCluster(atom_tmp,
+                                                                   cell_dummy));
+                                        if (iter_cluster != cluster->get_interaction_cluster(order, i).end()) {
+
+                                            int iloc = -1;
+
+                                            for (int j = 0; j < atom_tmp.size(); ++j) {
+                                                if (atom_tmp[j] == jat) {
+                                                    iloc = j;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (iloc == -1) {
+                                                exit("generate_rotational_constraint", "This cannot happen.");
+                                            }
+
+                                            for (int j = 0; j < 3; ++j) vec_for_rot[j] = 0.0;
+
+                                            const auto nsize_equiv = (*iter_cluster).cell.size();
+
+                                            for (int j = 0; j < nsize_equiv; ++j) {
+                                                for (auto k = 0; k < 3; ++k) {
+                                                    vec_for_rot[k] += system->get_x_image()[(*iter_cluster).cell[j][
+                                                            iloc]][jat][k];
+                                                }
+                                            }
+
+                                            for (int j = 0; j < 3; ++j) {
+                                                vec_for_rot[j] /= static_cast<double>(nsize_equiv);
+                                            }
+                                        }
+
+
+                                        // mu, nu
+
+                                        interaction_index[order + 1] = 3 * jat + mu;
+                                        for (int j = 0; j < order + 2; ++j) interaction_tmp[j] = interaction_index[j];
+
+                                        sort_tail(order + 2, &interaction_tmp[0]);
+
+                                        iter_found = list_found.
+                                                find(FcProperty(order + 2, 1.0, &interaction_tmp[0], 1));
+                                        if (iter_found != list_found.end()) {
+                                            arr_constraint[nparams[order - 1] + (*iter_found).mother]
+                                                    += (*iter_found).sign * vec_for_rot[nu];
+                                        }
+
+                                        // Exchange mu <--> nu and repeat again.
+
+                                        interaction_index[order + 1] = 3 * jat + nu;
+                                        for (int j = 0; j < order + 2; ++j) interaction_tmp[j] = interaction_index[j];
+
+                                        sort_tail(order + 2, &interaction_tmp[0]);
+
+                                        iter_found = list_found.
+                                                find(FcProperty(order + 2, 1.0, &interaction_tmp[0], 1));
+                                        if (iter_found != list_found.end()) {
+                                            arr_constraint[nparams[order - 1] + (*iter_found).mother]
+                                                    -= (*iter_found).sign * vec_for_rot[mu];
+                                        }
+                                    }
+
+                                    for (lambda = 0; lambda < order + 1; ++lambda) {
+
+                                        mu_lambda = interaction_index[lambda] % 3;
+
+                                        for (int jcrd = 0; jcrd < 3; ++jcrd) {
+
+                                            for (int j = 0; j < order + 1; ++j) {
+                                                interaction_tmp[j] = interaction_index[j];
+                                            }
+
+                                            interaction_tmp[lambda] = 3 * interaction_atom[lambda] + jcrd;
+
+                                            levi_factor = 0;
+
+                                            for (int j = 0; j < 3; ++j) {
+                                                levi_factor += levi_civita(j, mu, nu)
+                                                               * levi_civita(j, mu_lambda, jcrd);
+                                            }
+
+                                            if (levi_factor == 0) continue;
+
+                                            sort_tail(order + 1, &interaction_tmp[0]);
+
+                                            iter_found = list_found_last.find(FcProperty(order + 1, 1.0,
+                                                                                         &interaction_tmp[0], 1));
+                                            if (iter_found != list_found_last.end()) {
+                                                arr_constraint[(*iter_found).mother]
+                                                        += (*iter_found).sign * static_cast<double>(levi_factor);
+                                            }
+                                        }
+                                    }
+
+                                    if (!is_allzero(arr_constraint, tolerance, loc_nonzero)) {
+
+                                        // A Candidate for another constraint found !
+                                        // Add to the appropriate set
+
+                                        if (arr_constraint[loc_nonzero] < 0.0) {
+                                            for (int j = 0; j < nparam_sub; ++j) arr_constraint[j] *= -1.0;
+                                        }
+                                        for (int j = 0; j < nparams[order]; ++j) {
+                                            arr_constraint_self[j] = arr_constraint[j + nparams[order - 1]];
+                                        }
+                                        for (int j = 0; j < nparams[order - 1]; ++j) {
+                                            arr_constraint_lower[j] = arr_constraint[j];
+                                        }
+
+                                        const_tmp.clear();
+
+                                        if (is_allzero(arr_constraint_self, tolerance, loc_nonzero)) {
+                                            // If all elements of the "order"th order is zero,
+                                            // the constraint is intraorder of the "order-1"th order.
+                                            for (int j = 0; j < nparams[order - 1]; ++j) {
+                                                if (std::abs(arr_constraint_lower[j]) >= tolerance) {
+                                                    const_tmp.emplace_back(j, arr_constraint_lower[j]);
+                                                }
+                                            }
+                                            const_self_vec[order - 1].emplace_back(const_tmp);
+
+                                        } else if (is_allzero(arr_constraint_lower, tolerance, loc_nonzero)) {
+                                            // If all elements of the "order-1"th order is zero,
+                                            // the constraint is intraorder of the "order"th order.
+                                            for (int j = 0; j < nparams[order]; ++j) {
+                                                if (std::abs(arr_constraint_self[j]) >= tolerance) {
+                                                    const_tmp.emplace_back(j, arr_constraint_self[j]);
+                                                }
+                                            }
+                                            const_self_vec[order].emplace_back(const_tmp);
+
+                                        } else {
+                                            // If nonzero elements exist in both of the "order-1" and "order",
+                                            // the constraint is intrerorder.
+
+                                            for (int j = 0; j < nparam_sub; ++j) {
+                                                if (std::abs(arr_constraint[j]) >= tolerance) {
+                                                    const_tmp.emplace_back(j, arr_constraint[j]);
+                                                }
+                                            }
+                                            const_cross_vec[order].emplace_back(const_tmp);
+                                        }
+                                    }
+
+                                } // nu
+                            }     // mu
+                        } // ixyz
+                    } while (g.next());
+                } // direction
+            }     // icrd
+        }
+    } // iat
+
+    if (xyzcomponent) deallocate(xyzcomponent);
+
+    status_constraint_subset["rotation"] = 1;
+}
+
+void Constraint::set_rotation_constraints_extra(const System *system,
+                                                const Symmetry *symmetry,
+                                                const Cluster *cluster,
+                                                const Fcs *fcs,
+                                                const int order,
+                                                const bool valid_rotation_axis[3][3],
+                                                const std::unordered_set<FcProperty> &list_found,
+                                                const double tolerance,
+                                                std::vector<std::vector<ConstraintDoubleElement>> *const_self_vec,
+                                                std::vector<std::vector<ConstraintDoubleElement>> *const_cross_vec)
+{
+    const auto maxorder = cluster->get_maxorder();
+
+    // Additional constraint for the last order.
+    // All IFCs over maxorder-th order are neglected.
+    if (order != (maxorder - 1) or status_constraint_subset["rotation_extra"] == -1) return;
+
+    int j;
+    const auto natmin = symmetry->get_nat_prim();
+
+    int iat, jat;
+    int icrd;
+    int mu, nu;
+
+    CombinationWithRepetition<int> g;
+    double vec_for_rot[3];
+
+    int ixyz, nxyz{0};
+    int loc_nonzero;
+
+    int mu_lambda, lambda;
+    int levi_factor;
+
+    std::vector<double> arr_constraint;
+    std::vector<double> arr_constraint_self;
+
+    std::unordered_set<FcProperty>::iterator iter_found;
+
+    std::vector<int> atom_tmp;
+    std::set<InteractionCluster>::iterator iter_cluster;
+
+    std::vector<size_t> nparams;
+    std::vector<int> interaction_index, interaction_atom, interaction_tmp;
+
+    interaction_index.resize(order + 2);
+    interaction_atom.resize(order + 2);
+    interaction_tmp.resize(order + 2);
+
+    typedef std::vector<ConstraintDoubleElement> ConstEntry;
+    ConstEntry const_tmp;
+
+    for (int i = 0; i < maxorder; ++i) {
+        nparams.push_back(fcs->get_nequiv()[i].size());
+    }
+
+    arr_constraint_self.resize(nparams[order]);
+
+    int **xyzcomponent = nullptr;
+
+    nxyz = static_cast<int>(pow(static_cast<double>(3), order + 1));
+    allocate(xyzcomponent, nxyz, order + 1);
+    fcs->get_xyzcomponent(order + 1, xyzcomponent);
+
+
+    for (int i = 0; i < natmin; ++i) {
+
+        iat = symmetry->get_map_p2s()[i][0];
+
+        interaction_atom[0] = iat;
+
+        auto interaction_list_now(cluster->get_interaction_pair(order, i));
+        std::sort(interaction_list_now.begin(), interaction_list_now.end());
+
+        for (icrd = 0; icrd < 3; ++icrd) {
+
+            interaction_index[0] = 3 * interaction_atom[0] + icrd;
+
+            CombinationWithRepetition<int> g_now(interaction_list_now.begin(),
+                                                 interaction_list_now.end(), order + 1);
+            do {
+
+                auto data = g_now.now();
+
+                for (auto idata = 0; idata < data.size(); ++idata)
+                    interaction_atom[idata + 1] = data[idata];
+
+                for (ixyz = 0; ixyz < nxyz; ++ixyz) {
+
+                    for (j = 0; j < order + 1; ++j)
+                        interaction_index[j + 1] = 3 * interaction_atom[j + 1] + xyzcomponent[ixyz][j];
+
+                    for (mu = 0; mu < 3; ++mu) {
+
+                        for (nu = 0; nu < 3; ++nu) {
+
+                            if (!valid_rotation_axis[mu][nu]) continue;
+
+                            for (j = 0; j < nparams[order]; ++j) arr_constraint_self[j] = 0.0;
+
+                            for (lambda = 0; lambda < order + 2; ++lambda) {
+
+                                mu_lambda = interaction_index[lambda] % 3;
+
+                                for (int jcrd = 0; jcrd < 3; ++jcrd) {
+
+                                    for (j = 0; j < order + 2; ++j)
+                                        interaction_tmp[j] = interaction_index[j];
+
+                                    interaction_tmp[lambda] = 3 * interaction_atom[lambda] + jcrd;
+
+                                    levi_factor = 0;
+                                    for (j = 0; j < 3; ++j) {
+                                        levi_factor += levi_civita(j, mu, nu) * levi_civita(j, mu_lambda, jcrd);
+                                    }
+
+                                    if (levi_factor == 0) continue;
+
+                                    sort_tail(order + 2, &interaction_tmp[0]);
+
+                                    iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                                            &interaction_tmp[0], 1));
+                                    if (iter_found != list_found.end()) {
+                                        arr_constraint_self[(*iter_found).mother]
+                                                += (*iter_found).sign * static_cast<double>(levi_factor);
+                                    }
+                                } // jcrd
+                            }     // lambda
+
+                            if (!is_allzero(arr_constraint_self, tolerance, loc_nonzero)) {
+                                if (arr_constraint_self[loc_nonzero] < 0.0) {
+                                    for (j = 0; j < nparams[order]; ++j) arr_constraint_self[j] *= -1.0;
+                                }
+                                const_tmp.clear();
+                                for (j = 0; j < nparams[order]; ++j) {
+                                    if (std::abs(arr_constraint_self[j]) >= tolerance) {
+                                        const_tmp.emplace_back(j, arr_constraint_self[j]);
+                                    }
+                                }
+                                const_self_vec[order].emplace_back(const_tmp);
+                            }
+
+                        } // nu
+                    }     // mu
+                } // ixyz
+            } while (g_now.next());
+        } // icrd
+    } // iat
+    deallocate(xyzcomponent);
 }
 
 
@@ -2254,7 +2400,10 @@ void Constraint::fix_forceconstants_to_file(const int order,
     }
 
     int **intpair_ref;
+    std::vector<std::vector<int>> intpairs_to_fix;
     double *fcs_ref;
+
+    intpairs_to_fix.resize(nfcs, std::vector<int>(2));
 
     allocate(fcs_ref, nfcs);
     allocate(intpair_ref, nfcs, 3);
@@ -2295,9 +2444,28 @@ void Constraint::fix_forceconstants_to_file(const int order,
     std::unordered_set<FcProperty>::iterator iter_found;
 
     list_found.clear();
-
+    auto counter2 = 0;
     for (auto &list_tmp: fcs->get_fc_table()[order]) {
         list_found.insert(FcProperty(list_tmp));
+        counter++;
+        std::cout << counter << " " << list_tmp.elems[0] << " " << list_tmp.elems[1] << std::endl;
+    }
+
+    for (auto i = 0; i < nfcs; ++i) {
+        for (auto j = 0; j < 2; ++j) {
+            intpairs_to_fix[i][j] = symmetry->get_map_sym()[intpair_ref[i][j] / 3][10] * 3 + intpair_ref[i][j] % 3;
+        }
+    }
+
+    fcs->translate_forceconstant_index_to_centercell(symmetry,
+                                                     intpairs_to_fix);
+
+    for (auto i = 0; i < nfcs; ++i) {
+        std::cout << intpair_ref[i][0] << " " << intpair_ref[i][1] << '\n';
+    }
+    std::cout << "\n\n";
+    for (auto i = 0; i < nfcs; ++i) {
+        std::cout << intpairs_to_fix[i][0] << " " << intpairs_to_fix[i][1] << '\n';
     }
 
     for (auto i = 0; i < nfcs; ++i) {
@@ -2310,6 +2478,19 @@ void Constraint::fix_forceconstants_to_file(const int order,
         }
         const_out.emplace_back(ConstraintTypeFix((*iter_found).mother, fcs_ref[i]));
     }
+
+    for (auto i = 0; i < nfcs; ++i) {
+        iter_found = list_found.find(FcProperty(nterms, 1.0,
+                                                &intpairs_to_fix[i][0], 1));
+        if (iter_found == list_found.end()) {
+            exit("fix_forceconstants_to_file",
+                 "Cannot find equivalent force constant, number: ",
+                 i + 1);
+        }
+        std::cout << (*iter_found).mother << std::endl;
+//        const_out.emplace_back(ConstraintTypeFix((*iter_found).mother, fcs_ref[i]));
+    }
+
     deallocate(intpair_ref);
     deallocate(fcs_ref);
 
