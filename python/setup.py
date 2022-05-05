@@ -51,7 +51,15 @@ if "CC" in os.environ:
             warnings.warn("clang++ is used instead of clang.")
             os.environ["CC"] = os.environ["CC"].replace("clang", "clang++")
         extra_link_args.append("-lomp")
-    elif "gcc" in os.environ["CC"] or "gnu-cc" in os.environ["CC"]:
+    elif "gcc" in os.environ["CC"]:
+        if "g++" not in os.environ["CC"]:
+            warnings.warn("g++ is used instead of gcc.")
+            os.environ["CC"] = os.environ["CC"].replace("gcc", "g++")
+        extra_link_args.append("-lgomp")
+    elif "gnu-cc" in os.environ["CC"]:
+        if "gnu-c++" not in os.environ["CC"]:
+            warnings.warn("gnu-g++ is used instead of gnu-cc.")
+            os.environ["CC"] = os.environ["CC"].replace("gnu-cc", "gnu-c++")
         extra_link_args.append("-lgomp")
 
 if not extra_link_args:  # Default libgomp
