@@ -283,6 +283,30 @@ void alm_set_constraint_type(const int id,
     alm[id]->set_constraint_mode(constraint_flag);
 }
 
+void alm_set_forceconstants_to_fix(const int id,
+                                   const int *fc_indices,
+                                   const double *fc_values,
+                                   const size_t nfcs,
+                                   const int fc_order)
+{
+    std::vector<std::vector<int>> intpair_fix;
+    std::vector<double> values_fix;
+
+    const auto nelems = fc_order + 1;
+
+    intpair_fix.resize(nfcs, std::vector<int>(nelems));
+    values_fix.resize(nfcs);
+
+    for (size_t i = 0; i < nfcs; i++) {
+        for (size_t j = 0; j < nelems; ++j) {
+            intpair_fix[i][j] = fc_indices[i * nelems + j];
+        }
+        values_fix[i] = fc_values[i];
+    }
+    alm[id]->set_forceconstants_to_fix(intpair_fix,
+                                       values_fix);
+}
+
 void alm_set_fc(const int id, double *fc_in)
 {
     alm[id]->set_fc(fc_in);

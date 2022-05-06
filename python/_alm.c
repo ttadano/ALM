@@ -38,6 +38,8 @@ static PyObject *py_set_f_train(PyObject *self, PyObject *args);
 
 static PyObject *py_set_constraint_type(PyObject *self, PyObject *args);
 
+static PyObject *py_set_fcs_freeze(PyObject *self, PyObject *args);
+
 static PyObject *py_set_fc(PyObject *self, PyObject *args);
 
 static PyObject *py_set_output_filename_prefix(PyObject *self, PyObject *args);
@@ -113,6 +115,7 @@ static PyMethodDef _alm_methods[] = {
         {"set_u_train",                           py_set_u_train,                     METH_VARARGS, ""},
         {"set_f_train",                           py_set_f_train,                     METH_VARARGS, ""},
         {"set_constraint_type",                   py_set_constraint_type,             METH_VARARGS, ""},
+        {"set_fcs_freeze",                        py_set_fcs_freeze,                  METH_VARARGS, ""},
         {"set_fc",                                py_set_fc,                          METH_VARARGS, ""},
         {"set_output_filename_prefix",            py_set_output_filename_prefix,      METH_VARARGS, ""},
         {"get_optimizer_control",                 py_get_optimizer_control,           METH_VARARGS, ""},
@@ -494,6 +497,30 @@ static PyObject *py_set_constraint_type(PyObject *self, PyObject *args)
     }
 
     alm_set_constraint_type(id, iconst);
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *py_set_fcs_freeze(PyObject *self, PyObject *args)
+{
+    int id;
+    PyArrayObject *py_fc_values;
+    PyArrayObject *py_fc_indices;
+
+    if (!PyArg_ParseTuple(args, "iOO",
+                          &id,
+                          &py_fc_values,
+                          &py_fc_indices)) {
+        return NULL;
+    }
+
+    const int *fc_indices = (int *) PyArray_DATA(py_fc_indices);
+    const double *fc_values = (double *) PyArray_DATA(py_fc_values);
+
+    const size_t nfcs = (size_t) PyArray_DIMS(py_fc_indices)[0];
+    const size_t fc_order = (int) PyArray_DIMS(py_fc_indices)[1] - 1;
+
+    alm_set_forceconstants_to_fix(id, fc_indices, fc_values, nfcs, fc_order);
 
     Py_RETURN_NONE;
 }

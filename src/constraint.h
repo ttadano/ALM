@@ -241,6 +241,8 @@ public:
 
     void set_fix_cubic(const bool);
 
+    void set_constraint_algebraic(const int constraint_algebraic_in);
+
     int get_constraint_algebraic() const;
 
     double **get_const_mat() const;
@@ -273,8 +275,8 @@ public:
 
     void show_status_constraint() const;
 
-    void fix_forceconstants(const std::vector<std::vector<int>> &intpair_fix,
-                            const std::vector<double> &values_fix);
+    void set_forceconstants_to_fix(const std::vector<std::vector<int>> &intpair_fix,
+                                   const std::vector<double> &values_fix);
 
     void update_constraint_matrix(const System *system,
                                   const Symmetry *symmetry,
@@ -283,6 +285,7 @@ public:
                                   const int verbosity,
                                   const int mirror_image_conv);
 
+    bool ready_all_constraints() const;
 
 private:
 
@@ -301,10 +304,9 @@ private:
     std::vector<std::vector<ConstraintTypeFix>> const_fix;
     std::vector<std::vector<ConstraintTypeRelate>> const_relate;
     std::vector<std::vector<ConstraintTypeRelate>> const_relate_rotation;
-    std::vector<boost::bimap<size_t, size_t>> index_bimap;
+    boost::bimap<size_t, size_t> *index_bimap;
 
     bool impose_inv_T, impose_inv_R, exclude_last_R;
-    bool ready_constraints;
 
     std::vector<ConstraintSparseForm> const_symmetry;
     std::vector<ConstraintSparseForm> const_translation;
@@ -319,6 +321,7 @@ private:
     std::map<std::string, int> status_constraint_subset; // -1: not used,
     //  0: used but not ready,
     //  1: ready
+
 
     void set_default_variables();
 

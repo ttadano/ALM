@@ -711,6 +711,39 @@ class ALM(object):
         self._iconst = iconst
         alm.set_constraint_type(self._id, self._iconst)
 
+    def freeze_fc(self, fc_values, fc_indices):
+        """Freeze force to the given values upon optimization.
+
+        Parameters
+        ----------
+        fc_values: array_like, dtype='float', shape=(num_fc)
+            Array of force constant values.
+
+        fc_indices: array_like, dtype='int', shape=(num_fc, fc_order + 1)
+            Array of flattened indices 3 * index_atom + index_xyz of the
+            force constants.
+
+        Note
+        ----
+        The order of force constant is judged using the dimension of
+        the input `fc_indices`.
+
+        """
+        if self._id is None:
+            self._show_error_not_initizalied()
+
+        if fc_indices.ndim != 2:
+            msg = "fc_indices array has to be two dimensions."
+            raise RuntimeError(msg)
+
+        if len(fc_indices) != len(fc_values):
+            msg = "length of fc_indices and fc_values must be the same."
+            raise RuntimeError(msg)
+
+        fc_indices = np.array(fc_indices, dtype="intc", order="C")
+        fc_values = np.array(fc_values, dtype="float")
+        alm.set_fcs_freeze(self._id, fc_values, fc_indices)
+
     def getmap_primitive_to_supercell(self):
         """Return the mapping information from the primitive cell to the supercell.
 

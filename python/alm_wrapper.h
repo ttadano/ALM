@@ -63,6 +63,11 @@ void alm_set_f_train(const int id,
                      const size_t ndata_used);
 void alm_set_constraint_type(const int id,
                              const int constraint_flag); // ICONST
+void alm_set_forceconstants_to_fix(const int id,
+                                   const int *fc_indices,
+                                   const double *fc_values,
+                                   const size_t nfcs,
+                                   const int fc_order); // harmonic=1
 void alm_set_fc(const int id, double *fc_in);
 
 void alm_set_output_filename_prefix(const int id,
