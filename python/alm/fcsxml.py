@@ -265,7 +265,7 @@ class Fcsxml(object):
         if self._map_p2s is None:
             self._setup_symmetry()
 
-        return self._map_p2s[:][0]
+        return self._map_p2s[:, 0]
 
     def _add_header_xml(self, root_in):
 
@@ -542,8 +542,10 @@ class Fcsxml(object):
                 xnew = self._xf[index_s, :] + translations[isym][:]
 
                 for iat in np.where(mapping_to_primitive == unique_set[index_p])[0]:
-                    xdiff = np.fmod(xnew - self._xf[iat], 1.0)
-                    if np.dot(xdiff, xdiff) < 1.0e-8:
+                    xdiff = xnew - self._xf[iat]
+                    xdiff -= np.array(np.rint(xdiff), dtype="float")
+
+                    if np.dot(xdiff, xdiff) < 1.0e-5:
                         self._map_p2s[index_p][itran] = iat
                         break
 
