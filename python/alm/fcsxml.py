@@ -181,6 +181,7 @@ class Fcsxml(object):
         ----------
         fc_values: array_like, dtype='float', shape=(num_fc)
             Array of force constant values to write in an alamode XML file.
+            The unit of fc_values should be Rydberg/bohr**fc_order.
 
         fc_indices: array_like, dtype='int', shape=(num_fc, fc_order + 1)
             Array of flattened indices 3 * index_atom + index_xyz of the
