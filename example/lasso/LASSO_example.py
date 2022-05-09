@@ -144,8 +144,7 @@ def run_lasso_by_scikit_learn(X, y, nat, ndata,
 
         alphas_lasso, coefs_lasso, _ = lasso_path(X_train, y_train, eps=eps,
                                                   alphas=alphas,
-                                                  verbose=False,
-                                                  fit_intercept=False)
+                                                  verbose=False)
 
         y_model_train = np.dot(X_train, coefs_lasso)
         y_model_test = np.dot(X_test, coefs_lasso)
@@ -221,18 +220,19 @@ def main():
         alm.define(maxorder, cutoff, nbody)
         alm.set_constraint(translation=True)
         alm.set_fc(fc)
+        alm.save_fc('lasso_test.xml', format='alamode')
         fc_values1, elem_indices1 = alm.get_fc(1, mode='origin')
 
-    with open("fc-LASSO.dat", 'w') as w:
-        c = "xyz"
-        for (val, elem) in zip(fc_values1, elem_indices1):
-            v1 = elem[0] // 3
-            c1 = elem[0] % 3
-            v2 = elem[1] // 3
-            c2 = elem[1] % 3
-            w.write("%15.7f %d%s %d%s\n" %
-                    ((val, v1 + 1, c[c1], v2 + 1, c[c2])))
-    print("Force constants data are written in fc-LASSO.dat")
+    # with open("fc-LASSO.dat", 'w') as w:
+    #     c = "xyz"
+    #     for (val, elem) in zip(fc_values1, elem_indices1):
+    #         v1 = elem[0] // 3
+    #         c1 = elem[0] % 3
+    #         v2 = elem[1] // 3
+    #         c2 = elem[1] % 3
+    #         w.write("%15.7f %d%s %d%s\n" %
+    #                 ((val, v1 + 1, c[c1], v2 + 1, c[c2])))
+    print("Force constants data are written in lasso_test.xml")
 
     fig, ax = plt.subplots()
     ax.plot(alphas_lasso, rmse_mean, linestyle='--', marker='o', ms=5)
