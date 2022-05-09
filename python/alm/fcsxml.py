@@ -363,6 +363,11 @@ class Fcsxml(object):
                 elem, self._fc3_info[1], self._fc3_info[0]
             )
 
+        if self._fc4_info:
+            self._add_anharmonic_fcs_to_treeelement(
+                elem, self._fc4_info[1], self._fc4_info[0]
+            )
+
     def _add_anharmonic_fcs_to_treeelement(self, elem_in, clusters, fcvals):
         fc_order = len(clusters[0])
         subelem = SubElement(elem_in, "ANHARM%d" % fc_order)
