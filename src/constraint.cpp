@@ -1206,7 +1206,7 @@ void Constraint::get_constraint_translation(const Cell &supercell,
 
                 const_now_omp.resize(nparams);
 #ifdef _OPENMP
-#pragma omp for private(isize, ixyz, jcrd, j, jat, iter_found, loc_nonzero), schedule(guided), nowait
+#pragma omp for private(isize, ixyz, jcrd, j, jat, iter_found, loc_nonzero), nowait
 #endif
                 for (idata = 0; idata < ndata; ++idata) {
 
@@ -1474,7 +1474,7 @@ void Constraint::get_constraint_translation_for_mirror_images(const Cell &superc
 
                 consts_now_omp.resize(n_mirror_images, std::vector<double>(nparams));
 #ifdef _OPENMP
-#pragma omp for private(isize, ixyz, jcrd, j, jat, iter_found, loc_nonzero, i_mirror_images), schedule(guided), nowait
+#pragma omp for private(isize, ixyz, jcrd, j, jat, iter_found, loc_nonzero, i_mirror_images), nowait
 #endif
                 for (idata = 0; idata < ndata; ++idata) {
 

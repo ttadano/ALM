@@ -888,7 +888,7 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
             {
                 std::vector<ForceConstantTable> fc_cart_omp;
 
-#pragma omp for private(prod_matrix, j), schedule(guided), nowait
+#pragma omp for private(prod_matrix, j), nowait
                 for (int igrp = 0; igrp < ngrp; ++igrp) {
                     for (auto ixyz = 0; ixyz < nxyz; ++ixyz) {
 
