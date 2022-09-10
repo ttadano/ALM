@@ -676,7 +676,7 @@ int ALM::run_optimize()
         std::cout << "initialize_structure must be called beforehand." << std::endl;
         exit(EXIT_FAILURE);
     }
-    
+
     if (!initialized_constraint_class) {
         constraint->setup(system,
                           fcs,

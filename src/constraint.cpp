@@ -2686,6 +2686,24 @@ void Constraint::get_forceconstants_from_file(const int order,
                         }
                     }
     }
+
+    // convert the sign properly to the real one so that the constraint data can be
+    // directly used in generate_fix_constraint.
+    std::unordered_set<FcProperty> list_found;
+    std::unordered_set<FcProperty>::iterator iter_found;
+
+    list_found.clear();
+    for (auto &list_tmp: fcs->get_fc_table()[order]) {
+        list_found.insert(FcProperty(list_tmp));
+    }
+
+    for (auto i = 0; i < nfcs; ++i) {
+        iter_found = list_found.find(FcProperty(order + 2, 1.0,
+                                                &intpair_fcs[i][0], 1));
+        if (iter_found != list_found.end()) {
+            fcs_values[i] *= iter_found->sign;
+        }
+    }
 }
 
 void Constraint::set_forceconstants_to_fix(const std::vector<std::vector<int>> &intpair_fix,
@@ -2724,6 +2742,15 @@ void Constraint::generate_fix_constraint(const Symmetry *symmetry,
 
         fcs->translate_forceconstant_index_to_centercell(symmetry,
                                                          intpair_to_fix);
+
+//        std::cout << "intpair_fix.size() = " << intpair_to_fix.size() << '\n';
+//        for (auto ifix = 0; ifix < intpair_to_fix.size(); ++ifix) {
+//            for (auto it: intpair_to_fix[ifix]) {
+//                std::cout << std::setw(5) << it;
+//            }
+//            std::cout << std::setw(15) << values_fix_fc2[ifix] << '\n';
+//        }
+
         std::vector<ForceConstantTable> fc_fix_table;
 
         const auto nfcs = intpair_to_fix.size();
@@ -2763,13 +2790,21 @@ void Constraint::generate_fix_constraint(const Symmetry *symmetry,
                 if (it_found != fc_fix_table.end()) {
                     found_element = true;
                     sign = fcs->get_fc_table()[order][ihead + j].sign;
+                    if (std::abs(sign + sign_mother) < eps8) {
+                        sign *= -1.0;
+                    }
                     break;
                 }
             }
+//
+//            std::cout << "found: mother = " << std::setw(5) << mother;
+//            std::cout << " val = " << std::setw(15) << sign * (*it_found).fc_value;
+//            std::cout << " sign_mother = " << sign_mother;
+//            std::cout << '\n';
 
             if (found_element) {
                 const_fix[order].emplace_back(ConstraintTypeFix(mother,
-                                                                sign_mother * sign * (*it_found).fc_value));
+                                                                sign * (*it_found).fc_value));
             }
             ihead += fcs->get_nequiv()[order][ui];
         }
@@ -2821,13 +2856,16 @@ void Constraint::generate_fix_constraint(const Symmetry *symmetry,
                 if (it_found != fc_fix_table.end()) {
                     found_element = true;
                     sign = fcs->get_fc_table()[order][ihead + j].sign;
+                    if (std::abs(sign + sign_mother) < eps8) {
+                        sign *= -1.0;
+                    }
                     break;
                 }
             }
 
             if (found_element) {
                 const_fix[order].emplace_back(ConstraintTypeFix(mother,
-                                                                sign_mother * sign * (*it_found).fc_value));
+                                                                sign * (*it_found).fc_value));
             }
             ihead += fcs->get_nequiv()[order][ui];
         }
