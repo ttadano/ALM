@@ -479,24 +479,25 @@ class ALM(object):
         if self._id is None:
             self._show_error_not_initizalied()
 
-        keys = optimizer_control_data_types.keys()
+        supported_keys = optimizer_control_data_types.keys()
         optctrl = []
         optcontrol_l = {key.lower(): optcontrol[key] for key in optcontrol}
 
         for i, key in enumerate(optcontrol):
-            if key.lower() not in keys:
+            if key.lower() not in supported_keys:
                 msg = "%s is not a valide key for optimizer control." % key
                 raise KeyError(msg)
 
-        for i, key in enumerate(keys):
+        for i, key in enumerate(supported_keys):
             if key in optcontrol_l:
                 optctrl.append(optcontrol_l[key])
             else:
                 optctrl.append(None)
 
-        self._set_optimizer_control(optctrl)
+        alm.set_optimizer_control(self._id, optctrl)
 
-    def _set_optimizer_control(self, optcontrol):
+
+    def set_optimizer_control(self, optcontrol):
         self.optimizer_control = optcontrol
 
     @property
@@ -1039,16 +1040,12 @@ class ALM(object):
         else:
             raise ValueError("Invalid format in save_fc.")
 
-    @property
-    def cv_l1_alpha(self):
+    def get_cv_l1_alpha(self):
         """Return L1 alpha at minimum CV."""
         if self._id is None:
             self._show_error_not_initizalied()
 
-        return self._get_cv_l1_alpha()
-
-    def _get_cv_l1_alpha(self):
-        return self.cv_l1_alpha
+        return alm.get_cv_l1_alpha(self._id)
 
     def _transfer_parameters(self):
         if self._need_transfer:
