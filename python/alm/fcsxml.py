@@ -337,8 +337,7 @@ class Fcsxml(object):
             clusters = self._fc2_info[1]
             for fcval, cluster in zip(fcvals, clusters):
                 list_mir_imgs = self._closest_mirror_images[cluster[0] // 3][
-                    cluster[1] // 3
-                ][0]
+                    cluster[1] // 3][0]
                 num_mir_img = len(list_mir_imgs)
                 fcval_scale = fcval / float(num_mir_img)
                 for mir_img in list_mir_imgs:
@@ -473,7 +472,7 @@ class Fcsxml(object):
             self._xf_image[icell, :, 1] = self._xf[:, 1] + float(iy)
             self._xf_image[icell, :, 2] = self._xf[:, 2] + float(iz)
 
-        self._xc_image = np.dot(self._xf_image, self._lavec)
+        self._xc_image = np.dot(self._xf_image, self._lavec.transpose())
 
     def _compute_closest_mirror_images(self):
 
@@ -529,9 +528,8 @@ class Fcsxml(object):
                 symnum_translation.append(elem)
 
         self._nat_prim = self._nat_super // len(symnum_translation)
-        self._map_p2s = (
-            np.ones((self._nat_prim, len(symnum_translation)), dtype="int") * -1
-        )
+        self._map_p2s = (np.ones((self._nat_prim,
+                                  len(symnum_translation)), dtype="int") * -1)
 
         unique_set, atom_in_primitive_at_origin = np.unique(
             mapping_to_primitive, return_index=True
