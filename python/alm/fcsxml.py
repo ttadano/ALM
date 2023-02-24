@@ -6,6 +6,7 @@ from xml.etree.ElementTree import Element, ElementTree, SubElement
 
 import numpy as np
 import spglib
+from ase.units import Bohr
 
 atom_names = (
     "X",
@@ -133,13 +134,14 @@ atom_names = (
 class Fcsxml(object):
     """Writer of harmonic and anharmonic interatomic force constants for alamode."""
 
-    def __init__(self, lavec, xcoord, numbers, symprec=1.0e-3):
+    def __init__(self, lavec, xcoord, numbers, symprec=1.0e-3, unit='angstrom'):
         """Initialize the object with the input crystal structure.
 
         Parameters
         ----------
         lavec : array_like
-            Basis vectors. a, b, c are given as column vectors.
+            Basis vectors in units specified by 'unit'
+            a, b, c are given as column vectors.
             shape=(3, 3), dtype='double'
         xcoord : array_like
             Fractional coordinates of atomic points.
@@ -152,7 +154,11 @@ class Fcsxml(object):
             Will be passed to spglib.
 
         """
-        self._lavec = np.array(lavec).transpose()
+        if unit == 'angstrom':
+            self._lavec = np.array(lavec).transpose() / Bohr
+        else:
+            self._lavec = np.array(lavec).transpose()
+
         self._xf = np.array(xcoord)
         self._atomic_kinds = np.array(numbers)
         self._symprec = symprec
