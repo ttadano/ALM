@@ -2743,30 +2743,21 @@ void Constraint::generate_fix_constraint(const Symmetry *symmetry,
         fcs->translate_forceconstant_index_to_centercell(symmetry,
                                                          intpair_to_fix);
 
-//        std::cout << "intpair_fix.size() = " << intpair_to_fix.size() << '\n';
-//        for (auto ifix = 0; ifix < intpair_to_fix.size(); ++ifix) {
-//            for (auto it: intpair_to_fix[ifix]) {
-//                std::cout << std::setw(5) << it;
-//            }
-//            std::cout << std::setw(15) << values_fix_fc2[ifix] << '\n';
-//        }
-
-        std::vector<ForceConstantTable> fc_fix_table;
+        std::set<ForceConstantTable> fc_fix_table;
 
         const auto nfcs = intpair_to_fix.size();
 
         for (auto i = 0; i < nfcs; ++i) {
-            fc_fix_table.emplace_back(values_fix_fc2[i],
-                                      intpair_to_fix[i]);
+            fc_fix_table.insert(ForceConstantTable(values_fix_fc2[i],
+                                                   intpair_to_fix[i]));
         }
-        std::sort(fc_fix_table.begin(), fc_fix_table.end());
 
         size_t ihead = 0;
 
         std::vector<int> index_tmp;
         double sign;
         size_t mother;
-        std::vector<ForceConstantTable>::iterator it_found;
+        std::set<ForceConstantTable>::iterator it_found;
         bool found_element;
 
         const_fix[order].clear();
@@ -2783,9 +2774,7 @@ void Constraint::generate_fix_constraint(const Symmetry *symmetry,
             for (auto j = 0; j < fcs->get_nequiv()[order][ui]; ++j) {
                 index_tmp = fcs->get_fc_table()[order][ihead + j].elems;
 
-                it_found = std::lower_bound(fc_fix_table.begin(),
-                                            fc_fix_table.end(),
-                                            ForceConstantTable(0.0, index_tmp));
+                it_found = fc_fix_table.find(ForceConstantTable(0.0, index_tmp));
 
                 if (it_found != fc_fix_table.end()) {
                     found_element = true;
@@ -2796,15 +2785,10 @@ void Constraint::generate_fix_constraint(const Symmetry *symmetry,
                     break;
                 }
             }
-//
-//            std::cout << "found: mother = " << std::setw(5) << mother;
-//            std::cout << " val = " << std::setw(15) << sign * (*it_found).fc_value;
-//            std::cout << " sign_mother = " << sign_mother;
-//            std::cout << '\n';
 
             if (found_element) {
-                const_fix[order].emplace_back(ConstraintTypeFix(mother,
-                                                                sign * (*it_found).fc_value));
+                const_fix[order].emplace_back(mother,
+                                              sign * (*it_found).fc_value);
             }
             ihead += fcs->get_nequiv()[order][ui];
         }
@@ -2820,20 +2804,19 @@ void Constraint::generate_fix_constraint(const Symmetry *symmetry,
 
         const auto nfcs = intpair_to_fix.size();
 
-        std::vector<ForceConstantTable> fc_fix_table;
+        std::set<ForceConstantTable> fc_fix_table;
 
         for (auto i = 0; i < nfcs; ++i) {
-            fc_fix_table.emplace_back(values_fix_fc3[i],
-                                      intpair_to_fix[i]);
+            fc_fix_table.insert(ForceConstantTable(values_fix_fc3[i],
+                                                   intpair_to_fix[i]));
         }
-        std::sort(fc_fix_table.begin(), fc_fix_table.end());
 
         size_t ihead = 0;
 
         std::vector<int> index_tmp;
         double sign;
         size_t mother;
-        std::vector<ForceConstantTable>::iterator it_found;
+        std::set<ForceConstantTable>::iterator it_found;
         bool found_element;
 
         const_fix[order].clear();
@@ -2849,9 +2832,7 @@ void Constraint::generate_fix_constraint(const Symmetry *symmetry,
 
             for (auto j = 0; j < fcs->get_nequiv()[order][ui]; ++j) {
                 index_tmp = fcs->get_fc_table()[order][ihead + j].elems;
-                it_found = std::lower_bound(fc_fix_table.begin(),
-                                            fc_fix_table.end(),
-                                            ForceConstantTable(0.0, index_tmp));
+                it_found = fc_fix_table.find(ForceConstantTable(0.0, index_tmp));
 
                 if (it_found != fc_fix_table.end()) {
                     found_element = true;
@@ -2864,8 +2845,8 @@ void Constraint::generate_fix_constraint(const Symmetry *symmetry,
             }
 
             if (found_element) {
-                const_fix[order].emplace_back(ConstraintTypeFix(mother,
-                                                                sign * (*it_found).fc_value));
+                const_fix[order].emplace_back(mother,
+                                              sign * (*it_found).fc_value);
             }
             ihead += fcs->get_nequiv()[order][ui];
         }

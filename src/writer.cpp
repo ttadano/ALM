@@ -662,6 +662,8 @@ void Writer::save_fcs_alamode_oldformat(const System *system,
 
     for (const auto &it: fc_cart_harmonic) {
 
+        if (std::abs(it.fc_value) < fcs->get_fc_zero_threshold()) continue;
+
         for (k = 0; k < 2; ++k) {
             pair_tmp[k] = it.atoms[k];
         }
@@ -717,6 +719,7 @@ void Writer::save_fcs_alamode_oldformat(const System *system,
             // and the last (order + 1) elements are sorted in ascending order.
 
             if (!it.is_ascending_order) continue;
+            if (std::abs(it.fc_value) < fcs->get_fc_zero_threshold()) continue;
 
             for (k = 0; k < order + 2; ++k) {
                 pair_tmp[k] = it.atoms[k];

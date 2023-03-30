@@ -903,12 +903,10 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
                             fcs_cart += prod_matrix * fc_list_grp[igrp][j];
                         }
 
-                        if (std::abs(fcs_cart) >= fc_zero_threshold) {
-                            fc_cart_omp.emplace_back(nelems,
-                                                     fcs_cart,
-                                                     &atoms_grp[igrp][0],
-                                                     xyzcomponent[ixyz]);
-                        }
+                        fc_cart_omp.emplace_back(nelems,
+                                                 fcs_cart,
+                                                 &atoms_grp[igrp][0],
+                                                 xyzcomponent[ixyz]);
                     }
                 }
 
@@ -939,20 +937,18 @@ void Fcs::set_forceconstant_cartesian(const int maxorder,
             coords_now.resize(nelems);
 
             for (const auto &it: fc_table[i]) {
-                if (std::abs(param_in[it.mother + ishift]) >= fc_zero_threshold) {
-                    elems_permutation = it.elems;
-                    do {
-                        for (j = 0; j < nelems; ++j) {
-                            atoms_now[j] = elems_permutation[j] / 3;
-                            coords_now[j] = elems_permutation[j] % 3;
-                        }
-                        fc_cart[i].emplace_back(nelems,
-                                                param_in[it.mother + ishift] * it.sign,
-                                                &atoms_now[0],
-                                                &coords_now[0]);
-                    } while (std::next_permutation(elems_permutation.begin() + 1,
-                                                   elems_permutation.end()));
-                }
+                elems_permutation = it.elems;
+                do {
+                    for (j = 0; j < nelems; ++j) {
+                        atoms_now[j] = elems_permutation[j] / 3;
+                        coords_now[j] = elems_permutation[j] % 3;
+                    }
+                    fc_cart[i].emplace_back(nelems,
+                                            param_in[it.mother + ishift] * it.sign,
+                                            &atoms_now[0],
+                                            &coords_now[0]);
+                } while (std::next_permutation(elems_permutation.begin() + 1,
+                                               elems_permutation.end()));
             }
 
             ishift += nequiv[i].size();
