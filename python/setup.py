@@ -68,9 +68,9 @@ if not extra_link_args:  # Default libgomp
 # Lapack library
 extra_link_args.append("-llapack")
 
-spglib_dir = os.path.join(conda_prefix, "lib")
-if not os.path.exists(os.path.join(spglib_dir, "libsymspg.a")):
-    spglib_dir = os.path.join(conda_prefix, "lib64")
+# spglib
+extra_link_args.append("-lsymspg")
+
 include_dirs = []
 include_dirs.append(numpy.get_include())
 include_dirs.append(os.path.join(conda_prefix, "include"))
@@ -102,13 +102,11 @@ if compile_with_sources:
     ]
     sources = [os.path.join(source_dir, s) for s in cpp_files]
     sources += ["_alm.c", "alm_wrapper.cpp"]
-    extra_link_args.append(os.path.join(spglib_dir, "libsymspg.a"))
 else:  # compile with library
     sources = ["_alm.c", "alm_wrapper.cpp"]
     # 'libalmcxx.a' static link library has to come before depending
     # dynamic link libraries '-lgomp', '-llapack'.
     extra_link_args.insert(0, os.path.join("..", "lib", "libalmcxx.a"))
-    extra_link_args.append(os.path.join(spglib_dir, "libsymspg.a"))
 
 extension = Extension(
     "alm._alm",
@@ -120,16 +118,6 @@ extension = Extension(
 )
 
 setup(
-    name="alm",
-    version="1.4.0",
-    description="Force constants generator",
-    setup_requires=["numpy", "setuptools>=18.0"],
-    author="Terumasa Tadano",
-    author_email="terumasa.tadano@gmail.com",
-    url="https://github.com/ttadano/ALM",
-    packages=["alm"],
-    install_requires=["numpy"],
-    provides=["alm"],
     platforms=["all"],
     ext_modules=[extension],
 )

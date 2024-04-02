@@ -1,5 +1,26 @@
 [build-system]
 requires = ["setuptools", "wheel", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alm"
+version = "1.4.0"
+description = "Force constants generator"
+authors = [
+ {name = "Terumasa Tadano"},
+ {email = "terumasa.tadano@gmail.com" }
+]
+readme = "README.md"
+license = { text = "MIT License"}
+keywords = ["alm", "numpy", "setuptools"]
+
+[project.urls]
+documentation = "https://alm.readthedocs.io"
+homepage = "https://github.com/ttadano/ALM"
+repository = "https://github.com/ttadano/ALM"
+
+[project.scripts]
+alm = "alm:main"
 
 [tool.flake8]
 max-line-length = 88
