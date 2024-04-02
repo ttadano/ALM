@@ -1,19 +1,29 @@
-ALM python modules
-==================
+alm package
+===========
 
-alm module
+Submodules
 ----------
 
-.. automodule:: alm.alm
-    :members:
-    :undoc-members:
-    :show-inheritance:
+alm.alm module
+--------------
 
+.. automodule:: alm.alm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+alm.fcsxml module
+-----------------
+
+.. automodule:: alm.fcsxml
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------
 
 .. automodule:: alm
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

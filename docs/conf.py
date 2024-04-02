@@ -37,8 +37,8 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.mathjax',
               'sphinx.ext.napoleon']
 
 def run_apidoc(_):
-    #from sphinx.ext.apidoc import main
-    from sphinx.apidoc import main
+    from sphinx.ext.apidoc import main
+    #from sphinx.apidoc import main
     parentFolder = os.path.join(os.path.dirname(__file__), '..')
     cur_dir = os.path.abspath(os.path.dirname(__file__))
     print(sys.path)
@@ -48,7 +48,7 @@ def run_apidoc(_):
 
 def setup(app):
     # overrides for wide tables in RTD theme
-    app.add_stylesheet('theme_overrides.css')
+    app.add_css_file('theme_overrides.css')
     # trigger the run_apidoc
     app.connect('builder-inited', run_apidoc)
 
@@ -75,7 +75,7 @@ author = 'Terumasa Tadano'
 # built documents.
 #
 # The short X.Y version.
-version = '2.0'
+version = '2.0'
 # The full version, including alpha/beta/rc tags.
 release = '2.0.0 beta'
 
@@ -84,7 +84,7 @@ release = '2.0.0 beta'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

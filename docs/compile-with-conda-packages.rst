@@ -19,7 +19,7 @@ Preparing build tools by conda
 At first, it is recommended `to prepare a conda environment
 <https://conda.io/docs/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands>`_ by::
 
-   % conda create --name alm -c conda-forge python=3.8
+   % conda create --name alm -c conda-forge
 
 Here the name of the conda environment is chosen ``alm``. The detailed
 instruction about the conda environment is found `here
@@ -31,6 +31,8 @@ installed by
 
    % conda install -c conda-forge numpy scipy h5py compilers "libblas=*=*mkl" spglib boost eigen cmake ipython mkl-include
 
+If one wants to use other BLAS libraries than MKL, the package
+``libblas=*=*mkl`` should be replaced by the appropriate package name, e.g., ``libblas=*=*openblas``.
 
 .. _build_ALMlib:
 
@@ -84,8 +86,7 @@ The build and installation in the user directory is done by
 
 ::
 
-   % python setup.py build
-   % pip install -e .
+   % python -m pip install .
 
 ..
    For macOS, we use clang instead of gcc in this documentation. In this
