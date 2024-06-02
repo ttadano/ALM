@@ -186,6 +186,11 @@ public:
                     int fc_order, // harmonic=1, ...
                     int permutation = 1) const;
 
+    void get_fc_dependency_mat(const int fc_order,
+                               int *index_elements_irred,
+                               int *index_elements_origin,
+                               double *matrix_out) const;
+
     void set_fc(double *fc_in) const;
 
     void set_fc_zero_threshold(const double threshold_in);

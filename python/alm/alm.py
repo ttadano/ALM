@@ -496,8 +496,8 @@ class ALM(object):
 
         alm.set_optimizer_control(self._id, optctrl)
 
-
     def set_optimizer_control(self, optcontrol):
+        """Set the options for force constant optimization."""
         self.optimizer_control = optcontrol
 
     @property
@@ -612,7 +612,8 @@ class ALM(object):
         self.set_training_data(u, f)
 
     def define(
-        self, maxorder, cutoff_radii=None, nbody=None, symmetrization_basis="Lattice"
+            self, maxorder, cutoff_radii=None,
+            nbody=None, symmetrization_basis="Lattice"
     ):
         """Define the Taylor expansion potential.
 
@@ -667,7 +668,7 @@ class ALM(object):
                 msg = "The array shape of cutoff_radii is wrong."
                 raise RuntimeError(msg)
             nkd = int(round(np.sqrt(nelem // maxorder)))
-            if nkd**2 - nelem // maxorder != 0:
+            if nkd ** 2 - nelem // maxorder != 0:
                 msg = "The array shape of cutoff_radii is wrong."
                 raise RuntimeError(msg)
             _cutoff_radii = np.reshape(_cutoff_radii, (maxorder, nkd, nkd), order="C")
@@ -1040,6 +1041,78 @@ class ALM(object):
         else:
             raise ValueError("Invalid format in save_fc.")
 
+    def get_fc_dependency(self, fc_order):
+        """Return the force constant dependency information as dictionary.
+
+        Parameters
+        ----------
+        fc_order : int
+            The order of force constants to get.
+
+            - If ``fc_order = 1``, returns harmonic force constants.
+            - If ``fc_order = 2``, returns cubic force constants.
+            - If ``fc_order = 3``, returns quartic force constants.
+            - ...
+
+        Returns
+        -------
+        dependency : dictionary
+            Force constant dependency information
+
+        Note
+        ----
+        The returned dictionary contains the information of equivalent
+        force constants as well as the equality constraints between
+        force constants that needs to be hold to satisfy the
+        translational invariance (ASR, acoustic sum rule).
+        If one want to exclude the constraints due to the ASR,
+        please set alm.set_constraint(translation=False)
+        before calling this method.
+        """
+        n_fc_irred = self._get_number_of_irred_fc_elements(fc_order)
+        n_fc_origin = self._get_number_of_fc_origin(fc_order, 0)
+        elem_indices_irred = np.zeros((n_fc_irred, fc_order + 1),
+                                      dtype="intc", order="C")
+        elem_indices_origin = np.zeros((n_fc_origin, fc_order + 1),
+                                       dtype="intc", order="C")
+        dependency_mat = np.zeros(n_fc_irred * n_fc_origin, dtype="double", order="C")
+
+        alm.get_fc_dependency(self._id, elem_indices_irred,
+                              elem_indices_origin, dependency_mat)
+        xyz = "xyz"
+        dependency_mat = np.reshape(dependency_mat, (n_fc_origin, n_fc_irred))
+        nonzeros = np.where(np.abs(dependency_mat) > 1.0e-5)
+
+        dependency_dic = {}
+        i_prev = -1
+        dic_tmp = {}
+        for i, j in zip(nonzeros[0], nonzeros[1]):
+            if i == i_prev:
+                key = ''
+                for entry in elem_indices_irred[j]:
+                    key += '{}{}'.format(entry // 3 + 1, xyz[entry % 3])
+                dic_tmp[key] = dependency_mat[i, j]
+            else:
+                if len(dic_tmp) > 0:
+                    key = ''
+                    for entry in elem_indices_origin[i_prev]:
+                        key += '{}{}'.format(entry // 3 + 1, xyz[entry % 3])
+                    dependency_dic[key] = dic_tmp
+                dic_tmp = {}
+                key = ''
+                for entry in elem_indices_irred[j]:
+                    key += '{}{}'.format(entry // 3 + 1, xyz[entry % 3])
+                dic_tmp[key] = dependency_mat[i, j]
+                i_prev = i
+
+        if len(dic_tmp) > 0:
+            key = ''
+            for entry in elem_indices_origin[i_prev]:
+                key += '{}{}'.format(entry // 3 + 1, xyz[entry % 3])
+            dependency_dic[key] = dic_tmp
+
+        return dependency_dic
+
     def get_cv_l1_alpha(self):
         """Return L1 alpha at minimum CV."""
         if self._id is None:
@@ -1144,8 +1217,8 @@ class ALM(object):
             fc_order = 1 for harmonic, fc_order = 2 for cubic ...
 
         permutation: int
-            Flag to include permutated elements
-            permutation = 0 for skipping permutated elements,
+            Flag to include permuted elements
+            permutation = 0 for skipping permuted elements,
             permutation = 1 for including them
 
         """

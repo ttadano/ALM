@@ -501,4 +501,16 @@ void alm_save_fc(const int id,
     alm[id]->save_fc(filename, format, maxorder_to_save);
 }
 
+void alm_get_fc_dependency(const int id,
+                           int *elem_indices_irred,
+                           int *elem_indices_origin,
+                           double *dependency_mat,
+                           const int fc_order)
+{
+    alm[id]->get_fc_dependency_mat(fc_order,
+                                   elem_indices_irred,
+                                   elem_indices_origin,
+                                   dependency_mat);
+}
+
 }

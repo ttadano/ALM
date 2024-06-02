@@ -20,6 +20,8 @@
 #include "timer.h"
 #include <iostream>
 #include <string>
+#include <Eigen/Sparse>
+
 
 using namespace ALM_NS;
 
@@ -596,6 +598,116 @@ void ALM::get_fc_all(double *fc_values,
             }
         }
     }
+}
+
+void ALM::get_fc_dependency_mat(const int fc_order,
+                                int *elem_indices_irred,
+                                int *elem_indices_origin,
+                                double *matrix_out) const
+{
+    const auto maxorder = cluster->get_maxorder();
+
+    if (fc_order > maxorder) {
+        std::cout << "fc_order must not be larger than maxorder" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    typedef Eigen::Triplet<double, size_t> T;
+    std::vector<T> triplet_map, index_map_constraint, index_map_rotation;
+
+    const auto order = fc_order - 1;
+    const auto relation = constraint->get_index_bimap(order);
+    const auto const_relate = constraint->get_const_relate(order);
+    const auto nequiv = fcs->get_nequiv();
+    const auto fcs_table = fcs->get_fc_table();
+
+    if (relation.empty()) {
+        std::cout << "All values are fixed, so the relation matrix cannot be generated" << std::endl;
+        return;
+    }
+
+    for (const auto &it: relation) {
+        size_t index_tmp = 0;
+        for (auto i = 0; i < it.right; ++i) {
+            index_tmp += nequiv[order][i];
+        }
+        for (auto i = 0; i < fc_order + 1; ++i) {
+            elem_indices_irred[it.left * (fc_order + 1) + i]
+                    = fcs_table[order][index_tmp].elems[i];
+        }
+        triplet_map.emplace_back(it.right, it.left, 1.0);
+    }
+
+    int irow_max = 0;
+    int icol_max = 0;
+    for (const auto &it: triplet_map) {
+        if (it.row() > irow_max) irow_max = it.row();
+        if (it.col() > icol_max) icol_max = it.col();
+    }
+    SpMat P_map(irow_max + 1, icol_max + 1);
+    P_map.setFromTriplets(triplet_map.begin(), triplet_map.end());
+    P_map.makeCompressed();
+
+    std::set<size_t> set_first_index;
+    // Equality constraint elements
+    for (const auto &it: const_relate) {
+        for (auto i = 0; i < it.alpha.size(); ++i) {
+            index_map_constraint.emplace_back(it.p_index_target, it.p_index_orig[i], it.alpha[i]);
+        }
+        set_first_index.insert(it.p_index_target);
+    }
+
+    // Identity matrix elements
+    const auto nrows_tmp = P_map.rows();
+    for (auto i = 0; i < nrows_tmp; ++i) {
+        if (set_first_index.find(i) == set_first_index.end()) {
+            index_map_constraint.emplace_back(i, i, 1.0);
+        }
+    }
+
+    irow_max = 0;
+    icol_max = 0;
+    for (const auto &it: index_map_constraint) {
+        if (it.row() > irow_max) irow_max = it.row();
+        if (it.col() > icol_max) icol_max = it.col();
+    }
+    SpMat M_constraint(irow_max + 1, icol_max + 1);
+    M_constraint.setFromTriplets(index_map_constraint.begin(),
+                                 index_map_constraint.end());
+    M_constraint.makeCompressed();
+
+
+    int ielems = 0;
+    for (auto i = 0; i < nequiv[order].size(); ++i) {
+        for (auto j = 0; j < nequiv[order][i]; ++j) {
+            for (auto k = 0; k < fcs_table[order][ielems].elems.size(); ++k) {
+                elem_indices_origin[ielems * (fc_order + 1) + k] = fcs_table[order][ielems].elems[k];
+            }
+            index_map_rotation.emplace_back(ielems, i, fcs_table[order][ielems].sign);
+            ++ielems;
+        }
+    }
+
+    SpMat M_rotation(ielems, nequiv[order].size());
+    M_rotation.setFromTriplets(index_map_rotation.begin(), index_map_rotation.end());
+    M_rotation.makeCompressed();
+
+    SpMat M = M_rotation * M_constraint * P_map;
+    Eigen::MatrixXd mat_dense = Eigen::MatrixXd(M);
+
+    const auto ncol_irred = relation.size();
+
+    //std::cout << "matrix size (C++) = " << mat_dense.rows() << "x" << mat_dense.cols() << '\n';
+
+    for (int i = 0; i < mat_dense.rows(); ++i) {
+//        std::cout << "row C++: ";
+        for (int j = 0; j < ncol_irred; ++j) {
+            matrix_out[i * ncol_irred + j] = mat_dense(i, j);
+//            std::cout << std::setw(5) << mat_dense(i, j);
+        }
+//        std::cout << '\n';
+    }
+
 }
 
 void ALM::set_fc(double *fc_in) const

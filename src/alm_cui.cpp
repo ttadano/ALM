@@ -82,6 +82,32 @@ void ALMCUI::run(const int narg,
                                   alm->optimize,
                                   alm->files,
                                   alm->get_verbosity());
+
+            const auto nfcs_irred = alm->get_number_of_irred_fc_elements(2);
+            const auto nfcs_origin = alm->get_number_of_fc_origin(2, 0);
+
+            std::cout << nfcs_irred << " " << nfcs_origin << '\n';
+
+            double *flattened_array = new double[nfcs_irred * nfcs_origin];
+            int *index_elements_origin = new int[nfcs_origin * 3];
+            int *index_elements_irred = new int[nfcs_irred * 3];
+
+            alm->get_fc_dependency_mat(2,
+                                       index_elements_irred,
+                                       index_elements_origin,
+                                       flattened_array);
+
+            for (size_t i = 0; i < nfcs_origin; ++i) {
+                for (size_t j = 0; j < nfcs_irred; ++j) {
+                    std::cout << flattened_array[i * nfcs_irred + j] << " ";
+                }
+                std::cout << '\n';
+            }
+
+            delete[] flattened_array;
+            delete[] index_elements_irred;
+            delete[] index_elements_origin;
+
         }
     } else if (run_mode == "suggest") {
         alm->run_suggest();

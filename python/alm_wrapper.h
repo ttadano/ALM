@@ -127,6 +127,12 @@ void alm_save_fc(const int id,
                  const char *format,
                  const int maxorder_to_save);
 
+void alm_get_fc_dependency(const int id,
+                           int *elem_indices_irred,
+                           int *elem_indices_orig,
+                           double *dependency_mat,
+                           const int fc_order);
+
 
 #ifdef __cplusplus
 }

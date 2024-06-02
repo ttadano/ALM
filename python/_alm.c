@@ -82,6 +82,9 @@ static PyObject *py_get_matrix_elements(PyObject *self, PyObject *args);
 
 static PyObject *py_save_fc(PyObject *self, PyObject *args);
 
+static PyObject *py_get_fc_dependency(PyObject *self, PyObject *args);
+
+
 struct module_state {
     PyObject *error;
 };
@@ -139,6 +142,7 @@ static PyMethodDef _alm_methods[] = {
         {"get_fc_all",                            py_get_fc_all,                      METH_VARARGS, ""},
         {"get_matrix_elements",                   py_get_matrix_elements,             METH_VARARGS, ""},
         {"save_fc",                               py_save_fc,                         METH_VARARGS, ""},
+        {"get_fc_dependency",                     py_get_fc_dependency,               METH_VARARGS, ""},
         {NULL,                                    NULL,                               0,            NULL}
 };
 
@@ -912,6 +916,34 @@ static PyObject *py_save_fc(PyObject *self, PyObject *args)
     }
 
     alm_save_fc(id, filename, format, maxorder_to_save);
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *py_get_fc_dependency(PyObject *self, PyObject *args)
+{
+    int id;
+    PyArrayObject *py_elem_indices_irred;
+    PyArrayObject *py_elem_indices_origin;
+    PyArrayObject *py_dependency_mat;
+
+    if (!PyArg_ParseTuple(args, "iOOO",
+                          &id,
+                          &py_elem_indices_irred,
+                          &py_elem_indices_origin,
+                          &py_dependency_mat)) {
+        return NULL;
+    }
+
+    int (*elem_indices_irred) = (int *) PyArray_DATA(py_elem_indices_irred);
+    int (*elem_indices_origin) = (int *) PyArray_DATA(py_elem_indices_origin);
+    double (*dependency_mat) = (double *) PyArray_DATA(py_dependency_mat);
+
+    const int fc_order = PyArray_DIMS(py_elem_indices_irred)[1] - 1;
+
+    alm_get_fc_dependency(id, elem_indices_irred,
+                          elem_indices_origin,
+                          dependency_mat, fc_order);
 
     Py_RETURN_NONE;
 }
